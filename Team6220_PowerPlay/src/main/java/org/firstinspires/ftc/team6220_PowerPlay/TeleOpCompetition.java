@@ -12,6 +12,7 @@ public class TeleOpCompetition extends BaseTeleOp{
 
     @Override public void runOpMode() {
         initHardware();
+
         waitForStart();
         //get angle after startup to prevent jitter on startup
         IMUOriginalAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);

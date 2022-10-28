@@ -36,6 +36,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     //constant for converting angle error to motor speed
     double correctionConstant = 1/45.0;
 
+    double driveSpeedModifier = 0.75;//Affects the overall intensity of the robot's movements
+
     public void initHardware() {
         //init drive motors
         motorFL = hardwareMap.dcMotor.get("motorFL");
@@ -84,7 +86,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         IMUOriginalAngles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES);
     }
 
-    boolean turnFlag = false; // Flag to say whether we should disable the correction system
+    boolean turnFlag = true; // Flag to say whether we should disable the correction system
 
     public void driveRobot(double x, double y, double t)  {
 
@@ -126,10 +128,10 @@ abstract public class BaseOpMode extends LinearOpMode {
         telemetry.update();//temp
 
         //calculate speed and direction of each individual motor
-        double speedFL = (-y+x+t);
-        double speedFR = (-y-x-t);
-        double speedBL = (-y-x+t);
-        double speedBR = (-y+x-t);
+        double speedFL = (-y+x+t)*driveSpeedModifier;
+        double speedFR = (-y-x-t)*driveSpeedModifier;
+        double speedBL = (-y-x+t)*driveSpeedModifier;
+        double speedBR = (-y+x-t)*driveSpeedModifier;
 
         //set power of motors to speed
         motorFL.setPower(speedFL);
@@ -145,11 +147,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     //method to open/close grabber if you set boolean to true or false
     //this is so that you can use it in Autonomous and TeleOp.
     public void openGrabber(boolean open) {
-        if (open) {
-            servoGrabber.setPosition(0.33); //set servo to open position
-        } else {
-            servoGrabber.setPosition(0.11); //set servo to closed position
-        }
+        servoGrabber.setPosition(open? 0.33 : 0.11);
     }
     //this is a general method to turn the turntable
     public void rotateTurntable(double power){
