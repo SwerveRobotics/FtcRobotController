@@ -3,6 +3,7 @@ package org.firstinspires.ftc.team6220_PowerPlay;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
+import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -43,6 +44,9 @@ public abstract class BaseOpMode extends LinearOpMode {
     public BNO055IMU imu;
     public double originalAngle;
     public double startAngle;
+
+    // Limit switch
+    public RevTouchSensor slideLimitSwitch;
 
     // flag to say whether we should disable the correction system
     private boolean turnFlag = false;
@@ -113,6 +117,9 @@ public abstract class BaseOpMode extends LinearOpMode {
         parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
         imu = hardwareMap.get(BNO055IMU.class, "imu");
         imu.initialize(parameters);
+
+        // initialize limit switch as Rev Touch Sensor
+        slideLimitSwitch = (RevTouchSensor) hardwareMap.get(RevTouchSensor.class, "slideLimitSwitch");
 
         // sleep to allow the IMU to initialize before the absolute angles are measured
         sleep(3000);
