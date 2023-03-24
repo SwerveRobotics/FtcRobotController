@@ -42,6 +42,7 @@ public class Constants {
     public static final int SLIDE_STACK_TWO = 330;
     public static final int SLIDE_STACK_ONE = 170;
     public static final int SLIDE_BOTTOM = 0;
+    public static final int SLIDE_MANUAL_SPEED = 25;
 
     public static final double GRABBER_INITIALIZE_POSITION = 0.17;
     public static final double GRABBER_OPEN_POSITION = 0.46;

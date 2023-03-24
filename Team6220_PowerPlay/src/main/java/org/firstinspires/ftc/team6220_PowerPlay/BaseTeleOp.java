@@ -221,7 +221,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     public void driveSlidesWithControllerLimitSwitch() {
         // joystick control
-        slideTargetPosition += (int) (-gamepad2.left_stick_y * 25);
+        slideTargetPosition += (int) (-gamepad2.left_stick_y * Constants.SLIDE_MANUAL_SPEED);
 
         // cone stack positions - increase position by one if dpad up is just pressed
         if (gamepad2.dpad_up && previousConeStack == currentConeStack) {
