@@ -320,7 +320,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
         }
 
         // limit switch pressed means slide is at the bottom, so stop the slides and reset the encoders
-        if (slideLimitSwitch.isPressed()) {
+        if (slideLimitSwitch.getState()) {
             slideTargetPosition = 0;
             motorLeftSlides.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 

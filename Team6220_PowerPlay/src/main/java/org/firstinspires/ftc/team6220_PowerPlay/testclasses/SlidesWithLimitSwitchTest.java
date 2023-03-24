@@ -16,7 +16,7 @@ public class SlidesWithLimitSwitchTest extends BaseTeleOp {
 
         while (opModeIsActive()) {
             driveSlidesWithControllerLimitSwitch();
-            telemetry.addData("Limit switch hit", slideLimitSwitch.isPressed());
+            telemetry.addData("Limit switch hit", slideLimitSwitch.getState());
             telemetry.update();
         }
     }

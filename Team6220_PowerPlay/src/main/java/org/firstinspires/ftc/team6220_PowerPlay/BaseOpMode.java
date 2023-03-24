@@ -7,6 +7,7 @@ import com.qualcomm.hardware.rev.RevTouchSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.PwmControl;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
@@ -46,7 +47,7 @@ public abstract class BaseOpMode extends LinearOpMode {
     public double startAngle;
 
     // Limit switch
-    public RevTouchSensor slideLimitSwitch;
+    public DigitalChannel slideLimitSwitch;
 
     // flag to say whether we should disable the correction system
     private boolean turnFlag = false;
@@ -119,7 +120,8 @@ public abstract class BaseOpMode extends LinearOpMode {
         imu.initialize(parameters);
 
         // initialize limit switch as Rev Touch Sensor
-        slideLimitSwitch = (RevTouchSensor) hardwareMap.get(RevTouchSensor.class, "slideLimitSwitch");
+        slideLimitSwitch = (DigitalChannel) hardwareMap.get(DigitalChannel.class, "slideLimitSwitch");
+        slideLimitSwitch.setMode(DigitalChannel.Mode.INPUT);
 
         // sleep to allow the IMU to initialize before the absolute angles are measured
         sleep(3000);
