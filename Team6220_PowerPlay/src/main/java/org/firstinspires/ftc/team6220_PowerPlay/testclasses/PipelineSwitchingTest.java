@@ -23,7 +23,7 @@ public class PipelineSwitchingTest extends BaseAutonomous {
         GrabberCameraPipeline grabberCameraPipeline = new GrabberCameraPipeline();
         RobotCameraPipeline robotCameraPipeline = new RobotCameraPipeline();
         grabberCameraPipeline.setRanges(Constants.LOWER_YELLOW, Constants.UPPER_YELLOW);
-        robotCameraPipeline.setRanges(Constants.LOWER_BLUE, Constants.UPPER_BLUE);
+        robotCameraPipeline.setTargetColor(RobotCameraPipeline.Color.BLUE);
         // starts streaming camera
         startCameraWithPipeline(grabberCameraPipeline, robotCamera, Constants.CAMERA_X, Constants.CAMERA_Y);
         waitForStart();

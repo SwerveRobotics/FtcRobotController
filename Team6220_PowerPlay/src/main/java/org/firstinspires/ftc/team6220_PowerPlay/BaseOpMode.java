@@ -271,6 +271,8 @@ public abstract class BaseOpMode extends LinearOpMode {
 
             // drive forward while centering on the cone stack if contour exists
             if (width == 0) {
+                telemetry.addData("width: ", width);
+                telemetry.update();
                 break;
             } else {
                 strafePower = coneStackPixelsAndWidthToStrafingPower(xOffset, width);

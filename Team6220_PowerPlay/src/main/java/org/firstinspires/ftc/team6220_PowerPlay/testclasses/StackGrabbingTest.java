@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.team6220_PowerPlay.BaseAutonomous;
 import org.firstinspires.ftc.team6220_PowerPlay.Constants;
+import org.firstinspires.ftc.team6220_PowerPlay.RobotCameraPipeline;
 
 @Autonomous(name = "StackGrabbingTest")
 public class StackGrabbingTest extends BaseAutonomous {
@@ -13,7 +14,7 @@ public class StackGrabbingTest extends BaseAutonomous {
         initialize();
         grabberCameraPipeline.setRanges(Constants.LOWER_BLACK, Constants.UPPER_BLACK);
         startCameraWithPipeline(grabberCameraPipeline, grabberCamera, Constants.CAMERA_X, Constants.CAMERA_Y);
-        robotCameraPipeline.setRanges(Constants.LOWER_BLUE, Constants.UPPER_BLUE);
+        robotCameraPipeline.setTargetColor(RobotCameraPipeline.Color.BLUE);
         startCameraWithPipeline(robotCameraPipeline, robotCamera, Constants.CAMERA_X, Constants.CAMERA_Y);
         waitForStart();
         sleep(300);
