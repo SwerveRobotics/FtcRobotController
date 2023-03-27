@@ -91,6 +91,32 @@ public abstract class BaseTeleOp extends BaseOpMode {
         }
     }
 
+    public int stackHeightToTicks(int count) {
+        switch (count) {
+            case 1:
+                return Constants.SLIDE_STACK_ONE;
+            case 2:
+                return Constants.SLIDE_STACK_TWO;
+            case 3:
+                return Constants.SLIDE_STACK_THREE;
+            case 4:
+                return Constants.SLIDE_STACK_FOUR;
+        }
+        return 0;
+    }
+
+    public int junctionHeightToTicks(int count) {
+        switch (count) {
+            case 1:
+                return Constants.SLIDE_LOW;
+            case 2:
+                return Constants.SLIDE_MEDIUM;
+            case 3:
+                return Constants.SLIDE_HIGH;
+        }
+        return 0;
+    }
+
     /**
      * allows the driver to operate the slides using the left joystick, dpad, and bumpers
      * left joystick - fine control
@@ -98,128 +124,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
      * bumpers - raising and lowering the slides to junction heights
      */
     public void driveSlidesWithController() {
-        // joystick control
-        slideTargetPosition += (int) (-gamepad2.left_stick_y * 25);
-
-        // cone stack positions - increase position by one if dpad up is just pressed
-        if (gamepad2.dpad_up && previousConeStack == currentConeStack) {
-            currentConeStack++;
-
-            // don't let dpad control take slides above highest cone height in cone stack
-            if (currentConeStack >= 4) {
-                currentConeStack = 4;
-            }
-
-            // set slide target position to the chosen cone stack height
-            switch (currentConeStack) {
-                case 1:
-                    slideTargetPosition = Constants.SLIDE_STACK_ONE;
-                    break;
-                case 2:
-                    slideTargetPosition = Constants.SLIDE_STACK_TWO;
-                    break;
-                case 3:
-                    slideTargetPosition = Constants.SLIDE_STACK_THREE;
-                    break;
-                case 4:
-                    slideTargetPosition = Constants.SLIDE_STACK_FOUR;
-                    break;
-            }
-
-        // cone stack positions - decrease position by one if dpad down is just pressed
-        } else if (gamepad2.dpad_down && previousConeStack == currentConeStack) {
-            currentConeStack--;
-
-            // don't let dpad control take slides below ground height
-            if (currentConeStack <= 0) {
-                currentConeStack = 0;
-            }
-
-            // set slide target position to the chosen cone stack height
-            switch (currentConeStack) {
-                case 0:
-                    slideTargetPosition = Constants.SLIDE_BOTTOM;
-                    break;
-                case 1:
-                    slideTargetPosition = Constants.SLIDE_STACK_ONE;
-                    break;
-                case 2:
-                    slideTargetPosition = Constants.SLIDE_STACK_TWO;
-                    break;
-                case 3:
-                    slideTargetPosition = Constants.SLIDE_STACK_THREE;
-                    break;
-            }
-        }
-
-        // junction positions - increase position by one if right bumper is just pressed
-        if (gamepad2.right_bumper && previousJunction == currentJunction) {
-            currentJunction++;
-
-            // don't let bumper control take slides above high junction height
-            if (currentJunction >= 3) {
-                currentJunction = 3;
-            }
-
-            // set slide target position to the chosen junction height
-            switch (currentJunction) {
-                case 1:
-                    slideTargetPosition = Constants.SLIDE_LOW;
-                    break;
-                case 2:
-                    slideTargetPosition = Constants.SLIDE_MEDIUM;
-                    break;
-                case 3:
-                    slideTargetPosition = Constants.SLIDE_HIGH;
-                    break;
-            }
-
-        // junction positions - decrease position by one if left bumper is just pressed
-        } else if (gamepad2.left_bumper && previousJunction == currentJunction) {
-            currentJunction--;
-
-            // don't let bumper control take slides below ground height
-            if (currentJunction <= 0) {
-                currentJunction = 0;
-            }
-
-            // set slide target position to the chosen junction height
-            switch (currentJunction) {
-                case 0:
-                    slideTargetPosition = Constants.SLIDE_BOTTOM;
-                    break;
-                case 1:
-                    slideTargetPosition = Constants.SLIDE_LOW;
-                    break;
-                case 2:
-                    slideTargetPosition = Constants.SLIDE_MEDIUM;
-                    break;
-            }
-        }
-
-        // don't let target position go below slide bottom position
-        if (slideTargetPosition <= Constants.SLIDE_BOTTOM) {
-            slideTargetPosition = Constants.SLIDE_BOTTOM;
-
-        // don't let target position go above slide top position
-        } else if (slideTargetPosition >= Constants.SLIDE_TOP) {
-            slideTargetPosition = Constants.SLIDE_TOP;
-        }
-
-        driveSlides(slideTargetPosition);
-
-        // makes sure that the previous cone stack positions are only updated when the dpad is just pressed
-        if (!gamepad2.dpad_down && !gamepad2.dpad_up) {
-            previousConeStack = currentConeStack;
-        }
-
-        // makes sure that the previous junction positions are only updated when the bumpers are just pressed
-        if (!gamepad2.left_bumper && !gamepad2.right_bumper) {
-            previousJunction = currentJunction;
-        }
-    }
-
-    public void driveSlidesWithControllerLimitSwitch() {
         // joystick control
         slideTargetPosition += (int) (-gamepad2.left_stick_y * Constants.SLIDE_MANUAL_SPEED);
 
@@ -233,20 +137,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             }
 
             // set slide target position to the chosen cone stack height
-            switch (currentConeStack) {
-                case 1:
-                    slideTargetPosition = Constants.SLIDE_STACK_ONE;
-                    break;
-                case 2:
-                    slideTargetPosition = Constants.SLIDE_STACK_TWO;
-                    break;
-                case 3:
-                    slideTargetPosition = Constants.SLIDE_STACK_THREE;
-                    break;
-                case 4:
-                    slideTargetPosition = Constants.SLIDE_STACK_FOUR;
-                    break;
-            }
+            slideTargetPosition = stackHeightToTicks(currentConeStack);
 
             // cone stack positions - decrease position by one if dpad down is just pressed
         } else if (gamepad2.dpad_down && previousConeStack == currentConeStack) {
@@ -258,20 +149,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             }
 
             // set slide target position to the chosen cone stack height
-            switch (currentConeStack) {
-                case 0:
-                    slideTargetPosition = Constants.SLIDE_BOTTOM;
-                    break;
-                case 1:
-                    slideTargetPosition = Constants.SLIDE_STACK_ONE;
-                    break;
-                case 2:
-                    slideTargetPosition = Constants.SLIDE_STACK_TWO;
-                    break;
-                case 3:
-                    slideTargetPosition = Constants.SLIDE_STACK_THREE;
-                    break;
-            }
+            slideTargetPosition = stackHeightToTicks(currentConeStack);
         }
 
         // junction positions - increase position by one if right bumper is just pressed
@@ -284,17 +162,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             }
 
             // set slide target position to the chosen junction height
-            switch (currentJunction) {
-                case 1:
-                    slideTargetPosition = Constants.SLIDE_LOW;
-                    break;
-                case 2:
-                    slideTargetPosition = Constants.SLIDE_MEDIUM;
-                    break;
-                case 3:
-                    slideTargetPosition = Constants.SLIDE_HIGH;
-                    break;
-            }
+            slideTargetPosition = junctionHeightToTicks(currentJunction);
 
             // junction positions - decrease position by one if left bumper is just pressed
         } else if (gamepad2.left_bumper && previousJunction == currentJunction) {
@@ -306,17 +174,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             }
 
             // set slide target position to the chosen junction height
-            switch (currentJunction) {
-                case 0:
-                    slideTargetPosition = Constants.SLIDE_BOTTOM;
-                    break;
-                case 1:
-                    slideTargetPosition = Constants.SLIDE_LOW;
-                    break;
-                case 2:
-                    slideTargetPosition = Constants.SLIDE_MEDIUM;
-                    break;
-            }
+            slideTargetPosition = junctionHeightToTicks(currentJunction);
         }
 
         // limit switch pressed means slide is at the bottom, so stop the slides and reset the encoders
