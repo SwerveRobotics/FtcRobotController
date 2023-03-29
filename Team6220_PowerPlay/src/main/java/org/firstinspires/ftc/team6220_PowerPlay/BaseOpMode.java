@@ -263,7 +263,7 @@ public abstract class BaseOpMode extends LinearOpMode {
      * uses the robot camera to guide the robot so it can drive forward while centering on the stack
      * @param pipeline the RobotCameraPipeline being used by the robot camera
      */
-    public void centerConeStack(RobotCameraPipeline pipeline) {
+    public void centerConeStack(RobotCameraPipeline pipeline, int breakDistance) {
         double xOffset, width, strafePower, turnPower;
         do {
             xOffset = Constants.CAMERA_CENTER_X - pipeline.xPosition;
@@ -286,7 +286,7 @@ public abstract class BaseOpMode extends LinearOpMode {
             }
 
             // while far enough that the cone stack doesn't fill the entire camera view
-        } while (width < Constants.CONE_WIDTH);
+        } while (width < breakDistance);
 
         stopDriveMotors();
     }
