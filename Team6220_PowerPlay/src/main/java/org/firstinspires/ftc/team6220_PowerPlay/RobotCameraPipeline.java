@@ -71,7 +71,7 @@ public class RobotCameraPipeline extends OpenCvPipeline {
                 Moments moments = Imgproc.moments(contours.get(maxValIdx), false);
 
                 // draw the bounding rectangle on the frame
-                Imgproc.rectangle(input, boundingRect, new Scalar(0, 255, 0), 10);
+                Imgproc.rectangle(mat, boundingRect, new Scalar(0, 255, 0), 10);
 
                 if (moments.get_m00() > 0) {
                     xPosition = boundingRect.x + (boundingRect.width * 0.5);
@@ -87,7 +87,7 @@ public class RobotCameraPipeline extends OpenCvPipeline {
         }
 
         contours.clear();
-        return input;
+        return mat;
     }
 
     /**
