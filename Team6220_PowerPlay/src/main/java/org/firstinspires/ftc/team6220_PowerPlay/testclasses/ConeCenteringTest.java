@@ -15,9 +15,15 @@ public class ConeCenteringTest extends BaseAutonomous {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        initialize();
+        //initialize();
 
         //driveSlidesAutonomous(Constants.SLIDE_TOP);
+
+        RobotCameraPipeline robotCameraPipeline = new RobotCameraPipeline();
+
+        int cameraMonitorViewId = hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", hardwareMap.appContext.getPackageName());
+
+        OpenCvCamera robotCamera = OpenCvCameraFactory.getInstance().createWebcam(hardwareMap.get(WebcamName.class, "RobotCamera"), cameraMonitorViewId);
 
         robotCameraPipeline.setTargetColor(RobotCameraPipeline.Color.ALL);
 
@@ -25,7 +31,7 @@ public class ConeCenteringTest extends BaseAutonomous {
 
         waitForStart();
 
-        centerConeStack(robotCameraPipeline, Constants.CONE_WIDTH);
+        //centerConeStack(robotCameraPipeline, Constants.CONE_WIDTH);
 
         robotCamera.closeCameraDevice();
     }

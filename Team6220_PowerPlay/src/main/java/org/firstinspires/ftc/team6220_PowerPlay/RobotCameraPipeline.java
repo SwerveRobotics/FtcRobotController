@@ -63,7 +63,7 @@ public class RobotCameraPipeline extends OpenCvPipeline {
             }
 
             // crops contour if the area is below a certain size
-            if (maxVal >= Constants.CONE_STACK_CONTOUR_MINIMUM_SIZE) {
+            if (maxVal >= Constants.CONE_STACK_CONTOUR_MINIMUM_SIZE || maxVal <= 100000) {
                 // get the bounding rectangle around the largest contour
                 Rect boundingRect = Imgproc.boundingRect(contours.get(maxValIdx));
 
@@ -71,7 +71,7 @@ public class RobotCameraPipeline extends OpenCvPipeline {
                 Moments moments = Imgproc.moments(contours.get(maxValIdx), false);
 
                 // draw the bounding rectangle on the frame
-                Imgproc.rectangle(mat, boundingRect, new Scalar(0, 255, 0), 10);
+                Imgproc.rectangle(input, boundingRect, new Scalar(0, 255, 0), 10);
 
                 if (moments.get_m00() > 0) {
                     xPosition = boundingRect.x + (boundingRect.width * 0.5);
@@ -87,7 +87,7 @@ public class RobotCameraPipeline extends OpenCvPipeline {
         }
 
         contours.clear();
-        return mat;
+        return input;
     }
 
     /**
@@ -100,11 +100,17 @@ public class RobotCameraPipeline extends OpenCvPipeline {
         switch(targetColor) {
             case RED:
                 // mask the blurred frame
-                Core.inRange(mat, Constants.LOWER_RED, Constants.UPPER_RED, mat);
+                Mat mat1 = new Mat();
+                Mat mat2 = new Mat();
+                Core.inRange(mat, Constants.LOWER_RED_BOTTOM, Constants.UPPER_RED_BOTTOM, mat1);
+                Core.inRange(mat, Constants.LOWER_RED_UPPER, Constants.UPPER_RED_UPPER, mat2);
                 // invert ranges if looking for red
                 // this is because red is detected on both ends of the hue spectrum(0-20 & 160-180)
                 // so we are looking for 20-160 and changing it so that it detects anything but that.
-                Core.bitwise_not(mat, mat);
+                //Core.bitwise_not(mat, mat);
+                Core.bitwise_or(mat1,mat2,mat);
+                mat1.release();
+                mat2.release();
                 break;
 
             case BLUE:
@@ -117,15 +123,26 @@ public class RobotCameraPipeline extends OpenCvPipeline {
 
             case ALL:
                 Mat matRed = new Mat(), matBlue = new Mat(), matYellow = new Mat();
-                Core.inRange(mat, Constants.LOWER_RED, Constants.UPPER_RED, matRed);
-                Core.bitwise_not(matRed, matRed); // invert red
+                Mat matLower = new Mat();
+                Mat matUpper = new Mat();
+                Core.inRange(mat, Constants.LOWER_RED_BOTTOM, Constants.UPPER_RED_BOTTOM, matLower);
+                Core.inRange(mat, Constants.LOWER_RED_UPPER, Constants.UPPER_RED_UPPER, matUpper);
+                // invert ranges if looking for red
+                // this is because red is detected on both ends of the hue spectrum(0-20 & 160-180)
+                // so we are looking for 20-160 and changing it so that it detects anything but that.
+                //Core.bitwise_not(mat, mat);
+                Core.bitwise_or(matUpper,matLower,matRed);
                 Core.inRange(mat, Constants.LOWER_BLUE, Constants.UPPER_BLUE, matBlue);
                 Core.inRange(mat, Constants.LOWER_YELLOW, Constants.UPPER_YELLOW, matYellow);
 
                 // put together all the color masks into one single mask, saved to mat
                 Core.bitwise_or(matRed, matBlue, mat); // combine the red and blue masks, save to mat
                 Core.bitwise_or(mat, matYellow, mat); // combine the previous combined and the yellow mask, save into mat
-
+                matUpper.release();
+                matLower.release();
+                matRed.release();
+                matBlue.release();
+                matYellow.release();
                 break;
         }
 
