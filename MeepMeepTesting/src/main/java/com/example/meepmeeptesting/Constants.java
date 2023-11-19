@@ -10,10 +10,10 @@ public class Constants {
     public static final Pose2d bottomRight = new Pose2d (70, -70, 0);
 
     //actual start places
-    public static final Pose2d backBlue = new Pose2d (11.6, 58.3, Math.toRadians(-90));
-    public static final Pose2d backRed = new Pose2d (11.6, -58.3, Math.toRadians(90));
-    public static final Pose2d stackRed = new Pose2d (-70, -70, Math.toRadians(-90));
-    public static final Pose2d stackBlue = new Pose2d (70, -70, Math.toRadians(90));
+    public static final Pose2d backBlue = new Pose2d (11.6, 61, Math.toRadians(-90));
+    public static final Pose2d backRed = new Pose2d (11.6, -61, Math.toRadians(90));
+    public static final Pose2d stackBlue = new Pose2d (-35, 61, Math.toRadians(-90));
+    public static final Pose2d stackRed = new Pose2d (-35, -61, Math.toRadians(90));
 
     //positions to base things off off
     public static final double backBoardDropoffX = 46.67;
