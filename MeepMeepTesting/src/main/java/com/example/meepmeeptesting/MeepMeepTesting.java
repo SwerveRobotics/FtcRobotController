@@ -23,7 +23,7 @@ public class MeepMeepTesting {
                 // Robot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width:
                 new Constraints(60, 60, Math.toRadians(180), Math.toRadians(180), 15),
                 // Robot dimensions: width, height:
-                15, 15,
+                18, 18,
                 new Pose2d(0, 0, 0),
                 meepMeep.getColorManager().getTheme(),
                 0.8f,
@@ -79,15 +79,23 @@ class AutonDriveFactory {
      * can invoke it there by calling "Actions.runBlocking(driveAction);".
      */
     Action getDriveAction(boolean isRed, boolean isFar) {
-        TrajectoryActionBuilder build = this.drive.actionBuilder(new Pose2d(0, 0, 0));
+        TrajectoryActionBuilder build = this.drive.actionBuilder(Constants.backBlue);
 
-        build = build.lineToX(30)
-                .turn(Math.toRadians(90))
-                .lineToY(30);
+        //drive to spike mark position
+        build = build.lineToY(35);
 
-        build = build.splineTo(new Vector2d(0, 30), Math.toRadians(-90))
-                .lineToY(0)
-                .turn(Math.toRadians(90));
+        //insert spike mark delivering code here
+
+        //move back and reverse
+        build = build.lineToY(45)
+                .setReversed(true);
+
+        //go to scoring area on backboard (change y value to go to different spikemark indicated spot things)
+        build = build.splineTo(new Vector2d(Constants.backBoardDropoffX, Constants.blueBackBoardDropoffY), 0);
+
+        //park
+        build = build.strafeTo(new Vector2d(Constants.backBoardDropoffX, Constants.parkingY))
+                .strafeTo(new Vector2d(Constants.parkingX, Constants.parkingY));
 
         return build.build();
     }
