@@ -94,8 +94,8 @@ class AutonDriveFactory {
         build = build.splineTo(new Vector2d(Constants.backBoardDropoffX, Constants.blueBackBoardDropoffY), 0);
 
         //park
-        build = build.strafeTo(new Vector2d(Constants.backBoardDropoffX, Constants.parkingY))
-                .strafeTo(new Vector2d(Constants.parkingX, Constants.parkingY));
+        build = build.strafeTo(new Vector2d(Constants.backBoardDropoffX, Constants.parkingFarY))
+                .strafeTo(new Vector2d(Constants.parkingX, Constants.parkingFarY));
 
         return build.build();
     }

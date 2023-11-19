@@ -21,6 +21,7 @@ public class Constants {
     public static final double redBackBoardDropoffY = -35;
 
     public static final double parkingX = 58.3;
-    public static final double parkingY = 11.67;
+    public static final double parkingMiddleY = 11.67;
+    public static final double parkingFarY = 58.3;
 
 }
