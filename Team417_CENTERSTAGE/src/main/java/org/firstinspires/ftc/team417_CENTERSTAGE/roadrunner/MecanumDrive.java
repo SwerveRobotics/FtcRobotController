@@ -71,7 +71,7 @@ public final class MecanumDrive {
     public DcMotorEx[] motors;
 
     // Whether or not to use April Tags (added by Hank)
-    public final static boolean USE_APRIL_TAGS = true;
+    public final static boolean USE_APRIL_TAGS = false;
 
     public static String getBotName() {
         InspectionState inspection=new InspectionState();
@@ -144,7 +144,7 @@ public final class MecanumDrive {
             maxProfileAccel = 50;
 
             // turn profile parameters (in radians)
-            maxAngVel = Math.PI; // shared with path
+            maxAngVel = Math.PI;
             maxAngAccel = Math.PI;
 
             axialVelGain = 0.0;
@@ -388,14 +388,7 @@ public final class MecanumDrive {
 
             FlightRecorder.write("TARGET_POSE", new PoseMessage(txWorldTarget.value()));
 
-            p.put("x", pose.position.x);
-            p.put("y", pose.position.y);
-            p.put("heading (deg)", Math.toDegrees(pose.heading.log()));
-
             Pose2d error = txWorldTarget.value().minusExp(pose);
-            p.put("xError", error.position.x);
-            p.put("yError", error.position.y);
-            p.put("headingError (deg)", Math.toDegrees(error.heading.log()));
 
             // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();

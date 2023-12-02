@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms;
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static java.lang.System.nanoTime;
 
 import android.graphics.PointF;
@@ -17,6 +18,7 @@ import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.internal.tfod.Results;
 import org.firstinspires.ftc.team417_CENTERSTAGE.opencv.OpenCvColorDetection;
@@ -105,6 +107,10 @@ abstract public class BaseAutonomous extends BaseOpMode {
                 sawarResult = AutonDriveFactory.SpikeMarks.CENTER;
             else
                 sawarResult = AutonDriveFactory.SpikeMarks.RIGHT;
+
+            telemetry.addData("sawarResult", sawarResult);
+            telemetry.update();
+            sleep(1000000000); //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         }
 
         // Close cameras to avoid errors
@@ -114,7 +120,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
         AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, sawarResult, dropPixel());
 
         drive.pose = poseAndAction.startPose;
-        Actions.runBlocking(poseAndAction.action);
+        // @@@ Actions.runBlocking(poseAndAction.action);
     }
 
     public Action dropPixel() {
@@ -245,7 +251,12 @@ class AutonDriveFactory {
     }
 }
 
+@Config
 class PropDistanceResults {
+
+    public static double propSpot1Angle = 116, propSpot2Angle = 145,
+            propSpot3Angle = 190, noPropAngle = 220, doneAngle = 220;
+    public static double maxDist = 28;
     enum SpikeMarks {
         LEFT,
         CENTER,
@@ -260,35 +271,44 @@ class PropDistanceResults {
             private final ArrayList<PointF> propPos3 = new ArrayList<>();
             private double initAngle;
             private boolean inited = false;
-            private final double maxDist = 3;
             @Override
             public boolean run(TelemetryPacket packet) {
                 Canvas canvas = packet.fieldOverlay();
 
                 double distanceSensorReturn = distSensor.getDistance(DistanceUnit.INCH);
-                double currentAngle;
-                double propSpot1Angle = Math.toRadians(30), propSpot2Angle = Math.toRadians(40),
-                        propSpot3Angle = Math.toRadians(50), noPropAngle = Math.toRadians(60);
+                double currentAngleRadians;
 
                 if (!inited) {
-                    initAngle = drive.pose.heading.log();
+                    initAngle = drive.pose.heading.log() + Math.PI;
                     inited = true;
                 }
 
-                currentAngle = drive.pose.heading.log() - initAngle;
+                currentAngleRadians = (drive.pose.heading.log() + Math.PI) - initAngle;
+                if (currentAngleRadians < Math.toRadians(-3)) // Allow 3 degrees of backtracking
+                    currentAngleRadians += 2 * Math.PI;
+
                 if (distanceSensorReturn <= maxDist){
-                    if (currentAngle > propSpot3Angle) {
-                        propPos3.add(new PointF((float) (Math.cos(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.x),
-                                (float) (Math.sin(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.y)));
-                    } else if (currentAngle > propSpot2Angle) {
-                        propPos2.add(new PointF((float) (Math.cos(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.x),
-                                (float) (Math.sin(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.y)));
-                    } else if (currentAngle > propSpot1Angle) {
-                        propPos1.add(new PointF((float) (Math.cos(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.x),
-                                (float) (Math.sin(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.y)));
+                    if (currentAngleRadians > Math.toRadians(noPropAngle))
+                        ;
+                    else if (currentAngleRadians > Math.toRadians(propSpot3Angle)) {
+                        propPos3.add(new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.x),
+                                (float) (Math.sin(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.y)));
+                    } else if (currentAngleRadians > Math.toRadians(propSpot2Angle)) {
+                        propPos2.add(new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.x),
+                                (float) (Math.sin(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.y)));
+                    } else if (currentAngleRadians > Math.toRadians(propSpot1Angle)) {
+                        propPos1.add(new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.x),
+                                (float) (Math.sin(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.y)));
                     }
                 }
 
+                packet.put("propPos1", propPos1.size());
+                packet.put("propPos2", propPos2.size());
+                packet.put("propPos3", propPos3.size());
+                packet.put("noPropAngle", noPropAngle);
+                packet.put("currentAngle", Math.toDegrees(currentAngleRadians));
+
+                canvas.setStrokeWidth(1);
                 canvas.setFill("#ff0000");
                 plotPointsInRoadRunner(propPos1, canvas);
 
@@ -301,12 +321,11 @@ class PropDistanceResults {
                 canvas.setStroke("#808080");
                 canvas.strokeCircle(drive.pose.position.x, drive.pose.position.y, maxDist);
 
-                plotPropSpots(propSpot1Angle, canvas);
-                plotPropSpots(propSpot2Angle, canvas);
-                plotPropSpots(propSpot3Angle, canvas);
-                plotPropSpots(noPropAngle, canvas);
+                plotPropSpots(Math.toRadians(propSpot1Angle), canvas);
+                plotPropSpots(Math.toRadians(propSpot2Angle), canvas);
+                plotPropSpots(Math.toRadians(propSpot3Angle), canvas);
 
-                if (currentAngle < noPropAngle)
+                if (currentAngleRadians < Math.toRadians(doneAngle))
                     return true;
 
                 //movement has finished. find result.
@@ -319,6 +338,7 @@ class PropDistanceResults {
                 } else {
                     results.result = SpikeMarks.LEFT;
                 }
+                packet.put("Final result", results.result);
 
                 return false;
             }
@@ -385,6 +405,7 @@ class PropDistanceFactory {
                 .afterTime(0, sweepAction)
                 .turn(2 * Math.PI)
                 .setTangent(-tangent)
+//                 .stopAndAdd(new SleepAction(100000000))
                 .splineToLinearHeading(startPose, -tangent);
 
         return new PoseAndAction(builder.build(), startPose);
