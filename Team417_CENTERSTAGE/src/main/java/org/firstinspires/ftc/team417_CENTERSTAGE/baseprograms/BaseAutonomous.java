@@ -2,6 +2,9 @@ package org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms;
 
 import static java.lang.System.nanoTime;
 
+import android.graphics.PointF;
+
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
@@ -10,20 +13,24 @@ import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
+import com.fasterxml.jackson.databind.annotation.JsonAppend;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.internal.tfod.Results;
 import org.firstinspires.ftc.team417_CENTERSTAGE.opencv.OpenCvColorDetection;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.Pose;
+
+import java.util.ArrayList;
 
 @Config
 abstract public class BaseAutonomous extends BaseOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
 
-    public int lastEncoderFL = 0;
-    public int lastEncoderFR = 0;
-    public int lastEncoderBL = 0;
-    public int lastEncoderBR = 0;
+    private final boolean USE_OPEN_CV_PROP_DETECTION = false;
 
     public static double INTAKE_SPEED = 1;
     public static double INTAKE_TIME = 2; // in seconds
@@ -48,12 +55,6 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
         telemetry.addData("Init State", "Init Finished");
 
-        // Set last know encoder values
-        lastEncoderFR = FR.getCurrentPosition();
-        lastEncoderFL = FL.getCurrentPosition();
-        lastEncoderBL = BL.getCurrentPosition();
-        lastEncoderBR = BR.getCurrentPosition();
-
         // Allow the OpenCV to process
         sleep(500);
 
@@ -63,6 +64,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
     }
 
     public void runAuto(boolean red, boolean close) {
+        OpenCvColorDetection.SideDetected result;
+
         if (red) {
             myColorDetection.setDetectColor(OpenCvColorDetection.detectColorType.RED);
             telemetry.addLine("Looking for red");
@@ -75,22 +78,40 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
         waitForStart();
 
-        OpenCvColorDetection.SideDetected result = myColorDetection.detectTeamProp();
         AutonDriveFactory.SpikeMarks sawarResult;
+
+        if (USE_OPEN_CV_PROP_DETECTION) {
+            result = myColorDetection.detectTeamProp();
+            if (result == OpenCvColorDetection.SideDetected.LEFT) {
+                sawarResult = AutonDriveFactory.SpikeMarks.LEFT;
+            } else if (result == OpenCvColorDetection.SideDetected.CENTER) {
+                sawarResult = AutonDriveFactory.SpikeMarks.CENTER;
+            } else {
+                sawarResult = AutonDriveFactory.SpikeMarks.RIGHT;
+            }
+        } else {
+            PropDistanceResults distanceResult = new PropDistanceResults();
+            PropDistanceFactory propDistance = new PropDistanceFactory(drive);
+            Action sweepAction = distanceResult.sweepAction(drive, distSensor, distanceResult);
+            PropDistanceFactory.PoseAndAction poseAndAction = propDistance.getDistanceAction(red, !close, sweepAction);
+
+            // Do the robot movement for prop detection:
+            drive.pose = poseAndAction.startPose;
+            Actions.runBlocking(poseAndAction.action);
+
+            if (distanceResult.result == PropDistanceResults.SpikeMarks.LEFT)
+                sawarResult = AutonDriveFactory.SpikeMarks.LEFT;
+            else if (distanceResult.result == PropDistanceResults.SpikeMarks.CENTER)
+                sawarResult = AutonDriveFactory.SpikeMarks.CENTER;
+            else
+                sawarResult = AutonDriveFactory.SpikeMarks.RIGHT;
+        }
 
         // Close cameras to avoid errors
         myColorDetection.robotCamera.closeCameraDevice();
 
-        if (result == OpenCvColorDetection.SideDetected.LEFT) {
-            sawarResult = AutonDriveFactory.SpikeMarks.LEFT;
-        } else if (result == OpenCvColorDetection.SideDetected.CENTER) {
-            sawarResult = AutonDriveFactory.SpikeMarks.CENTER;
-        } else {
-            sawarResult = AutonDriveFactory.SpikeMarks.RIGHT;
-        }
-
         AutonDriveFactory auton = new AutonDriveFactory(drive);
-        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red,!close, sawarResult, dropPixel());
+        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, sawarResult, dropPixel());
 
         drive.pose = poseAndAction.startPose;
         Actions.runBlocking(poseAndAction.action);
@@ -221,5 +242,154 @@ class AutonDriveFactory {
      */
     Action getMeepMeepAction() {
         return getDriveAction(true, true, SpikeMarks.LEFT, null).action;
+    }
+}
+
+class PropDistanceResults {
+    enum SpikeMarks {
+        LEFT,
+        CENTER,
+        RIGHT
+    }
+    public SpikeMarks result = SpikeMarks.LEFT;
+
+    public Action sweepAction(MecanumDrive drive, DistanceSensor distSensor, PropDistanceResults results) {
+        return new Action() {
+            private final ArrayList<PointF> propPos1 = new ArrayList<>();
+            private final ArrayList<PointF> propPos2 = new ArrayList<>();
+            private final ArrayList<PointF> propPos3 = new ArrayList<>();
+            private double initAngle;
+            private boolean inited = false;
+            private final double maxDist = 3;
+            @Override
+            public boolean run(TelemetryPacket packet) {
+                Canvas canvas = packet.fieldOverlay();
+
+                double distanceSensorReturn = distSensor.getDistance(DistanceUnit.INCH);
+                double currentAngle;
+                double propSpot1Angle = Math.toRadians(30), propSpot2Angle = Math.toRadians(40),
+                        propSpot3Angle = Math.toRadians(50), noPropAngle = Math.toRadians(60);
+
+                if (!inited) {
+                    initAngle = drive.pose.heading.log();
+                    inited = true;
+                }
+
+                currentAngle = drive.pose.heading.log() - initAngle;
+                if (distanceSensorReturn <= maxDist){
+                    if (currentAngle > propSpot3Angle) {
+                        propPos3.add(new PointF((float) (Math.cos(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.x),
+                                (float) (Math.sin(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.y)));
+                    } else if (currentAngle > propSpot2Angle) {
+                        propPos2.add(new PointF((float) (Math.cos(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.x),
+                                (float) (Math.sin(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.y)));
+                    } else if (currentAngle > propSpot1Angle) {
+                        propPos1.add(new PointF((float) (Math.cos(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.x),
+                                (float) (Math.sin(drive.pose.heading.log()) * distanceSensorReturn + drive.pose.position.y)));
+                    }
+                }
+
+                canvas.setFill("#ff0000");
+                plotPointsInRoadRunner(propPos1, canvas);
+
+                canvas.setFill("#00ff00");
+                plotPointsInRoadRunner(propPos2, canvas);
+
+                canvas.setFill("#0000ff");
+                plotPointsInRoadRunner(propPos3, canvas);
+
+                canvas.setStroke("#808080");
+                canvas.strokeCircle(drive.pose.position.x, drive.pose.position.y, maxDist);
+
+                plotPropSpots(propSpot1Angle, canvas);
+                plotPropSpots(propSpot2Angle, canvas);
+                plotPropSpots(propSpot3Angle, canvas);
+                plotPropSpots(noPropAngle, canvas);
+
+                if (currentAngle < noPropAngle)
+                    return true;
+
+                //movement has finished. find result.
+                if (propPos1.size() > propPos2.size() && propPos1.size() > propPos3.size()) {
+                    results.result = SpikeMarks.RIGHT;
+
+                } else if (propPos2.size() > propPos3.size()) {
+                    results.result = SpikeMarks.CENTER;
+
+                } else {
+                    results.result = SpikeMarks.LEFT;
+                }
+
+                return false;
+            }
+
+            private void plotPropSpots(double lineAngle, Canvas canvas) {
+                canvas.strokeLine(drive.pose.position.x, drive.pose.position.y,
+                        Math.cos(lineAngle + initAngle) * maxDist + drive.pose.position.x,
+                        Math.sin(lineAngle + initAngle) * maxDist + drive.pose.position.y);
+            }
+
+            private void plotPointsInRoadRunner(ArrayList<PointF> arrayOfPoints, Canvas canvas) {
+                for (PointF point: arrayOfPoints)
+                    canvas.fillRect(point.x - 1, point.y - 1, 3, 3);
+            }
+        };
+    }
+
+}
+
+class PropDistanceFactory {
+    class PoseAndAction {
+        Action action;
+        Pose2d startPose;
+
+        PoseAndAction(Action action, Pose2d startPose) {
+            this.action = action;
+            this.startPose = startPose;
+        }
+    }
+
+    private final double xOffset = -24;
+    private final double yOffset = 0;
+    MecanumDrive drive;
+    PropDistanceFactory(MecanumDrive drive) {
+        this.drive = drive;
+    }
+
+    Pose2d xForm(double x, double y, double theta, boolean isRed, boolean isFar) {
+        if (!isFar)
+            x = x * -1 + xOffset;
+
+        if (!isRed)
+            y = y * -1 + yOffset;
+
+        return new Pose2d(x, y, theta);
+    }
+    PoseAndAction getDistanceAction(boolean isRed, boolean isFar, Action sweepAction) {
+        double tangent = Math.PI / 2;
+
+        if (sweepAction == null) {
+            sweepAction = new SleepAction(0.5);
+        }
+
+        if (!isRed) {
+            tangent = tangent * -1;
+        }
+
+        Pose2d startPose = xForm(-34, -60, Math.PI /2, isRed, isFar);
+
+        TrajectoryActionBuilder builder
+                = this.drive.actionBuilder(startPose)
+                .setTangent(tangent)
+                .splineToLinearHeading(xForm(-42, -45, Math.PI / 2, isRed, isFar), tangent)
+                .afterTime(0, sweepAction)
+                .turn(2 * Math.PI)
+                .setTangent(-tangent)
+                .splineToLinearHeading(startPose, -tangent);
+
+        return new PoseAndAction(builder.build(), startPose);
+    }
+    Action getMeepMeepAction() {
+        return getDistanceAction(false, false, null).action;
     }
 }

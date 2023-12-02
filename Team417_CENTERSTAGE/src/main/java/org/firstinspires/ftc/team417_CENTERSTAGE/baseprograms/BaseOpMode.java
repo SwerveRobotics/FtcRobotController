@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
@@ -32,6 +33,7 @@ public abstract class BaseOpMode extends LinearOpMode {
     public Servo gateServo;
     public final double GATE_SERVO_OPEN_POSITION = 0;
     public final double GATE_SERVO_CLOSE_POSITION = 0.55;
+    public DistanceSensor distSensor;
 
     public static final double TICKS_PER_REVOLUTION = 537.7 * (24.0/27); // 5203 Series Yellow Jacket Motor, robot was overshooting so
     public static final double GEAR_RATIO = 1.0;
@@ -71,6 +73,9 @@ public abstract class BaseOpMode extends LinearOpMode {
             //Mechanism Servos
             dumperServo = initializeServo("DumperServo", Servo.Direction.FORWARD);
             gateServo = initializeServo("GateServo", Servo.Direction.FORWARD);
+
+            //Sensor
+             distSensor = hardwareMap.get(DistanceSensor.class, "distance");
         }
         /*
         // Sets up the parameters with which we will use our IMU. Note that integration
