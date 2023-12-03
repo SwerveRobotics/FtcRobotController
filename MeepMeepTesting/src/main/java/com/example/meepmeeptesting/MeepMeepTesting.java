@@ -34,7 +34,7 @@ public class MeepMeepTesting {
                 false);
 
         MecanumDrive drive = new MecanumDrive(myBot.getDrive());
-        boolean distanceTest = true;
+        boolean distanceTest = false;
         if (distanceTest) {
             PropDistanceFactory prop = new PropDistanceFactory(drive);
             myBot.runAction(prop.getMeepMeepAction());
@@ -151,28 +151,37 @@ class AutonDriveFactory {
 
         TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
         spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -36)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-38, -34)), xForm((Math.toRadians(180) + (1e-6))))
+                .setTangent(xForm(0))
+                .splineToConstantHeading(xForm(new Vector2d(-24, -36)), xForm(Math.toRadians(0)))
                 .stopAndAdd(intake)
-                .splineToConstantHeading(xForm(new Vector2d(-30, -34)), xForm(Math.toRadians(180)))
+                .setTangent(xForm(Math.toRadians(180)))
+                .splineToConstantHeading(xForm(new Vector2d(-34, -36)), xForm(Math.toRadians(180)))
+                .setTangent(xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
                 .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -10)), xForm(Math.toRadians(0)));
 
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, (Math.toRadians(90)))));
-        spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -33)), xForm(Math.toRadians(90)))
+        spikeCenter = spikeCenter.splineToSplineHeading(xForm(new Pose2d(-42, -24, Math.toRadians(0))), xForm(Math.toRadians(90)))
                 .stopAndAdd(intake)
-                .splineToConstantHeading(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xFormCenter(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xFormCenter(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
+                //.splineToConstantHeading(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
+                //.splineToConstantHeading(xFormCenter(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
+                //.splineToConstantHeading(xFormCenter(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
+                .setTangent(xForm(Math.toRadians(90)))
+                .splineToConstantHeading(xForm(new Vector2d(-42, -10)), xForm(Math.toRadians(90)))
+                .setTangent(xForm(Math.toRadians(0)))
                 .splineTo(xFormCenter(new Vector2d(parkingOffset - 43, -10)), xForm(Math.toRadians(0)))
                 .splineToConstantHeading(xFormCenter(new Vector2d(parkingOffset - 43, -10)), xForm(Math.toRadians(0)));
 
 
         TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
-        spikeRight = spikeRight.splineToSplineHeading(xForm(new Pose2d(-35, -32, Math.toRadians(0))), xForm(Math.toRadians(90)))
+        spikeRight = spikeRight.splineTo(xForm(new Vector2d(-34, -36)), xForm(Math.toRadians(90)))
                 .stopAndAdd(intake)
-                .splineToConstantHeading(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
-                .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
+                .setTangent(xForm(Math.toRadians(180)))
+                .splineToConstantHeading(xForm(new Vector2d(-46, -36)), xForm(Math.toRadians(0)))
+                .setTangent(xForm(Math.toRadians(90)))
+                //.splineToConstantHeading(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
+                //.splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
                 .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -10)), xForm(Math.toRadians(0)));
 
@@ -229,7 +238,7 @@ class AutonDriveFactory {
      * arguments here to test your different code paths.
      */
     Action getMeepMeepAction() {
-        return getDriveAction(false, true, SpikeMarks.RIGHT, null).action;
+        return getDriveAction(true, false, SpikeMarks.CENTER, null).action;
     }
 }
 

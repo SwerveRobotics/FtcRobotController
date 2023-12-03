@@ -7,6 +7,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.ArmTeleOp;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
@@ -15,6 +16,8 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 public abstract class BaseTeleOp extends BaseOpMode {
     public MecanumDrive drive;
     private ArmTeleOp arm;
+
+    ElapsedTime time = new ElapsedTime();
 
     @Override
     public void runOpMode() {
@@ -25,6 +28,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
         if (armMotor != null) {
             arm = new ArmTeleOp(gamepad2, armMotor, dumperServo);
             resetDumper();
+            droneServo.setPosition(droneServoHoldingPos);
         }
 
         waitForStart();
@@ -148,6 +152,26 @@ public abstract class BaseTeleOp extends BaseOpMode {
         controlGateUsingControllers();
         if (arm != null)
             arm.armControl();
+        controlDroneLauncher();
+    }
+
+    private boolean testDroneLauncher = true;
+    private boolean droneLauncherInited = false;
+    private double droneLauncherInitTime;
+    public static double droneServoReleasedPos = 0.5;
+    public static double droneServoHoldingPos = 0.08;
+
+    private void controlDroneLauncher() {
+        if (!droneLauncherInited) {
+            droneLauncherInitTime = time.milliseconds();
+            droneLauncherInited = true;
+        }
+
+        if (testDroneLauncher || time.milliseconds() - droneLauncherInitTime > 90000.0)
+        {
+            if (gamepad1.x)
+                droneServo.setPosition(droneServoReleasedPos);
+        }
     }
 
     public boolean dumperDumped = false;
