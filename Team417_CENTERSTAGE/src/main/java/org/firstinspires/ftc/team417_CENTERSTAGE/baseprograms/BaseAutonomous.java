@@ -27,17 +27,22 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.Pose;
 
 import java.util.ArrayList;
 
+import java.util.concurrent.CompletableFuture;
+
 @Config
 abstract public class BaseAutonomous extends BaseOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
 
-    private final boolean USE_OPEN_CV_PROP_DETECTION = false;
+    public static double APRIL_TAG_SLEEP_TIME = 500;
+    public static double NO_APRIL_TAG_SLEEP_TIME = 2500;
+
+    private final boolean USE_OPEN_CV_PROP_DETECTION = true;
 
     public static double INTAKE_SPEED = 1;
     public static double INTAKE_TIME = 2; // in seconds
 
-    public static double INTAKE_SPEED2 = 1;
+    public static double INTAKE_SPEED2 = 0.2;
 
     public static double INTAKE_TIME2 = 10; // in seconds
 
@@ -45,29 +50,30 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
     MecanumDrive drive;
 
-    public OpenCvColorDetection myColorDetection = new OpenCvColorDetection(this);
+    public OpenCvColorDetection myColorDetection = new OpenCvColorDetection(this);;
 
     public void initializeAuto() {
-        drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
-
         telemetry.addData("Init State", "Init Started");
         telemetry.update();
         myColorDetection.init();
         initializeHardware();
+        drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
         telemetry.addData("Init State", "Init Finished");
 
         // Allow the OpenCV to process
-        sleep(500);
+        if (drive.USE_APRIL_TAGS) {
+            sleep((long) APRIL_TAG_SLEEP_TIME);
+        } else {
+            sleep((long) NO_APRIL_TAG_SLEEP_TIME);
+        }
 
         telemetry.clear();
         telemetry.addLine("Initialized. Ready to start!");
         telemetry.update();
     }
 
-    public void runAuto(boolean red, boolean close) {
-        OpenCvColorDetection.SideDetected result;
-
+    public void runAuto(boolean red, boolean close, boolean test) {
         if (red) {
             myColorDetection.setDetectColor(OpenCvColorDetection.detectColorType.RED);
             telemetry.addLine("Looking for red");
@@ -80,6 +86,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
         waitForStart();
 
+        OpenCvColorDetection.SideDetected result = myColorDetection.detectTeamProp();
         AutonDriveFactory.SpikeMarks sawarResult;
 
         if (USE_OPEN_CV_PROP_DETECTION) {
@@ -110,7 +117,6 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
             telemetry.addData("sawarResult", sawarResult);
             telemetry.update();
-            sleep(1000000000); //@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
         }
 
         // Close cameras to avoid errors
@@ -120,7 +126,25 @@ abstract public class BaseAutonomous extends BaseOpMode {
         AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, sawarResult, dropPixel());
 
         drive.pose = poseAndAction.startPose;
-        // @@@ Actions.runBlocking(poseAndAction.action);
+
+        if (!test) {
+            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> Actions.runBlocking(poseAndAction.action));
+
+            while (opModeIsActive());
+
+            future.cancel(true);
+        } else {
+            while (opModeIsActive());
+        }
+
+
+        //if (drive.myAprilTagPoseEstimator != null) {
+        //    drive.myAprilTagPoseEstimator.visionPortal.close();
+        //}
+    }
+
+    public void runAuto(boolean red, boolean close) {
+        runAuto(red, close, false);
     }
 
     public Action dropPixel() {
@@ -149,6 +173,17 @@ class AutonDriveFactory {
     MecanumDrive drive;
     double xOffset;
     double yMultiplier;
+
+    double parkingOffset;
+
+    double parkingOffsetCenterFar;
+
+    double centerMultiplier;
+
+    double centerOffset;
+
+
+
     AutonDriveFactory(MecanumDrive drive) {
         this.drive = drive;
     }
@@ -172,12 +207,26 @@ class AutonDriveFactory {
             this.startPose = startPose;
         }
     }
+
     PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake) {
 
         if (isFar) {
             xOffset = 0;
+            parkingOffset = 48;
+            centerMultiplier = 1;
+            centerOffset = 0;
+
+            /*if (location == xForm(SpikeMarks.CENTER)) {
+                parkingOffset = 100;
+            }*/
+
+
         } else {
             xOffset = 48;
+            parkingOffset = 2;
+            centerMultiplier = -1;
+            centerOffset = 96;
+
         }
 
         if (isRed) {
@@ -187,43 +236,67 @@ class AutonDriveFactory {
         }
 
         // in MeepMeep, intake needs to be null however .stopAndAdd() can't be null because it will crash so we set to a random sleep
-        if(intake == null) {
+        if (intake == null) {
             intake = new SleepAction(3);
         }
 
-        TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
-        spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -36)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-38, -34)), xForm(Math.toRadians(180) + (1e-6)))
-                .stopAndAdd(intake)
-                .splineToConstantHeading(xForm(new Vector2d(-30, -34)), xForm(Math.toRadians(180)))
-                .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
+        TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xMirroringXForm(new Pose2d(-36, -60, Math.toRadians(90)), isFar, 0));
+        spikeRight = spikeRight.splineTo(xMirroringXForm(new Vector2d(-36, -38), isFar), xForm(Math.toRadians(90))) //Drive forward into the center of the spike marks
+                .setTangent(xForm(0))
+                .splineToConstantHeading(xForm(new Vector2d(-24, -38)), xForm(Math.toRadians(0))) //strafe onto the left spike mark
+                //.stopAndAdd(intake)
+                .setTangent(xForm(Math.toRadians(180)))
+                .splineToConstantHeading(xMirroringXForm(new Vector2d(-39, -38), isFar), xForm(Math.toRadians(180))) //strafe back between the spike marks
+                .setTangent(xForm(Math.toRadians(90)))
+                .splineTo(xMirroringXForm(new Vector2d(-39, -30), isFar), xForm(Math.toRadians(90))) //drive forward before starting the turn to go the backdrop
+                .splineTo(xForm(new Vector2d(-18, -12)), xForm(Math.toRadians(0))) //curve to face the backdrop
+                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(0))) //drive to the backdrop
+                .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
+                .setTangent(xForm(Math.toRadians(-90)))
+                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -29.5)), xForm(Math.toRadians(-90))) //strafe to the corresponding april tag on the backdrop
+                .setTangent(xForm(Math.toRadians(90)))
+                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(90)));
 
-        TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
-        spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -33)), xForm(Math.toRadians(90)))
-                // arm
-                .splineToConstantHeading(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xForm(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xForm(new Vector2d(-55, -10)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
+        TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-36, -60, (Math.toRadians(90)))));
+        spikeCenter = spikeCenter.splineToSplineHeading(xMirroringXForm(new Pose2d(-42, -24, Math.toRadians(0)), isFar, 1), xForm(Math.toRadians(90)))
+                //.stopAndAdd(intake)
+                //.splineToConstantHeading(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
+                //.splineToConstantHeading(xFormCenter(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
+                //.splineToConstantHeading(xFormCenter(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
+                .setTangent(xForm(Math.toRadians(90)))
+                .splineToConstantHeading(xMirroringXForm(new Vector2d(-42, -12), isFar), xForm(Math.toRadians(90)))
+                .setTangent(xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(0))) //drive to the backdrop
+                .turn(xMirroringAngle(Math.toRadians(180), isFar)) //Turn so the arm faces the backdrop
+                .setTangent(xForm(Math.toRadians(-90)))
+                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -36)), xForm(Math.toRadians(-90))) //strafe to the corresponding april tag on the backdrop
+                .setTangent(xForm(Math.toRadians(90)))
+                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(90)));
 
 
-        TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
-        spikeRight = spikeRight.splineToSplineHeading(xForm(new Pose2d(-35, -32, Math.toRadians(0))), xForm(Math.toRadians(90)))
-                // arm action
-                .splineToConstantHeading(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
-                .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
+        TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xMirroringXForm(new Pose2d(-36, -60, Math.toRadians(90)), isFar, 0));
+        spikeLeft = spikeLeft.splineTo(xMirroringXForm(new Vector2d(-36, -38), isFar), xForm(Math.toRadians(90))) //Drive forward into the center of the spike marks
+                .setTangent(xForm(Math.toRadians(180)))
+                .splineToConstantHeading(xForm(new Vector2d(-46, -38)), xForm(Math.toRadians(180))) //strafe onto the left spike mark
+                //.stopAndAdd(intake)
+                .setTangent(xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xMirroringXForm(new Vector2d(-39, -38), isFar), xForm(Math.toRadians(0))) //strafe back between the spike marks
+                .setTangent(xForm(Math.toRadians(90)))
+                .splineTo(xMirroringXForm(new Vector2d(-39, -30), isFar), xForm(Math.toRadians(90))) //drive forward before starting the turn to go the backdrop
+                .splineTo(xForm(new Vector2d(-18, -12)), xForm(Math.toRadians(0))) //curve to face the backdrop
+                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(0))) //drive to the backdrop
+                .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
+                .setTangent(xForm(Math.toRadians(-90)))
+                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -44)), xForm(Math.toRadians(-90))) //strafe to the corresponding april tag on the backdrop
+                .setTangent(xForm(Math.toRadians(90)))
+                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(90)));
 
-        if(location == SpikeMarks.LEFT) {
-            return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
-        } else if(location == SpikeMarks.CENTER) {
-            return new PoseAndAction(spikeCenter.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+        if (location == xForm(SpikeMarks.LEFT)) {
+            return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
+        } else if (location == xForm(SpikeMarks.RIGHT)) {
+            return new PoseAndAction(spikeRight.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         } else {
-            return new PoseAndAction(spikeRight.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+            return new PoseAndAction(spikeCenter.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         }
 
     }
@@ -233,8 +306,39 @@ class AutonDriveFactory {
         return new Pose2d(pose.position.x + xOffset, pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
     }
 
+    private final double xMirroringOffset = -24;
+
+    Pose2d xMirroringXForm(Pose2d pose, boolean isFar, double angleFormAmount) {
+        if (!isFar)
+            return new Pose2d(pose.position.x * -1 + xMirroringOffset, pose.position.y * yMultiplier, pose.heading.log() * yMultiplier + Math.toRadians(180) * angleFormAmount);
+        else
+            return new Pose2d(pose.position.x + xOffset, pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
+    }
+
+    Pose2d xFormCenter(Pose2d pose) {
+        return new Pose2d((pose.position.x + centerOffset), pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
+    }
+
     Vector2d xForm(Vector2d vector) {
         return new Vector2d(vector.x + xOffset, vector.y * yMultiplier);
+    }
+
+    Vector2d xMirroringXForm(Vector2d vector, boolean isFar) {
+        if (!isFar)
+            return new Vector2d(vector.x * -1 + xMirroringOffset, vector.y * yMultiplier);
+        else
+            return new Vector2d(vector.x + xOffset, vector.y * yMultiplier);
+    }
+
+    double xMirroringAngle(double angle, boolean isFar) {
+        if (!isFar)
+            return angle - Math.PI + 0.00000000000001;
+        else
+            return angle;
+    }
+
+    Vector2d xFormCenter(Vector2d vector) {
+        return new Vector2d((vector.x + centerOffset), vector.y * yMultiplier);
     }
 
     double xForm(double angle) {
@@ -242,14 +346,33 @@ class AutonDriveFactory {
     }
 
 
+    SpikeMarks xForm(SpikeMarks spike) {
+        if (yMultiplier == -1) {
+            switch (spike) {
+                case LEFT:
+                    return SpikeMarks.RIGHT;
+                case RIGHT:
+                    return SpikeMarks.LEFT;
+            }
+        }
+        return spike;
+    }
+
+
+
+
+
     /*
      * MeepMeep calls this routine to get a trajectory sequence action to draw. Modify the
      * arguments here to test your different code paths.
      */
     Action getMeepMeepAction() {
-        return getDriveAction(true, true, SpikeMarks.LEFT, null).action;
+        return getDriveAction(true, false, SpikeMarks.LEFT , null).action;
     }
 }
+
+
+
 
 @Config
 class PropDistanceResults {
@@ -405,7 +528,6 @@ class PropDistanceFactory {
                 .afterTime(0, sweepAction)
                 .turn(2 * Math.PI)
                 .setTangent(-tangent)
-//                 .stopAndAdd(new SleepAction(100000000))
                 .splineToLinearHeading(startPose, -tangent);
 
         return new PoseAndAction(builder.build(), startPose);

@@ -78,7 +78,7 @@ public abstract class BaseOpMode extends LinearOpMode {
         }
 
         //Sensor
-        //distSensor = hardwareMap.get(DistanceSensor.class, "distance");
+        distSensor = hardwareMap.get(DistanceSensor.class, "distance");
         /*
         // Sets up the parameters with which we will use our IMU. Note that integration
         // algorithm here just reports accelerations to the logcat log; it doesn't actually
