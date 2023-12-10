@@ -244,7 +244,7 @@ class AutonDriveFactory {
         spikeRight = spikeRight.splineTo(xMirroringXForm(new Vector2d(-36, -38), isFar), xForm(Math.toRadians(90))) //Drive forward into the center of the spike marks
                 .setTangent(xForm(0))
                 .splineToConstantHeading(xForm(new Vector2d(-24, -38)), xForm(Math.toRadians(0))) //strafe onto the left spike mark
-                //.stopAndAdd(intake)
+                .stopAndAdd(intake)
                 .setTangent(xForm(Math.toRadians(180)))
                 .splineToConstantHeading(xMirroringXForm(new Vector2d(-39, -38), isFar), xForm(Math.toRadians(180))) //strafe back between the spike marks
                 .setTangent(xForm(Math.toRadians(90)))
@@ -259,7 +259,7 @@ class AutonDriveFactory {
 
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-36, -60, (Math.toRadians(90)))));
         spikeCenter = spikeCenter.splineToSplineHeading(xMirroringXForm(new Pose2d(-42, -24, Math.toRadians(0)), isFar, 1), xForm(Math.toRadians(90)))
-                //.stopAndAdd(intake)
+                .stopAndAdd(intake)
                 //.splineToConstantHeading(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
                 //.splineToConstantHeading(xFormCenter(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
                 //.splineToConstantHeading(xFormCenter(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
@@ -278,7 +278,7 @@ class AutonDriveFactory {
         spikeLeft = spikeLeft.splineTo(xMirroringXForm(new Vector2d(-36, -38), isFar), xForm(Math.toRadians(90))) //Drive forward into the center of the spike marks
                 .setTangent(xForm(Math.toRadians(180)))
                 .splineToConstantHeading(xForm(new Vector2d(-46, -38)), xForm(Math.toRadians(180))) //strafe onto the left spike mark
-                //.stopAndAdd(intake)
+                .stopAndAdd(intake)
                 .setTangent(xForm(Math.toRadians(0)))
                 .splineToConstantHeading(xMirroringXForm(new Vector2d(-39, -38), isFar), xForm(Math.toRadians(0))) //strafe back between the spike marks
                 .setTangent(xForm(Math.toRadians(90)))
