@@ -6,10 +6,10 @@ import android.util.Size;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
@@ -30,7 +30,7 @@ public class AprilTagPoseEstimator {
 
     public HardwareMap myHardwareMap;   // gain access to camera in hardwareMap
 
-    public LinearOpMode myOpMode;   // gain access to methods in the calling OpMode.
+    public Telemetry telemetry;   // gain access to telemetry
 
     /**
      * The variable to store our instance of the AprilTag processor.
@@ -50,16 +50,14 @@ public class AprilTagPoseEstimator {
     // For this concept: supposed location of the robot
     Pose robotPoseEstimate = new Pose(0, 0, 0);
 
-    // Define a constructor that allows the OpMode to pass a reference to itself
-    //   in order to allow this class to access the camera hardware
-    public AprilTagPoseEstimator(LinearOpMode opmode) {
-        myOpMode = opmode;
+    public AprilTagPoseEstimator(HardwareMap hardwareMap, Telemetry telemetry) {
+        this.myHardwareMap = hardwareMap;
+        this.telemetry = telemetry;
         init();
     }
 
     public AprilTagPoseEstimator(HardwareMap hardwareMap) {
-        myHardwareMap = hardwareMap;
-        init();
+        new AprilTagPoseEstimator(hardwareMap, null);
     }
 
     /**
@@ -100,22 +98,14 @@ public class AprilTagPoseEstimator {
 
         // Set the camera (webcam vs. built-in RC phone camera).
         if (USE_WEBCAM) {
-            if (myOpMode != null) {
-                builder.setCamera(myOpMode.hardwareMap.get(WebcamName.class, "webcam"));
-            } else if (myHardwareMap != null) {
-                builder.setCamera(myHardwareMap.get(WebcamName.class, "webcam"));
-            }
+            builder.setCamera(myHardwareMap.get(WebcamName.class, "webcam"));
         } else {
             builder.setCamera(BuiltinCameraDirection.BACK);
         }
 
         // Sets the status light for latency testing, etc.
         if (isDevBot) {
-            if (myOpMode != null) {
-                statusLight = myOpMode.hardwareMap.get(DigitalChannel.class, "green");
-            } else if (myHardwareMap != null) {
-                statusLight = myHardwareMap.get(DigitalChannel.class, "green");
-            }
+            statusLight = myHardwareMap.get(DigitalChannel.class, "green");
             statusLight.setMode(DigitalChannel.Mode.OUTPUT);
         }
 
@@ -160,29 +150,38 @@ public class AprilTagPoseEstimator {
         double d, beta, gamma, relativeX, relativeY, absoluteX, absoluteY, absoluteTheta;
 
         if (isDevBot) {
-            // d - Absolute distance from April-tag to robot
+            // d - absolute distance from April-tag to robot
             d = Math.hypot(detection.ftcPose.x + Constants.DEVBOT_CAMERA_TO_CENTER_X, detection.ftcPose.y + Constants.DEVBOT_CAMERA_TO_CENTER_Y);
 
-            // gamma
+            // gamma - angle of center of camera direction to april tag direction
             gamma = Math.atan2(detection.ftcPose.x + Constants.DEVBOT_CAMERA_TO_CENTER_X, detection.ftcPose.y + Constants.DEVBOT_CAMERA_TO_CENTER_Y);
 
+            // beta - yaw of robot relative to the tag
             beta = gamma + Math.toRadians(detection.ftcPose.yaw + Constants.DEVBOT_CAMERA_TO_CENTER_ROT); //(or gamma - detection.ftcPose.yaw + + Constants.DEVBOT_CAMERA_TO_CENTER_ROT) if that doesn't work)
         } else {
+            // d - absolute distance from April-tag to robot
             d = Math.hypot(detection.ftcPose.x + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_X, detection.ftcPose.y + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_Y);
 
+            // gamma - angle of center of camera direction to april tag direction
             gamma = Math.atan2(detection.ftcPose.x + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_X, detection.ftcPose.y + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_Y);
 
+            // beta - yaw of robot relative to the tag
             beta = gamma + Math.toRadians(detection.ftcPose.yaw + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_ROT); //(or gamma - detection.ftcPose.yaw + + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_ROT) if that doesn't work)
         }
-            
+
+        // relativeX - x of robot without compensating for yaw
         relativeX = d * Math.cos(beta) + aprilTagInfo.x;
-        
+
+        // relativeY - y of robot without compensating for yaw
         relativeY = -d * Math.sin(beta) + aprilTagInfo.y;
-        
+
+        // absoluteX - x of robot
         absoluteX = relativeX * Math.cos(Math.toRadians(aprilTagInfo.yaw)) - relativeY * Math.sin(Math.toRadians(aprilTagInfo.yaw));
-        
+
+        // absoluteY - y of robot
         absoluteY = relativeX * Math.sin(Math.toRadians(aprilTagInfo.yaw)) + relativeY * Math.cos(Math.toRadians(aprilTagInfo.yaw));
-        
+
+        // absoluteTheta - yaw of robot
         absoluteTheta = Math.toRadians(aprilTagInfo.yaw) - Math.toRadians(detection.ftcPose.yaw) + Math.PI;
 
         return new Pose(absoluteX, absoluteY, absoluteTheta);
@@ -277,13 +276,13 @@ public class AprilTagPoseEstimator {
         }
 
         // Turn the status light on when it detects an april tag (yes, setState(boolean) is backwards)
-        //if (statusLight != null) {
-        //    statusLight.setState(!detecting);
-        //}
+        if (statusLight != null) {
+            statusLight.setState(!detecting);
+        }
 
         // Telemeters the current pose estimate
-        if (myOpMode != null && robotPoseEstimate != null) {
-            myOpMode.telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)", robotPoseEstimate.x, robotPoseEstimate.y, Math.toDegrees(robotPoseEstimate.theta)));
+        if (telemetry != null && robotPoseEstimate != null) {
+            telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)", robotPoseEstimate.x, robotPoseEstimate.y, Math.toDegrees(robotPoseEstimate.theta)));
 
             // Telemeters the pose info to FTC dashboard so that it draws the robot pose
             // Remove before competition, could cause lags
