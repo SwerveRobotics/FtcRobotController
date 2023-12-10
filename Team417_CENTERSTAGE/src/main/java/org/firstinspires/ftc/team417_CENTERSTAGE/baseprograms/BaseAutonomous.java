@@ -371,7 +371,7 @@ class PropDistanceResults { //Drive forward, spin, and use the distance sensor t
                 } else {
                     results.result = SpikeMarks.LEFT;
                 }
-                packet.put("Final result", results.result); //send the final resault to FTC dashboard.
+                packet.put("Final result", results.result); //send the final result to FTC dashboard.
 
                 return false; //Once the result has been calculated, return false to end the action.
             }
