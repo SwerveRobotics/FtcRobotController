@@ -110,7 +110,7 @@ public final class MecanumDrive {
                 // drive model parameters
                 inPerTick = 0.0225669957686882; // 96.0 / 4254.0;
                 lateralInPerTick = 0.020179372197309417; // 49.5 / 2453
-                trackWidthTicks = 690.3255416844875;
+                trackWidthTicks = 616.0724803629631;
 
                 // feedforward parameters (in tick units)
                 kS = 0.6298460597755153;
@@ -139,12 +139,12 @@ public final class MecanumDrive {
             }
 
             // path profile parameters (in inches)
-            maxWheelVel = 40;
+            maxWheelVel = 50;
             minProfileAccel = -30;
             maxProfileAccel = 50;
 
             // turn profile parameters (in radians)
-            maxAngVel = Math.PI;
+            maxAngVel = Math.PI; // shared with path
             maxAngAccel = Math.PI;
 
             axialVelGain = 0.0;
@@ -252,7 +252,6 @@ public final class MecanumDrive {
         if (USE_APRIL_TAGS) {
             // To detect April Tags to correct drift (added by Hank)
             myAprilTagPoseEstimator = new AprilTagPoseEstimator(hardwareMap);
-            myAprilTagPoseEstimator.init();
         }
 
         this.pose = pose;
@@ -310,6 +309,13 @@ public final class MecanumDrive {
         twistList = new ArrayList<>();
 
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
+    }
+
+    // Closes and releases resources (Added by Hank)
+    public void close() {
+        if (myAprilTagPoseEstimator != null) {
+            myAprilTagPoseEstimator.visionPortal.close();
+        }
     }
 
     public void setDrivePowers(PoseVelocity2d powers) {
@@ -388,7 +394,14 @@ public final class MecanumDrive {
 
             FlightRecorder.write("TARGET_POSE", new PoseMessage(txWorldTarget.value()));
 
+            p.put("x", pose.position.x);
+            p.put("y", pose.position.y);
+            p.put("heading (deg)", Math.toDegrees(pose.heading.log()));
+
             Pose2d error = txWorldTarget.value().minusExp(pose);
+            p.put("xError", error.position.x);
+            p.put("yError", error.position.y);
+            p.put("headingError (deg)", Math.toDegrees(error.heading.log()));
 
             // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();

@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms;
 
-import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.telemetry;
 import static java.lang.System.nanoTime;
 
 import android.graphics.PointF;
@@ -14,20 +13,14 @@ import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
-import com.fasterxml.jackson.databind.annotation.JsonAppend;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.internal.tfod.Results;
 import org.firstinspires.ftc.team417_CENTERSTAGE.opencv.OpenCvColorDetection;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
-import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.Pose;
 
 import java.util.ArrayList;
-
-import java.util.concurrent.CompletableFuture;
 
 @Config
 abstract public class BaseAutonomous extends BaseOpMode {
@@ -42,7 +35,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
     public static double INTAKE_SPEED = 1;
     public static double INTAKE_TIME = 2; // in seconds
 
-    public static double INTAKE_SPEED2 = 0.2;
+    public static double INTAKE_SPEED2 = 1;
 
     public static double INTAKE_TIME2 = 10; // in seconds
 
@@ -128,15 +121,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
         drive.pose = poseAndAction.startPose;
 
         if (!test) {
-            CompletableFuture<Void> future = CompletableFuture.runAsync(() -> Actions.runBlocking(poseAndAction.action));
-
-            while (opModeIsActive());
-
-            future.cancel(true);
-        } else {
-            while (opModeIsActive());
+            Actions.runBlocking(poseAndAction.action);
         }
-
 
         //if (drive.myAprilTagPoseEstimator != null) {
         //    drive.myAprilTagPoseEstimator.visionPortal.close();
@@ -212,21 +198,8 @@ class AutonDriveFactory {
 
         if (isFar) {
             xOffset = 0;
-            parkingOffset = 48;
-            centerMultiplier = 1;
-            centerOffset = 0;
-
-            /*if (location == xForm(SpikeMarks.CENTER)) {
-                parkingOffset = 100;
-            }*/
-
-
         } else {
             xOffset = 48;
-            parkingOffset = 2;
-            centerMultiplier = -1;
-            centerOffset = 96;
-
         }
 
         if (isRed) {
@@ -240,63 +213,39 @@ class AutonDriveFactory {
             intake = new SleepAction(3);
         }
 
-        TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xMirroringXForm(new Pose2d(-36, -60, Math.toRadians(90)), isFar, 0));
-        spikeRight = spikeRight.splineTo(xMirroringXForm(new Vector2d(-36, -38), isFar), xForm(Math.toRadians(90))) //Drive forward into the center of the spike marks
-                .setTangent(xForm(0))
-                .splineToConstantHeading(xForm(new Vector2d(-24, -38)), xForm(Math.toRadians(0))) //strafe onto the left spike mark
+        TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+        spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -36)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-38, -34)), xForm(Math.toRadians(180) + (1e-6)))
                 .stopAndAdd(intake)
-                .setTangent(xForm(Math.toRadians(180)))
-                .splineToConstantHeading(xMirroringXForm(new Vector2d(-39, -38), isFar), xForm(Math.toRadians(180))) //strafe back between the spike marks
-                .setTangent(xForm(Math.toRadians(90)))
-                .splineTo(xMirroringXForm(new Vector2d(-39, -30), isFar), xForm(Math.toRadians(90))) //drive forward before starting the turn to go the backdrop
-                .splineTo(xForm(new Vector2d(-18, -12)), xForm(Math.toRadians(0))) //curve to face the backdrop
-                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(0))) //drive to the backdrop
-                .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
-                .setTangent(xForm(Math.toRadians(-90)))
-                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -29.5)), xForm(Math.toRadians(-90))) //strafe to the corresponding april tag on the backdrop
-                .setTangent(xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(90)));
+                .splineToConstantHeading(xForm(new Vector2d(-30, -34)), xForm(Math.toRadians(180)))
+                .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
 
-        TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-36, -60, (Math.toRadians(90)))));
-        spikeCenter = spikeCenter.splineToSplineHeading(xMirroringXForm(new Pose2d(-42, -24, Math.toRadians(0)), isFar, 1), xForm(Math.toRadians(90)))
-                .stopAndAdd(intake)
-                //.splineToConstantHeading(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
-                //.splineToConstantHeading(xFormCenter(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
-                //.splineToConstantHeading(xFormCenter(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
-                .setTangent(xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xMirroringXForm(new Vector2d(-42, -12), isFar), xForm(Math.toRadians(90)))
-                .setTangent(xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(0))) //drive to the backdrop
-                .turn(xMirroringAngle(Math.toRadians(180), isFar)) //Turn so the arm faces the backdrop
-                .setTangent(xForm(Math.toRadians(-90)))
-                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -36)), xForm(Math.toRadians(-90))) //strafe to the corresponding april tag on the backdrop
-                .setTangent(xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(90)));
+        TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+        spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -33)), xForm(Math.toRadians(90)))
+                // arm
+                .splineToConstantHeading(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
+                .splineToConstantHeading(xForm(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
+                .splineToConstantHeading(xForm(new Vector2d(-55, -10)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
 
 
-        TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xMirroringXForm(new Pose2d(-36, -60, Math.toRadians(90)), isFar, 0));
-        spikeLeft = spikeLeft.splineTo(xMirroringXForm(new Vector2d(-36, -38), isFar), xForm(Math.toRadians(90))) //Drive forward into the center of the spike marks
-                .setTangent(xForm(Math.toRadians(180)))
-                .splineToConstantHeading(xForm(new Vector2d(-46, -38)), xForm(Math.toRadians(180))) //strafe onto the left spike mark
-                .stopAndAdd(intake)
-                .setTangent(xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xMirroringXForm(new Vector2d(-39, -38), isFar), xForm(Math.toRadians(0))) //strafe back between the spike marks
-                .setTangent(xForm(Math.toRadians(90)))
-                .splineTo(xMirroringXForm(new Vector2d(-39, -30), isFar), xForm(Math.toRadians(90))) //drive forward before starting the turn to go the backdrop
-                .splineTo(xForm(new Vector2d(-18, -12)), xForm(Math.toRadians(0))) //curve to face the backdrop
-                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(0))) //drive to the backdrop
-                .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
-                .setTangent(xForm(Math.toRadians(-90)))
-                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -44)), xForm(Math.toRadians(-90))) //strafe to the corresponding april tag on the backdrop
-                .setTangent(xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -12)), xForm(Math.toRadians(90)));
+        TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+        spikeRight = spikeRight.splineToSplineHeading(xForm(new Pose2d(-35, -32, Math.toRadians(0))), xForm(Math.toRadians(90)))
+                // arm action
+                .splineToConstantHeading(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
+                .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
 
-        if (location == xForm(SpikeMarks.LEFT)) {
-            return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
-        } else if (location == xForm(SpikeMarks.RIGHT)) {
-            return new PoseAndAction(spikeRight.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
+        if(location == SpikeMarks.LEFT) {
+            return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+        } else if(location == SpikeMarks.CENTER) {
+            return new PoseAndAction(spikeCenter.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
         } else {
-            return new PoseAndAction(spikeCenter.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
+            return new PoseAndAction(spikeRight.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
         }
 
     }
@@ -306,39 +255,8 @@ class AutonDriveFactory {
         return new Pose2d(pose.position.x + xOffset, pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
     }
 
-    private final double xMirroringOffset = -24;
-
-    Pose2d xMirroringXForm(Pose2d pose, boolean isFar, double angleFormAmount) {
-        if (!isFar)
-            return new Pose2d(pose.position.x * -1 + xMirroringOffset, pose.position.y * yMultiplier, pose.heading.log() * yMultiplier + Math.toRadians(180) * angleFormAmount);
-        else
-            return new Pose2d(pose.position.x + xOffset, pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
-    }
-
-    Pose2d xFormCenter(Pose2d pose) {
-        return new Pose2d((pose.position.x + centerOffset), pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
-    }
-
     Vector2d xForm(Vector2d vector) {
         return new Vector2d(vector.x + xOffset, vector.y * yMultiplier);
-    }
-
-    Vector2d xMirroringXForm(Vector2d vector, boolean isFar) {
-        if (!isFar)
-            return new Vector2d(vector.x * -1 + xMirroringOffset, vector.y * yMultiplier);
-        else
-            return new Vector2d(vector.x + xOffset, vector.y * yMultiplier);
-    }
-
-    double xMirroringAngle(double angle, boolean isFar) {
-        if (!isFar)
-            return angle - Math.PI + 0.00000000000001;
-        else
-            return angle;
-    }
-
-    Vector2d xFormCenter(Vector2d vector) {
-        return new Vector2d((vector.x + centerOffset), vector.y * yMultiplier);
     }
 
     double xForm(double angle) {
@@ -346,133 +264,125 @@ class AutonDriveFactory {
     }
 
 
-    SpikeMarks xForm(SpikeMarks spike) {
-        if (yMultiplier == -1) {
-            switch (spike) {
-                case LEFT:
-                    return SpikeMarks.RIGHT;
-                case RIGHT:
-                    return SpikeMarks.LEFT;
-            }
-        }
-        return spike;
-    }
-
-
-
-
-
     /*
      * MeepMeep calls this routine to get a trajectory sequence action to draw. Modify the
      * arguments here to test your different code paths.
      */
     Action getMeepMeepAction() {
-        return getDriveAction(true, false, SpikeMarks.LEFT , null).action;
+        return getDriveAction(true, true, SpikeMarks.LEFT, null).action;
     }
 }
 
-
-
-
 @Config
-class PropDistanceResults {
+class PropDistanceResults { //Drive forward, spin, and use the distance sensor to find the prop location.
 
     public static double propSpot1Angle = 116, propSpot2Angle = 145,
-            propSpot3Angle = 190, noPropAngle = 220, doneAngle = 220;
-    public static double maxDist = 28;
+                         propSpot3Angle = 190, noSpikeMarkAngle = 220, doneAngle = 220; //The angles in degrees that each spike mark is located at.
+    public static double maxDist = 28; //The maxim distance a result from the distance sensor can be for it to be considered.
     enum SpikeMarks {
         LEFT,
         CENTER,
         RIGHT
-    }
-    public SpikeMarks result = SpikeMarks.LEFT;
+    } //The different locations the function can return.
+    public SpikeMarks result = SpikeMarks.LEFT; //The value the prop distance factory is returning.
 
+    //Checks for the prop with the distance sensor while the robot is spinning.
     public Action sweepAction(MecanumDrive drive, DistanceSensor distSensor, PropDistanceResults results) {
         return new Action() {
-            private final ArrayList<PointF> propPos1 = new ArrayList<>();
-            private final ArrayList<PointF> propPos2 = new ArrayList<>();
-            private final ArrayList<PointF> propPos3 = new ArrayList<>();
-            private double initAngle;
-            private boolean inited = false;
+            //Arrays that store the points that the distance sensor detected were on a spike mark.
+            private final ArrayList<PointF> SpikeMark1Pos = new ArrayList<>();
+            private final ArrayList<PointF> SpikeMark2Pos = new ArrayList<>();
+            private final ArrayList<PointF> SpikeMark3Pos = new ArrayList<>();
+            private double initAngle; //The angle of the robot when the function is first called.
+            private boolean inited = false; //If the function has inited.
             @Override
             public boolean run(TelemetryPacket packet) {
-                Canvas canvas = packet.fieldOverlay();
+                Canvas canvas = packet.fieldOverlay(); //Setup canvas to draw to later.
 
-                double distanceSensorReturn = distSensor.getDistance(DistanceUnit.INCH);
-                double currentAngleRadians;
+                double distanceSensorReturn = distSensor.getDistance(DistanceUnit.INCH); //What the distance sensor is detecting.
+                double currentAngleRadians; //The current angle of the robot in radians.
+                PointF selectedPoint; //The x and y location of the point the distance sensor is looking at.
 
-                if (!inited) {
+                if (!inited) { //Only runs once when the function is first called. Sets the value of the starting angle.
                     initAngle = drive.pose.heading.log() + Math.PI;
                     inited = true;
                 }
 
-                currentAngleRadians = (drive.pose.heading.log() + Math.PI) - initAngle;
+                currentAngleRadians = (drive.pose.heading.log() + Math.PI) - initAngle; //sets the current angle the robot is facing.
                 if (currentAngleRadians < Math.toRadians(-3)) // Allow 3 degrees of backtracking
                     currentAngleRadians += 2 * Math.PI;
 
+                selectedPoint = new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.x),
+                        (float) (Math.sin(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.y)); //sets selected point to the current point the distance sensor is detecting.
+
+                //if the distance sensor reading is within max dist, update the corresponding array with the point that the distance sensor is detecting.
                 if (distanceSensorReturn <= maxDist){
-                    if (currentAngleRadians > Math.toRadians(noPropAngle))
+                    if (currentAngleRadians > Math.toRadians(noSpikeMarkAngle))
                         ;
                     else if (currentAngleRadians > Math.toRadians(propSpot3Angle)) {
-                        propPos3.add(new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.x),
-                                (float) (Math.sin(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.y)));
+                        SpikeMark3Pos.add(selectedPoint);
                     } else if (currentAngleRadians > Math.toRadians(propSpot2Angle)) {
-                        propPos2.add(new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.x),
-                                (float) (Math.sin(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.y)));
+                        SpikeMark2Pos.add(selectedPoint);
                     } else if (currentAngleRadians > Math.toRadians(propSpot1Angle)) {
-                        propPos1.add(new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.x),
-                                (float) (Math.sin(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.y)));
+                        SpikeMark1Pos.add(selectedPoint);
                     }
                 }
 
-                packet.put("propPos1", propPos1.size());
-                packet.put("propPos2", propPos2.size());
-                packet.put("propPos3", propPos3.size());
-                packet.put("noPropAngle", noPropAngle);
+                //send the number of points in each array of detected points to FTC dashboard.
+                packet.put("propPos1", SpikeMark1Pos.size());
+                packet.put("propPos2", SpikeMark2Pos.size());
+                packet.put("propPos3", SpikeMark3Pos.size());
+                packet.put("noPropAngle", noSpikeMarkAngle);
                 packet.put("currentAngle", Math.toDegrees(currentAngleRadians));
 
+                //Plot the points from the first array of detected points on FTC dashboard in red.
                 canvas.setStrokeWidth(1);
                 canvas.setFill("#ff0000");
-                plotPointsInRoadRunner(propPos1, canvas);
+                plotPointsInRoadRunner(SpikeMark1Pos, canvas);
 
+                //Plot the points from the second array of detected points on FTC dashboard in green.
                 canvas.setFill("#00ff00");
-                plotPointsInRoadRunner(propPos2, canvas);
+                plotPointsInRoadRunner(SpikeMark2Pos, canvas);
 
+                //Plot the points from the third array of detected points on FTC dashboard in blue.
                 canvas.setFill("#0000ff");
-                plotPointsInRoadRunner(propPos3, canvas);
+                plotPointsInRoadRunner(SpikeMark3Pos, canvas);
 
+                //Draw a circle centered on the robot with the diameter of maxDist to show the area that results are being considered in.
                 canvas.setStroke("#808080");
                 canvas.strokeCircle(drive.pose.position.x, drive.pose.position.y, maxDist);
 
+                //Draw lines to show the detection areas for each spike mark
                 plotPropSpots(Math.toRadians(propSpot1Angle), canvas);
                 plotPropSpots(Math.toRadians(propSpot2Angle), canvas);
                 plotPropSpots(Math.toRadians(propSpot3Angle), canvas);
 
+                //If the current angle of the is not past the end of the last spike mark, return true and restart the function.
                 if (currentAngleRadians < Math.toRadians(doneAngle))
                     return true;
 
-                //movement has finished. find result.
-                if (propPos1.size() > propPos2.size() && propPos1.size() > propPos3.size()) {
+                //Once the robot is past the end of the last spike mark, find the array of detected points that has the most points in it and update result with the corresponding spike mark.
+                if (SpikeMark1Pos.size() > SpikeMark2Pos.size() && SpikeMark1Pos.size() > SpikeMark3Pos.size()) {
                     results.result = SpikeMarks.RIGHT;
 
-                } else if (propPos2.size() > propPos3.size()) {
+                } else if (SpikeMark2Pos.size() > SpikeMark3Pos.size()) {
                     results.result = SpikeMarks.CENTER;
 
                 } else {
                     results.result = SpikeMarks.LEFT;
                 }
-                packet.put("Final result", results.result);
+                packet.put("Final result", results.result); //send the final resault to FTC dashboard.
 
-                return false;
+                return false; //Once the result has been calculated, return false to end the action.
             }
 
-            private void plotPropSpots(double lineAngle, Canvas canvas) {
+            private void plotPropSpots(double lineAngle, Canvas canvas) { //Plot the areas of the each spike mark.
                 canvas.strokeLine(drive.pose.position.x, drive.pose.position.y,
                         Math.cos(lineAngle + initAngle) * maxDist + drive.pose.position.x,
                         Math.sin(lineAngle + initAngle) * maxDist + drive.pose.position.y);
             }
 
-            private void plotPointsInRoadRunner(ArrayList<PointF> arrayOfPoints, Canvas canvas) {
+            private void plotPointsInRoadRunner(ArrayList<PointF> arrayOfPoints, Canvas canvas) { //Plot each detected point.
                 for (PointF point: arrayOfPoints)
                     canvas.fillRect(point.x - 1, point.y - 1, 3, 3);
             }
