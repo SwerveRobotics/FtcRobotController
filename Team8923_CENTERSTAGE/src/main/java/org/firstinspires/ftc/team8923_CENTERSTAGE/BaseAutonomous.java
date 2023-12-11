@@ -101,6 +101,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
     }
 
     public  void pivot(double targetHeading) {
+        targetHeading *= -1;
         double currentAngle = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
         double angleError = targetHeading - currentAngle + startAngle;
         double motorPower;
@@ -127,6 +128,9 @@ abstract public class BaseAutonomous extends BaseOpMode {
             motorFR.setPower(-motorPower);
             motorBL.setPower(motorPower);
             motorBR.setPower(-motorPower);
+
+            telemetry.addData("current angle", currentAngle);
+            telemetry.update();
         }
 
         stopDriving();
@@ -141,7 +145,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
         motorIntakeWheels.setPower(power);
         while (opModeIsActive() &&
                 (runtime.seconds() < 30) &&
-                (motorFL.isBusy() && motorFR.isBusy() && motorBL.isBusy() && motorBR.isBusy())) {
+                motorIntakeWheels.isBusy()) {
         }
         motorIntakeWheels.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
