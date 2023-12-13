@@ -4,7 +4,6 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseAutonomous;
-import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.League1BaseAutonomous;
 
 @Autonomous(name="Calibrate Intake")
 public class CalibrateIntake extends BaseAutonomous {
