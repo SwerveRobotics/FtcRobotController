@@ -232,8 +232,7 @@ class AutonDriveFactory {
                 .splineToConstantHeading(xForm(new Vector2d(-55, -10)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
                 .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
-
-
+        
         TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
         spikeRight = spikeRight.splineToSplineHeading(xForm(new Pose2d(-35, -32, Math.toRadians(0))), xForm(Math.toRadians(90)))
                 // arm action
@@ -251,7 +250,6 @@ class AutonDriveFactory {
         }
 
     }
-
 
     Pose2d xForm(Pose2d pose) {
         return new Pose2d(pose.position.x + xOffset, pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
