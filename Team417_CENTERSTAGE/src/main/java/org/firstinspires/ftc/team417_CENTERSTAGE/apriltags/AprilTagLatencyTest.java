@@ -23,7 +23,8 @@ public class AprilTagLatencyTest extends BaseOpMode {
     public void runOpMode() {
         initializeHardware();
 
-        // Turn red light to be off at beginning (counterintuitive, on = false, off = true)
+        // Turn red light to be off at beginning
+        //     DigitalChannel object for LEDs makes this counterintuitive, on = false, off = true
         red.setState(true);
 
         myAprilTagLatencyCompensation = new AprilTagPoseEstimator(hardwareMap, telemetry);
@@ -33,7 +34,7 @@ public class AprilTagLatencyTest extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            // Code added to draw the pose, remove before competition, causes lags:
+            // Code added to draw the pose
             TelemetryPacket p = new TelemetryPacket();
             Canvas c = p.fieldOverlay();
 

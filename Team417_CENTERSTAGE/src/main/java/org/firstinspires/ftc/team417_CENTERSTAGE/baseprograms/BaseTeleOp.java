@@ -8,13 +8,16 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.IMU;
 
-import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.ArmTeleOp;
+import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.ArmMechanism;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 @Config
 public abstract class BaseTeleOp extends BaseOpMode {
+    // Set to false for competitions to remove lags
+    public static final boolean TESTING = true;
+
     public MecanumDrive drive;
-    private ArmTeleOp arm;
+    private ArmMechanism arm;
 
     @Override
     public void runOpMode() {
@@ -23,7 +26,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
         initializeHardware();
 
         if (armMotor != null) {
-            arm = new ArmTeleOp(gamepad2, armMotor, dumperServo);
+            arm = new ArmMechanism(gamepad2, armMotor, dumperServo);
             resetDumper();
         }
 
@@ -39,14 +42,16 @@ public abstract class BaseTeleOp extends BaseOpMode {
             telemetry.addData("y", drive.pose.position.y);
             telemetry.addData("heading", drive.pose.heading);
 
-            // Code added to draw the pose, remove before competition, causes lags:
-            TelemetryPacket p = new TelemetryPacket();
-            Canvas c = p.fieldOverlay();
-            c.setStroke("#3F5100");
-            MecanumDrive.drawRobot(c, drive.pose);
+            // Code added to draw the pose, use only when testing
+            if (TESTING) {
+                TelemetryPacket p = new TelemetryPacket();
+                Canvas c = p.fieldOverlay();
+                c.setStroke("#3F5100");
+                MecanumDrive.drawRobot(c, drive.pose);
 
-            FtcDashboard dashboard = FtcDashboard.getInstance();
-            dashboard.sendTelemetryPacket(p);
+                FtcDashboard dashboard = FtcDashboard.getInstance();
+                dashboard.sendTelemetryPacket(p);
+            }
 
             if (armMotor != null && dumperServo != null && gateServo != null) {
                 outputUsingControllers();
@@ -56,14 +61,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
                 telemetry.addData("GateServo", gateServo.getPosition());
             }
 
-            telemetry.addData("FRMotor", FR.getCurrentPosition());
-            telemetry.addData("FRMotor", FR.getPowerFloat());
-            telemetry.addData("FLMotor", FL.getCurrentPosition());
-            telemetry.addData("FLMotor", FL.getPowerFloat());
-            telemetry.addData("BRMotor", BR.getCurrentPosition());
-            telemetry.addData("BRMotor", BR.getPowerFloat());
-            telemetry.addData("BLMotor", BL.getCurrentPosition());
-            telemetry.addData("BLMotor", BL.getPowerFloat());
             telemetry.update();
         }
 

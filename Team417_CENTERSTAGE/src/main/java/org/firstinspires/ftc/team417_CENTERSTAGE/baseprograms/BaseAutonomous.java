@@ -24,7 +24,6 @@ abstract public class BaseAutonomous extends BaseOpMode {
     public static double NO_APRIL_TAG_SLEEP_TIME = 2500;
 
     public int lastEncoderFL = 0;
-    public int lastEncoderFR = 0;
     public int lastEncoderBL = 0;
     public int lastEncoderBR = 0;
 
@@ -37,24 +36,15 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
     public static double NANO_TO_SECONDS_MULTIPLIER = 1e-9;
 
-    MecanumDrive drive;
-
     public OpenCvColorDetection myColorDetection = new OpenCvColorDetection(this);;
 
     public void initializeAuto() {
         telemetry.addData("Init State", "Init Started");
         telemetry.update();
         myColorDetection.init();
-        drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
         initializeHardware();
 
         telemetry.addData("Init State", "Init Finished");
-
-        // Set last know encoder values
-        lastEncoderFR = FR.getCurrentPosition();
-        lastEncoderFL = FL.getCurrentPosition();
-        lastEncoderBL = BL.getCurrentPosition();
-        lastEncoderBR = BR.getCurrentPosition();
 
         // Allow the OpenCV to process
         if (drive.USE_APRIL_TAGS) {
@@ -82,7 +72,11 @@ abstract public class BaseAutonomous extends BaseOpMode {
         waitForStart();
 
         OpenCvColorDetection.SideDetected result = myColorDetection.detectTeamProp();
-        AutonDriveFactory.SpikeMarks sawarResult;
+
+        /*The variable 'translateEnum' converts the OpenCV Enum by Hank to the Enum used by
+        AutonDriveFactory created by Sawar.
+        */
+        AutonDriveFactory.SpikeMarks translateEnum;
 
         telemetry.addData("Side detected", result);
         telemetry.update();
@@ -91,15 +85,15 @@ abstract public class BaseAutonomous extends BaseOpMode {
         myColorDetection.robotCamera.closeCameraDevice();
 
         if (result == OpenCvColorDetection.SideDetected.LEFT) {
-            sawarResult = AutonDriveFactory.SpikeMarks.LEFT;
+            translateEnum = AutonDriveFactory.SpikeMarks.LEFT;
         } else if (result == OpenCvColorDetection.SideDetected.CENTER) {
-            sawarResult = AutonDriveFactory.SpikeMarks.CENTER;
+            translateEnum = AutonDriveFactory.SpikeMarks.CENTER;
         } else {
-            sawarResult = AutonDriveFactory.SpikeMarks.RIGHT;
+            translateEnum = AutonDriveFactory.SpikeMarks.RIGHT;
         }
 
         AutonDriveFactory auton = new AutonDriveFactory(drive);
-        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, sawarResult, dropPixel());
+        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(1, 2));
 
         drive.pose = poseAndAction.startPose;
 
@@ -107,9 +101,9 @@ abstract public class BaseAutonomous extends BaseOpMode {
             Actions.runBlocking(poseAndAction.action);
         }
 
-        //if (drive.myAprilTagPoseEstimator != null) {
-        //    drive.myAprilTagPoseEstimator.visionPortal.close();
-        //}
+        if (drive.myAprilTagPoseEstimator != null) {
+            drive.myAprilTagPoseEstimator.visionPortal.close();
+        }
     }
 
     public void runAuto(boolean red, boolean close) {
@@ -117,19 +111,27 @@ abstract public class BaseAutonomous extends BaseOpMode {
         runAuto(red, close, false);
     }
 
-    public Action dropPixel() {
+    //Action: Spits out pixel in trajectory; see usage in AutonDriveFactory below.
+
+    public Action dropPixel(double intakeTime, double intakeSpeed) {
         return new Action() {
-            double startTime = 0;  // startTime value to compare to
+
+            // Variable to store the start time for comparison
+            double startTime = 0;
             @Override
             public boolean run(TelemetryPacket packet) {
-                if (startTime == 0) { // does this on first loop
-                    intakeMotor.setPower(INTAKE_SPEED2);
+
+                // Executes on the first loop to start the intake motor
+                if (startTime == 0) {
+                    intakeMotor.setPower(intakeSpeed);
                     startTime = nanoTime() * NANO_TO_SECONDS_MULTIPLIER;
                 }
-                // current time - start time has to be greater than the intake time for the motor to stop
-                if(nanoTime() * NANO_TO_SECONDS_MULTIPLIER - startTime > INTAKE_TIME) {
+                // Checks if the elapsed time is greater than the intake time to stop the motor
+                if(nanoTime() * NANO_TO_SECONDS_MULTIPLIER - startTime > intakeTime) {
                     intakeMotor.setPower(0);
-                    startTime = 0; // reset for next run
+
+                    // Resets start time for the next run
+                    startTime = 0;
                     return false;
                 } else {
                     return true;
@@ -166,6 +168,10 @@ class AutonDriveFactory {
             this.startPose = startPose;
         }
     }
+
+   /* Booleans 'isRed' (red or blue side), 'isFar' (far or close to backdrop)
+    'location' (center, middle, or right), and 'intake' (Action for use).
+    */
     PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake) {
 
         if (isFar) {

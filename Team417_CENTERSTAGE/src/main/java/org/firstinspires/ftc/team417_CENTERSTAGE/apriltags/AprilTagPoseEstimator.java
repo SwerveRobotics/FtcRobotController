@@ -283,6 +283,7 @@ public class AprilTagPoseEstimator {
         // Telemeters the current pose estimate
         if (telemetry != null && robotPoseEstimate != null) {
             telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)", robotPoseEstimate.x, robotPoseEstimate.y, Math.toDegrees(robotPoseEstimate.theta)));
+<<<<<<< HEAD
 
             // Telemeters the pose info to FTC dashboard so that it draws the robot pose
             // Remove before competition, could cause lags
@@ -310,6 +311,8 @@ public class AprilTagPoseEstimator {
         myOpMode.telemetry.addLine("PRY = Pitch, Roll & yaw) (XYZ Rotation)");
         myOpMode.telemetry.addLine("RBE = Range, Bearing & Elevation");
         */
+=======
+>>>>>>> 37b8c301afa0b1711d89777ad46068ebd596328d
         }
     } // end method telemetryAprilTag()
 
