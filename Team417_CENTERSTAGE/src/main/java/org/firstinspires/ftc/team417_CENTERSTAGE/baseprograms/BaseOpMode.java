@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
@@ -29,6 +30,8 @@ public abstract class BaseOpMode extends LinearOpMode {
     public Servo gateServo;
     public final double GATE_SERVO_OPEN_POSITION = 0;
     public final double GATE_SERVO_CLOSE_POSITION = 0.55;
+    public Servo droneServo;
+    public DistanceSensor distSensor;
 
     //Initializes motors, servos, and sensors
     public void initializeHardware() {
@@ -51,6 +54,7 @@ public abstract class BaseOpMode extends LinearOpMode {
             //Mechanism Servos
             dumperServo = initializeServo("DumperServo", Servo.Direction.FORWARD);
             gateServo = initializeServo("GateServo", Servo.Direction.FORWARD);
+            droneServo = initializeServo("droneServo", Servo.Direction.FORWARD);
         }
     }
 

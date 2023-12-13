@@ -178,13 +178,13 @@ public class ArmMechanism {
     }
 
     public void armControl() {
-        double rStickSensitivity = 1, rStickSensitivityInsideRobot = rStickSensitivity / 3, rStickSensitivityOutsideRobot = rStickSensitivity; //How much moving the right stick will effect arm speed outside and inside the robot.
+        double rStickSensitivity, rStickSensitivityInsideRobot = 0.3, rStickSensitivityOutsideRobot = 1; //How much moving the right stick will effect arm speed outside and inside the robot.
         double[] ArmPositions = new double[] {BaseOpMode.ARM_MOTOR_MIN_POSITION, BaseOpMode.ARM_MOTOR_MAX_POSITION / 2.0,
                 BaseOpMode.ARM_MOTOR_MAX_POSITION * (3.0/4.0), BaseOpMode.ARM_MOTOR_MAX_POSITION}; //array of arm positions the dpad can move to.
         double armCurrentLocation = armMotor.getCurrentPosition(); //The current distance the arm is from its init location
         double rStickTilt = -gamepad2.right_stick_y; //The amount the right stick has been moved
         final double rStickDeadZone = 0.1, armPosEpsilon = 25; //rStickDeadZone: the amount of space that is considered zero, armPosEpsilon: the amount of error between the current location and the goal location that is acceptable.
-        final double startUpwardTiltPos = 75, startUpwardResetPos = 1500, endUpwardResetPos = 2000, startDownwardTiltPos = 1500, endDownwardTiltPos = 250; //Locations the dumper should tilt so the arm does not hit the robot.
+        final double startUpwardTiltPos = 75, startUpwardResetPos = 1500, endUpwardResetPos = 2000, startDownwardTiltPos = 1500, endDownwardTiltPos = 300; //Locations the dumper should tilt so the arm does not hit the robot.
         final double armMoveToPositionVelocity = 0.5; //The speed the arm moves while in move to position mode
 
         if (gamepad2.left_stick_y < -rStickDeadZone || gamepad2.left_stick_y > rStickDeadZone) { //If the arm is outside the dead zone switch to using stick control

@@ -32,9 +32,15 @@ public class MeepMeepTesting {
                 false);
 
         MecanumDrive drive = new MecanumDrive(myBot.getDrive());
-        AutonDriveFactory auton = new AutonDriveFactory(drive);
+        boolean distanceTest = false;
+        if (distanceTest) {
+            PropDistanceFactory prop = new PropDistanceFactory(drive);
+            myBot.runAction(prop.getMeepMeepAction());
 
-        myBot.runAction(auton.getMeepMeepAction());
+        } else {
+            AutonDriveFactory auton = new AutonDriveFactory(drive);
+            myBot.runAction(auton.getMeepMeepAction());
+        }
 
         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_DARK)
                 .setDarkMode(true)
@@ -176,5 +182,52 @@ class AutonDriveFactory {
      */
     Action getMeepMeepAction() {
         return getDriveAction(false, true, SpikeMarks.LEFT, null).action;
+    }
+}
+
+class PropDistanceFactory {
+
+    private final double xOffset = -24;
+    private final double yOffset = 0;
+    MecanumDrive drive;
+    PropDistanceFactory(MecanumDrive drive) {
+        this.drive = drive;
+    }
+
+    Pose2d xForm(double x, double y, double theta, boolean isRed, boolean isFar) {
+        if (!isFar)
+            x = x * -1 + xOffset;
+
+        if (!isRed)
+            y = y * -1 + yOffset;
+
+        return new Pose2d(x, y, theta);
+    }
+    Action getDistanceAction(boolean isRed, boolean isFar, Action sweepAction) {
+        double tangent = Math.PI / 2;
+
+        if (sweepAction == null) {
+            sweepAction = new SleepAction(0.5);
+        }
+
+        if (!isRed) {
+            tangent = tangent * -1;
+        }
+
+        Pose2d startPose = xForm(-34, -60, Math.PI /2, isRed, isFar);
+
+        TrajectoryActionBuilder builder
+                = this.drive.actionBuilder(startPose)
+                .setTangent(tangent)
+                .splineToLinearHeading(xForm(-42, -45, Math.PI / 2, isRed, isFar), tangent)
+                .afterTime(0, sweepAction)
+                .turn(2 * Math.PI)
+                .setTangent(-tangent)
+                .splineToLinearHeading(startPose, -tangent);
+
+        return builder.build();
+    }
+    Action getMeepMeepAction() {
+        return getDistanceAction(false, false, null);
     }
 }
