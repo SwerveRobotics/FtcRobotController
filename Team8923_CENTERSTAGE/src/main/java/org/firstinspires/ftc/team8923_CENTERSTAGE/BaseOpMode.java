@@ -92,7 +92,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
 
         imu.initialize(new IMU.Parameters(orientationOnRobot));
-        startAngle = imu.getRobotOrientation(AxesReference.INTRINSIC, AxesOrder.ZYX, AngleUnit.DEGREES).firstAngle;
+        startAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
         sleep(2000);// a wait, so the imu can process
 
     }

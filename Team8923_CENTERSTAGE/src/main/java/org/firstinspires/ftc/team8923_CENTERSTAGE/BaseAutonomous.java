@@ -101,6 +101,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
     }
 
     public  void pivot(double targetHeading) {
+        targetHeading *= -1;
         double currentAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
         double angleError = targetHeading - currentAngle + startAngle;
         double motorPower;
@@ -128,6 +129,9 @@ abstract public class BaseAutonomous extends BaseOpMode {
             motorBL.setPower(motorPower);
             motorBR.setPower(-motorPower);
         }
+
+        telemetry.addData("current angle", currentAngle);
+        telemetry.update();
 
         stopDriving();
     }
