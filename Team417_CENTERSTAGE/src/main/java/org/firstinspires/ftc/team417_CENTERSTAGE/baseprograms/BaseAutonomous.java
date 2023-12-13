@@ -325,8 +325,10 @@ class PropDistanceResults {
                     currentAngleRadians += 2 * Math.PI;
 
                 //sets selected point to the current point the distance sensor is detecting.
-                selectedPoint = new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.x),
-                        (float) (Math.sin(drive.pose.heading.log() + Math.PI) * distanceSensorReturn + drive.pose.position.y));
+                selectedPoint = new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI)
+                                                    * distanceSensorReturn + drive.pose.position.x),
+                                           (float) (Math.sin(drive.pose.heading.log() + Math.PI)
+                                                    * distanceSensorReturn + drive.pose.position.y));
 
                 //if the distance sensor reading is within max dist,
                 // update the corresponding array with the point that the distance sensor is detecting.
@@ -445,7 +447,7 @@ class PropDistanceFactory {
             sweepAction = new SleepAction(0.5);
         }
 
-        if (!isRed) { 
+        if (!isRed) {
             tangent = tangent * -1;
         }
 
