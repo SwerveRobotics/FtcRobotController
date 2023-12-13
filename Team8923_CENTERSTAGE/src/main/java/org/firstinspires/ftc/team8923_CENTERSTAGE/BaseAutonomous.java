@@ -29,7 +29,6 @@ abstract public class BaseAutonomous extends BaseOpMode {
         telemetry.addLine("Waiting for start");
         telemetry.update();
 
-        waitForStart();
         myColorDetection.detectColor();
         initHardware();
 

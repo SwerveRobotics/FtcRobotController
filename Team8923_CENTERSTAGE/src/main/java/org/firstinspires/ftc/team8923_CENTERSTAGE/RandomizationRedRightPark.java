@@ -1,12 +1,13 @@
 package org.firstinspires.ftc.team8923_CENTERSTAGE;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-@Autonomous (name = "RandomizatioRedRightPark")
+@Autonomous (name = "RandomizationRedRightPark")
 
 public class RandomizationRedRightPark extends BaseAutonomous {
     public void runOpMode() {
         initAuto();
         waitForStart();
+      //myColorDetection.setDetectColor(OpenCvColorDetection.detectColorType.RED);
         switch (myColorDetection.detectColor()) {
             case ONE:
                 driveInches(0, 24);

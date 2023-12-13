@@ -77,9 +77,9 @@ public class OpenCvColorDetection {
     }
 
     // set detection color
-   /* public void setDetectColor(detectColorType color) {
+   public void setDetectColor(detectColorType color) {
         myColor = color;
-    }*/
+    }
 
     // initialize the camera and openCV pipeline
     public void init() {
@@ -135,7 +135,7 @@ public class OpenCvColorDetection {
             // filter out the range of blue or red colors defined in
             //   Constants.BLUE_COLOR_DETECT_MIN_HSV and Constants.BLUE_COLOR_DETECT_MAX_HSV
             //   or Constants.RED_COLOR_DETECT_MIN_HSV and Constants.RED_COLOR_DETECT_MAX_HSV
-            if (myColor == detectColorType.BLUE) {
+           if (myColor == detectColorType.BLUE) {
                 Core.inRange(hsvMat, ConstantsOpenCV.BLUE_COLOR_DETECT_MIN_HSV, ConstantsOpenCV.BLUE_COLOR_DETECT_MAX_HSV, filteredMat);
             } else {
                 Core.inRange(hsvMat, ConstantsOpenCV.RED_COLOR_DETECT_MIN_HSV, ConstantsOpenCV.RED_COLOR_DETECT_MAX_HSV, filteredMat);
