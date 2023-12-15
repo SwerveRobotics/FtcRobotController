@@ -28,7 +28,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
     private ElapsedTime runtime = new ElapsedTime();
 
     public static double APRIL_TAG_SLEEP_TIME = 500;
-    public static double NO_APRIL_TAG_SLEEP_TIME = 2500;
+    public static double NO_APRIL_TAG_SLEEP_TIME = 5000;
 
     private final boolean USE_OPEN_CV_PROP_DETECTION = true;
 
@@ -95,6 +95,9 @@ abstract public class BaseAutonomous extends BaseOpMode {
             } else {
                 translateEnum = AutonDriveFactory.SpikeMarks.RIGHT;
             }
+
+            // Close cameras to avoid errors
+            myColorDetection.robotCamera.closeCameraDevice();
         } else {
             PropDistanceResults distanceResult = new PropDistanceResults();
             PropDistanceFactory propDistance = new PropDistanceFactory(drive);
@@ -169,6 +172,15 @@ class AutonDriveFactory {
     MecanumDrive drive;
     double xOffset;
     double yMultiplier;
+
+    double parkingOffset;
+
+    double parkingOffsetCenterFar;
+
+    double centerMultiplier;
+
+    double centerOffset;
+
     AutonDriveFactory(MecanumDrive drive) {
         this.drive = drive;
     }
@@ -200,8 +212,17 @@ class AutonDriveFactory {
 
         if (isFar) {
             xOffset = 0;
+            parkingOffset = 55;
+            centerMultiplier = 1;
+            centerOffset = 0;
+            if (location == xForm(SpikeMarks.CENTER)) {
+                parkingOffset = 100;
+            }
         } else {
             xOffset = 48;
+            parkingOffset = 2;
+            centerMultiplier = -1;
+            centerOffset = 96;
         }
 
         if (isRed) {
@@ -215,44 +236,48 @@ class AutonDriveFactory {
             intake = new SleepAction(3);
         }
 
-        TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
-        spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -36)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-38, -34)), xForm(Math.toRadians(180) + (1e-6)))
+        TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
+        spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-35, -34)), xForm((Math.toRadians(180) + (1e-6))))
                 .stopAndAdd(intake)
                 .splineToConstantHeading(xForm(new Vector2d(-30, -34)), xForm(Math.toRadians(180)))
                 .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
+                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -10)), xForm(Math.toRadians(0)));
 
-        TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
-        spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -33)), xForm(Math.toRadians(90)))
-                // arm
+        TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
+        spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
+                .stopAndAdd(intake)
                 .splineToConstantHeading(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xForm(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xForm(new Vector2d(-55, -10)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
-        
-        TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
-        spikeRight = spikeRight.splineToSplineHeading(xForm(new Pose2d(-35, -32, Math.toRadians(0))), xForm(Math.toRadians(90)))
-                // arm action
+                .splineToConstantHeading(xFormCenter(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
+                .splineToConstantHeading(xFormCenter(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
+                .splineTo(xFormCenter(new Vector2d(parkingOffset - 43, -10)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xFormCenter(new Vector2d(parkingOffset - 43, -10)), xForm(Math.toRadians(0)));
+
+        TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
+        spikeRight = spikeRight.splineTo(xForm(new Vector2d(-35, -37)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-33, -37)), xForm(Math.toRadians(0)))
+                .stopAndAdd(intake)
                 .splineToConstantHeading(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
                 .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
+                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -10)), xForm(Math.toRadians(0)));
 
-        if(location == SpikeMarks.LEFT) {
-            return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
-        } else if(location == SpikeMarks.CENTER) {
-            return new PoseAndAction(spikeCenter.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+        if (location == xForm(SpikeMarks.LEFT)) {
+            return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
+        } else if (location == xForm(SpikeMarks.RIGHT)) {
+            return new PoseAndAction(spikeRight.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         } else {
-            return new PoseAndAction(spikeRight.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+            return new PoseAndAction(spikeCenter.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         }
-
     }
 
     Pose2d xForm(Pose2d pose) {
         return new Pose2d(pose.position.x + xOffset, pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
+    }
+
+    Pose2d xFormCenter(Pose2d pose) {
+        return new Pose2d((pose.position.x + centerOffset), pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
     }
 
     Vector2d xForm(Vector2d vector) {
@@ -263,6 +288,21 @@ class AutonDriveFactory {
         return (angle * yMultiplier);
     }
 
+    Vector2d xFormCenter(Vector2d vector) {
+        return new Vector2d((vector.x + centerOffset), vector.y * yMultiplier);
+    }
+
+    SpikeMarks xForm(SpikeMarks spike) {
+        if (yMultiplier == -1) {
+            switch (spike) {
+                case LEFT:
+                    return SpikeMarks.RIGHT;
+                case RIGHT:
+                    return SpikeMarks.LEFT;
+            }
+        }
+        return spike;
+    }
 
     /*
      * MeepMeep calls this routine to get a trajectory sequence action to draw. Modify the
