@@ -4,7 +4,6 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -17,15 +16,12 @@ public abstract class BaseTeleOp extends BaseOpMode {
     // Set to false for competitions to remove lags
     public static final boolean TESTING = true;
 
-    public MecanumDrive drive;
     private ArmMechanism arm;
 
     ElapsedTime time = new ElapsedTime();
 
     @Override
     public void runOpMode() {
-        drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
-
         initializeHardware();
 
         if (armMotor != null) {

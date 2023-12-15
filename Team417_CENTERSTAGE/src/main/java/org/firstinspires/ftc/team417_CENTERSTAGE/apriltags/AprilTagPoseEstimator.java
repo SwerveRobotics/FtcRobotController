@@ -57,7 +57,7 @@ public class AprilTagPoseEstimator {
     }
 
     public AprilTagPoseEstimator(HardwareMap hardwareMap) {
-        new AprilTagPoseEstimator(hardwareMap, null);
+        this(hardwareMap, null);
     }
 
     /**

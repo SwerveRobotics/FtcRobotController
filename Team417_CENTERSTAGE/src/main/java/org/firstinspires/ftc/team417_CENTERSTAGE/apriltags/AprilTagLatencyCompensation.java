@@ -20,8 +20,8 @@ public class AprilTagLatencyCompensation {
             if (mecanumDrive.twistList.size() > 0) {
                 TwistWithTimestamp oldestTwist = mecanumDrive.twistList.get(mecanumDrive.twistList.size() - 1);
                 double currentTime = mecanumDrive.clock.milliseconds();
-                while (oldestTwist.timestamp < currentTime - mecanumDrive.myAprilTagPoseEstimator.CAMERA_LATENCY
-                        + (1000 / mecanumDrive.myAprilTagPoseEstimator.visionPortal.getFps())) {
+                while (oldestTwist.timestamp < currentTime - (mecanumDrive.myAprilTagPoseEstimator.CAMERA_LATENCY
+                        + (1000 / mecanumDrive.myAprilTagPoseEstimator.visionPortal.getFps()) + 200)) {
                     mecanumDrive.twistList.remove(oldestTwist);
                     oldestTwist = mecanumDrive.twistList.get(mecanumDrive.twistList.size() - 1);
                     currentTime = mecanumDrive.clock.milliseconds();

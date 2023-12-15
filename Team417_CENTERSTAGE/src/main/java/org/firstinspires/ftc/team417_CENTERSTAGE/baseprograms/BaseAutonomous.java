@@ -30,7 +30,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
     public static double APRIL_TAG_SLEEP_TIME = 500;
     public static double NO_APRIL_TAG_SLEEP_TIME = 5000;
 
-    private final boolean USE_OPEN_CV_PROP_DETECTION = true;
+    private final boolean USE_OPEN_CV_PROP_DETECTION = false;
 
     public static double INTAKE_SPEED = 1;
     public static double INTAKE_TIME = 2; // in seconds
@@ -41,16 +41,16 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
     public static double NANO_TO_SECONDS_MULTIPLIER = 1e-9;
 
-    MecanumDrive drive;
-
-    public OpenCvColorDetection myColorDetection = new OpenCvColorDetection(this);;
+    public OpenCvColorDetection myColorDetection;
 
     public void initializeAuto() {
         telemetry.addData("Init State", "Init Started");
         telemetry.update();
-        myColorDetection.init();
+        if (USE_OPEN_CV_PROP_DETECTION) {
+            myColorDetection = new OpenCvColorDetection(this);
+            myColorDetection.init();
+        }
         initializeHardware();
-        drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
         telemetry.addData("Init State", "Init Finished");
 
@@ -67,19 +67,19 @@ abstract public class BaseAutonomous extends BaseOpMode {
     }
 
     public void runAuto(boolean red, boolean close, boolean test) {
-        if (red) {
-            myColorDetection.setDetectColor(OpenCvColorDetection.detectColorType.RED);
-            telemetry.addLine("Looking for red");
-        } else {
-            myColorDetection.setDetectColor(OpenCvColorDetection.detectColorType.BLUE);
-            telemetry.addLine("Looking for blue");
+        if (USE_OPEN_CV_PROP_DETECTION) {
+            if (red) {
+                myColorDetection.setDetectColor(OpenCvColorDetection.detectColorType.RED);
+                telemetry.addLine("Looking for red");
+            } else {
+                myColorDetection.setDetectColor(OpenCvColorDetection.detectColorType.BLUE);
+                telemetry.addLine("Looking for blue");
+            }
         }
 
         initializeAuto();
 
         waitForStart();
-
-        OpenCvColorDetection.SideDetected result = myColorDetection.detectTeamProp();
 
         /*The variable 'translateEnum' converts the OpenCV Enum by Hank to the Enum used by
         AutonDriveFactory created by Sawar.
@@ -87,7 +87,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
         AutonDriveFactory.SpikeMarks translateEnum;
 
         if (USE_OPEN_CV_PROP_DETECTION) {
-            result = myColorDetection.detectTeamProp();
+            OpenCvColorDetection.SideDetected result = myColorDetection.detectTeamProp();
+
             if (result == OpenCvColorDetection.SideDetected.LEFT) {
                 translateEnum = AutonDriveFactory.SpikeMarks.LEFT;
             } else if (result == OpenCvColorDetection.SideDetected.CENTER) {
@@ -96,7 +97,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
                 translateEnum = AutonDriveFactory.SpikeMarks.RIGHT;
             }
 
-            // Close cameras to avoid errors
+            // Close camera to avoid errors
+            myColorDetection.robotCamera.stopStreaming();
             myColorDetection.robotCamera.closeCameraDevice();
         } else {
             PropDistanceResults distanceResult = new PropDistanceResults();
@@ -128,7 +130,11 @@ abstract public class BaseAutonomous extends BaseOpMode {
             Actions.runBlocking(poseAndAction.action);
         }
 
+        telemetry.addLine("Running closing procedure: ");
+        telemetry.update();
+
         if (drive.myAprilTagPoseEstimator != null) {
+            drive.myAprilTagPoseEstimator.visionPortal.stopStreaming();
             drive.myAprilTagPoseEstimator.visionPortal.close();
         }
     }
@@ -145,18 +151,22 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
             // Variable to store the start time for comparison
             double startTime = 0;
+
             @Override
             public boolean run(TelemetryPacket packet) {
 
                 // Executes on the first loop to start the intake motor
                 if (startTime == 0) {
-                    intakeMotor.setPower(intakeSpeed);
+                    if (drive.isDevBot && intakeMotor != null) {
+                        intakeMotor.setPower(intakeSpeed);
+                    }
                     startTime = nanoTime() * NANO_TO_SECONDS_MULTIPLIER;
                 }
                 // Checks if the elapsed time is greater than the intake time to stop the motor
-                if(nanoTime() * NANO_TO_SECONDS_MULTIPLIER - startTime > intakeTime) {
-                    intakeMotor.setPower(0);
-
+                if (nanoTime() * NANO_TO_SECONDS_MULTIPLIER - startTime > intakeTime) {
+                    if (drive.isDevBot && intakeMotor != null) {
+                        intakeMotor.setPower(0);
+                    }
                     // Resets start time for the next run
                     startTime = 0;
                     return false;
@@ -205,9 +215,9 @@ class AutonDriveFactory {
         }
     }
 
-   /* Booleans 'isRed' (red or blue side), 'isFar' (far or close to backdrop)
-    'location' (center, middle, or right), and 'intake' (Action for use).
-    */
+    /* Booleans 'isRed' (red or blue side), 'isFar' (far or close to backdrop)
+     'location' (center, middle, or right), and 'intake' (Action for use).
+     */
     PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake) {
 
         if (isFar) {
@@ -319,14 +329,16 @@ class PropDistanceResults {
 
     //The angles in degrees that each spike mark is located at.
     public static double propSpot1Angle = 116, propSpot2Angle = 145,
-                         propSpot3Angle = 190, noSpikeMarkAngle = 220, doneAngle = 220;
+            propSpot3Angle = 190, noSpikeMarkAngle = 220, doneAngle = 220;
     //The max distance a result from the distance sensor can be for it to be considered.
     public static double maxDist = 28;
+
     enum SpikeMarks {
         LEFT,
         CENTER,
         RIGHT
     } //The different locations the function can return.
+
     public SpikeMarks result = SpikeMarks.LEFT; //The value the prop distance factory is returning.
 
     //Checks for the prop with the distance sensor while the robot is spinning.
@@ -338,6 +350,7 @@ class PropDistanceResults {
             private final ArrayList<PointF> SpikeMark3Pos = new ArrayList<>();
             private double initAngle; //The angle of the robot when the function is first called.
             private boolean inited = false; //If the function has inited.
+
             @Override
             public boolean run(TelemetryPacket packet) {
                 //Setup canvas to draw to later.
@@ -364,13 +377,13 @@ class PropDistanceResults {
 
                 //sets selected point to the current point the distance sensor is detecting.
                 selectedPoint = new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI)
-                                                    * distanceSensorReturn + drive.pose.position.x),
-                                           (float) (Math.sin(drive.pose.heading.log() + Math.PI)
-                                                    * distanceSensorReturn + drive.pose.position.y));
+                        * distanceSensorReturn + drive.pose.position.x),
+                        (float) (Math.sin(drive.pose.heading.log() + Math.PI)
+                                * distanceSensorReturn + drive.pose.position.y));
 
                 //if the distance sensor reading is within max dist,
                 // update the corresponding array with the point that the distance sensor is detecting.
-                if (distanceSensorReturn <= maxDist){
+                if (distanceSensorReturn <= maxDist) {
                     if (currentAngleRadians > Math.toRadians(noSpikeMarkAngle))
                         ;
                     else if (currentAngleRadians > Math.toRadians(propSpot3Angle)) {
@@ -439,7 +452,7 @@ class PropDistanceResults {
             }
 
             private void plotPointsInRoadRunner(ArrayList<PointF> arrayOfPoints, Canvas canvas) { //Plot each detected point.
-                for (PointF point: arrayOfPoints)
+                for (PointF point : arrayOfPoints)
                     canvas.fillRect(point.x - 1, point.y - 1, 3, 3);
             }
         };
@@ -462,6 +475,7 @@ class PropDistanceFactory {
     private final double xOffset = -24;
     private final double yOffset = 0;
     MecanumDrive drive;
+
     PropDistanceFactory(MecanumDrive drive) {
         this.drive = drive;
     }
@@ -489,7 +503,7 @@ class PropDistanceFactory {
             tangent = tangent * -1;
         }
 
-        Pose2d startPose = xForm(-34, -60, Math.PI /2, isRed, isFar);
+        Pose2d startPose = xForm(-34, -60, Math.PI / 2, isRed, isFar);
 
         TrajectoryActionBuilder builder
                 = this.drive.actionBuilder(startPose)
@@ -502,6 +516,7 @@ class PropDistanceFactory {
 
         return new PoseAndAction(builder.build(), startPose);
     }
+
     Action getMeepMeepAction() {
         return getDistanceAction(false, false, null).action;
     }
