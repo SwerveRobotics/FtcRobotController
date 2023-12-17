@@ -71,7 +71,7 @@ public final class MecanumDrive {
     public DcMotorEx[] motors;
 
     // Whether or not to use April Tags 
-    public final static boolean USE_APRIL_TAGS = false;
+    public final static boolean USE_APRIL_TAGS = true;
 
     public static String getBotName() {
         InspectionState inspection=new InspectionState();
@@ -252,6 +252,8 @@ public final class MecanumDrive {
     }
 
     public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
+        assert hardwareMap != null;
+
         // For the April Tag latency calculation 
         clock.reset();
 

@@ -57,7 +57,7 @@ public class AprilTagPoseEstimator {
     }
 
     public AprilTagPoseEstimator(HardwareMap hardwareMap) {
-        new AprilTagPoseEstimator(hardwareMap, null);
+        this(hardwareMap, null);
     }
 
     /**
@@ -283,36 +283,6 @@ public class AprilTagPoseEstimator {
         // Telemeters the current pose estimate
         if (telemetry != null && robotPoseEstimate != null) {
             telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)", robotPoseEstimate.x, robotPoseEstimate.y, Math.toDegrees(robotPoseEstimate.theta)));
-<<<<<<< HEAD
-
-            // Telemeters the pose info to FTC dashboard so that it draws the robot pose
-            // Remove before competition, could cause lags
-            //c.setStroke("#3F51B5");
-            //MecanumDrive.drawRobot(c, new Pose2d(robotPoseEstimate.x, robotPoseEstimate.y, robotPoseEstimate.theta));
-
-        /*
-        myOpMode.telemetry.addData("\n# AprilTags Detected", currentDetections.size());
-
-        // Step through the list of detections and display info for each one.
-        for (AprilTagDetection detection : currentDetections) {
-            if (detection.metadata != null) {
-                myOpMode.telemetry.addLine(String.format("\n==== (ID %d) %s", detection.id, detection.metadata.name));
-                myOpMode.telemetry.addLine(String.format("XYZ %6.1f %6.1f %6.1f  (inch)", detection.ftcPose.x + + Constants.DEVBOT_CAMERA_TO_CENTER_X, detection.ftcPose.y + + Constants.DEVBOT_CAMERA_TO_CENTER_Y, detection.ftcPose.z));
-                myOpMode.telemetry.addLine(String.format("PRY %6.1f %6.1f %6.1f  (deg)", detection.ftcPose.pitch, detection.ftcPose.roll, detection.ftcPose.yaw + + Constants.DEVBOT_CAMERA_TO_CENTER_ROT));
-                myOpMode.telemetry.addLine(String.format("RBE %6.1f %6.1f %6.1f  (inch, deg, deg)", detection.ftcPose.range, detection.ftcPose.bearing, detection.ftcPose.elevation));
-            } else {
-                myOpMode.telemetry.addLine(String.format("\n==== (ID %d) Unknown", detection.id));
-                myOpMode.telemetry.addLine(String.format("Center %6.0f %6.0f   (pixels)", detection.center.x, detection.center.y));
-            }
-        }   // end for() loop
-
-        // Add "key" information to telemetry
-        myOpMode.telemetry.addLine("\nkey:\nXYZ = X (Right), Y (Forward), Z (Up) dist.");
-        myOpMode.telemetry.addLine("PRY = Pitch, Roll & yaw) (XYZ Rotation)");
-        myOpMode.telemetry.addLine("RBE = Range, Bearing & Elevation");
-        */
-=======
->>>>>>> 37b8c301afa0b1711d89777ad46068ebd596328d
         }
     } // end method telemetryAprilTag()
 

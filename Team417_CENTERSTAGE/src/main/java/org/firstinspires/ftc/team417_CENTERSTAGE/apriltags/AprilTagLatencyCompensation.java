@@ -16,13 +16,12 @@ public class AprilTagLatencyCompensation {
         if (mecanumDrive.USE_APRIL_TAGS) {
             mecanumDrive.twistList.add(0, new TwistWithTimestamp(twist, mecanumDrive.clock.milliseconds()));
 
-            // Todo: change 5000 ms to (latency time + frame rate)
             // Keep only twists from less than five seconds ago
             if (mecanumDrive.twistList.size() > 0) {
                 TwistWithTimestamp oldestTwist = mecanumDrive.twistList.get(mecanumDrive.twistList.size() - 1);
                 double currentTime = mecanumDrive.clock.milliseconds();
-                while (oldestTwist.timestamp < currentTime - mecanumDrive.myAprilTagPoseEstimator.CAMERA_LATENCY
-                        + (1000 / mecanumDrive.myAprilTagPoseEstimator.visionPortal.getFps())) {
+                while (oldestTwist.timestamp < currentTime - (mecanumDrive.myAprilTagPoseEstimator.CAMERA_LATENCY
+                        + (1000 / mecanumDrive.myAprilTagPoseEstimator.visionPortal.getFps()) + 200)) {
                     mecanumDrive.twistList.remove(oldestTwist);
                     oldestTwist = mecanumDrive.twistList.get(mecanumDrive.twistList.size() - 1);
                     currentTime = mecanumDrive.clock.milliseconds();
@@ -32,7 +31,6 @@ public class AprilTagLatencyCompensation {
             mecanumDrive.myAprilTagPoseEstimator.updatePoseEstimate();
 
             Pose2d poseEstimation = mecanumDrive.myAprilTagPoseEstimator.estimatePose();
-
 
             if (poseEstimation != null && mecanumDrive.twistList.size() > 1) {
                 if (mecanumDrive.isDevBot) {
