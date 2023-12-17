@@ -43,7 +43,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
     MecanumDrive drive;
 
-    public OpenCvColorDetection myColorDetection = new OpenCvColorDetection(this);;
+    public OpenCvColorDetection myColorDetection = new OpenCvColorDetection(this);
 
     public void initializeAuto() {
         telemetry.addData("Init State", "Init Started");
