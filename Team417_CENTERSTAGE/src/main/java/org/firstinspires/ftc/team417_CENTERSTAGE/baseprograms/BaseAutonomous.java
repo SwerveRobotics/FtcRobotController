@@ -41,13 +41,9 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
     public static double NANO_TO_SECONDS_MULTIPLIER = 1e-9;
 
-<<<<<<< HEAD
     MecanumDrive drive;
 
     public OpenCvColorDetection myColorDetection = new OpenCvColorDetection(this);
-=======
-    public OpenCvColorDetection myColorDetection;
->>>>>>> eed675ddd1376c944a2f5313e223aa48ca5ce0c3
 
     public void initializeAuto() {
         telemetry.addData("Init State", "Init Started");
