@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 public class AlternativeRedRightPark extends BaseAutonomous {
     @Override
     public void runOpMode() {
-        initAuto();
+        initRedAuto();
         waitForStart();
         // right one tile, forward three, left one
         driveInches(24, 0);

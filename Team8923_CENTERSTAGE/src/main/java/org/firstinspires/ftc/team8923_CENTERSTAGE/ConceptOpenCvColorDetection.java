@@ -26,7 +26,6 @@
 package org.firstinspires.ftc.team8923_CENTERSTAGE;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 /*
  * This program demonstrates the use of EasyOpenCV to detect blue or red objects
@@ -42,7 +41,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 public class ConceptOpenCvColorDetection extends LinearOpMode {
     // create the openCV detection object
     //   pass (opmode: this) to the object so it could access the camera hardware
-    OpenCvColorDetection myColorDetection = new OpenCvColorDetection(this);
+    BlueOpenCvColorDetection myColorDetection = new BlueOpenCvColorDetection(this);
 
     @Override
     public void runOpMode() {

@@ -47,7 +47,7 @@ import java.util.List;
  * It uses the USB webcam named "RobotCamera" in the robot configuration, connected to the REV control hub
  */
 
-public class OpenCvColorDetection {
+public class RedOpenCvColorDetection {
     OpenCvCamera robotCamera;
     /* Declare OpMode members. */
     private LinearOpMode myOpMode = null;   // gain access to methods in the calling OpMode.
@@ -72,12 +72,12 @@ public class OpenCvColorDetection {
 
     // Define a constructor that allows the OpMode to pass a reference to itself
     //   in order to allow this class to access the camera hardware
-    public OpenCvColorDetection(LinearOpMode opmode) {
+    public RedOpenCvColorDetection(LinearOpMode opmode) {
         myOpMode = opmode;
     }
 
     // set detection color
-   public void setDetectColor(detectColorType color) {
+    public void setDetectColor(detectColorType color) {
         myColor = color;
     }
 
@@ -90,7 +90,7 @@ public class OpenCvColorDetection {
         int cameraMonitorViewId = myOpMode.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", myOpMode.hardwareMap.appContext.getPackageName());
         robotCamera = OpenCvCameraFactory.getInstance().createWebcam(myOpMode.hardwareMap.get(WebcamName.class, "RobotCamera"), cameraMonitorViewId);
 
-        //setDetectColor(detectColorType.BLUE);
+        setDetectColor(detectColorType.BLUE);
         robotCamera.setPipeline(new ColorDetectPipeline());
 
         robotCamera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
@@ -118,6 +118,7 @@ public class OpenCvColorDetection {
         boolean viewportPaused = false;
 
         // matrices in the processing pipeline
+        Mat roiMat = new Mat();
         Mat blurredMat = new Mat();
         Mat hsvMat = new Mat();
         Mat filteredMat = new Mat();
@@ -125,9 +126,11 @@ public class OpenCvColorDetection {
         Mat outputMat = new Mat();
 
         public Mat processFrame(Mat inputMat) {
+            // resize the image to the roi so that stuff like volunteer's shirts aren't detected
+            roiMat = inputMat.submat(ConstantsOpenCV.roi);
             // blur the image to reduce the impact of noisy pixels
             //   each pixel is "averaged" with its neighboring pixels
-            Imgproc.GaussianBlur(inputMat, blurredMat, ConstantsOpenCV.BLUR_SIZE, 0);
+            Imgproc.GaussianBlur(roiMat, blurredMat, ConstantsOpenCV.BLUR_SIZE, 0);
 
             // convert image to HSV color space, which is better for detecting red and blue colors
             Imgproc.cvtColor(blurredMat, hsvMat, Imgproc.COLOR_RGB2HSV);
@@ -135,7 +138,7 @@ public class OpenCvColorDetection {
             // filter out the range of blue or red colors defined in
             //   Constants.BLUE_COLOR_DETECT_MIN_HSV and Constants.BLUE_COLOR_DETECT_MAX_HSV
             //   or Constants.RED_COLOR_DETECT_MIN_HSV and Constants.RED_COLOR_DETECT_MAX_HSV
-           if (myColor == detectColorType.BLUE) {
+            if (myColor == detectColorType.BLUE) {
                 Core.inRange(hsvMat, ConstantsOpenCV.BLUE_COLOR_DETECT_MIN_HSV, ConstantsOpenCV.BLUE_COLOR_DETECT_MAX_HSV, filteredMat);
             } else {
                 Core.inRange(hsvMat, ConstantsOpenCV.RED_COLOR_DETECT_MIN_HSV, ConstantsOpenCV.RED_COLOR_DETECT_MAX_HSV, filteredMat);
@@ -146,7 +149,7 @@ public class OpenCvColorDetection {
             Imgproc.findContours(filteredMat, contoursList, contourMask, Imgproc.RETR_TREE, Imgproc.CHAIN_APPROX_SIMPLE);
 
             // copy original image to output image for drawing overlay on
-            inputMat.copyTo(outputMat);
+            roiMat.copyTo(outputMat);
 
             //   iterate through list of contours, find max area contour
             int maxAreaContourIndex = -1;
@@ -197,12 +200,12 @@ public class OpenCvColorDetection {
 
     public Position detectColor() {
         Position position = Position.FOUR;
-        if (targetPoint.x < 213.3) {
-            position = Position.ONE;
-        } else if ((targetPoint.x > 213.3) && (targetPoint.x < 426.6)) {
-            position = Position.TWO;
-        } else if ((targetPoint.x > 426.6) && (targetPoint.x < 640)) {
-            position = Position.THREE;
+        if (targetPoint.x < 200.3) {
+            position = Position.ONE;//left
+        } else if (((targetPoint.x > 200.3) && (targetPoint.x < 640))) {
+            position = Position.TWO;//center
+        } else if (/* (targetPoint.x > 426.6) && (targetPoint.x < 640) || */targetDetected == false) {
+            position = Position.THREE;//right
         } else {
             position = Position.FOUR;
         }

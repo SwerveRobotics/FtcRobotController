@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 public class BlueLeftPark extends BaseAutonomous {
     @Override
     public void runOpMode() {
-        initAuto();
+        initBlueAuto();
         waitForStart();
         // go forward then strafe to backstage
         driveInches(0, 4);

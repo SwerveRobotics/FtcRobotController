@@ -5,13 +5,12 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 public class RandomizationRedRightPark extends BaseAutonomous {
     public void runOpMode() {
-        initAuto();
+        initRedAuto();
         waitForStart();
-      //myColorDetection.setDetectColor(OpenCvColorDetection.detectColorType.RED);
-        switch (myColorDetection.detectColor()) {
+        switch (myRedColorDetection.detectColor()) {
             case ONE:
                 driveInches(0, 24);
-                pivot(-90);
+                pivot(90);
                 // pivot - 90 degrees
                 runIntake(0.5, 2);
                 // ouput pixel
@@ -34,7 +33,7 @@ public class RandomizationRedRightPark extends BaseAutonomous {
             case THREE:
                 driveInches(0, 24);
                 // pivot 90 degrees
-                pivot(90);
+                pivot(-90);
                 // output pixel
                 runIntake(0.5, 2);
                 // pivot 90 degrees
