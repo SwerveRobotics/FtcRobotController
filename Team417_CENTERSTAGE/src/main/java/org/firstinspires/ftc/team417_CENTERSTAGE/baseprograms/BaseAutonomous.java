@@ -220,7 +220,7 @@ class AutonDriveFactory {
     /* Booleans 'isRed' (red or blue side), 'isFar' (far or close to backdrop)
      'location' (center, middle, or right), and 'intake' (Action for use).
      */
-    PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake) {
+    PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake, boolean isWallParking) {
 
         if (isFar) {
             xOffset = 0;
@@ -247,6 +247,58 @@ class AutonDriveFactory {
         if (intake == null) {
             intake = new SleepAction(3);
         }
+
+        //Auto rework skeleton
+
+        //starting position
+        TrajectoryActionBuilder spike = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
+
+        //moving forward to spike marks
+        spike = spike.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)));
+
+        //if statement for different cases for spike marks
+        if(location == SpikeMarks.LEFT) {
+
+            // turns to face left spike mark
+            spike = spike.splineTo(xForm(new Vector2d(-35, -34)), xForm((Math.toRadians(180) + (1e-6))));
+        } else if(location == SpikeMarks.CENTER) {
+
+            // moves forward to center spike mark
+            spike = spike.splineTo(xForm(new Vector2d(-34, -35)), xForm(Math.toRadians(90)));
+        } else {
+
+            // turns to face rights mark
+            spike = spike.splineTo(xForm(new Vector2d(-33, -37)), xForm(Math.toRadians(0)));
+
+        }
+
+        spike = spike.stopAndAdd(intake);
+
+
+        //if statments for whether parking is closer to the wall or not
+        if(isWallParking == false) {
+
+            //if statments for spike mark cases
+            if(location == SpikeMarks.LEFT ) {
+
+                // from the left mark
+                spike = spike.splineToConstantHeading(xForm(new Vector2d(-30, -34)), xForm(Math.toRadians(180)))
+                        .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)));
+            } else if(location == SpikeMarks.CENTER) {
+                spike = spike.splineTo(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
+                        .splineToConstantHeading(xFormCenter(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
+                        .splineToConstantHeading(xFormCenter(new Vector2d(-55, -30)), xForm(Math.toRadians(90)));
+            } else {
+                spike = spike.splineTo(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
+                        .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)));
+            }
+
+            // need to add more cases for if parking is farther from wall 
+        }
+
+
+
+
 
         TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
