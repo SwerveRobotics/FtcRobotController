@@ -182,7 +182,7 @@ public class ArmMechanism {
         double[] ArmPositions = new double[] {BaseOpMode.ARM_MOTOR_MIN_POSITION, BaseOpMode.ARM_MOTOR_MAX_POSITION / 2.0,
                 BaseOpMode.ARM_MOTOR_MAX_POSITION * (3.0/4.0), BaseOpMode.ARM_MOTOR_MAX_POSITION}; //array of arm positions the dpad can move to.
         double armCurrentLocation = armMotor.getCurrentPosition(); //The current distance the arm is from its init location
-        double rStickTilt = -gamepad2.right_stick_y; //The amount the right stick has been moved
+        double lStickTilt = -gamepad2.left_stick_y; //The amount the right stick has been moved
         final double rStickDeadZone = 0.1, armPosEpsilon = 25; //rStickDeadZone: the amount of space that is considered zero, armPosEpsilon: the amount of error between the current location and the goal location that is acceptable.
         final double startUpwardTiltPos = 75, startUpwardResetPos = 1500, endUpwardResetPos = 2000, startDownwardTiltPos = 1500, endDownwardTiltPos = 300; //Locations the dumper should tilt so the arm does not hit the robot.
         final double armMoveToPositionVelocity = 0.5; //The speed the arm moves while in move to position mode
@@ -205,10 +205,10 @@ public class ArmMechanism {
 
         //If using stick control update the speed of arm based on the stick tilt
         if (usingStick) {
-            armMotor.setPower(rStickTilt * rStickSensitivity);
+            armMotor.setPower(lStickTilt * rStickSensitivity);
 
             //If stick is inside dead zone set motor power to zero
-            if (rStickTilt < rStickDeadZone && rStickTilt > -rStickDeadZone)
+            if (lStickTilt < rStickDeadZone && lStickTilt > -rStickDeadZone)
                 armMotor.setPower(0);
         } else {
             //if the arm is within 50 encoder ticks of it's goal, stop it from moving.
@@ -220,10 +220,10 @@ public class ArmMechanism {
                 armMotor.setPower(armMoveToPositionVelocity);
         }
 
-        if ((armMotor.getCurrentPosition() > startUpwardTiltPos && armMotor.getCurrentPosition() < startUpwardResetPos) && armMotor.getPower() > 0)
-            dumperServo.setPosition(DUMPER_SERVO_TILT_POSITION);
-        else if (armMotor.getCurrentPosition() < endUpwardResetPos && armMotor.getPower() > 0)
+        if (armMotor.getCurrentPosition() < startUpwardTiltPos)
             dumperServo.setPosition(DUMPER_SERVO_RESET_POSITION);
+        if (armMotor.getCurrentPosition() < startUpwardResetPos && armMotor.getPower() > 0)
+            dumperServo.setPosition(DUMPER_SERVO_TILT_POSITION);
 
         if (armMotor.getCurrentPosition() < endDownwardTiltPos && armMotor.getPower() < 0)
             dumperServo.setPosition(DUMPER_SERVO_RESET_POSITION);

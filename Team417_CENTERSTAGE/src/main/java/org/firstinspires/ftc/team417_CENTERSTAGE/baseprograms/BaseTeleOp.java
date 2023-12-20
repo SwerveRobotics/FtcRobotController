@@ -177,7 +177,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     public void controlDumperUsingControllers() {
         if (!bIsPressed && gamepad2.b) {
-            if (dumperDumped) {
+            if (!dumperDumped) {
                 dumpDumper();
             } else {
                 resetDumper();
@@ -188,7 +188,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
         bIsPressed = gamepad2.b;
 
         if (!yIsPressed && gamepad2.y) {
-            if (dumperDumped) {
+            if (!dumperDumped) {
                 tiltDumper();
             } else {
                 resetDumper();

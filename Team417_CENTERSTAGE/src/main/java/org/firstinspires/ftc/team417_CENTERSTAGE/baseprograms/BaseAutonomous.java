@@ -103,7 +103,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
         } else {
             PropDistanceResults distanceResult = new PropDistanceResults();
             PropDistanceFactory propDistance = new PropDistanceFactory(drive);
-            Action sweepAction = distanceResult.sweepAction(drive, distSensor, distanceResult);
+            Action sweepAction = distanceResult.sweepAction(drive, distSensor, distanceResult, !close);
             PropDistanceFactory.PoseAndAction poseAndAction = propDistance.getDistanceAction(red, !close, sweepAction);
 
             // Do the robot movement for prop detection:
@@ -342,14 +342,30 @@ class PropDistanceResults {
     public SpikeMarks result = SpikeMarks.LEFT; //The value the prop distance factory is returning.
 
     //Checks for the prop with the distance sensor while the robot is spinning.
-    public Action sweepAction(MecanumDrive drive, DistanceSensor distSensor, PropDistanceResults results) {
+    public Action sweepAction(MecanumDrive drive, DistanceSensor distSensor, PropDistanceResults results, boolean isFar) {
         return new Action() {
             //Arrays that store the points that the distance sensor detected were on a spike mark.
-            private final ArrayList<PointF> SpikeMark1Pos = new ArrayList<>();
-            private final ArrayList<PointF> SpikeMark2Pos = new ArrayList<>();
-            private final ArrayList<PointF> SpikeMark3Pos = new ArrayList<>();
+            private final ArrayList<PointF> LeftSpikeMarkPoints = new ArrayList<>();
+            private final ArrayList<PointF> CenterSpikeMarkPoints = new ArrayList<>();
+            private final ArrayList<PointF> RightSpikeMarkPoints = new ArrayList<>();
             private double initAngle; //The angle of the robot when the function is first called.
             private boolean inited = false; //If the function has inited.
+
+            private double xFormAngleDegrees(double theta){
+                if (!isFar)
+                    return 360 - theta;
+                else
+                    return theta;
+            }
+
+            private double angleToScope(double angle) {
+                while (angle > Math.PI)
+                    angle -= 2 * Math.PI;
+                while (angle < -Math.PI)
+                    angle += 2 * Math.PI;
+
+                return angle;
+            }
 
             @Override
             public boolean run(TelemetryPacket packet) {
@@ -362,6 +378,11 @@ class PropDistanceResults {
                 double currentAngleRadians;
                 //The x and y location of the point the distance sensor is looking at.
                 PointF selectedPoint;
+                double xOffset = 2.75, yOffset = 4;
+                double rotationOffset;
+
+                rotationOffset = Math.tan(yOffset / (xOffset + distanceSensorReturn));
+                rotationOffset = angleToScope(rotationOffset);
 
                 //Only runs once when the function is first called. Sets the value of the starting angle.
                 if (!inited) {
@@ -371,70 +392,81 @@ class PropDistanceResults {
 
                 //sets the current angle the robot is facing.
                 currentAngleRadians = (drive.pose.heading.log() + Math.PI) - initAngle;
+
                 // Allow 3 degrees of backtracking
                 if (currentAngleRadians < Math.toRadians(-3))
                     currentAngleRadians += 2 * Math.PI;
 
                 //sets selected point to the current point the distance sensor is detecting.
-                selectedPoint = new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI)
+                selectedPoint = new PointF((float) (Math.cos(drive.pose.heading.log() + Math.PI - rotationOffset)
                         * distanceSensorReturn + drive.pose.position.x),
                         (float) (Math.sin(drive.pose.heading.log() + Math.PI)
                                 * distanceSensorReturn + drive.pose.position.y));
 
                 //if the distance sensor reading is within max dist,
                 // update the corresponding array with the point that the distance sensor is detecting.
-                if (distanceSensorReturn <= maxDist) {
-                    if (currentAngleRadians > Math.toRadians(noSpikeMarkAngle))
+                if (distanceSensorReturn <= maxDist && isFar) {
+                    if (currentAngleRadians - rotationOffset > Math.toRadians(noSpikeMarkAngle))
                         ;
-                    else if (currentAngleRadians > Math.toRadians(propSpot3Angle)) {
-                        SpikeMark3Pos.add(selectedPoint);
-                    } else if (currentAngleRadians > Math.toRadians(propSpot2Angle)) {
-                        SpikeMark2Pos.add(selectedPoint);
-                    } else if (currentAngleRadians > Math.toRadians(propSpot1Angle)) {
-                        SpikeMark1Pos.add(selectedPoint);
+                    else if (currentAngleRadians - rotationOffset > Math.toRadians(propSpot3Angle)) {
+                        RightSpikeMarkPoints.add(selectedPoint);
+                    } else if (currentAngleRadians - rotationOffset > Math.toRadians(propSpot2Angle)) {
+                        CenterSpikeMarkPoints.add(selectedPoint);
+                    } else if (currentAngleRadians - rotationOffset > Math.toRadians(propSpot1Angle)) {
+                        LeftSpikeMarkPoints.add(selectedPoint);
+                    }
+                } else if (distanceSensorReturn <= maxDist) {
+                    if (currentAngleRadians - rotationOffset < Math.toRadians(360.0 - noSpikeMarkAngle))
+                        ;
+                    else if (currentAngleRadians - rotationOffset < Math.toRadians(360.0 - propSpot3Angle)) {
+                        LeftSpikeMarkPoints.add(selectedPoint);
+                    } else if (currentAngleRadians - rotationOffset < Math.toRadians(360.0 - propSpot2Angle)) {
+                        CenterSpikeMarkPoints.add(selectedPoint);
+                    } else if (currentAngleRadians - rotationOffset < Math.toRadians(360.0 - propSpot1Angle)) {
+                        RightSpikeMarkPoints.add(selectedPoint);
                     }
                 }
 
                 //send the number of points in each array of detected points to FTC dashboard.
-                packet.put("propPos1", SpikeMark1Pos.size());
-                packet.put("propPos2", SpikeMark2Pos.size());
-                packet.put("propPos3", SpikeMark3Pos.size());
-                packet.put("noPropAngle", noSpikeMarkAngle);
+                packet.put("propPos1", LeftSpikeMarkPoints.size());
+                packet.put("propPos2", CenterSpikeMarkPoints.size());
+                packet.put("propPos3", RightSpikeMarkPoints.size());
+                packet.put("noPropAngle", xFormAngleDegrees(noSpikeMarkAngle));
                 packet.put("currentAngle", Math.toDegrees(currentAngleRadians));
 
                 //Plot the points from the first array of detected points on FTC dashboard in red.
                 canvas.setStrokeWidth(1);
                 canvas.setFill("#ff0000");
-                plotPointsInRoadRunner(SpikeMark1Pos, canvas);
+                plotPointsInRoadRunner(LeftSpikeMarkPoints, canvas);
 
                 //Plot the points from the second array of detected points on FTC dashboard in green.
                 canvas.setFill("#00ff00");
-                plotPointsInRoadRunner(SpikeMark2Pos, canvas);
+                plotPointsInRoadRunner(CenterSpikeMarkPoints, canvas);
 
                 //Plot the points from the third array of detected points on FTC dashboard in blue.
                 canvas.setFill("#0000ff");
-                plotPointsInRoadRunner(SpikeMark3Pos, canvas);
+                plotPointsInRoadRunner(RightSpikeMarkPoints, canvas);
 
                 //Draw a circle centered on the robot with the diameter of maxDist.
                 canvas.setStroke("#808080");
                 canvas.strokeCircle(drive.pose.position.x, drive.pose.position.y, maxDist);
 
                 //Draw lines to show the detection areas for each spike mark
-                plotPropSpots(Math.toRadians(propSpot1Angle), canvas);
-                plotPropSpots(Math.toRadians(propSpot2Angle), canvas);
-                plotPropSpots(Math.toRadians(propSpot3Angle), canvas);
+                plotPropSpots(Math.toRadians(xFormAngleDegrees(propSpot1Angle)), canvas);
+                plotPropSpots(Math.toRadians(xFormAngleDegrees(propSpot2Angle)), canvas);
+                plotPropSpots(Math.toRadians(xFormAngleDegrees(propSpot3Angle)), canvas);
 
                 //If the current angle of the is not past the end of the last spike mark,
                 // return true and restart the function.
-                if (currentAngleRadians < Math.toRadians(doneAngle))
+                if (currentAngleRadians < Math.toRadians(xFormAngleDegrees(doneAngle)))
                     return true;
 
                 //Once the robot is past the end of the last spike mark,
                 // find the array of detected points that has the most points in it and update result.
-                if (SpikeMark1Pos.size() > SpikeMark2Pos.size() && SpikeMark1Pos.size() > SpikeMark3Pos.size()) {
+                if (LeftSpikeMarkPoints.size() > CenterSpikeMarkPoints.size() && LeftSpikeMarkPoints.size() > RightSpikeMarkPoints.size()) {
                     results.result = SpikeMarks.RIGHT;
 
-                } else if (SpikeMark2Pos.size() > SpikeMark3Pos.size()) {
+                } else if (CenterSpikeMarkPoints.size() > RightSpikeMarkPoints.size()) {
                     results.result = SpikeMarks.CENTER;
 
                 } else {
@@ -491,6 +523,13 @@ class PropDistanceFactory {
         return new Pose2d(x, y, theta);
     }
 
+    double xFormAngle(double theta, boolean isFar) {
+        if (!isFar)
+            return theta * -1;
+        else
+            return theta;
+    }
+
     //drives and spins to find the prop location.
     PoseAndAction getDistanceAction(boolean isRed, boolean isFar, Action sweepAction) {
         double tangent = Math.PI / 2;
@@ -503,14 +542,14 @@ class PropDistanceFactory {
             tangent = tangent * -1;
         }
 
-        Pose2d startPose = xForm(-34, -60, Math.PI / 2, isRed, isFar);
+        Pose2d startPose = xForm(-36, -60, Math.PI / 2, isRed, isFar);
 
         TrajectoryActionBuilder builder
                 = this.drive.actionBuilder(startPose)
                 .setTangent(tangent)
                 .splineToLinearHeading(xForm(-42, -45, Math.PI / 2, isRed, isFar), tangent)
                 .afterTime(0, sweepAction)
-                .turn(2 * Math.PI)
+                .turn(xFormAngle(2 * Math.PI, isFar))
                 .setTangent(-tangent)
                 .splineToLinearHeading(startPose, -tangent);
 

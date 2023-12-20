@@ -7,7 +7,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
+import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
@@ -25,13 +27,14 @@ public abstract class BaseOpMode extends LinearOpMode {
     static final public double ARM_MOTOR_MAX_POSITION = 4200;
     public Servo dumperServo;
     public static final double DUMPER_SERVO_TILT_POSITION = 0.4;
-    public static final double DUMPER_SERVO_RESET_POSITION = 0.527;
+    public static final double DUMPER_SERVO_RESET_POSITION = 0.51;
     public static final double DUMPER_SERVO_DUMP_POSITION = 0.2;
     public Servo gateServo;
     public final double GATE_SERVO_OPEN_POSITION = 0;
     public final double GATE_SERVO_CLOSE_POSITION = 0.55;
     public Servo droneServo;
     public DistanceSensor distSensor;
+    public static ElapsedTime TIME = new ElapsedTime();
 
     //Initializes motors, servos, and sensors
     public void initializeHardware() {
@@ -46,6 +49,9 @@ public abstract class BaseOpMode extends LinearOpMode {
             //    DigitalChannel object for LEDs makes this counterintuitive, on = false, off = true
             red.setState(true);
             green.setState(true);
+
+            //sensors
+            distSensor = hardwareMap.get(DistanceSensor.class, "distance");
         } else {
             //Mechanism Motors
             intakeMotor = initializeMotor("IntakeMotor", DcMotor.Direction.FORWARD);
@@ -55,6 +61,9 @@ public abstract class BaseOpMode extends LinearOpMode {
             dumperServo = initializeServo("DumperServo", Servo.Direction.FORWARD);
             gateServo = initializeServo("GateServo", Servo.Direction.FORWARD);
             droneServo = initializeServo("droneServo", Servo.Direction.FORWARD);
+
+            //sensors
+            distSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
         }
     }
 
