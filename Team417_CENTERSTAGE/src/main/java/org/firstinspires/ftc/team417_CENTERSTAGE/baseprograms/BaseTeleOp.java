@@ -63,9 +63,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
             telemetry.update();
         }
-
-        // Close drive (release resources)
-        drive.close();
     }
 
     boolean leftBumperIsPressed = false;

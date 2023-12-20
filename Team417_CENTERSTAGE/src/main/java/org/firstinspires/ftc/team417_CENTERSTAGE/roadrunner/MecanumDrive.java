@@ -47,36 +47,17 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagLatencyCompensation;
-import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagPoseEstimator;
-import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.TwistWithTimestamp;
+import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagLatencyHelper;
 import org.firstinspires.inspection.InspectionState;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 @Config
 public final class MecanumDrive {
-    // For the April Tag latency calculation 
-    public ElapsedTime clock = new ElapsedTime();
-
-    // To keep a record of twists to be used by April Tag latency compensation 
-    public ArrayList<TwistWithTimestamp> twistList;
-
-    // To detect April Tags to correct drift 
-    public AprilTagPoseEstimator myAprilTagPoseEstimator;
-
-    // To detect the motion of the motors 
-    public DcMotorEx[] motors;
-
-    // Whether or not to use April Tags 
-    public final static boolean USE_APRIL_TAGS = false;
-
     public static String getBotName() {
         InspectionState inspection=new InspectionState();
         inspection.initializeLocal();
@@ -257,16 +238,6 @@ public final class MecanumDrive {
     }
 
     public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
-        assert hardwareMap != null;
-
-        // For the April Tag latency calculation 
-        clock.reset();
-
-        if (USE_APRIL_TAGS) {
-            // To detect April Tags to correct drift 
-            myAprilTagPoseEstimator = new AprilTagPoseEstimator(hardwareMap);
-        }
-
         this.pose = pose;
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
@@ -315,20 +286,7 @@ public final class MecanumDrive {
             localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
         }
 
-        // To detect the motion of the motors 
-        motors = new DcMotorEx[]{rightBack, rightFront, leftBack, leftFront};
-
-        // To keep a record of twists to be used by April Tag latency compensation 
-        twistList = new ArrayList<>();
-
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
-    }
-
-    // Closes and releases resources 
-    public void close() {
-        if (myAprilTagPoseEstimator != null) {
-            myAprilTagPoseEstimator.visionPortal.close();
-        }
     }
 
     public void setDrivePowers(PoseVelocity2d powers) {
@@ -389,6 +347,11 @@ public final class MecanumDrive {
             Pose2dDual<Time> txWorldTarget = timeTrajectory.get(t);
 
             PoseVelocity2d robotVelRobot = updatePoseEstimate();
+
+            Pose2d tentativePose = ATLHelper.refinePose();
+            if (tentativePose != null) {
+                pose = tentativePose;
+            }
 
             PoseVelocity2dDual<Time> command = new HolonomicController(
                     PARAMS.axialGain, PARAMS.lateralGain, PARAMS.headingGain,
@@ -511,14 +474,24 @@ public final class MecanumDrive {
         }
     }
 
+    // An AprilTagLatencyHelper instance in order to add twists to it
+    AprilTagLatencyHelper ATLHelper;
+
+    public void setATLHelper(AprilTagLatencyHelper ATLHelper) {
+        this.ATLHelper = ATLHelper;
+    }
+
     public PoseVelocity2d updatePoseEstimate() {
         // Twists are a change over a single sensor loop of the robot's position. It has
         //    an angle and a line component, which can be converted to an x, y, and z.
         Twist2dDual<Time> twist = localizer.update();
 
-        AprilTagLatencyCompensation.compensateForLatency(this, twist);
+        // Update the pose estimate if necessary based on the April Tag Helper
+        if (ATLHelper != null) {
+            ATLHelper.addTwist(twist);
+        }
 
-        //This was the original location of: "pose = pose.plus(twist.value());"
+        pose = pose.plus(twist.value());
 
         poseHistory.add(pose);
         while (poseHistory.size() > 100) {

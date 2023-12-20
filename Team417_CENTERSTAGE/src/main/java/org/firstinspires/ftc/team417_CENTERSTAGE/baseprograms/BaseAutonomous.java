@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagPoseEstimator;
 import org.firstinspires.ftc.team417_CENTERSTAGE.opencv.OpenCvColorDetection;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
@@ -30,6 +31,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
     public static double APRIL_TAG_SLEEP_TIME = 500;
     public static double NO_APRIL_TAG_SLEEP_TIME = 5000;
 
+    private final boolean USE_APRIL_TAGS = false;
     private final boolean USE_OPEN_CV_PROP_DETECTION = false;
 
     public static double INTAKE_SPEED = 1;
@@ -43,7 +45,9 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
     MecanumDrive drive;
 
-    public OpenCvColorDetection myColorDetection = new OpenCvColorDetection(this);
+
+    public OpenCvColorDetection myColorDetection;
+    public AprilTagPoseEstimator myATPoseEstimator;
 
     public void initializeAuto() {
         telemetry.addData("Init State", "Init Started");
@@ -57,7 +61,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
         telemetry.addData("Init State", "Init Finished");
 
         // Allow the OpenCV to process
-        if (drive.USE_APRIL_TAGS) {
+        if (USE_APRIL_TAGS) {
             sleep((long) APRIL_TAG_SLEEP_TIME);
         } else {
             sleep((long) NO_APRIL_TAG_SLEEP_TIME);
@@ -99,8 +103,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
                 translateEnum = AutonDriveFactory.SpikeMarks.RIGHT;
             }
 
-            // Close camera to avoid errors
-            myColorDetection.robotCamera.stopStreaming();
+            // Since April Tag Detector objects cannot exist at the same time as any other robot
+            //     camera objects, close the robot camera first... (see below)
             myColorDetection.robotCamera.closeCameraDevice();
         } else {
             PropDistanceResults distanceResult = new PropDistanceResults();
@@ -123,6 +127,15 @@ abstract public class BaseAutonomous extends BaseOpMode {
             telemetry.update();
         }
 
+        if (USE_APRIL_TAGS) {
+            // (see above) ...and only then initialize the April Tag Pose Estimator
+            myATPoseEstimator = new AprilTagPoseEstimator(hardwareMap, telemetry);
+
+            // Pass an April Tag Helper object so drive can add twists to it (See MecanumDrive for
+            //     updatePoseEstimate() an explanation on twists)
+            drive.setATLHelper(myATPoseEstimator.myAprilTagLatencyHelper);
+        }
+
         AutonDriveFactory auton = new AutonDriveFactory(drive);
         AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(1, 2));
 
@@ -135,9 +148,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
         telemetry.addLine("Running closing procedure: ");
         telemetry.update();
 
-        if (drive.myAprilTagPoseEstimator != null) {
-            drive.myAprilTagPoseEstimator.visionPortal.stopStreaming();
-            drive.myAprilTagPoseEstimator.visionPortal.close();
+        if (myATPoseEstimator != null) {
+            myATPoseEstimator.visionPortal.close();
         }
     }
 
