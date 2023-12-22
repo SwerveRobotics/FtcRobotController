@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.ArmMechanism;
+import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.autoDriveTo;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 @Config
@@ -19,6 +20,8 @@ public abstract class BaseTeleOp extends BaseOpMode {
     private ArmMechanism arm;
 
     ElapsedTime time = new ElapsedTime();
+    autoDriveTo autoDrive;
+    TelemetryPacket packet = new TelemetryPacket();
 
     @Override
     public void runOpMode() {
@@ -30,9 +33,17 @@ public abstract class BaseTeleOp extends BaseOpMode {
             droneServo.setPosition(droneServoHoldingPos);
         }
 
+        autoDrive = new autoDriveTo(drive);
+
+        packet.put("velocity", 0);
+
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+        dashboard.sendTelemetryPacket(packet);
+
         waitForStart();
 
         while (opModeIsActive()) {
+
             resetIMUIfNeeded();
             driveUsingControllers(false);
 
@@ -49,7 +60,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
                 c.setStroke("#3F5100");
                 MecanumDrive.drawRobot(c, drive.pose);
 
-                FtcDashboard dashboard = FtcDashboard.getInstance();
                 dashboard.sendTelemetryPacket(p);
             }
 
@@ -108,12 +118,17 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
         mecanumDrive(x, y, rot);
     }
+    boolean usingStick = true;
+    boolean dPadUpPressed;
 
     public void driveUsingControllers(boolean curve) {
         sensitive = gamepad1.right_bumper;
 
         double sensitivity, rotSensitivity;
         double strafeConstant = 1.1;
+        double x, y, rot;
+        double deadZone = 0.02;
+        boolean hasDriveToInit = false;
 
         if (sensitive) {
             sensitivity = 0.5;
@@ -123,17 +138,31 @@ public abstract class BaseTeleOp extends BaseOpMode {
             rotSensitivity = 1;
         }
 
-        double x, y, rot;
-        if (curve) {
-            x = curveStick(gamepad1.left_stick_x) * strafeConstant * sensitivity;
-            y = curveStick(-gamepad1.left_stick_y) * sensitivity;
-            rot = curveStick(gamepad1.right_stick_x) * rotSensitivity;
-        } else {
-            x = gamepad1.left_stick_x * strafeConstant * sensitivity;
-            y = -gamepad1.left_stick_y * sensitivity;
-            rot = gamepad1.right_stick_x * rotSensitivity;
+        if (Math.abs(gamepad1.left_stick_y) > deadZone || Math.abs(gamepad1.left_stick_x) > deadZone ||
+                Math.abs(gamepad1.right_stick_y) > deadZone || Math.abs(gamepad1.right_stick_x) > deadZone)
+            usingStick = true;
+        else if (gamepad1.dpad_up && !dPadUpPressed) {
+            usingStick = false;
+            hasDriveToInit = true;
         }
-        mecanumDrive(x, y, rot);
+
+        telemetry.addData("hasDriveToInit", hasDriveToInit);
+
+        if (usingStick) {
+            if (curve) {
+                x = curveStick(gamepad1.left_stick_x) * strafeConstant * sensitivity;
+                y = curveStick(-gamepad1.left_stick_y) * sensitivity;
+                rot = curveStick(gamepad1.right_stick_x) * rotSensitivity;
+            } else {
+                x = gamepad1.left_stick_x * strafeConstant * sensitivity;
+                y = -gamepad1.left_stick_y * sensitivity;
+                rot = gamepad1.right_stick_x * rotSensitivity;
+            }
+            mecanumDrive(x, y, rot);
+        } else
+            autoDrive.driveTo(0, 0, hasDriveToInit);
+
+        dPadUpPressed = gamepad1.dpad_up;
     }
 
     public void intakeUsingControllers() {
