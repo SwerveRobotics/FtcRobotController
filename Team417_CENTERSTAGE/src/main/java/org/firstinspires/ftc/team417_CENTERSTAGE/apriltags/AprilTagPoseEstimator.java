@@ -113,7 +113,7 @@ public class AprilTagPoseEstimator {
         }
 
         if (statusLight != null) {
-            statusLight.setState(true);
+            statusLight.setState(false);
         }
 
         // Choose a camera resolution. Not all cameras support all resolutions.
@@ -273,12 +273,15 @@ public class AprilTagPoseEstimator {
         boolean detecting;
         InfoWithDetection best = chooseBestAprilTag(knownAprilTagsDetected);
         if (best != null) {
+            telemetry.addLine(Integer.toString(best.detection.id));
             robotPoseEstimate = calculatePoseEstimate(best.detection, best.info);
             detecting = true;
         } else {
+            telemetry.addLine("None");
             robotPoseEstimate = null;
             detecting = false;
         }
+        telemetry.update();
 
         if (robotPoseEstimate != null) {
             myAprilTagLatencyHelper.updateMecanumDrive(estimatePose());
@@ -287,7 +290,7 @@ public class AprilTagPoseEstimator {
         // setState is reversed (true = off, false = on) so the extra ! in front is necessary
         // Cannot fix this, SDK problem
         if (statusLight != null) {
-            statusLight.setState(!(robotPoseEstimate == null));
+            statusLight.setState(!detecting);
         }
 
         // Telemeters the current pose estimate

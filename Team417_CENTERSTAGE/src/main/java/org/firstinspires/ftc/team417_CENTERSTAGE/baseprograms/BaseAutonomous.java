@@ -31,20 +31,14 @@ abstract public class BaseAutonomous extends BaseOpMode {
     public static double APRIL_TAG_SLEEP_TIME = 500;
     public static double NO_APRIL_TAG_SLEEP_TIME = 5000;
 
-    private final boolean USE_APRIL_TAGS = false;
-    private final boolean USE_OPEN_CV_PROP_DETECTION = false;
+    private final boolean USE_APRIL_TAGS = true;
+    private final boolean USE_OPEN_CV_PROP_DETECTION = true;
 
     public static double INTAKE_SPEED = 1;
     public static double INTAKE_TIME = 2; // in seconds
-
     public static double INTAKE_SPEED2 = 1;
-
     public static double INTAKE_TIME2 = 10; // in seconds
-
     public static double NANO_TO_SECONDS_MULTIPLIER = 1e-9;
-
-    MecanumDrive drive;
-
 
     public OpenCvColorDetection myColorDetection;
     public AprilTagPoseEstimator myATPoseEstimator;
@@ -73,7 +67,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
     }
 
     public void runAuto(boolean red, boolean close, boolean test) {
-        if (USE_OPEN_CV_PROP_DETECTION) {
+        if (myColorDetection != null) {
             if (red) {
                 myColorDetection.setDetectColor(OpenCvColorDetection.detectColorType.RED);
                 telemetry.addLine("Looking for red");
@@ -92,7 +86,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
         */
         AutonDriveFactory.SpikeMarks translateEnum;
 
-        if (USE_OPEN_CV_PROP_DETECTION) {
+        if (myColorDetection != null) {
             OpenCvColorDetection.SideDetected result = myColorDetection.detectTeamProp();
 
             if (result == OpenCvColorDetection.SideDetected.LEFT) {

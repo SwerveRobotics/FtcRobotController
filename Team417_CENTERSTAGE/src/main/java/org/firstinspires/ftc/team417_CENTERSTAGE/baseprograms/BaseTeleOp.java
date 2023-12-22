@@ -8,6 +8,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagPoseEstimator;
 import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.ArmMechanism;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
@@ -20,9 +21,22 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     ElapsedTime time = new ElapsedTime();
 
+    private final boolean USE_APRIL_TAGS = true;
+
+    public AprilTagPoseEstimator myATPoseEstimator;
+
     @Override
     public void runOpMode() {
         initializeHardware();
+
+        // Initialize April Tags (if enabled)
+        if (USE_APRIL_TAGS) {
+            myATPoseEstimator = new AprilTagPoseEstimator(hardwareMap, telemetry);
+
+            // Pass an April Tag Helper object so drive can add twists to it (See MecanumDrive for
+            //     updatePoseEstimate() an explanation on twists)
+            drive.setATLHelper(myATPoseEstimator.myAprilTagLatencyHelper);
+        }
 
         if (armMotor != null) {
             arm = new ArmMechanism(gamepad2, armMotor, dumperServo);
@@ -33,6 +47,8 @@ public abstract class BaseTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
+            double startOfLoop = time.startTimeNanoseconds();
+
             resetIMUIfNeeded();
             driveUsingControllers(false);
 
@@ -60,6 +76,10 @@ public abstract class BaseTeleOp extends BaseOpMode {
                 telemetry.addData("DumperServo", dumperServo.getPosition());
                 telemetry.addData("GateServo", gateServo.getPosition());
             }
+
+            double elapsedTimeInLoop = time.startTimeNanoseconds() - startOfLoop;
+
+            telemetry.addData("Loop Time", Integer.toString((int) (elapsedTimeInLoop * 1e-6)));
 
             telemetry.update();
         }
