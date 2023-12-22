@@ -45,7 +45,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
         while (opModeIsActive()) {
 
             resetIMUIfNeeded();
-            driveUsingControllers(false);
+            //driveUsingControllers(false);
 
             drive.updatePoseEstimate();
 
@@ -128,7 +128,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
         double strafeConstant = 1.1;
         double x, y, rot;
         double deadZone = 0.02;
-        boolean hasDriveToInit = false;
+        boolean driveToInit = false;
 
         if (sensitive) {
             sensitivity = 0.5;
@@ -138,15 +138,16 @@ public abstract class BaseTeleOp extends BaseOpMode {
             rotSensitivity = 1;
         }
 
-        if (Math.abs(gamepad1.left_stick_y) > deadZone || Math.abs(gamepad1.left_stick_x) > deadZone ||
-                Math.abs(gamepad1.right_stick_y) > deadZone || Math.abs(gamepad1.right_stick_x) > deadZone)
-            usingStick = true;
-        else if (gamepad1.dpad_up && !dPadUpPressed) {
+        if (gamepad1.dpad_up) {
             usingStick = false;
-            hasDriveToInit = true;
-        }
+            if (!dPadUpPressed)
+                driveToInit = true;
+        } else if (Math.abs(gamepad1.left_stick_y) > deadZone || Math.abs(gamepad1.left_stick_x) > deadZone ||
+                   Math.abs(gamepad1.right_stick_y) > deadZone || Math.abs(gamepad1.right_stick_x) > deadZone)
+            usingStick = true;
 
-        telemetry.addData("hasDriveToInit", hasDriveToInit);
+
+        telemetry.addData("hasDriveToInit", driveToInit);
 
         if (usingStick) {
             if (curve) {
@@ -160,7 +161,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             }
             mecanumDrive(x, y, rot);
         } else
-            autoDrive.driveTo(0, 0, hasDriveToInit);
+            autoDrive.driveTo(0, 0, driveToInit);
 
         dPadUpPressed = gamepad1.dpad_up;
     }
