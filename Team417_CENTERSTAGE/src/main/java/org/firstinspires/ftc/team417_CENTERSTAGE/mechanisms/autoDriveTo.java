@@ -58,67 +58,74 @@ public class autoDriveTo {
     }
 
     Vector2d initialVelocity;
+    Vector2d currentVelocity = new Vector2d (0, 0);
 
     public Vector2d motionProfileWithVector(Vector2d distVector, boolean hasInit){
         Vector2d finalVelocityVector;
         Vector2d radialVelocity;
         Vector2d tangentialVelocity;
-        PoseVelocity2d currentCombinedVelocity = drive.poseVelocity;
-        Vector2d currentVelocity = drive.pose.times(currentCombinedVelocity.linearVel);
         double timeSenseInit;
         double distRemaining;
-        double velocity;
+        double speed;
         double epsilon = 0.5;
         double radialSpeed, tangentialSpeed;
         printVectorData("distVector", distVector);
 
         if (hasInit) {
             initTime = BaseOpMode.TIME.seconds();
+            PoseVelocity2d currentCombinedVelocity = drive.poseVelocity;
+            currentVelocity = drive.pose.times(currentCombinedVelocity.linearVel);
         }
         packet.put("initTime", initTime);
-
-        radialVelocity = findRadialVelocity(distVector, currentVelocity);
-        printVectorData("radialVelocity", radialVelocity);
-
-        normDistVector = distVector.div(distVector.norm());
-        printVectorData("normDistVector", normDistVector);
 
         timeSenseInit = BaseOpMode.TIME.seconds() - initTime;
         packet.put("timeSenseInit", timeSenseInit);
 
-        distRemaining = Math.hypot(distVector.x, distVector.y);
-        packet.put("distRemaining", distRemaining);
+        radialVelocity = findRadialVelocity(distVector, currentVelocity);
+        printVectorData("radialVelocity", radialVelocity);
 
         if (radialVelocity.x > 0) {
             radialSpeed = Math.hypot(radialVelocity.x, radialVelocity.y);
-            velocity = driveAccel * timeSenseInit + radialSpeed;
+            speed = driveAccel * timeSenseInit + radialSpeed;
         } else {
             radialSpeed = -Math.hypot(radialVelocity.x, radialVelocity.y);
-            velocity = driveDeccel * timeSenseInit + radialSpeed;
+            speed = -driveDeccel * timeSenseInit + radialSpeed;
         }
         packet.put("radialSpeed", radialSpeed);
-        packet.put("accelVelocity", velocity);
+        packet.put("accelVelocity", speed);
 
-        velocity = Math.min(velocity, maxDriveVelocity);
-        packet.put("maintainVelocity", velocity);
+        speed = Math.min(speed, maxDriveVelocity);
+        packet.put("maintainVelocity", speed);
 
-        velocity = Math.min(velocity, Math.sqrt(Math.abs(2.0 * driveDeccel * distRemaining)));
-        packet.put("decelVelocity", velocity);
-        packet.put("velocity", velocity);
+        distRemaining = Math.hypot(distVector.x, distVector.y);
+        packet.put("distRemaining", distRemaining);
+
+        speed = Math.min(speed, Math.sqrt(Math.abs(2.0 * driveDeccel * distRemaining)));
+        packet.put("decelVelocity", speed);
+        packet.put("velocity", speed);
 
         tangentialVelocity = findTangentialVelocity(distVector, currentVelocity);
+        printVectorData("tangentialVelocity1", tangentialVelocity);
 
         tangentialSpeed = Math.hypot(tangentialVelocity.x, tangentialVelocity.y);
+        packet.put("tangentialSpeed1", tangentialSpeed);
 
         tangentialSpeed += driveDeccel * (timeSenseInit - lastTime);
+        packet.put("tangentialSpeed2", tangentialSpeed);
 
         tangentialSpeed = Math.min(tangentialSpeed, 0.0);
+        packet.put("tangentialSpeed3", tangentialSpeed);
 
         tangentialVelocity = tangentialVelocity.div(tangentialVelocity.norm());
+        printVectorData("tangentialVelocity2", tangentialVelocity);
 
         tangentialVelocity = tangentialVelocity.times(tangentialSpeed);
+        printVectorData("tangentialVelocity3", tangentialVelocity);
 
-        finalVelocityVector = new Vector2d(normDistVector.x * velocity, normDistVector.y * velocity);
+        normDistVector = distVector.div(distVector.norm());
+        printVectorData("normDistVector", normDistVector);
+
+        finalVelocityVector = new Vector2d(normDistVector.x * speed, normDistVector.y * speed);
         printVectorData("velocityVector", finalVelocityVector);
 
         finalVelocityVector = finalVelocityVector.plus(tangentialVelocity);
