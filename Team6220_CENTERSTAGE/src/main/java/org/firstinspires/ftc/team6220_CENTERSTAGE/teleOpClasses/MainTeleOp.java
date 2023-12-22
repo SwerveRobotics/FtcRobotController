@@ -7,6 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.team6220_CENTERSTAGE.Constants;
+import org.firstinspires.ftc.team6220_CENTERSTAGE.ExtendedDriveFeatures;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.MecanumDrive;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
@@ -67,10 +68,12 @@ public class MainTeleOp extends LinearOpMode {
     };
 
     MecanumDrive drive;
+    ExtendedDriveFeatures exDrive;
 
     @Override
     public void runOpMode() throws InterruptedException {
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+        exDrive = new ExtendedDriveFeatures(drive);
 
         GamepadEx gp1 = new GamepadEx(gamepad1);
         GamepadEx gp2 = new GamepadEx(gamepad2);
@@ -175,11 +178,11 @@ public class MainTeleOp extends LinearOpMode {
 
                 // Slides stuff
                 if (gp2.getButton(GamepadKeys.Button.LEFT_BUMPER)) {
-                    drive.moveSlides(-0.5);
+                    exDrive.moveSlides(-0.5);
                 } else if (gp2.getButton(GamepadKeys.Button.RIGHT_BUMPER)) {
-                    drive.moveSlides(0.5);
+                    exDrive.moveSlides(0.5);
                 } else {
-                    drive.moveSlides(0);
+                    exDrive.moveSlides(0);
                 }
 
                 // move intake bar down to preset value with dpad but only if it can
