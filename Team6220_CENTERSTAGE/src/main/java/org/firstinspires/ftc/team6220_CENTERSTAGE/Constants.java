@@ -46,7 +46,7 @@ public class Constants {
     };*/
     public static final double[] INTAKE_POSITIONS = { // Preset positions that the intake can travel to through use of Dpad Controls.
             0.37,
-            0.9,
+            0.87,
     };
 
   
