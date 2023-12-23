@@ -222,8 +222,7 @@ public class MainTeleOp extends LinearOpMode {
 
 
                 // drive the servo to position set by dpad using above code
-                drive.intakeServo.setPosition(Constants.INTAKE_POSITIONS[intakePreset]
-                        - (gp2.getButton(GamepadKeys.Button.X)? 0.05 : 0.0));
+                drive.intakeServo.setPosition(Constants.INTAKE_POSITIONS[intakePreset]);
 
                 // go go gadget intake motor
                 drive.intakeMotor.setPower(-gp2.getLeftY());
