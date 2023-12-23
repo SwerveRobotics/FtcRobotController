@@ -66,6 +66,14 @@ abstract public class BaseAutonomous extends BaseOpMode {
         telemetry.update();
     }
 
+    class ATContinuallyEstimatePoseAction implements Action {
+        public boolean run(TelemetryPacket packet) {
+            if (!opModeIsActive()) return false;
+            myATPoseEstimator.updatePoseEstimate();
+            return true;
+        }
+    }
+
     public void runAuto(boolean red, boolean close, boolean test) {
         if (myColorDetection != null) {
             if (red) {
@@ -108,6 +116,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
             // Do the robot movement for prop detection:
             drive.pose = poseAndAction.startPose;
+
+            drive.runParallel(new ATContinuallyEstimatePoseAction());
             Actions.runBlocking(poseAndAction.action);
 
             if (distanceResult.result == PropDistanceResults.SpikeMarks.LEFT)
