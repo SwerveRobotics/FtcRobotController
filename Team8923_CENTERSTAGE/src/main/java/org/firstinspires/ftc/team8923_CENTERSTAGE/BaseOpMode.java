@@ -9,12 +9,17 @@ import com.qualcomm.robotcore.hardware.CRServo;
 
 
 abstract public class BaseOpMode extends LinearOpMode {
+
+    static public double GONDOLA_INITIALIZED_ANGLE = 0.6;
+    static public double ARMS_INITIALIZED_ANGLE = 0.25;
     DcMotor motorFL;
     DcMotor motorFR;
     DcMotor motorBL;
     DcMotor motorBR;
 
-    DcMotor motorSlides;
+    CRServo servoSlideRight;
+
+    CRServo servoSlideLeft;
 
     DcMotor motorIntakeWheels;
 
@@ -42,7 +47,8 @@ abstract public class BaseOpMode extends LinearOpMode {
         motorBL = hardwareMap.dcMotor.get("motorBL");
         motorBR = hardwareMap.dcMotor.get("motorBR");
 
-        motorSlides = hardwareMap.dcMotor.get("motorSlides");
+        servoSlideLeft = hardwareMap.crservo.get("servoSlideLeft");
+        servoSlideRight = hardwareMap.crservo.get("servoSlideRight");
 
         motorIntakeWheels = hardwareMap.dcMotor.get("motorIntakeWheels");
 
@@ -78,9 +84,9 @@ abstract public class BaseOpMode extends LinearOpMode {
         motorIntakeWheels.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         motorIntakeWheels.setDirection(DcMotor.Direction.FORWARD);
 
-        servoFlipGondola.setPosition(0.25);
-
-        servoRotateGondola.setPosition(0.0);
+        // initializes the gondola and arm servos (same positions as when they're lowered during tele-op)
+        servoFlipGondola.setPosition(ARMS_INITIALIZED_ANGLE);
+        servoRotateGondola.setPosition(GONDOLA_INITIALIZED_ANGLE);
     }
 
     // mecanum drive method

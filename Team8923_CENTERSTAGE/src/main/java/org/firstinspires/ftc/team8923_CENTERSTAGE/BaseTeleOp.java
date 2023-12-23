@@ -2,9 +2,11 @@ package org.firstinspires.ftc.team8923_CENTERSTAGE;
 
 abstract public class BaseTeleOp extends BaseOpMode {
 
-    private boolean flipGondola = false;
-
-    private Toggle pressToggle = new Toggle();
+    // constants for output servo positions (gondola and arms)
+    public static double GONDOLA_DOWN_POSITION = 0.6;
+    public static double GONDOLA_UP_POSITION = 0.8;
+    public static double ARMS_DOWN_POSITION = 0.25;
+    public static double ARMS_UP_POSITION = 0.95;
 
     public void driveMechanism() {
         /* controls:
@@ -39,21 +41,24 @@ abstract public class BaseTeleOp extends BaseOpMode {
 
         // slides controlled by up and down dpad
         if (gamepad2.dpad_up) {
-            motorSlides.setPower(1.0);
+            servoSlideLeft.setPower(1.0);
+            servoSlideRight.setPower(-1.0);
         } if (gamepad2.dpad_down) {
-            motorSlides.setPower(0.0);
+            servoSlideLeft.setPower(-1.0);
+            servoSlideRight.setPower(1.0);
         } else {
-            motorSlides.setPower(0.0);
+            servoSlideLeft.setPower(0.0);
+            servoSlideRight.setPower(0.0);
         }
 
         // flips arms in
         if (gamepad2.a) {
-            servoFlipGondola.setPosition(0.25);
-            servoRotateGondola.setPosition(0.6);
+            servoFlipGondola.setPosition(ARMS_DOWN_POSITION);
+            servoRotateGondola.setPosition(GONDOLA_DOWN_POSITION);
         // flips arms out
         } else if (gamepad2.b) {
-            servoFlipGondola.setPosition(0.95);
-            servoRotateGondola.setPosition(0.8);
+            servoFlipGondola.setPosition(ARMS_UP_POSITION);
+            servoRotateGondola.setPosition(GONDOLA_UP_POSITION);
         }
         // runs intake power proportional to how far right trigger is pressed down
         if (gamepad2.right_trigger != 0.0) {
