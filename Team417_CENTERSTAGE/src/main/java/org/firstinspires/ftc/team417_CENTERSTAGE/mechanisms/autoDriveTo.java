@@ -78,7 +78,10 @@ public class autoDriveTo {
 
         radialVelocity = radialVelocity.div(radialVelocity.norm());
         printVectorData("radialVelocity2", radialVelocity);
-        return radialVelocity.times(radialSpeed);
+
+        radialVelocity = radialVelocity.times(radialSpeed);
+        printVectorData("radialVelocity3", radialVelocity);
+        return radialVelocity;
     }
 
     private Vector2d tangentialVectorCalculations(Vector2d distVector, double timeSenseInit) {
@@ -89,15 +92,18 @@ public class autoDriveTo {
         printVectorData("tangentialVelocity1", tangentialVelocity);
 
         tangentialSpeed = driveDeccel * timeSenseInit + Math.hypot(tangentialVelocity.x, tangentialVelocity.y);
-        packet.put("tangentialSpeed", tangentialSpeed);
+        packet.put("tangentialSpeed1", tangentialSpeed);
 
-        tangentialSpeed = Math.min(tangentialSpeed, 0.0);
-        packet.put("tangentialSpeed", tangentialSpeed);
+        tangentialSpeed = Math.max(tangentialSpeed, 0.0);
+        packet.put("tangentialSpeed2", tangentialSpeed);
 
         tangentialVelocity = tangentialVelocity.div(tangentialVelocity.norm());
         printVectorData("tangentialVelocity2", tangentialVelocity);
 
-        return tangentialVelocity.times(tangentialSpeed);
+        tangentialVelocity = tangentialVelocity.times(tangentialSpeed);
+        printVectorData("tangentialVelocity3", tangentialVelocity);
+
+        return tangentialVelocity;
     }
 
     Vector2d currentVelocity = new Vector2d (0, 0);
@@ -126,8 +132,9 @@ public class autoDriveTo {
         printVectorData("distVector", distVector);
         printVectorData("finalVelocity", finalVelocity);
         printVectorData("tangentialVelocity", tangentialVelocity);
-        printVectorData("radialVelocity", tangentialVelocity);
+        printVectorData("radialVelocity", radialVelocity);
         printVectorData("currentVelocity", currentVelocity);
+        packet.put("initTime", initTime);
         packet.put("hasInit", hasInit);
         packet.put("epsilon", epsilon);
         packet.put("timeSenseInit", timeSenseInit);
@@ -143,7 +150,7 @@ public class autoDriveTo {
 
     public double driveTo(double goalX, double goalY, boolean hasDriveToInit) {
         Vector2d motionProfileVel = motionProfileWithVector(new Vector2d(goalX - drive.pose.position.x, goalY - drive.pose.position.y), hasDriveToInit);
-        drive.setDrivePowers(null, new PoseVelocity2d(motionProfileVel, 0));
+        //drive.setDrivePowers(null, new PoseVelocity2d(motionProfileVel, 0));
         return Math.hypot(motionProfileVel.x, motionProfileVel.y);
     }
 }
