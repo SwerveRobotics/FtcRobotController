@@ -42,10 +42,13 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
         waitForStart();
 
+        if (dumperWheelServo != null)
+            dumperWheelServo.setPower(-1.0);
+
         while (opModeIsActive()) {
 
             resetIMUIfNeeded();
-            //driveUsingControllers(false);
+            driveUsingControllers(false);
 
             drive.updatePoseEstimate();
 
@@ -176,6 +179,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     public void outputUsingControllers() {
         controlDumperUsingControllers();
+        controlDumperWheelUsingControllers();
         controlGateUsingControllers();
         if (arm != null)
             arm.armControl();
@@ -227,6 +231,22 @@ public abstract class BaseTeleOp extends BaseOpMode {
         }
 
         yIsPressed = gamepad2.y;
+    }
+
+    boolean downIsPressed = false;
+    boolean wheelOn = true;
+    public void controlDumperWheelUsingControllers() {
+        if (!downIsPressed && gamepad1.dpad_down) {
+            if (!wheelOn) {
+                dumperWheelServo.setPower(-1);
+                wheelOn = true;
+            } else {
+                dumperWheelServo.setPower(0);
+                wheelOn = false;
+            }
+        }
+
+        downIsPressed = gamepad1.dpad_down;
     }
 
     public boolean gateOpen = false;
