@@ -3,11 +3,11 @@ package org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
-import com.qualcomm.robotcore.hardware.OpticalDistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -26,9 +26,12 @@ public abstract class BaseOpMode extends LinearOpMode {
     static final public double ARM_MOTOR_MIN_POSITION = 0;
     static final public double ARM_MOTOR_MAX_POSITION = 4200;
     public Servo dumperServo;
-    public static final double DUMPER_SERVO_TILT_POSITION = 0.4;
-    public static final double DUMPER_SERVO_RESET_POSITION = 0.51;
-    public static final double DUMPER_SERVO_DUMP_POSITION = 0.2;
+    public static double DUMPER_SERVO_TILT_POSITION = 0.4;
+    public static double DUMPER_SERVO_RESET_POSITION = 0.495;
+    public static double DUMPER_SERVO_DUMP_POSITION = 0.075;
+
+    public CRServo dumperWheelServo;
+
     public Servo gateServo;
     public final double GATE_SERVO_OPEN_POSITION = 0;
     public final double GATE_SERVO_CLOSE_POSITION = 0.55;
@@ -56,9 +59,9 @@ public abstract class BaseOpMode extends LinearOpMode {
             //Mechanism Motors
             intakeMotor = initializeMotor("IntakeMotor", DcMotor.Direction.FORWARD);
             armMotor = initializeMotor("ArmMotor", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);//DcMotor.RunMode.RUN_TO_POSITION);
-
             //Mechanism Servos
             dumperServo = initializeServo("DumperServo", Servo.Direction.FORWARD);
+            dumperWheelServo = hardwareMap.get(CRServo.class, "DumperWheelServo");
             gateServo = initializeServo("GateServo", Servo.Direction.FORWARD);
             droneServo = initializeServo("droneServo", Servo.Direction.FORWARD);
 
