@@ -36,6 +36,13 @@ public abstract class BaseTeleOp extends BaseOpMode {
         autoDrive = new AutoDriveTo(drive);
 
         packet.put("velocity", 0);
+        packet.put("radialSpeed1", 0);
+        packet.put("radialSpeed2", 0);
+        packet.put("radialSpeed3", 0);
+        packet.put("finalVelocity Hypot", 0);
+        packet.put("actualSpeed", 0);
+        packet.put("differanceBetween radial and actual speeds", 0);
+        packet.put("aveOfDifferences", 0);
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         dashboard.sendTelemetryPacket(packet);

@@ -1,7 +1,9 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 
@@ -10,21 +12,35 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 
+import java.util.Arrays;
+
 @Config
 public class AutoDriveTo {
 
     public static double driveAccel = MecanumDrive.PARAMS.maxProfileAccel;
     public static double driveDeccel = MecanumDrive.PARAMS.minProfileAccel;
     public static double maxDriveVelocity = MecanumDrive.PARAMS.maxWheelVel;
+    public static double currentVX = 6;
+    public static double currentVY = 0;
 
-    double initialDist;
-    double lastTime;
     MecanumDrive drive;
     TelemetryPacket packet = new TelemetryPacket();
+    Vector2d finalVelocity;
+
+    double radialSpeed;
+    double differanceBetweenGoalVAndActualV;
+    int findAverageIndex;
+    Canvas canvas = packet.fieldOverlay();
+
+    private double listOfItems[];
 
     public AutoDriveTo(MecanumDrive drive) {
         this.drive = drive;
         lastTime = 0;
+        finalVelocity = new Vector2d(0, 0);
+        radialSpeed = 0;
+        differanceBetweenGoalVAndActualV = 0;
+        findAverageIndex = 0;
     }
 
     private void printVectorData(String vectorName, Vector2d vector) {
@@ -52,10 +68,24 @@ public class AutoDriveTo {
         return new Vector2d(Math.cos(goalTheta - (Math.PI / 2.0)) * tangentialVectorMagnitude, Math.sin(goalTheta - (Math.PI / 2.0)) * tangentialVectorMagnitude);
     }
 
-    private Vector2d radialVectorCalculations(Vector2d distVector, double timeSinceInit) {
+    private double findAverage(double num) {
+        listOfItems[findAverageIndex] = num;
+        findAverageIndex += 1;
+        if (findAverageIndex == listOfItems.length)
+            findAverageIndex = 0;
+        double sumOfItems = 0;
+
+        for (double listOfItem : listOfItems) {
+            sumOfItems += listOfItem;
+        }
+        return sumOfItems / listOfItems.length;
+    }
+
+    private Vector2d radialVectorCalculations(Vector2d distVector, double timeSinceInit, double deltaTime) {
         Vector2d radialVelocity;
-        double radialSpeed;
+
         double distRemaining;
+        double aveOfDifferences;
 
         distRemaining = Math.hypot(distVector.x, distVector.y);
         packet.put("distRemaining", distRemaining);
@@ -63,10 +93,15 @@ public class AutoDriveTo {
         radialVelocity = findRadialVelocity(distVector, currentVelocity.linearVel);
         printVectorData("radialVelocity1", radialVelocity);
 
-        if (radialVelocity.x > 0) //change
-            radialSpeed = Math.hypot(radialVelocity.x, radialVelocity.y) + driveAccel; //change
+        packet.put("actualSpeed", Math.hypot(radialVelocity.x, radialVelocity.y));
+
+        aveOfDifferences = Math.abs(radialSpeed - Math.hypot(radialVelocity.x, radialVelocity.y));
+        packet.put("aveOfDifferences", aveOfDifferences);
+
+        if (radialVelocity.x * distVector.x >= 0)
+            radialSpeed = Math.hypot(radialVelocity.x, radialVelocity.y) + (driveAccel * deltaTime) + aveOfDifferences;
         else
-            radialSpeed = -driveDeccel * timeSinceInit - Math.hypot(radialVelocity.x, radialVelocity.y); //change
+            radialSpeed = Math.hypot(radialVelocity.x, radialVelocity.y) - (driveAccel * deltaTime);
         packet.put("radialSpeed1", radialSpeed);
 
         radialSpeed = Math.min(radialSpeed, maxDriveVelocity);
@@ -74,7 +109,12 @@ public class AutoDriveTo {
         radialSpeed = Math.min(radialSpeed, Math.sqrt(Math.abs(2.0 * driveDeccel * distRemaining)));
         packet.put("radialSpeed3", radialSpeed);
 
-        radialVelocity = radialVelocity.div(radialVelocity.norm());
+        System.out.println(radialSpeed - Math.hypot(radialVelocity.x, radialVelocity.y));
+
+        if (radialVelocity.x == 0 && radialVelocity.y == 0)
+            radialVelocity = distVector.div(distVector.norm());
+        else
+            radialVelocity = radialVelocity.div(radialVelocity.norm());
         printVectorData("radialVelocity2", radialVelocity);
 
         radialVelocity = radialVelocity.times(radialSpeed);
@@ -105,32 +145,38 @@ public class AutoDriveTo {
     }
 
     PoseVelocity2d currentVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
-    private double initTime = 0;
+    private double initTime = 0, lastTime = 0;
+    boolean finished = false;
 
     public Vector2d motionProfileWithVector(Vector2d distVector, boolean hasInit){
-        Vector2d finalVelocity;
         Vector2d tangentialVelocity;
         Vector2d radialVelocity;
-        final double epsilon = 0.5;
-        double timeSinceInit;
+        final double velocityEpsilon = 7.5;
+        final double distEpsilon = 5;
+        double timeSinceInit, deltaTime;
 
-        if (Math.abs(distVector.x - drive.pose.position.x) < epsilon && Math.abs(distVector.y - drive.pose.position.y) < epsilon)
-            return new Vector2d(0, 0);
+        //currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
+        currentVelocity = drive.pose.times(new PoseVelocity2d(new Vector2d(currentVX, currentVY), 0));
 
         if (hasInit) {
             initTime = BaseOpMode.TIME.seconds();
-            currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
+            differanceBetweenGoalVAndActualV = 0;
+            listOfItems = new double[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
         }
         printVectorData("currentVelocity", currentVelocity.linearVel);
         packet.put("PoseVelocity",drive.poseVelocity);
 
+        if (Math.hypot(finalVelocity.x, finalVelocity.y) < velocityEpsilon && Math.abs(distVector.x - drive.pose.position.x) < distEpsilon && Math.abs(distVector.y - drive.pose.position.y) < distEpsilon){
+            return new Vector2d(0, 0);
+        }
+
         timeSinceInit = BaseOpMode.TIME.seconds() - initTime;
+        deltaTime = timeSinceInit - lastTime;
 
-        radialVelocity = radialVectorCalculations(distVector, timeSinceInit);
-        tangentialVelocity = new Vector2d(0, 0);
-        //tangentialVelocity = tangentialVectorCalculations(distVector, timeSinceInit);
+        radialVelocity = radialVectorCalculations(distVector, timeSinceInit, deltaTime);
+        tangentialVelocity = tangentialVectorCalculations(distVector, deltaTime);
 
-        finalVelocity = radialVelocity.plus(tangentialVelocity);
+        finalVelocity = radialVelocity;//.plus(tangentialVelocity);
 
         printVectorData("distVector", distVector);
         printVectorData("finalVelocity", finalVelocity);
@@ -138,18 +184,20 @@ public class AutoDriveTo {
         printVectorData("radialVelocity", radialVelocity);
         packet.put("initTime", initTime);
         packet.put("hasInit", hasInit);
-        packet.put("epsilon", epsilon);
         packet.put("timeSenseInit", timeSinceInit);
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         dashboard.sendTelemetryPacket(packet);
 
+        lastTime = timeSinceInit;
+
         return finalVelocity;
     }
 
     public double driveTo(double goalX, double goalY, boolean hasDriveToInit) {
-        Vector2d motionProfileVel = motionProfileWithVector(new Vector2d(goalX - drive.pose.position.x, goalY - drive.pose.position.y), hasDriveToInit);
+        //Vector2d motionProfileVel = motionProfileWithVector(new Vector2d(goalX - drive.pose.position.x, goalY - drive.pose.position.y), hasDriveToInit);
+        Vector2d motionProfileVel = motionProfileWithVector(new Vector2d(-24, 0.1), hasDriveToInit);
         //drive.setDrivePowers(null, new PoseVelocity2d(motionProfileVel, 0));
-        return Math.hypot(motionProfileVel.x, motionProfileVel.y);
+        return 0;//Math.hypot(motionProfileVel.x, motionProfileVel.y);
     }
 }
