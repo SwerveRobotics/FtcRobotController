@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.ArmMechanism;
-import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.autoDriveTo;
+import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.AutoDriveTo;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 @Config
@@ -20,7 +20,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
     private ArmMechanism arm;
 
     ElapsedTime time = new ElapsedTime();
-    autoDriveTo autoDrive;
+    AutoDriveTo autoDrive;
     TelemetryPacket packet = new TelemetryPacket();
 
     @Override
@@ -33,7 +33,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             droneServo.setPosition(droneServoHoldingPos);
         }
 
-        autoDrive = new autoDriveTo(drive);
+        autoDrive = new AutoDriveTo(drive);
 
         packet.put("velocity", 0);
 

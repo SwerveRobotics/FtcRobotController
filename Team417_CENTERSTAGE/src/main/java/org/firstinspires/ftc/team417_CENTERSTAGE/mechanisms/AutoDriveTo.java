@@ -5,14 +5,13 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
-import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.Pose;
+
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 
 @Config
-public class autoDriveTo {
+public class AutoDriveTo {
 
     public static double driveAccel = MecanumDrive.PARAMS.maxProfileAccel;
     public static double driveDeccel = MecanumDrive.PARAMS.minProfileAccel;
@@ -23,7 +22,7 @@ public class autoDriveTo {
     MecanumDrive drive;
     TelemetryPacket packet = new TelemetryPacket();
 
-    public autoDriveTo(MecanumDrive drive) {
+    public AutoDriveTo(MecanumDrive drive) {
         this.drive = drive;
         lastTime = 0;
     }
@@ -32,8 +31,7 @@ public class autoDriveTo {
         packet.put(vectorName + " X", vector.x);
         packet.put(vectorName + " Y", vector.y);
         packet.put(vectorName + " Hypot", Math.hypot(vector.x, vector.y));
-        packet.put(vectorName + " Theta1", Math.atan(vector.x / vector.y));
-        packet.put(vectorName + " Theta2", Math.atan(vector.y / vector.x));
+        packet.put(vectorName + " Theta", Math.atan2(vector.y, vector.x));
     }
 
     private Vector2d findRadialVelocity(Vector2d goalVector, Vector2d currentVector) {
@@ -54,7 +52,7 @@ public class autoDriveTo {
         return new Vector2d(Math.cos(goalTheta - (Math.PI / 2.0)) * tangentialVectorMagnitude, Math.sin(goalTheta - (Math.PI / 2.0)) * tangentialVectorMagnitude);
     }
 
-    private Vector2d radialVectorCalculations(Vector2d distVector, double timeSenseInit) {
+    private Vector2d radialVectorCalculations(Vector2d distVector, double timeSinceInit) {
         Vector2d radialVelocity;
         double radialSpeed;
         double distRemaining;
@@ -62,13 +60,13 @@ public class autoDriveTo {
         distRemaining = Math.hypot(distVector.x, distVector.y);
         packet.put("distRemaining", distRemaining);
 
-        radialVelocity = findRadialVelocity(distVector, currentVelocity);
+        radialVelocity = findRadialVelocity(distVector, currentVelocity.linearVel);
         printVectorData("radialVelocity1", radialVelocity);
 
-        if (radialVelocity.x > 0)
-            radialSpeed = driveAccel * timeSenseInit + Math.hypot(radialVelocity.x, radialVelocity.y);
+        if (radialVelocity.x > 0) //change
+            radialSpeed = Math.hypot(radialVelocity.x, radialVelocity.y) + driveAccel; //change
         else
-            radialSpeed = -driveDeccel * timeSenseInit - Math.hypot(radialVelocity.x, radialVelocity.y);
+            radialSpeed = -driveDeccel * timeSinceInit - Math.hypot(radialVelocity.x, radialVelocity.y); //change
         packet.put("radialSpeed1", radialSpeed);
 
         radialSpeed = Math.min(radialSpeed, maxDriveVelocity);
@@ -84,14 +82,14 @@ public class autoDriveTo {
         return radialVelocity;
     }
 
-    private Vector2d tangentialVectorCalculations(Vector2d distVector, double timeSenseInit) {
+    private Vector2d tangentialVectorCalculations(Vector2d distVector, double timeSinceInit) {
         Vector2d tangentialVelocity;
         double tangentialSpeed;
 
-        tangentialVelocity = findTangentialVelocity(distVector, currentVelocity);
+        tangentialVelocity = findTangentialVelocity(distVector, currentVelocity.linearVel);
         printVectorData("tangentialVelocity1", tangentialVelocity);
 
-        tangentialSpeed = driveDeccel * timeSenseInit + Math.hypot(tangentialVelocity.x, tangentialVelocity.y);
+        tangentialSpeed = driveDeccel * timeSinceInit + Math.hypot(tangentialVelocity.x, tangentialVelocity.y);
         packet.put("tangentialSpeed1", tangentialSpeed);
 
         tangentialSpeed = Math.max(tangentialSpeed, 0.0);
@@ -106,7 +104,7 @@ public class autoDriveTo {
         return tangentialVelocity;
     }
 
-    Vector2d currentVelocity = new Vector2d (0, 0);
+    PoseVelocity2d currentVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
     private double initTime = 0;
 
     public Vector2d motionProfileWithVector(Vector2d distVector, boolean hasInit){
@@ -114,18 +112,23 @@ public class autoDriveTo {
         Vector2d tangentialVelocity;
         Vector2d radialVelocity;
         final double epsilon = 0.5;
-        double timeSenseInit;
+        double timeSinceInit;
+
+        if (Math.abs(distVector.x - drive.pose.position.x) < epsilon && Math.abs(distVector.y - drive.pose.position.y) < epsilon)
+            return new Vector2d(0, 0);
 
         if (hasInit) {
             initTime = BaseOpMode.TIME.seconds();
-            PoseVelocity2d currentCombinedVelocity = drive.poseVelocity;
-            currentVelocity = drive.pose.times(currentCombinedVelocity.linearVel);
+            currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
         }
+        printVectorData("currentVelocity", currentVelocity.linearVel);
+        packet.put("PoseVelocity",drive.poseVelocity);
 
-        timeSenseInit = BaseOpMode.TIME.seconds() - initTime;
+        timeSinceInit = BaseOpMode.TIME.seconds() - initTime;
 
-        radialVelocity = radialVectorCalculations(distVector, timeSenseInit);
-        tangentialVelocity = tangentialVectorCalculations(distVector, timeSenseInit);
+        radialVelocity = radialVectorCalculations(distVector, timeSinceInit);
+        tangentialVelocity = new Vector2d(0, 0);
+        //tangentialVelocity = tangentialVectorCalculations(distVector, timeSinceInit);
 
         finalVelocity = radialVelocity.plus(tangentialVelocity);
 
@@ -133,19 +136,15 @@ public class autoDriveTo {
         printVectorData("finalVelocity", finalVelocity);
         printVectorData("tangentialVelocity", tangentialVelocity);
         printVectorData("radialVelocity", radialVelocity);
-        printVectorData("currentVelocity", currentVelocity);
         packet.put("initTime", initTime);
         packet.put("hasInit", hasInit);
         packet.put("epsilon", epsilon);
-        packet.put("timeSenseInit", timeSenseInit);
+        packet.put("timeSenseInit", timeSinceInit);
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         dashboard.sendTelemetryPacket(packet);
 
-        if (Math.abs(distVector.x - drive.pose.position.x) < epsilon && Math.abs(distVector.y - drive.pose.position.y) < epsilon)
-            return new Vector2d(0, 0);
-        else
-            return finalVelocity;
+        return finalVelocity;
     }
 
     public double driveTo(double goalX, double goalY, boolean hasDriveToInit) {
