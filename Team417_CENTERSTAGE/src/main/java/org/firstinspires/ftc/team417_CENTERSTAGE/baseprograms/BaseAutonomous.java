@@ -146,10 +146,13 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
         if (USE_APRIL_TAGS) {
             drive.runParallel(new ATContinuallyEstimatePoseAction());
+            drive.runParallel(poseAndAction.action);
         }
 
         if (!test) {
-            Actions.runBlocking(poseAndAction.action);
+            while (opModeIsActive()) {
+                drive.doActionsWork();
+            }
         }
 
         telemetry.addLine("Running closing procedure: ");

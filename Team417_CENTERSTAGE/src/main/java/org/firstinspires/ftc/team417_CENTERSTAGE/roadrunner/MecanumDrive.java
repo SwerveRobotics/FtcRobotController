@@ -59,11 +59,12 @@ import java.util.List;
 @Config
 public final class MecanumDrive {
     public static String getBotName() {
-        InspectionState inspection=new InspectionState();
+        InspectionState inspection = new InspectionState();
         inspection.initializeLocal();
         Log.d("roadrunner", String.format("Device name:" + inspection.deviceName));
         return inspection.deviceName;
     }
+
     public static boolean isDevBot = getBotName().equals("DevBot");
 
     public static class Params {
@@ -96,7 +97,7 @@ public final class MecanumDrive {
 
                 //(Push robot for 4 tiles) 96.0 inches / FTCDashboard value 4254.0.
                 inPerTick = 0.0225669957686882;
-                
+
                 //RoadRunner tuning values
                 inPerTick = 0.0225669957686882; // 96.0 / 4254.0;
 
@@ -268,14 +269,15 @@ public final class MecanumDrive {
 
         imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters parameters;
-                if (isDevBot) {
-                    parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+        if (isDevBot) {
+            parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                     RevHubOrientationOnRobot.LogoFacingDirection.UP,
                     RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
         } else {
-                    parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+            parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
                     RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
-                    RevHubOrientationOnRobot.UsbFacingDirection.UP)); }
+                    RevHubOrientationOnRobot.UsbFacingDirection.UP));
+        }
         imu.initialize(parameters);
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
@@ -543,6 +545,7 @@ public final class MecanumDrive {
                 0.25, 0.1
         );
     }
+
     // List of currently running Actions:
     LinkedList<Action> actionList = new LinkedList<>();
 
@@ -551,12 +554,20 @@ public final class MecanumDrive {
         actionList.add(action);
     }
 
+    // Cancel an Action in actionList:
+    public void cancelAction(Action action) {
+        actionList.remove(action);
+    }
+
     // On every iteration of your robot loop, call 'doActionsWork'. Specify the packet
     // if you're drawing on the graph for FTC Dashboard:
-    public boolean doActionsWork() { return doActionsWork(null); }
+    public boolean doActionsWork() {
+        return doActionsWork(null);
+    }
+
     public boolean doActionsWork(TelemetryPacket packet) {
         LinkedList<Action> deletionList = new LinkedList<>();
-        for (Action action: actionList) {
+        for (Action action : actionList) {
             // Once the Action returns false, the action is done:
             if (!action.run(packet))
                 // We can't delete an item from a list while we're iterating on that list:
@@ -565,6 +576,7 @@ public final class MecanumDrive {
         actionList.removeAll(deletionList);
         return actionList.size() != 0;
     }
+
     // Used by setDrivePowers to calculate acceleration:
     PoseVelocity2d previousAssistVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
     double previousAssistSeconds = 0; // Previous call's nanoTime() in seconds
@@ -576,7 +588,7 @@ public final class MecanumDrive {
      * whereas the latter is in inches/s or radians/s. Both types of velocities can be specified
      * at the same time in which case the velocities are added together (to allow assist and stick
      * control to blend together, for example).
-     *
+     * <p>
      * It's also possible to map the controller input to inches/s and radians/s instead of the
      * normalized -1 to 1 voltage range. You can reference MecanumDrive.PARAMS.maxWheelVel and
      * .maxAngVel to determine the range to specify. Note however that the robot can actually
@@ -587,8 +599,7 @@ public final class MecanumDrive {
             // Manual power, normalized voltage from -1 to 1, robot-relative coordinates, can be null:
             PoseVelocity2d stickVelocity,
             // Computed power, inches/s and radians/s, field-relative coordinates, can be null:
-            PoseVelocity2d assistVelocity)
-    {
+            PoseVelocity2d assistVelocity) {
         if (stickVelocity == null)
             stickVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
         if (assistVelocity == null)
@@ -609,7 +620,7 @@ public final class MecanumDrive {
 
         // Remember the current velocity for next time:
         previousAssistVelocity = new PoseVelocity2d(new Vector2d(
-                assistVelocity.linearVel.x,assistVelocity.linearVel.y), assistVelocity.angVel);
+                assistVelocity.linearVel.x, assistVelocity.linearVel.y), assistVelocity.angVel);
 
         // Compute the wheel powers for the stick contribution:
         MecanumKinematics.WheelVelocities<Time> manualVels = new MecanumKinematics(1).inverse(
@@ -621,9 +632,9 @@ public final class MecanumDrive {
         double rightFrontPower = manualVels.rightFront.get(0);
 
         // Compute the wheel powers for the assist:
-        double[] x = { pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x };
-        double[] y = { pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y };
-        double[] angular = { pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel };
+        double[] x = {pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x};
+        double[] y = {pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y};
+        double[] angular = {pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel};
 
         Pose2dDual<Time> computedDualPose = new Pose2dDual<>(
                 new Vector2dDual<>(new DualNum<>(x), new DualNum<>(y)),
