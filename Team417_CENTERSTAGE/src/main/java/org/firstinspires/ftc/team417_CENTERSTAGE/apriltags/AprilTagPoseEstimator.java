@@ -281,7 +281,6 @@ public class AprilTagPoseEstimator {
             robotPoseEstimate = null;
             detecting = false;
         }
-        telemetry.update();
 
         if (robotPoseEstimate != null) {
             myAprilTagLatencyHelper.updateMecanumDrive(estimatePose());
