@@ -5,11 +5,12 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.acmerobotics.roadrunner.ftc.Actions;
+import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagPoseEstimator;
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 
+@Autonomous(name="Localization Benchmark")
 public class LocalizationBenchmark extends BaseOpMode {
     private final boolean USE_APRIL_TAGS = true;
 
@@ -18,6 +19,8 @@ public class LocalizationBenchmark extends BaseOpMode {
     public void initBenchmarking() {
         telemetry.addData("Init State", "Init Started");
         telemetry.update();
+        initializeHardware();
+
         if (USE_APRIL_TAGS) {
             myATPoseEstimator = new AprilTagPoseEstimator(hardwareMap, telemetry);
 
@@ -25,8 +28,6 @@ public class LocalizationBenchmark extends BaseOpMode {
             //     updatePoseEstimate() an explanation on twists)
             drive.setATLHelper(myATPoseEstimator.myAprilTagLatencyHelper);
         }
-
-        initializeHardware();
 
         telemetry.addData("Init State", "Init Finished");
 
@@ -39,7 +40,6 @@ public class LocalizationBenchmark extends BaseOpMode {
         public boolean run(TelemetryPacket packet) {
             if (!opModeIsActive()) return false;
             myATPoseEstimator.updatePoseEstimate();
-            telemetry.update();
             return true;
         }
     }
@@ -62,7 +62,7 @@ public class LocalizationBenchmark extends BaseOpMode {
                 .splineTo(new Vector2d(-51.00, -51.00), Math.toRadians(135.00))
                 .splineTo(new Vector2d(-57.00, -24.00), Math.toRadians(90.00))
                 .splineTo(new Vector2d(-57.00, 24.00), Math.toRadians(90.00))
-                .splineTo(new Vector2d(-48.00, 48.00), Math.toRadians(315.00));
+                .splineTo(new Vector2d(-48.00, 48.00), Math.toRadians(135.00));
 
         Action toAction = benchmarkTo.build();
         Action backAction = benchmarkBack.build();
@@ -78,19 +78,24 @@ public class LocalizationBenchmark extends BaseOpMode {
         boolean going = true;
 
         while (opModeIsActive()) {
+            String message;
             if (going) {
-                Actions.runBlocking(toAction);
+                message = "Going!";
+                drive.runParallel(toAction);
             } else {
-                Actions.runBlocking(backAction);
+                message = "Back";
+                drive.runParallel(backAction);
             }
 
             going = !going;
 
-            while (true) {
-                telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)", drive.pose.position.x, drive.pose.position.y, Math.toDegrees(Math.atan2(drive.pose.heading.imag, drive.pose.heading.real))));
+            while (opModeIsActive()) {
+                telemetry.addLine(message);
+                telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)",
+                        drive.pose.position.x, drive.pose.position.y,
+                        Math.toDegrees(Math.atan2(drive.pose.heading.imag, drive.pose.heading.real))));
                 telemetry.addLine("Press A to continue:");
                 telemetry.addLine("Or press X to reset position and continue:");
-                telemetry.update();
                 if (gamepad1.x) {
                     if (going) {
                         drive.pose = new Pose2d(-48.00, 48.00, Math.toRadians(135.00));
@@ -101,6 +106,8 @@ public class LocalizationBenchmark extends BaseOpMode {
                 } else if (gamepad1.a) {
                     break;
                 }
+                drive.doActionsWork();
+                telemetry.update();
             }
         }
 
