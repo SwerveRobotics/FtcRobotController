@@ -125,7 +125,7 @@ public class MenuInput {
 
                 // get new x,y input; consider deadzone
                 if (Math.hypot(x, y) > INPUT_DEADZONE) {
-                    // snap input vector to axis
+                    // snap input vector to axis of greatest magnitude component
                     if (Math.abs(x) >= Math.abs(y)) {
                         this.x = (int)Math.signum(x);
                     } else {

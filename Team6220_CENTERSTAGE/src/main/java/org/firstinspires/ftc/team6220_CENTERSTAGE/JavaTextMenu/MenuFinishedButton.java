@@ -36,8 +36,9 @@ public class MenuFinishedButton implements HoverableMenuElement<Void> {
 		return this.isPressed;
 	}
 
-	// It's okay to return null here because it's an ending button, but it needs to return something
 	public Void result() {
+		// this element doesn't have anything to return
+		// but is required to because of the HoverableMenuElement interface
 		return null;
 	}
 }

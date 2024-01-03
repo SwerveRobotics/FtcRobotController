@@ -87,13 +87,13 @@ public class MainAutonomous extends LinearOpMode {
 
         // setup auto parameters using menu results
         AutoParams params = new AutoParams();
-        params.allianceTeam = menu.getResult("select-team", AutoParams.AllianceTeam.class);
-        params.startingPosition = menu.getResult("start-select", AutoParams.StartingPosition.class);
-        params.parkLocation = menu.getResult("park-select", AutoParams.ParkLocation.class);
+        params.allianceTeam = menu.getResult(AutoParams.AllianceTeam.class, "select-team");
+        params.startingPosition = menu.getResult(AutoParams.StartingPosition.class, "start-select");
+        params.parkLocation = menu.getResult(AutoParams.ParkLocation.class, "park-select");
         //params.propPosition = ColorDetection.PropPosition.LEFT; // we get it after wait for start
-        params.startLongWaitTime = menu.getResult("long-wait", Double.class);
-        params.placePurplePixel = menu.getResult("purple-switch", Boolean.class);
-        params.placeYellowPixel = menu.getResult("yellow-switch", Boolean.class);
+        params.startLongWaitTime = menu.getResult(Double.class, "long-wait");
+        params.placePurplePixel = menu.getResult(Boolean.class, "purple-switch");
+        params.placeYellowPixel = menu.getResult(Boolean.class, "yellow-switch");
 
         ColorDetection colorDetector = new ColorDetection(this);
         if (!autoDrive.drive.isDevBot) {

@@ -222,14 +222,19 @@ public class TextMenu {
     /**
      * checks the result of a hoverable element using its name.
      * @param <T> the type to return as
-     * @param name the unique internal name of the desired element
      * @param clazz the class of the type to return as
+     * @param name the unique internal name of the desired element
      */
-    public <T> T getResult(String name, Class<T> clazz) {
+    public <T> T getResult(Class<T> clazz, String name) {
         if (!this.hoverableElements.containsKey(name)) {
             throw new NoSuchElementException("Could not find a menu element with the name: " + name);
         }
-        return clazz.cast(this.hoverableElements.get(name).result());
+        try {
+            return clazz.cast(this.hoverableElements.get(name).result());
+        } catch (ClassCastException e) {
+            throw new IllegalArgumentException("Class " + clazz + " is not the correct class for element " + name);
+        }
+        
     }
 
     /**
