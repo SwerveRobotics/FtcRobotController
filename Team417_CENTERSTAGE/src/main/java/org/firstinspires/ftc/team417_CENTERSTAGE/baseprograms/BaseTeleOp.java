@@ -41,8 +41,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
         packet.put("radialSpeed3", 0);
         packet.put("finalVelocity Hypot", 0);
         packet.put("actualSpeed", 0);
-        packet.put("differanceBetween radial and actual speeds", 0);
-        packet.put("aveOfDifferences", 0);
+        packet.put("differenceOfSpeeds", 0);
 
         FtcDashboard dashboard = FtcDashboard.getInstance();
         dashboard.sendTelemetryPacket(packet);
