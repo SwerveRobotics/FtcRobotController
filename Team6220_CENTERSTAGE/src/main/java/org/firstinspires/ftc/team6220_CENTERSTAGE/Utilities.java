@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.team6220_CENTERSTAGE;
 
+import com.acmerobotics.roadrunner.Vector2d;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 
@@ -65,5 +66,19 @@ public class Utilities {
      */
     public static double clamp(double val) {
         return clamp(val, -1.0, 1.0);
+    }
+
+    /**
+     * calculates a vector local to the robot heading that matches the input vector
+     * reference drafting: https://www.desmos.com/calculator/qrbg0uevnh
+     * @param fieldVector the field centric drive vector to match
+     * @param robotHeading the current heading of the robot IN RADIANS
+     * @return the new drive vector local to the robot
+     */
+    public static Vector2d fieldToRobotCentric(Vector2d fieldVector, double robotHeading) {
+        return new Vector2d(
+                fieldVector.x * Math.cos(-robotHeading) - fieldVector.y * Math.sin(-robotHeading),
+                fieldVector.x * Math.sin(-robotHeading) + fieldVector.y * Math.cos(-robotHeading)
+        );
     }
 }
