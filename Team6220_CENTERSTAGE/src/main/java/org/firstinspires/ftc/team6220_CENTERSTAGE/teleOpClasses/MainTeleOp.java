@@ -20,7 +20,7 @@ import org.firstinspires.ftc.team6220_CENTERSTAGE.Utilities;
 /*
 This is our main teleop class for competition driving.
  */
-@TeleOp(name="Main TeleOp", group ="amogus1")
+@TeleOp(name="Main TeleOp", group="amogus1")
 public class MainTeleOp extends LinearOpMode {
 
     // define states for turning, using slides, outtaking
@@ -50,9 +50,15 @@ public class MainTeleOp extends LinearOpMode {
     double turnPower = 0.0;
     double intakePower = 0.0;
 
+    // 1.0 represents 100% speed; applied too drive and turn
+    double slowMultiplier = 0.0;
+
     // holds heading from imu read which is done in roadrunner's mecanum drive class for us
     double currentHeading = 0.0;
     double targetHeading = 0.0;
+
+    // represents the drive x,y vector that is given to roadrunner
+    Vector2d driveVector;
 
     // useful groups of keycodes
     final GamepadKeys.Button[] BUMPER_KEYCODES = {
@@ -94,10 +100,6 @@ public class MainTeleOp extends LinearOpMode {
             drivePowerX = gp1.getLeftX() * Constants.DRIVE_POWER_X_MULTIPLIER;
             drivePowerY = gp1.getLeftY() * Constants.DRIVE_POWER_Y_MULTIPLIER;
             turnPower = gp1.getRightX();
-
-            intakePower = Math.max(gp2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER),
-                                   gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER))
-                                * Constants.INTAKE_POWER_MULTIPLIER;
 
             // get heading from imu in degrees
             currentHeading = drive.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
@@ -141,35 +143,58 @@ public class MainTeleOp extends LinearOpMode {
                     turnPower = Utilities.clamp(-Utilities.shortestDifference(currentHeading, targetHeading) / 90.0);
             }
 
-            // check for slowmode
-            if (gp1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.0 ||
-                    gp1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.0) {
+            // apply calculated slow multiplier (ranges from 1 to full multiplier)
+            slowMultiplier = Utilities.getSlowMultiplier( gp1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER), Constants.SLOWMODE_MULTIPLIER );
+            drivePowerX *= slowMultiplier;
+            drivePowerY *= slowMultiplier;
+            turnPower *= slowMultiplier;
 
-                drivePowerX *= Constants.SLOWMODE_MULTIPLIER;
-                drivePowerY *= Constants.SLOWMODE_MULTIPLIER;
-                turnPower *= Constants.SLOWMODE_MULTIPLIER;
-            }
-            // clamp powers between -1.0 and 1.0
+            // clamp powers between -1.0 and 1.0 just in case
             drivePowerX = Utilities.clamp(drivePowerX);
             drivePowerY = Utilities.clamp(drivePowerY);
             turnPower = Utilities.clamp(turnPower);
 
-            drive.setDrivePowers(new PoseVelocity2d(
-                    Utilities.fieldToRobotLocal(
-                            new Vector2d(
-                                drivePowerY, // not negative so it goes the right direction
-                                -drivePowerX
-                            ),
-                            currentHeading
-                    ),
-                    -turnPower
-            ));
 
-            // NOTE /!\ this doesn't work yet as we haven't set it up
+            // calculate drive vector:
+
+            // raw base drive vector (is robot centric)
+            // note: y (forward) is already flipped in the gamepadEx .get<stick>Y()
+            // implementation, so it doesn't need to be flipped here like drivePowerX is
+            driveVector = new Vector2d(drivePowerY, -drivePowerX);
+
+            // convert to local robot centric vector equivalent of field centric vector
+            // (do field centric driving)
+            driveVector = Utilities.rotateVector(driveVector, currentHeading);
+
+            // if holding the A button gp1 lock drive vector to heading direction
+            if (gp1.getButton(GamepadKeys.Button.A)) {
+                Vector2d robotDirection = Utilities.angleToUnitVector(currentHeading);
+                driveVector = robotDirection.times(driveVector.x);
+            }
+
+            // apply drive instructions
+            // note: turnPower is inverted to align with negative = clockwise
+            drive.setDrivePowers(new PoseVelocity2d(driveVector, -turnPower));
+
+            // update roadrunner's estimate of the robot's position
             drive.updatePoseEstimate();
 
 
+            // if it's the competition bot do slides, outtake, etc.
             if (!drive.isDevBot) {
+
+                // get intake power
+                // max function means positive (intake in) will overpower negative (intake out)
+                // note that trigger input (intake in) will range from 0 to 1 (and then be scaled)
+                intakePower = Math.max(
+                        gp1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER),
+                        gp1.getButton(GamepadKeys.Button.X) ? -1 : 0
+                ) * Constants.INTAKE_POWER_MULTIPLIER;
+
+                // apply intake instructions
+                drive.intakeMotor.setPower(intakePower); // will self stop with 0 power
+
+                /*
 
                 // drive Drone Launcher
                 if (gp2.wasJustPressed(GamepadKeys.Button.Y) && !hasDroneLaunched) {
@@ -202,13 +227,11 @@ public class MainTeleOp extends LinearOpMode {
 
                 // move intake bar down to preset value with dpad but only if it can
                 if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_DOWN))
-                        intakePreset = 0;
+                    intakePreset = 0;
 
                 // move intake bar up to preset value with dpad but only if it can
                 if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP))
-                        intakePreset = Constants.INTAKE_POSITIONS.length - 1;
-
-                /* WORK IN PROGRESS (please ignore)
+                    intakePreset = Constants.INTAKE_POSITIONS.length - 1;
 
                 // Moves the suspension arm (will be added in 3-5 business days) into position using drone button only after drone has launched
                 if (gp2.wasJustPressed(GamepadKeys.Button.Y) && hasDroneLaunched) {
@@ -220,8 +243,6 @@ public class MainTeleOp extends LinearOpMode {
                         drive.moveSuspensionArmPreset(100); // move it back down, bringing robot up after it locked in
                     }
                 }
-
-                */
 
 
                 // drive the servo to position set by dpad using above code
@@ -254,12 +275,12 @@ public class MainTeleOp extends LinearOpMode {
                 } else if (gp2.wasJustReleased(GamepadKeys.Button.B)) {
                     drive.pixelLatchBack.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
                 }
+                */
             }
 
 
             // telemetry
             /* telemetry.addData("current turning state", curTurningState);
-            telemetry.addData("imu reading", currentHeading);
             telemetry.addData("target heading", targetHeading);
             telemetry.addData("turn power", turnPower);
             telemetry.addData("drive power X", drivePowerX);
@@ -268,13 +289,13 @@ public class MainTeleOp extends LinearOpMode {
             telemetry.addData("intake preset", intakePreset); */
 
             if (!drive.isDevBot) {
-                telemetry.addData("slide target", slidePreset);
-                telemetry.addData("slide encoder pos", drive.slideMotor.getCurrentPosition());
+                //telemetry.addData("slide target", slidePreset);
+                //telemetry.addData("slide encoder pos", drive.slideMotor.getCurrentPosition());
             }
-
-            //telemetry.addData("x", drive.pose.position.x);
-            //telemetry.addData("y", drive.pose.position.y);
-            //telemetry.addData("heading", drive.pose.heading);
+            telemetry.addData("imu reading", currentHeading);
+            telemetry.addData("pose x", drive.pose.position.x);
+            telemetry.addData("pose y", drive.pose.position.y);
+            telemetry.addData("pose heading", drive.pose.heading);
 
             telemetry.update();
         }
