@@ -75,7 +75,8 @@ public class Utilities {
      * @param robotHeading the current heading of the robot IN RADIANS
      * @return the new drive vector local to the robot
      */
-    public static Vector2d fieldToRobotCentric(Vector2d fieldVector, double robotHeading) {
+    public static Vector2d fieldToRobotLocal(Vector2d fieldVector, double robotHeading) {
+        robotHeading = Math.toRadians(robotHeading);
         return new Vector2d(
                 fieldVector.x * Math.cos(-robotHeading) - fieldVector.y * Math.sin(-robotHeading),
                 fieldVector.x * Math.sin(-robotHeading) + fieldVector.y * Math.cos(-robotHeading)
