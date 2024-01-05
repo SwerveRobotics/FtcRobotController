@@ -69,20 +69,6 @@ public class Utilities {
     }
 
     /**
-     * rotates a vector by a given number of degrees (negative = clockwise)
-     * @param vector the vector to rotate
-     * @param rotationDegrees the number of degrees to rotate it by
-     * @return rotated vector with magnitude preserved
-     */
-    public static Vector2d rotateVector(Vector2d vector, double rotationDegrees) {
-        double angleRadians = Math.toRadians(rotationDegrees);
-        return new Vector2d(
-                vector.x * Math.cos(angleRadians) - vector.y * Math.sin(angleRadians),
-                vector.x * Math.sin(angleRadians) + vector.y * Math.cos(angleRadians)
-        );
-    }
-
-    /**
      * calculate a value between 1 and a given multiplier
      * based on how far down a trigger is pressed down
      * draft: https://www.desmos.com/calculator/y9y0ebnvqz
@@ -92,18 +78,5 @@ public class Utilities {
      */
     public static double getSlowMultiplier(double triggerInput, double maxSlowMultiplier) {
         return (maxSlowMultiplier - 1) * triggerInput + 1;
-    }
-
-    /**
-     * creates a unit vector from an angle in degrees
-     * @param angleDegrees angle in degrees
-     * @return a unit vector
-     */
-    public static Vector2d angleToUnitVector(double angleDegrees) {
-        double angleRadians = Math.toRadians(angleDegrees);
-        return new Vector2d(
-            Math.cos(angleRadians),
-            Math.sin(angleRadians)
-        );
     }
 }

@@ -19,10 +19,12 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.ColorDetection;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.Constants;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.ExtendedDriveFeatures;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.MecanumDrive;
+import org.firstinspires.ftc.team6220_CENTERSTAGE.PersistentValues;
 import org.jetbrains.annotations.NotNull;
 
 import org.firstinspires.ftc.team6220_CENTERSTAGE.JavaTextMenu.*;
@@ -138,6 +140,9 @@ public class MainAutonomous extends LinearOpMode {
         // run the path with the chosen parameters
         Action driveAction = autoDrive.getDriveAction(params);
         Actions.runBlocking(driveAction);
+
+        // save the ending heading from the imu for teleop later
+        PersistentValues.HEADING_OFFSET = autoDrive.drive.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
     }
 
 }

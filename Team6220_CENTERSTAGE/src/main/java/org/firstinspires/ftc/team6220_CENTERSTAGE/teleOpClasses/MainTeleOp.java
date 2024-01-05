@@ -8,6 +8,8 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.team6220_CENTERSTAGE.Constants;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.ExtendedDriveFeatures;
+import org.firstinspires.ftc.team6220_CENTERSTAGE.JavaTextMenu.MenuInput;
+import org.firstinspires.ftc.team6220_CENTERSTAGE.JavaTextMenu.TextMenu;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.MecanumDrive;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
@@ -15,6 +17,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.team6220_CENTERSTAGE.PersistentValues;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.Utilities;
 
 /*
@@ -57,8 +60,8 @@ public class MainTeleOp extends LinearOpMode {
     double currentHeading = 0.0;
     double targetHeading = 0.0;
 
-    // represents the drive x,y vector that is given to roadrunner
-    Vector2d driveVector;
+    // represents the driving direction vector that is given to roadrunner
+    DriveVector driveVector = new DriveVector(0, 0);
 
     // useful groups of keycodes
     final GamepadKeys.Button[] BUMPER_KEYCODES = {
@@ -87,8 +90,17 @@ public class MainTeleOp extends LinearOpMode {
         boolean hasDroneLaunched = false;
 
         // Reset encoders of slide motor
-        drive.slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        drive.slideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        if (!drive.isDevBot) { // is competition bot
+            drive.slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            drive.slideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        }
+
+
+        // quick menu for using persistent heading or not
+        TextMenu menu = new TextMenu();
+        MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
+
+        drive.imu.resetYaw();
 
         waitForStart();
 
@@ -97,12 +109,10 @@ public class MainTeleOp extends LinearOpMode {
             gp1.readButtons();
             gp2.readButtons();
 
-            drivePowerX = gp1.getLeftX() * Constants.DRIVE_POWER_X_MULTIPLIER;
-            drivePowerY = gp1.getLeftY() * Constants.DRIVE_POWER_Y_MULTIPLIER;
             turnPower = gp1.getRightX();
 
             // get heading from imu in degrees
-            currentHeading = drive.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+            currentHeading = drive.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);// + PersistentValues.HEADING_OFFSET;
 
 
             // update turn state
@@ -143,10 +153,11 @@ public class MainTeleOp extends LinearOpMode {
                     turnPower = Utilities.clamp(-Utilities.shortestDifference(currentHeading, targetHeading) / 90.0);
             }
 
+
             // apply calculated slow multiplier (ranges from 1 to full multiplier)
             slowMultiplier = Utilities.getSlowMultiplier( gp1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER), Constants.SLOWMODE_MULTIPLIER );
-            drivePowerX *= slowMultiplier;
-            drivePowerY *= slowMultiplier;
+            //drivePowerX *= slowMultiplier;
+            //drivePowerY *= slowMultiplier;
             turnPower *= slowMultiplier;
 
             // clamp powers between -1.0 and 1.0 just in case
@@ -155,30 +166,37 @@ public class MainTeleOp extends LinearOpMode {
             turnPower = Utilities.clamp(turnPower);
 
 
-            // calculate drive vector:
+            // calculate fancy drive vector:
 
             // raw base drive vector (is robot centric)
             // note: y (forward) is already flipped in the gamepadEx .get<stick>Y()
             // implementation, so it doesn't need to be flipped here like drivePowerX is
-            driveVector = new Vector2d(drivePowerY, -drivePowerX);
+            drivePowerX = gp1.getLeftX();// * Constants.DRIVE_POWER_X_MULTIPLIER;
+            drivePowerY = gp1.getLeftY();// * Constants.DRIVE_POWER_Y_MULTIPLIER;
+            driveVector.setXY(drivePowerY, -drivePowerX);
+            double mag1 = driveVector.magnitude();
 
             // convert to local robot centric vector equivalent of field centric vector
             // (do field centric driving)
-            driveVector = Utilities.rotateVector(driveVector, currentHeading);
+            driveVector.rotate(-currentHeading);
 
             // if holding the A button gp1 lock drive vector to heading direction
             if (gp1.getButton(GamepadKeys.Button.A)) {
-                Vector2d robotDirection = Utilities.angleToUnitVector(currentHeading);
-                driveVector = robotDirection.times(driveVector.x);
+                // clears any strafing and leaves only forward/back x driving
+                driveVector.y = 0;
             }
 
             // apply drive instructions
             // note: turnPower is inverted to align with negative = clockwise
-            drive.setDrivePowers(new PoseVelocity2d(driveVector, -turnPower));
+            double mag2 = driveVector.magnitude();
+            drive.setDrivePowers(new PoseVelocity2d(driveVector.toVector2d().times(slowMultiplier), -turnPower));
 
             // update roadrunner's estimate of the robot's position
             drive.updatePoseEstimate();
 
+            if (gp1.wasJustPressed(GamepadKeys.Button.RIGHT_STICK_BUTTON)) {
+                telemetry.speak("HONK!");
+            }
 
             // if it's the competition bot do slides, outtake, etc.
             if (!drive.isDevBot) {
@@ -292,10 +310,15 @@ public class MainTeleOp extends LinearOpMode {
                 //telemetry.addData("slide target", slidePreset);
                 //telemetry.addData("slide encoder pos", drive.slideMotor.getCurrentPosition());
             }
+            telemetry.addData("mag1", mag1);
+            telemetry.addData("mag2", mag2);
+            telemetry.addData("mag diff", mag1 - mag2);
+            telemetry.addData("driveVectorX", driveVector.x);
+            telemetry.addData("driveVectorY", driveVector.y);
             telemetry.addData("imu reading", currentHeading);
-            telemetry.addData("pose x", drive.pose.position.x);
-            telemetry.addData("pose y", drive.pose.position.y);
-            telemetry.addData("pose heading", drive.pose.heading);
+            //telemetry.addData("pose x", drive.pose.position.x);
+            //telemetry.addData("pose y", drive.pose.position.y);
+            //telemetry.addData("pose heading", drive.pose.heading);
 
             telemetry.update();
         }

@@ -9,9 +9,11 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 public class telemetry_format_test extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
-        telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
+        telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
 
         waitForStart();
+
+        telemetry.addLine("<b>text</b>");
 
         telemetry.addLine("test words! These are some WORDS..?");
         telemetry.addLine("0123456789012345678901234567890123456789");
