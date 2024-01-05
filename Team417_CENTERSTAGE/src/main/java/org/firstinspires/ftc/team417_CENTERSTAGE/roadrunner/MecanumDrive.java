@@ -130,13 +130,13 @@ public final class MecanumDrive {
             }
 
             // path profile parameters (in inches)
-            maxWheelVel = 50;
+            maxWheelVel = 10; // was 50 before
             minProfileAccel = -30;
             maxProfileAccel = 50;
 
             // turn profile parameters (in radians)
-            maxAngVel = Math.PI; // shared with path
-            maxAngAccel = Math.PI;
+            maxAngVel = Math.PI / 5; // shared with path // was pi before
+            maxAngAccel = Math.PI / 5; // was pi before
 
             axialVelGain = 0.0;
             lateralVelGain = 0.0;
@@ -551,9 +551,12 @@ public final class MecanumDrive {
         actionList.add(action);
     }
 
+    // Because apparently Action.run can't have a null TelemetryPacket
+    TelemetryPacket placeholderTelemetryPacket = new TelemetryPacket();
+
     // On every iteration of your robot loop, call 'doActionsWork'. Specify the packet
     // if you're drawing on the graph for FTC Dashboard:
-    public boolean doActionsWork() { return doActionsWork(null); }
+    public boolean doActionsWork() { return doActionsWork(placeholderTelemetryPacket); }
     public boolean doActionsWork(TelemetryPacket packet) {
         LinkedList<Action> deletionList = new LinkedList<>();
         for (Action action: actionList) {

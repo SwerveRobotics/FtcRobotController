@@ -31,7 +31,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
     public static double APRIL_TAG_SLEEP_TIME = 500;
     public static double NO_APRIL_TAG_SLEEP_TIME = 5000;
 
-    private final boolean USE_APRIL_TAGS = true;
+    private final boolean USE_APRIL_TAGS = false;
     private final boolean USE_OPEN_CV_PROP_DETECTION = true;
 
     public static double INTAKE_SPEED = 1;
@@ -117,7 +117,6 @@ abstract public class BaseAutonomous extends BaseOpMode {
             // Do the robot movement for prop detection:
             drive.pose = poseAndAction.startPose;
 
-            drive.runParallel(new ATContinuallyEstimatePoseAction());
             Actions.runBlocking(poseAndAction.action);
 
             if (distanceResult.result == PropDistanceResults.SpikeMarks.LEFT)
@@ -144,6 +143,10 @@ abstract public class BaseAutonomous extends BaseOpMode {
         AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(1, 2));
 
         drive.pose = poseAndAction.startPose;
+
+        if (USE_APRIL_TAGS) {
+            drive.runParallel(new ATContinuallyEstimatePoseAction());
+        }
 
         if (!test) {
             Actions.runBlocking(poseAndAction.action);

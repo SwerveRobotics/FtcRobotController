@@ -10,6 +10,7 @@ import com.acmerobotics.roadrunner.ftc.FlightRecorder;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -34,6 +35,16 @@ public final class ThreeDeadWheelLocalizer implements Localizer {
         par0 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "par1")));
         par1 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "par0")));
         perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "BLMotor")));
+
+        // This is magically making things work! Before this block of code, the encoders seemed to
+        //     be not resetting after every OpMode, causing errors. We are working on finding the
+        //     root cause of this, but so far this seems to fix it.
+        // (Note: without the last line the BLMotor does not run as part of the mecanum drive.
+        hardwareMap.get(DcMotor.class, "par0").setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        hardwareMap.get(DcMotor.class, "par1").setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        DcMotor perpMotor = hardwareMap.get(DcMotor.class, "BLMotor");
+        perpMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        perpMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         lastPar0Pos = par0.getPositionAndVelocity().position;
         lastPar1Pos = par1.getPositionAndVelocity().position;

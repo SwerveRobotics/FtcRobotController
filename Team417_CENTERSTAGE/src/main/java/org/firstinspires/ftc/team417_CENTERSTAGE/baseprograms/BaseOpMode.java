@@ -15,7 +15,7 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 @Config
 public abstract class BaseOpMode extends LinearOpMode {
-    MecanumDrive drive;
+    public MecanumDrive drive;
 
     //Declares LEDs on DevBot
     public DigitalChannel red;
@@ -59,6 +59,7 @@ public abstract class BaseOpMode extends LinearOpMode {
             //Mechanism Motors
             intakeMotor = initializeMotor("IntakeMotor", DcMotor.Direction.FORWARD);
             armMotor = initializeMotor("ArmMotor", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);//DcMotor.RunMode.RUN_TO_POSITION);
+
             //Mechanism Servos
             dumperServo = initializeServo("DumperServo", Servo.Direction.FORWARD);
             dumperWheelServo = hardwareMap.get(CRServo.class, "DumperWheelServo");
