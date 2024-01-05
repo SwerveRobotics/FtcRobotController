@@ -53,8 +53,8 @@ public class LocalizationBenchmark extends BaseOpMode {
                 .splineTo(new Vector2d(-57.00, -24.00), Math.toRadians(270.00))
                 .splineTo(new Vector2d(-51.00, -51.00), Math.toRadians(315.00))
                 .splineTo(new Vector2d(-24.00, -60.00), Math.toRadians(0.00))
-                .splineTo(new Vector2d(24.00, -60.00), Math.toRadians(0.00))
-                .splineTo(new Vector2d(48.00, -48.00), Math.toRadians(0.00));
+                .splineTo(new Vector2d(24.00, -60.00), Math.toRadians(180))
+                .splineTo(new Vector2d(48.00, -48.00), Math.toRadians(180));
 
         TrajectoryActionBuilder benchmarkBack = drive.actionBuilder(new Pose2d(48.00, -48.00, Math.toRadians(180.00)))
                 .splineTo(new Vector2d(24.00, -60.00), Math.toRadians(180.00))
