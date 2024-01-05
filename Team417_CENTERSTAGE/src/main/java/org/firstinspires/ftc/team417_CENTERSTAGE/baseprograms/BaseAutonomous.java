@@ -31,7 +31,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
     public static double APRIL_TAG_SLEEP_TIME = 500;
     public static double NO_APRIL_TAG_SLEEP_TIME = 5000;
 
-    private final boolean USE_APRIL_TAGS = true;
+    private final boolean USE_APRIL_TAGS = false;
     private final boolean USE_OPEN_CV_PROP_DETECTION = true;
 
     public static double INTAKE_SPEED = 1;
