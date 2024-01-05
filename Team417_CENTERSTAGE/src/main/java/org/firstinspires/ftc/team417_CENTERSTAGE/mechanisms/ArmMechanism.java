@@ -6,10 +6,12 @@ import static org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode.
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 
 public class ArmMechanism {
@@ -42,12 +44,14 @@ public class ArmMechanism {
 
     //PID last runtime, last error, total error every run iteration.
     private double lastPidTime, lastPidError, cumulativeError;
+    DistanceSensor distSensor;
 
-    public ArmMechanism(Gamepad gamepad2, DcMotor armMotor, Servo dumperServo) {
+    public ArmMechanism(Gamepad gamepad2, DcMotor armMotor, Servo dumperServo, DistanceSensor distSensor) {
         //passes necessary API objects in the class.
         this.gamepad2 = gamepad2;
         this.armMotor = armMotor;
         this.dumperServo = dumperServo;
+        this.distSensor = distSensor;
 
         //Init variables so they don't hold their value from last time the code was run
         armGoalLocation = 0;
@@ -58,6 +62,12 @@ public class ArmMechanism {
         lastArmProfileTime = 0;
         cumulativeError = 0;
     }
+
+    /*private double findArmGoal() {
+        double distSensorReturn = distSensor.getDistance(DistanceUnit.INCH);
+        double armGoal = Math.sqrt(Math.sqrt(distSensorReturn));
+        double armGoalPos =
+    }*/
 
     private double armPID(double goalVelocity, double currentVelocity, double Kp, double Ki, double Kd) {
 

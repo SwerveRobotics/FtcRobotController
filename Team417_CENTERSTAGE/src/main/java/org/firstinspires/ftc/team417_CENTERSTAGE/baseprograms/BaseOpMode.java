@@ -15,7 +15,7 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 @Config
 public abstract class BaseOpMode extends LinearOpMode {
-    MecanumDrive drive;
+    public MecanumDrive drive;
 
     //Declares LEDs on DevBot
     public DigitalChannel red;
