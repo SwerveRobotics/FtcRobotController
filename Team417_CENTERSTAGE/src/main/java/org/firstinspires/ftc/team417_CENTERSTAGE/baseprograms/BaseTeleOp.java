@@ -170,7 +170,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             }
             mecanumDrive(x, y, rot);
         } else
-            autoDrive.driveTo(0, 0, driveToInit);
+            autoDrive.driveTo(0, 0, 0, driveToInit);
 
         dPadUpPressed = gamepad1.dpad_up;
     }
