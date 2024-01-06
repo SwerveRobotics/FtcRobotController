@@ -161,12 +161,12 @@ public final class MecanumDrive {
     public DcMotorEx intakeMotor;
     public DcMotorEx slideMotor;
     public DcMotorEx returnMotor;
-    public DcMotorEx motSuspension;
+    //public DcMotorEx motSuspension; // unused without suspension mechanism
     public Servo intakeServo;
     public Servo droneServo;
     public Servo dumperServo;
-    public Servo pixelLatchFront;
-    public Servo pixelLatchBack;
+    public Servo outtakeGate;
+    public Servo outtakeConveyor;
 
 
     public final VoltageSensor voltageSensor;
@@ -265,8 +265,8 @@ public final class MecanumDrive {
             droneServo = hardwareMap.get(Servo.class, "droneServo");
             intakeServo = hardwareMap.get(ServoImplEx.class, "intakeServo");
             dumperServo = hardwareMap.get(ServoImplEx.class, "outtakeServo");
-            pixelLatchFront = hardwareMap.get(ServoImplEx.class, "pixelLatchFront");
-            pixelLatchBack = hardwareMap.get(ServoImplEx.class, "pixelLatchBack");
+            outtakeGate = hardwareMap.get(ServoImplEx.class, "gate");
+            outtakeConveyor = hardwareMap.get(ServoImplEx.class, "conveyor");
         }
 
         rightFront.setDirection(DcMotorEx.Direction.REVERSE);
@@ -288,8 +288,8 @@ public final class MecanumDrive {
             // preset servo positions
             intakeServo.setPosition(Constants.INTAKE_POSITIONS[Constants.INTAKE_POSITIONS.length - 1]);
             dumperServo.setPosition((Constants.DUMPER_INITIALIZATION_POS));
-            pixelLatchFront.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
-            pixelLatchBack.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
+            //pixelLatchFront.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
+            //pixelLatchBack.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
         }
 
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // disabled for roadrunner

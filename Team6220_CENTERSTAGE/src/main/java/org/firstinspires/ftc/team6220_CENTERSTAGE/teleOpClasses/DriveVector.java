@@ -46,7 +46,53 @@ public class DriveVector {
         return new Vector2d(this.x, this.y);
     }
 
+    /**
+     * gets the magnitude of the vector
+     */
     public double magnitude() {
         return Math.hypot(this.x, this.y);
+    }
+
+    /**
+     * multiplies both x and y component by a value
+     * @param a multiplier value
+     */
+    public void times(double a) {
+        this.setXY(
+            this.x * a,
+            this.y * a
+        );
+    }
+    /**
+     * multiplies x and y components by different values
+     * @param a multiplier value for x
+     * @param b multiplier value for y
+     */
+    public void times(double a, double b) {
+        this.setXY(
+                this.x * a,
+                this.y * b
+        );
+    }
+
+    /**
+     * divides both x and y component by a value
+     * @param a divisor value
+     */
+    public void divide(double a) {
+        this.setXY(
+                this.x / a,
+                this.y / a
+        );
+    }
+
+    /**
+     * limits the vector's magnitude to 1 or under
+     */
+    public void limit() {
+        // normalize to length 1 if magnitude is greater than 1
+        if (this.magnitude() > 1) {
+            this.divide(this.magnitude());
+        }
     }
 }

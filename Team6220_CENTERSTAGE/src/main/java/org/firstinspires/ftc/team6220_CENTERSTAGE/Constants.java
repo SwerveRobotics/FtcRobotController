@@ -14,9 +14,9 @@ public class Constants {
 
     public static final double TURN_STICK_DEADZONE = 0.01;
     public static final double TURN_POWER_MULTIPLIER = 1.0;
-    public static final double DRIVE_POWER_X_MULTIPLIER = 1.0;
-    public static final double DRIVE_POWER_Y_MULTIPLIER = 0.7;
-    public static final double TELEOP_MIN_HEADING_ACCURACY = 5.0; // degrees off from target
+    public static final double DRIVE_FORWARD_MULTIPLIER = 0.7;
+    public static final double DRIVE_STRAFE_MULTIPLIER = 1.0;
+    public static final double TELEOP_MIN_HEADING_ACCURACY = 2.0; // degrees off from target
     public static final double SLOWMODE_MULTIPLIER = 0.3;
     public static final double INTAKE_POWER_MULTIPLIER = 0.8;
     public static final double DRONE_SERVO_PRIMED_POS = 1;

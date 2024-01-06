@@ -1,5 +1,8 @@
 package org.firstinspires.ftc.team6220_CENTERSTAGE.teleOpClasses;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -96,11 +99,49 @@ public class MainTeleOp extends LinearOpMode {
         }
 
 
-        // quick menu for using persistent heading or not
-        TextMenu menu = new TextMenu();
-        MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
-
+        // stops the imu from unwanted continuing of previous tracking
         drive.imu.resetYaw();
+
+        boolean runningFieldCentric = true;
+
+        double headingOffset = 0.0;
+        // if there is a non-zero saved heading
+        if (PersistentValues.HEADING_OFFSET != 0.0) {
+            telemetry.addLine(String.format("Detected a saved heading offset of %.2f°", PersistentValues.HEADING_OFFSET));
+            telemetry.addLine();
+            telemetry.addLine("[A] : Use it");
+        } else {
+            telemetry.addLine("No saved heading offset detected.");
+            telemetry.addLine();
+        }
+        telemetry.addLine("[RUN] or [B] : Skip menu");
+        telemetry.addLine();
+        telemetry.addLine("[X]+[Y] : Run without field centric mode (only for emergencies!)");
+        telemetry.update();
+
+        // take input for using offset or not
+        boolean waitingForResponse = true;
+        while (!isStopRequested() && waitingForResponse && !opModeIsActive()) {
+            if ((gp1.getButton(GamepadKeys.Button.A) || gp2.getButton(GamepadKeys.Button.A))
+                    && PersistentValues.HEADING_OFFSET != 0.0) {
+                waitingForResponse = false;
+                headingOffset = PersistentValues.HEADING_OFFSET;
+                telemetry.addLine(String.format("Using heading offset of %.2f", headingOffset));
+
+            } else if (gp1.getButton(GamepadKeys.Button.B) || gp2.getButton(GamepadKeys.Button.B)) {
+                waitingForResponse = false;
+                telemetry.addLine("(Not using heading offset)");
+
+            } else if (gp1.getButton(GamepadKeys.Button.X) && gp1.getButton(GamepadKeys.Button.Y)) {
+                waitingForResponse = false;
+                runningFieldCentric = false;
+                telemetry.addLine("Disabled field centric mode!");
+            }
+        }
+
+        telemetry.addLine();
+        telemetry.addLine("Waiting for start...");
+        telemetry.update();
 
         waitForStart();
 
@@ -109,11 +150,13 @@ public class MainTeleOp extends LinearOpMode {
             gp1.readButtons();
             gp2.readButtons();
 
+
+            // manage turn input and state:
+
             turnPower = gp1.getRightX();
 
             // get heading from imu in degrees
-            currentHeading = drive.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);// + PersistentValues.HEADING_OFFSET;
-
+            currentHeading = Utilities.limitAngle( drive.imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES) + headingOffset );
 
             // update turn state
             if (Math.abs(turnPower) > Constants.TURN_STICK_DEADZONE) {
@@ -154,18 +197,6 @@ public class MainTeleOp extends LinearOpMode {
             }
 
 
-            // apply calculated slow multiplier (ranges from 1 to full multiplier)
-            slowMultiplier = Utilities.getSlowMultiplier( gp1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER), Constants.SLOWMODE_MULTIPLIER );
-            //drivePowerX *= slowMultiplier;
-            //drivePowerY *= slowMultiplier;
-            turnPower *= slowMultiplier;
-
-            // clamp powers between -1.0 and 1.0 just in case
-            drivePowerX = Utilities.clamp(drivePowerX);
-            drivePowerY = Utilities.clamp(drivePowerY);
-            turnPower = Utilities.clamp(turnPower);
-
-
             // calculate fancy drive vector:
 
             // raw base drive vector (is robot centric)
@@ -174,29 +205,49 @@ public class MainTeleOp extends LinearOpMode {
             drivePowerX = gp1.getLeftX();// * Constants.DRIVE_POWER_X_MULTIPLIER;
             drivePowerY = gp1.getLeftY();// * Constants.DRIVE_POWER_Y_MULTIPLIER;
             driveVector.setXY(drivePowerY, -drivePowerX);
-            double mag1 = driveVector.magnitude();
 
-            // convert to local robot centric vector equivalent of field centric vector
-            // (do field centric driving)
-            driveVector.rotate(-currentHeading);
+            // field centric is enabled by default and has to be disabled at the beginning of teleop
+            if (runningFieldCentric) {
+                // convert to local robot centric vector equivalent of field centric vector
+                // (do field centric driving)
+                driveVector.rotate(-currentHeading);
 
-            // if holding the A button gp1 lock drive vector to heading direction
-            if (gp1.getButton(GamepadKeys.Button.A)) {
-                // clears any strafing and leaves only forward/back x driving
-                driveVector.y = 0;
+                // if holding the A button gp1 lock drive vector to heading direction
+                if (gp1.getButton(GamepadKeys.Button.A)) {
+                    // clears any strafing and leaves only forward/back x driving
+                    driveVector.y = 0;
+                }
             }
+
+
+            // finish processing drive inputs:
+
+            // clamp powers between -1.0 and 1.0 just in case
+            turnPower = Utilities.clamp(turnPower);
+            driveVector.limit(); // magnitude <= 1
+
+            driveVector.times(Constants.DRIVE_FORWARD_MULTIPLIER, Constants.DRIVE_STRAFE_MULTIPLIER);
+
+            // apply calculated slow multiplier (ranges from 1 to full multiplier < 1)
+            slowMultiplier = Utilities.getSlowMultiplier( gp1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER), Constants.SLOWMODE_MULTIPLIER );
+
+            turnPower *= slowMultiplier;
+            driveVector.times(slowMultiplier);
+
 
             // apply drive instructions
             // note: turnPower is inverted to align with negative = clockwise
-            double mag2 = driveVector.magnitude();
-            drive.setDrivePowers(new PoseVelocity2d(driveVector.toVector2d().times(slowMultiplier), -turnPower));
+            drive.setDrivePowers(new PoseVelocity2d(driveVector.toVector2d(), -turnPower));
 
             // update roadrunner's estimate of the robot's position
             drive.updatePoseEstimate();
 
-            if (gp1.wasJustPressed(GamepadKeys.Button.RIGHT_STICK_BUTTON)) {
-                telemetry.speak("HONK!");
+
+            // necessary feature
+            if (gp1.wasJustPressed(GamepadKeys.Button.RIGHT_STICK_BUTTON) || gp2.wasJustPressed(GamepadKeys.Button.RIGHT_STICK_BUTTON)) {
+                telemetry.speak(Math.random() > 0.1 ? "HONK!" : "quack.");
             }
+
 
             // if it's the competition bot do slides, outtake, etc.
             if (!drive.isDevBot) {
@@ -210,7 +261,7 @@ public class MainTeleOp extends LinearOpMode {
                 ) * Constants.INTAKE_POWER_MULTIPLIER;
 
                 // apply intake instructions
-                drive.intakeMotor.setPower(intakePower); // will self stop with 0 power
+                drive.intakeMotor.setPower(-intakePower); // will self stop with 0 power
 
                 /*
 
@@ -310,18 +361,30 @@ public class MainTeleOp extends LinearOpMode {
                 //telemetry.addData("slide target", slidePreset);
                 //telemetry.addData("slide encoder pos", drive.slideMotor.getCurrentPosition());
             }
-            telemetry.addData("mag1", mag1);
-            telemetry.addData("mag2", mag2);
-            telemetry.addData("mag diff", mag1 - mag2);
+
             telemetry.addData("driveVectorX", driveVector.x);
             telemetry.addData("driveVectorY", driveVector.y);
             telemetry.addData("imu reading", currentHeading);
-            //telemetry.addData("pose x", drive.pose.position.x);
-            //telemetry.addData("pose y", drive.pose.position.y);
-            //telemetry.addData("pose heading", drive.pose.heading);
+            telemetry.addLine();
+            telemetry.addData("pose x", drive.pose.position.x);
+            telemetry.addData("pose y", drive.pose.position.y);
+            telemetry.addData("pose heading", drive.pose.heading.log());
+            //telemetry.addData("diff", Math.toDegrees(drive.pose.heading.log()) - currentHeading);
+
+            // Code added to draw the pose:
+            TelemetryPacket p = new TelemetryPacket();
+            Canvas c = p.fieldOverlay();
+            c.setStroke("#3F51B5");
+            MecanumDrive.drawRobot(c, drive.pose);
+            FtcDashboard dashboard = FtcDashboard.getInstance();
+            dashboard.sendTelemetryPacket(p);
 
             telemetry.update();
         }
+
+        // save the current heading in case we ended accidentally
+        // and can't reset robot position/heading
+        PersistentValues.HEADING_OFFSET = currentHeading;
     }
 
 }

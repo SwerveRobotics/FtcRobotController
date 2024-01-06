@@ -430,7 +430,7 @@ class AutoMechanismActions {
         this.drive = drive;
         intakeMotor = drive.intakeMotor;
         dumperServo = drive.dumperServo;
-        pixelLatchFront = drive.pixelLatchFront;
+        pixelLatchFront = drive.outtakeGate; //TEMPORARY LOL
         slideMotor = drive.slideMotor;
         returnMotor = drive.returnMotor;
         this.exDrive = new ExtendedDriveFeatures(drive);

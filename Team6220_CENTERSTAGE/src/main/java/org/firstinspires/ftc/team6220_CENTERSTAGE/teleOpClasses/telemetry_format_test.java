@@ -14,6 +14,7 @@ public class telemetry_format_test extends LinearOpMode {
         waitForStart();
 
         telemetry.addLine("<b>text</b>");
+        telemetry.addLine("This is <font color='red'>red</font> and this is <font color='blue'>blue</font>.");
 
         telemetry.addLine("test words! These are some WORDS..?");
         telemetry.addLine("0123456789012345678901234567890123456789");
