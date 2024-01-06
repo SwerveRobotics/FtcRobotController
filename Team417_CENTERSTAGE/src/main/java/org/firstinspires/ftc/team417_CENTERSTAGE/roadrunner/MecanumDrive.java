@@ -114,8 +114,8 @@ public final class MecanumDrive {
                 headingGain = 8.0; // shared with turn
             } else {
                 // drive model parameters
-                inPerTick = 0.00057006;
-                lateralInPerTick = 0.00043717549671991654;
+                inPerTick = 0.00054914881933003844041735310269083;
+                lateralInPerTick = 0.00043210354172444843;
                 trackWidthTicks = 23590.63804655905;
 
                 // feedforward parameters (in tick units)
