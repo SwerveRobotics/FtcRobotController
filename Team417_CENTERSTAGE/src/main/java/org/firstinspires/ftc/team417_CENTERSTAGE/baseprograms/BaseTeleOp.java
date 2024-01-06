@@ -21,7 +21,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     ElapsedTime time = new ElapsedTime();
 
-    public static boolean USE_APRIL_TAGS = false;
+    public static boolean USE_APRIL_TAGS = true;
 
     public AprilTagPoseEstimator myATPoseEstimator;
 
@@ -80,6 +80,10 @@ public abstract class BaseTeleOp extends BaseOpMode {
             double elapsedTimeInLoop = time.startTimeNanoseconds() - startOfLoop;
 
             telemetry.addData("Loop Time", Integer.toString((int) (elapsedTimeInLoop * 1e-6)));
+
+            if (USE_APRIL_TAGS) {
+                myATPoseEstimator.updatePoseEstimate();
+            }
 
             telemetry.update();
         }

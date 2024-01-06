@@ -52,6 +52,8 @@ public class AprilTagLatencyHelper {
     public void updateMecanumDrive(Pose2d poseEstimate) {
         robotPoseEstimate = poseEstimate;
 
+
+        System.out.println(robotPoseEstimate);
         // Latency compensation code
         double currentTime = clock.milliseconds();
 
