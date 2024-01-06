@@ -52,21 +52,23 @@ public class AprilTagLatencyHelper {
     public void updateMecanumDrive(Pose2d poseEstimate) {
         robotPoseEstimate = poseEstimate;
 
+        System.out.println("interesting:" + robotPoseEstimate);
 
-        System.out.println(robotPoseEstimate);
-        // Latency compensation code
-        double currentTime = clock.milliseconds();
+        if (robotPoseEstimate != null) {
+            // Latency compensation code
+            double currentTime = clock.milliseconds();
 
-        // Get the first twist to be added the robot's position
-        TwistWithTimestamp lastTwist = twistList.get(0);
+            // Get the first twist to be added the robot's position
+            TwistWithTimestamp lastTwist = twistList.get(0);
 
-        // Add all the twists since the April Tag frame to now to the robot pose
-        for (int i = 1; lastTwist.timestamp >= currentTime -
-                CAMERA_LATENCY
-                && i < twistList.size(); i++) {
-            robotPoseEstimate.plus(lastTwist.twist.value());
-            lastTwist = twistList.get(i);
-            currentTime = clock.milliseconds();
+            // Add all the twists since the April Tag frame to now to the robot pose
+            for (int i = 1; lastTwist.timestamp >= currentTime -
+                    CAMERA_LATENCY
+                    && i < twistList.size(); i++) {
+                robotPoseEstimate.plus(lastTwist.twist.value());
+                lastTwist = twistList.get(i);
+                currentTime = clock.milliseconds();
+            }
         }
     }
 

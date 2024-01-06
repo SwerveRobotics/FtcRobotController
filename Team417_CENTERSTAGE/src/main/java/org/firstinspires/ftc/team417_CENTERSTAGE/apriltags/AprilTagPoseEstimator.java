@@ -284,9 +284,7 @@ public class AprilTagPoseEstimator {
             detecting = false;
         }
 
-        if (robotPoseEstimate != null) {
-            myAprilTagLatencyHelper.updateMecanumDrive(estimatePose());
-        }
+        myAprilTagLatencyHelper.updateMecanumDrive(estimatePose());
 
         // setState is reversed (true = off, false = on) so the extra ! in front is necessary
         // Cannot fix this, SDK problem

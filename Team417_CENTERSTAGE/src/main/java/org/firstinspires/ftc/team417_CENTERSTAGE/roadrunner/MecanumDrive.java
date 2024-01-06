@@ -348,11 +348,6 @@ public final class MecanumDrive {
 
             PoseVelocity2d robotVelRobot = updatePoseEstimate();
 
-            Pose2d tentativePose = ATLHelper.refinePose();
-            if (tentativePose != null) {
-                pose = tentativePose;
-            }
-
             PoseVelocity2dDual<Time> command = new HolonomicController(
                     PARAMS.axialGain, PARAMS.lateralGain, PARAMS.headingGain,
                     PARAMS.axialVelGain, PARAMS.lateralVelGain, PARAMS.headingVelGain
@@ -491,11 +486,24 @@ public final class MecanumDrive {
             ATLHelper.addTwist(twist);
         }
 
+        System.out.println(twist.value());
+        System.out.println(pose);
         pose = pose.plus(twist.value());
+        System.out.println(pose);
 
         poseHistory.add(pose);
         while (poseHistory.size() > 100) {
             poseHistory.removeFirst();
+        }
+
+        if (ATLHelper != null) {
+            Pose2d tentativePose = ATLHelper.refinePose();
+            System.out.println(tentativePose);
+
+            if (tentativePose != null) {
+                pose = new Pose2d(tentativePose.position.x, tentativePose.position.y, tentativePose.heading.log());
+                // pose = tentativePose;
+            }
         }
 
         FlightRecorder.write("ESTIMATED_POSE", new PoseMessage(pose));

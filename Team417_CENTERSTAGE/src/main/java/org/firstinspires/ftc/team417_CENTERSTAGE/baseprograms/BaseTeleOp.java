@@ -21,7 +21,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     ElapsedTime time = new ElapsedTime();
 
-    public static boolean USE_APRIL_TAGS = true;
+    public static boolean USE_APRIL_TAGS = false;
 
     public AprilTagPoseEstimator myATPoseEstimator;
 
@@ -54,9 +54,9 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
             drive.updatePoseEstimate();
 
-            telemetry.addData("x", drive.pose.position.x);
-            telemetry.addData("y", drive.pose.position.y);
-            telemetry.addData("heading", drive.pose.heading);
+            telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)",
+                    drive.pose.position.x, drive.pose.position.y,
+                   drive.pose.heading.log()));
 
             // Code added to draw the pose, use only when testing
             if (TESTING) {
