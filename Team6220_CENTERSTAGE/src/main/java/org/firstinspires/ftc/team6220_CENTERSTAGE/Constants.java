@@ -29,6 +29,7 @@ public class Constants {
             1, // open
     };
 
+    public static final double SLIDE_MANUAL_MULTIPLIER = 0.5;
     public static final double SLIDE_RETURN_POWER_MULTIPLIER = 1.2;
     public static final double SLIDE_RETURN_POWER_OFFSET = -0.05;
     public static final double SLIDE_RETURN_UP_MUL = 0.66;

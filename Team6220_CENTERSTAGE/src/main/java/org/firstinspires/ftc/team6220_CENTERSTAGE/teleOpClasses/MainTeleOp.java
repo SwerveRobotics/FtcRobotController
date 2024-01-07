@@ -263,7 +263,7 @@ public class MainTeleOp extends LinearOpMode {
                 drive.intakeMotor.setPower(-intakePower); // will self stop with 0 power
 
 
-                // run inbar (intake bar):
+                // run inbar (aka intakeServo, intake bar):
 
                 // highest or lowest inbar positions
                 if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
@@ -290,6 +290,17 @@ public class MainTeleOp extends LinearOpMode {
 
                 // apply inbar position
                 drive.intakeServo.setPosition(inbarPos);
+
+
+
+
+                // run slides:
+
+                // move the slides up and down
+                exDrive.moveSlides(gp2.getLeftY() * Constants.SLIDE_MANUAL_MULTIPLIER);
+
+
+
 
                 /*
 
@@ -377,6 +388,10 @@ public class MainTeleOp extends LinearOpMode {
 
 
             // telemetry
+
+            telemetry.addData("driving field centric", runningFieldCentric);
+            telemetry.addLine();
+
             /* telemetry.addData("current turning state", curTurningState);
             telemetry.addData("target heading", targetHeading);
             telemetry.addData("turn power", turnPower);
@@ -388,16 +403,31 @@ public class MainTeleOp extends LinearOpMode {
             if (!drive.isDevBot) {
                 //telemetry.addData("slide target", slidePreset);
                 //telemetry.addData("slide encoder pos", drive.slideMotor.getCurrentPosition());
+
+                // some questionable code to let the drivers know which index the inbar is at
+                // if it's between because it's on manual mode, it estimates between indexes
+                double inbarIndex = -1;
+                double lowerIndex = -1;
+                for (int i = 0; i < Constants.INBAR_POSITIONS.length; i++) {
+                    if (Utilities.nearInbarPos(inbarPos, Constants.INBAR_POSITIONS[i])) {
+                        inbarIndex = i;
+                    }
+                    if (inbarPos >= Constants.INBAR_POSITIONS[i]) {
+                        lowerIndex = i;
+                    }
+                }
+                if (inbarIndex == -1) {
+                    double base = inbarPos - Utilities.inbarDown(inbarPos);
+                    double range = Utilities.inbarUp(inbarPos) - Utilities.inbarDown(inbarPos);
+                    double between = base / range;
+                    inbarIndex = lowerIndex + between;
+                }
+                telemetry.addLine(String.format("Intake bar index: %.2f", inbarIndex));
+                telemetry.addData("inbar pos", inbarPos);
+                telemetry.addLine();
             }
 
-            telemetry.addData("driveVectorX", driveVector.x);
-            telemetry.addData("driveVectorY", driveVector.y);
             telemetry.addData("imu reading", currentHeading);
-            telemetry.addLine();
-            telemetry.addData("pose x", drive.pose.position.x);
-            telemetry.addData("pose y", drive.pose.position.y);
-            telemetry.addData("pose heading", drive.pose.heading.log());
-            //telemetry.addData("diff", Math.toDegrees(drive.pose.heading.log()) - currentHeading);
 
             // Code added to draw the pose:
             TelemetryPacket p = new TelemetryPacket();
