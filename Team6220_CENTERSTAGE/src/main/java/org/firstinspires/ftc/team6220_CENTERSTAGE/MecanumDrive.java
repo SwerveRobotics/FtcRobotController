@@ -38,6 +38,8 @@ import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -166,7 +168,7 @@ public final class MecanumDrive {
     public Servo droneServo;
     public Servo dumperServo;
     public Servo outtakeGate;
-    public Servo outtakeConveyor;
+    public CRServoImplEx outtakeConveyor;
 
 
     public final VoltageSensor voltageSensor;
@@ -266,7 +268,7 @@ public final class MecanumDrive {
             intakeServo = hardwareMap.get(ServoImplEx.class, "intakeServo");
             dumperServo = hardwareMap.get(ServoImplEx.class, "outtakeServo");
             outtakeGate = hardwareMap.get(ServoImplEx.class, "gate");
-            outtakeConveyor = hardwareMap.get(ServoImplEx.class, "conveyor");
+            outtakeConveyor = hardwareMap.get(CRServoImplEx.class, "conveyor");
         }
 
         rightFront.setDirection(DcMotorEx.Direction.REVERSE);
@@ -299,7 +301,7 @@ public final class MecanumDrive {
 
         if (!isDevBot) {
             intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            slideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             returnMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             //motSuspension.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }

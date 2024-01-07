@@ -33,6 +33,10 @@ public class Constants {
     public static final double SLIDE_RETURN_POWER_MULTIPLIER = 1.2;
     public static final double SLIDE_RETURN_POWER_OFFSET = -0.05;
     public static final double SLIDE_RETURN_UP_MUL = 0.66;
+
+    public static final double SLIDE_MAX_POSITION = 4000;
+    public static final double SLIDE_POSITION_TOLERANCE = 20;
+
     public static final double AUTO_SLIDES_MAX_SPEED = 0.8;
     public static final double AUTO_SLIDES_PRESET_TOLERANCE = 0.1;
     public static final double SLIDE_P_GAIN = 0.3; // Multiplier modifier constant for slide power, used in preset moveSlides method.
@@ -45,6 +49,7 @@ public class Constants {
     public static final double INBAR_MAX_POSITION = INBAR_POSITIONS[INBAR_POSITIONS.length - 1];
     public static final double INBAR_POS_TOLERANCE = 0.03;
     public static final double INBAR_MANUAL_RATE = 0.01;
+    public static final double INBAR_MANUAL_MODE_TRIGGER_THRESHOLD = 0.1;
 
   
     /* Constants used in AutoFramework */

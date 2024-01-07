@@ -16,6 +16,7 @@ import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -38,6 +39,12 @@ public class MainAutonomous extends LinearOpMode {
     public void runOpMode() throws InterruptedException {
 
         AutonDriveFactory autoDrive = new AutonDriveFactory(new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0)));
+
+        // Reset encoders of slide motor
+        if (!autoDrive.drive.isDevBot) { // is competition bot
+            autoDrive.drive.slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            autoDrive.drive.slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
 
         GamepadEx gp1 = new GamepadEx(gamepad1);
 

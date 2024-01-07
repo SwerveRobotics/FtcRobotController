@@ -49,6 +49,7 @@ public class MainTeleOp extends LinearOpMode {
     double drivePowerY = 0.0;
     double turnPower = 0.0;
     double intakePower = 0.0;
+    double slidesPower = 0.0;
 
     // 1.0 represents 100% speed; applied too drive and turn
     double slowMultiplier = 0.0;
@@ -89,10 +90,11 @@ public class MainTeleOp extends LinearOpMode {
 
         boolean hasDroneLaunched = false;
 
+
         // Reset encoders of slide motor
         if (!drive.isDevBot) { // is competition bot
             drive.slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            drive.slideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            drive.slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
 
 
@@ -252,12 +254,10 @@ public class MainTeleOp extends LinearOpMode {
                 // run intake:
 
                 // get intake power
-                // max function means positive (intake in) will overpower negative (intake out)
-                // note that trigger input (intake in) will range from 0 to 1 (and then be scaled)
-                intakePower = Math.max(
-                        gp1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER),
-                        gp1.getButton(GamepadKeys.Button.X) ? -1 : 0
-                ) * Constants.INTAKE_POWER_MULTIPLIER;
+                intakePower =
+                        Math.max(gp1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER), gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER))
+                        * (gp1.getButton(GamepadKeys.Button.X) || gp2.getButton(GamepadKeys.Button.X) ? -1 : 1)
+                        * Constants.INTAKE_POWER_MULTIPLIER;
 
                 // apply intake instructions
                 drive.intakeMotor.setPower(-intakePower); // will self stop with 0 power
@@ -272,7 +272,7 @@ public class MainTeleOp extends LinearOpMode {
                     inbarPos = Constants.INBAR_MIN_POSITION;
 
                 // manual up and down (limited to max and min pos)
-                } else if (gp2.getButton(GamepadKeys.Button.X)) {
+                } else if (gp2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > Constants.INBAR_MANUAL_MODE_TRIGGER_THRESHOLD) {
                     if (gp2.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
                         inbarPos = Math.min(Constants.INBAR_MAX_POSITION, inbarPos + Constants.INBAR_MANUAL_RATE);
                     } else if (gp2.getButton(GamepadKeys.Button.DPAD_LEFT)) {
@@ -297,9 +297,27 @@ public class MainTeleOp extends LinearOpMode {
                 // run slides:
 
                 // move the slides up and down
-                exDrive.moveSlides(gp2.getLeftY() * Constants.SLIDE_MANUAL_MULTIPLIER);
+                slidesPower = gp2.getLeftY() * Constants.SLIDE_MANUAL_MULTIPLIER;
 
+                // if doing manual override let any input through
+                if (gp2.getButton(GamepadKeys.Button.Y)) {
+                    exDrive.moveSlides(slidesPower);
+                // if stopping manual override (releasing the button), set the new zero
+                } else if (gp2.wasJustReleased(GamepadKeys.Button.Y)) {
+                    drive.slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                    drive.slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
+                // otherwise do normal slide input with lower and upper limits
+
+                // if going up and not within tolerance of or above max position
+                // or if going down and not within tolerance of or below min position...
+                } else if ((slidesPower > 0 && drive.slideMotor.getCurrentPosition() < Constants.SLIDE_MAX_POSITION - Constants.SLIDE_POSITION_TOLERANCE)
+                        || (slidesPower < 0 && drive.slideMotor.getCurrentPosition() > Constants.SLIDE_POSITION_TOLERANCE)) {
+                    // ...then apply slides power
+                    exDrive.moveSlides(slidesPower);
+                } else {
+                    exDrive.moveSlides(0);
+                }
 
 
                 /*
@@ -425,6 +443,7 @@ public class MainTeleOp extends LinearOpMode {
                 telemetry.addLine(String.format("Intake bar index: %.2f", inbarIndex));
                 telemetry.addData("inbar pos", inbarPos);
                 telemetry.addLine();
+                telemetry.addData("slides pos", drive.slideMotor.getCurrentPosition());
             }
 
             telemetry.addData("imu reading", currentHeading);
