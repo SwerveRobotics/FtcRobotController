@@ -47,6 +47,12 @@ public class Constants {
             1.0
     };
 
+    public static final double[] OUTTAKE_GATE_POSITIONS = {
+            0.0,
+            1.0
+    };
+
+    public static final double OUTTAKE_CONVEYOR_POWER = 0.5;
 
     public static final double INBAR_MIN_POSITION = INBAR_POSITIONS[0];
     public static final double INBAR_MAX_POSITION = INBAR_POSITIONS[INBAR_POSITIONS.length - 1];

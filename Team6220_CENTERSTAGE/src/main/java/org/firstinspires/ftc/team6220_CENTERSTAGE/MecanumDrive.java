@@ -38,6 +38,7 @@ import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -166,7 +167,7 @@ public final class MecanumDrive {
     public Servo droneServo;
     public Servo dumperServo;
     public Servo outtakeGate;
-    public Servo outtakeConveyor;
+    public CRServoImplEx outtakeConveyor;
 
 
     public final VoltageSensor voltageSensor;
@@ -266,7 +267,7 @@ public final class MecanumDrive {
             intakeServo = hardwareMap.get(ServoImplEx.class, "intakeServo");
             dumperServo = hardwareMap.get(ServoImplEx.class, "outtakeServo");
             outtakeGate = hardwareMap.get(ServoImplEx.class, "gate");
-            outtakeConveyor = hardwareMap.get(ServoImplEx.class, "conveyor");
+            outtakeConveyor = hardwareMap.get(CRServoImplEx.class, "conveyor");
         }
 
         rightFront.setDirection(DcMotorEx.Direction.REVERSE);

@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.Const;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.Constants;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.ExtendedDriveFeatures;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.MecanumDrive;
@@ -310,6 +311,20 @@ public class MainTeleOp extends LinearOpMode {
                         drive.dumperServo.setPosition(Constants.DUMPER_POSITIONS[1]);
                         dumperExtended = true;
                     }
+                }
+
+                // drive belt when gp2 [A] is pressed
+                if(gp2.isDown(GamepadKeys.Button.A)) {
+                    drive.outtakeConveyor.setPower(Constants.OUTTAKE_CONVEYOR_POWER);
+                } else {
+                    drive.outtakeConveyor.setPower(0);
+                }
+                
+                // opens gate when gp2 [A] is pressed
+                if(gp2.wasJustPressed(GamepadKeys.Button.A)) {
+                    drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[0]);
+                } else if (gp2.wasJustReleased(GamepadKeys.Button.A)) {
+                    drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[1]);
                 }
 
 
