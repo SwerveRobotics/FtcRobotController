@@ -264,8 +264,8 @@ public class MainTeleOp extends LinearOpMode {
 
                 // apply intake instructions (and make sure the belt and gate work with Gavins janky solution :D)
                 drive.intakeMotor.setPower(-intakePower); // will self stop with 0 power
-                drive.outtakeConveyor.setPower(Math.abs(intakePower));
-                if(gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0) {
+                drive.outtakeConveyor.setPower(intakePower);
+                if(Math.abs(intakePower) > 0) {
                     drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[0]);
                 }
 

@@ -48,8 +48,8 @@ public class Constants {
     };
 
     public static final double[] OUTTAKE_GATE_POSITIONS = {
-            0.0,
-            1.0
+            0.0, // closed
+            1.0 // open
     };
 
     public static final double OUTTAKE_CONVEYOR_POWER = 0.5;
