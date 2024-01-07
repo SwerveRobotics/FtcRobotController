@@ -264,6 +264,10 @@ public class MainTeleOp extends LinearOpMode {
 
                 // apply intake instructions
                 drive.intakeMotor.setPower(-intakePower); // will self stop with 0 power
+                drive.outtakeConveyor.setPower(Math.abs(intakePower));
+                if(gp2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0) {
+                    drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[0]);
+                }
 
 
                 // run inbar (aka intakeServo, intake bar):
