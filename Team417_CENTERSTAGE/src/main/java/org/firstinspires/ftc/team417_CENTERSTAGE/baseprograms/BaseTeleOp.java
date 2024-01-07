@@ -4,8 +4,6 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagPoseEstimator;
@@ -49,7 +47,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
         while (opModeIsActive()) {
             double startOfLoop = time.startTimeNanoseconds();
 
-            resetIMUIfNeeded();
             driveUsingControllers(false);
 
             drive.updatePoseEstimate();
@@ -91,43 +88,10 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     boolean leftBumperIsPressed = false;
 
-    public void resetIMUIfNeeded() {
-        if (gamepad1.left_bumper && !leftBumperIsPressed) {
-            IMU.Parameters parameters;
-            if (drive.isDevBot) {
-                parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                        RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
-            } else {
-                parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
-                        RevHubOrientationOnRobot.UsbFacingDirection.UP)); }
-            drive.imu.initialize(parameters);
-        }
-        leftBumperIsPressed = gamepad1.left_bumper;
-    }
-
     public boolean sensitive = false;
 
     public void driveUsingControllers() {
-        sensitive = gamepad1.right_bumper;
-
-        double sensitivity, rotSensitivity;
-        double strafeConstant = 1.1;
-
-        if (sensitive) {
-            sensitivity = 0.5;
-            rotSensitivity = 0.8;
-        } else {
-            sensitivity = 1;
-            rotSensitivity = 1;
-        }
-
-        double x = curveStick(gamepad1.left_stick_x) * strafeConstant * sensitivity;
-        double y = curveStick(-gamepad1.left_stick_y) * sensitivity;
-        double rot = curveStick(gamepad1.right_stick_x) * rotSensitivity;
-
-        mecanumDrive(x, y, rot);
+        driveUsingControllers(false);
     }
 
     public void driveUsingControllers(boolean curve) {
