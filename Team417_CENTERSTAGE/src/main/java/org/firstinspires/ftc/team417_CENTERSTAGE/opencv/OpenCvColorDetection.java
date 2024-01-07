@@ -52,13 +52,13 @@ public class OpenCvColorDetection {
     /* Declare OpMode members. */
     public LinearOpMode myOpMode;   // gain access to methods in the calling OpMode.
 
-    public enum detectColorType {
+    public enum DetectColorType {
         BLUE,
         RED,
         UNSET,
     }
 
-    public detectColorType myColor = detectColorType.UNSET;
+    public DetectColorType myColor = DetectColorType.UNSET;
 
     // coordinates of largest detected image
     Point targetPoint = new Point(0, 0);
@@ -71,7 +71,7 @@ public class OpenCvColorDetection {
     }
 
     // set detection color
-    public void setDetectColor(detectColorType color) {
+    public void setDetectColor(DetectColorType color) {
         myColor = color;
     }
 

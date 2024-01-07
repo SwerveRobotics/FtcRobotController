@@ -45,7 +45,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            double startOfLoop = time.startTimeNanoseconds();
+            double startOfLoop = time.nanoseconds();
 
             driveUsingControllers(false);
 
@@ -53,7 +53,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
             telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)",
                     drive.pose.position.x, drive.pose.position.y,
-                   drive.pose.heading.log()));
+                   Math.toDegrees(drive.pose.heading.log())));
 
             // Code added to draw the pose, use only when testing
             if (TESTING) {
@@ -74,7 +74,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
                 telemetry.addData("GateServo", gateServo.getPosition());
             }
 
-            double elapsedTimeInLoop = time.startTimeNanoseconds() - startOfLoop;
+            double elapsedTimeInLoop = time.nanoseconds() - startOfLoop;
 
             telemetry.addData("Loop Time", Integer.toString((int) (elapsedTimeInLoop * 1e-6)));
 

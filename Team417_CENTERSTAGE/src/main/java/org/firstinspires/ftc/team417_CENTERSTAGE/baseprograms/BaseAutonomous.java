@@ -75,19 +75,24 @@ abstract public class BaseAutonomous extends BaseOpMode {
     }
 
     public void runAuto(boolean red, boolean close, boolean test) {
+        initializeAuto();
+
         if (myColorDetection != null) {
             if (red) {
-                myColorDetection.setDetectColor(OpenCvColorDetection.detectColorType.RED);
+                myColorDetection.setDetectColor(OpenCvColorDetection.DetectColorType.RED);
                 telemetry.addLine("Looking for red");
             } else {
-                myColorDetection.setDetectColor(OpenCvColorDetection.detectColorType.BLUE);
+                myColorDetection.setDetectColor(OpenCvColorDetection.DetectColorType.BLUE);
                 telemetry.addLine("Looking for blue");
             }
         }
+        telemetry.update();
 
-        initializeAuto();
-
-        waitForStart();
+        while (!isStarted()) {
+            telemetry.addData("Looking for", myColorDetection.myColor);
+            telemetry.addData("Side detected", myColorDetection.detectTeamProp());
+            telemetry.update();
+        }
 
         /*The variable 'translateEnum' converts the OpenCV Enum by Hank to the Enum used by
         AutonDriveFactory created by Sawar.
