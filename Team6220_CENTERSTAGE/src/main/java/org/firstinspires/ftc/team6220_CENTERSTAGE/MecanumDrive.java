@@ -38,6 +38,7 @@ import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -300,7 +301,7 @@ public final class MecanumDrive {
 
         if (!isDevBot) {
             intakeMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-            slideMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             returnMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
             //motSuspension.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         }
