@@ -11,8 +11,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.team6220_CENTERSTAGE.Constants;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.ExtendedDriveFeatures;
-import org.firstinspires.ftc.team6220_CENTERSTAGE.JavaTextMenu.MenuInput;
-import org.firstinspires.ftc.team6220_CENTERSTAGE.JavaTextMenu.TextMenu;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.MecanumDrive;
 
 import com.arcrobotics.ftclib.gamepad.GamepadEx;

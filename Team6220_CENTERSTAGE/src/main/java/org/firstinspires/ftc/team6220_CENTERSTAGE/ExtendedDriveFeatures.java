@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.team6220_CENTERSTAGE;
 
-import org.firstinspires.ftc.team6220_CENTERSTAGE.Constants;
-import org.firstinspires.ftc.team6220_CENTERSTAGE.MecanumDrive;
-
 /*
 This class adds features that are not built into the roadrunner mecanum drive class.
 It enables us to control our different mechanisms like slides/intake/etc.
@@ -36,7 +33,7 @@ public class ExtendedDriveFeatures {
      */
     public boolean moveSlidesPreset(int targetPos) {
         double power = (targetPos - this.drive.slideMotor.getCurrentPosition()) * Constants.SLIDE_P_GAIN;
-        this.moveSlides(clamp(power, -Constants.AUTO_SLIDES_MAX_SPEED, Constants.AUTO_SLIDES_MAX_SPEED));
+        this.moveSlides(Utilities.clamp(power, -Constants.AUTO_SLIDES_MAX_SPEED, Constants.AUTO_SLIDES_MAX_SPEED));
         return Math.abs(power) >= Constants.AUTO_SLIDES_PRESET_TOLERANCE;
     }
 
@@ -46,10 +43,5 @@ public class ExtendedDriveFeatures {
         this.drive.motSuspension.setPower(clamp(power, -Constants.AUTO_SLIDES_MAX_SPEED, Constants.AUTO_SLIDES_MAX_SPEED));
         return Math.abs(power) >= Constants.AUTO_SLIDES_PRESET_TOLERANCE;
     } */
-
-    // clamps value between a minimum and maximum value
-    private static double clamp(double value, double min, double max) {
-        return Math.max(min, Math.min(max, value));
-    }
 
 }
