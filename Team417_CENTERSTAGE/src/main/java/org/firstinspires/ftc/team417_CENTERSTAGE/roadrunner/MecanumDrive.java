@@ -50,6 +50,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagLatencyHelper;
+import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseAutonomous;
 import org.firstinspires.inspection.InspectionState;
 
 import java.util.Arrays;
@@ -116,7 +117,7 @@ public final class MecanumDrive {
                 // drive model parameters
                 inPerTick = 0.00054914881933003844041735310269083;
                 lateralInPerTick = 0.00043210354172444843;
-                trackWidthTicks = 23590.63804655905;
+                trackWidthTicks = 23335.14533610638;
 
                 // feedforward parameters (in tick units)
                 kS = 0.7728626336483462;
@@ -124,9 +125,9 @@ public final class MecanumDrive {
                 kA = 0.0000009;
 
                 // path controller gains
-                axialGain = 0.0;
-                lateralGain = 0.0;
-                headingGain = 0.0; // shared with turn
+                axialGain = 10.5;
+                lateralGain = 7.5;
+                headingGain = 2.0; // shared with turn
             }
 
             // path profile parameters (in inches)
@@ -348,9 +349,11 @@ public final class MecanumDrive {
 
             PoseVelocity2d robotVelRobot = updatePoseEstimate();
 
-            Pose2d tentativePose = ATLHelper.refinePose();
-            if (tentativePose != null) {
-                pose = tentativePose;
+            if (BaseAutonomous.USE_APRIL_TAGS) {
+                Pose2d tentativePose = ATLHelper.refinePose();
+                if (tentativePose != null) {
+                    pose = tentativePose;
+                }
             }
 
             PoseVelocity2dDual<Time> command = new HolonomicController(

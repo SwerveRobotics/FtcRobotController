@@ -31,8 +31,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
     public static double APRIL_TAG_SLEEP_TIME = 500;
     public static double NO_APRIL_TAG_SLEEP_TIME = 5000;
 
-    private final boolean USE_APRIL_TAGS = false;
-    private final boolean USE_OPEN_CV_PROP_DETECTION = true;
+    public static boolean USE_APRIL_TAGS = false;
+    public static boolean USE_OPEN_CV_PROP_DETECTION = true;
 
     public static double INTAKE_SPEED = 1;
     public static double INTAKE_TIME = 2; // in seconds
@@ -178,14 +178,14 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
                 // Executes on the first loop to start the intake motor
                 if (startTime == 0) {
-                    if (drive.isDevBot && intakeMotor != null) {
+                    if (intakeMotor != null) {
                         intakeMotor.setPower(intakeSpeed);
                     }
                     startTime = nanoTime() * NANO_TO_SECONDS_MULTIPLIER;
                 }
                 // Checks if the elapsed time is greater than the intake time to stop the motor
                 if (nanoTime() * NANO_TO_SECONDS_MULTIPLIER - startTime > intakeTime) {
-                    if (drive.isDevBot && intakeMotor != null) {
+                    if (intakeMotor != null) {
                         intakeMotor.setPower(0);
                     }
                     // Resets start time for the next run
