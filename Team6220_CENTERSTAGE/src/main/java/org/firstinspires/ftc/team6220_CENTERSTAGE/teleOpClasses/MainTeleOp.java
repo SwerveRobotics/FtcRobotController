@@ -319,7 +319,7 @@ public class MainTeleOp extends LinearOpMode {
                 } else {
                     drive.outtakeConveyor.setPower(0);
                 }
-                
+
                 // opens gate when gp2 [A] is pressed
                 if(gp2.wasJustPressed(GamepadKeys.Button.A)) {
                     drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[0]);
@@ -327,16 +327,15 @@ public class MainTeleOp extends LinearOpMode {
                     drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[1]);
                 }
 
-
-                /*
-
                 // drive Drone Launcher
-                if (gp2.wasJustPressed(GamepadKeys.Button.Y) && !hasDroneLaunched) {
+                if (gp1.wasJustPressed(GamepadKeys.Button.Y) && !hasDroneLaunched) {
                     drive.droneServo.setPosition(Constants.DRONE_SERVO_LAUNCHING_POS);
-                } else if (gp2.wasJustReleased(GamepadKeys.Button.Y)){
+                } else if (gp1.wasJustReleased(GamepadKeys.Button.Y)){
                     drive.droneServo.setPosition(Constants.DRONE_SERVO_PRIMED_POS);
                     hasDroneLaunched = true;
                 }
+
+                /*
 
                 // Slides stuff
                 if (gp2.getButton(GamepadKeys.Button.LEFT_BUMPER)) {
