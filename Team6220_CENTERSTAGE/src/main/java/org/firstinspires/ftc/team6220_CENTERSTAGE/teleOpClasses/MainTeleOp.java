@@ -39,10 +39,6 @@ public class MainTeleOp extends LinearOpMode {
     // ENUMS
     // GRAAAAHH
 
-    private int slidePreset = 0;
-    private int intakePreset = Constants.INTAKE_POSITIONS.length - 1;
-    private boolean resetProced = false;
-
     TurnStates curTurningState = TurnStates.TURNING_MANUAL;
     enum TurnStates {
         TURNING_MANUAL,
@@ -65,6 +61,9 @@ public class MainTeleOp extends LinearOpMode {
 
     // represents the driving direction vector that is given to roadrunner
     DriveVector driveVector = new DriveVector(0, 0);
+
+    // manages the current inbar position (intake bar)
+    double inbarPos = Constants.INBAR_MAX_POSITION;
 
     // useful groups of keycodes
     final GamepadKeys.Button[] BUMPER_KEYCODES = {
@@ -252,6 +251,8 @@ public class MainTeleOp extends LinearOpMode {
             // if it's the competition bot do slides, outtake, etc.
             if (!drive.isDevBot) {
 
+                // run intake:
+
                 // get intake power
                 // max function means positive (intake in) will overpower negative (intake out)
                 // note that trigger input (intake in) will range from 0 to 1 (and then be scaled)
@@ -262,6 +263,35 @@ public class MainTeleOp extends LinearOpMode {
 
                 // apply intake instructions
                 drive.intakeMotor.setPower(-intakePower); // will self stop with 0 power
+
+
+                // run inbar (intake bar):
+
+                // highest or lowest inbar positions
+                if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP)) {
+                    inbarPos = Constants.INBAR_MAX_POSITION;
+                } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_DOWN)) {
+                    inbarPos = Constants.INBAR_MIN_POSITION;
+
+                // manual up and down (limited to max and min pos)
+                } else if (gp2.getButton(GamepadKeys.Button.X)) {
+                    if (gp2.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
+                        inbarPos = Math.min(Constants.INBAR_MAX_POSITION, inbarPos + Constants.INBAR_MANUAL_RATE);
+                    } else if (gp2.getButton(GamepadKeys.Button.DPAD_LEFT)) {
+                        inbarPos = Math.max(Constants.INBAR_MIN_POSITION, inbarPos - Constants.INBAR_MANUAL_RATE);
+                    }
+
+                // preset up and down
+                } else {
+                    if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
+                        inbarPos = Utilities.inbarUp(inbarPos);
+                    } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
+                        inbarPos = Utilities.inbarDown(inbarPos);
+                    }
+                }
+
+                // apply inbar position
+                drive.intakeServo.setPosition(inbarPos);
 
                 /*
 

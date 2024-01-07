@@ -79,4 +79,73 @@ public class Utilities {
     public static double getSlowMultiplier(double triggerInput, double maxSlowMultiplier) {
         return (maxSlowMultiplier - 1) * triggerInput + 1;
     }
+
+
+    /**
+     * checks if a inbar position is close enough to a target position
+     * @param pos current inbar position
+     * @param target destination inbar position
+     * @return true if within tolerance constant
+     */
+    public static boolean nearInbarPos(double pos, double target) {
+        return Math.abs(pos - target) < Constants.INBAR_POS_TOLERANCE;
+    }
+
+    /**
+     * finds the next inbar pos above current
+     * @param pos current inbar position
+     * @return next pos, limited to max position
+     */
+    public static double firstInbarPosAbove(double pos) {
+        for (int i = 0; i < Constants.INBAR_POSITIONS.length; i++) {
+            if (pos < Constants.INBAR_POSITIONS[i]) {
+                return Constants.INBAR_POSITIONS[i];
+            }
+        }
+        // limit to the highest inbar pos
+        return Constants.INBAR_MAX_POSITION;
+    }
+    /**
+     * finds the next inbar pos below current
+     * @param pos current inbar position
+     * @return next pos, limited to min position
+     */
+    public static double firstInbarPosBelow(double pos) {
+        for (int i = Constants.INBAR_POSITIONS.length - 1; i >= 0; i--) {
+            if (pos > Constants.INBAR_POSITIONS[i]) {
+                return Constants.INBAR_POSITIONS[i];
+            }
+        }
+        // limit to the lowest inbar pos
+        return Constants.INBAR_MIN_POSITION;
+    }
+
+    /**
+     * find the inbar position above the current, whether between or on a preset position
+     * @param pos current inbar position
+     * @return next position above
+     */
+    public static double inbarUp(double pos) {
+        double above = firstInbarPosAbove(pos);
+        // if close enough to next, go one next further
+        if (nearInbarPos(pos, above)) {
+            return firstInbarPosAbove(above);
+        } else {
+            return above;
+        }
+    }
+    /**
+     * find the inbar position below the current, whether between or on a preset position
+     * @param pos current inbar position
+     * @return next position below
+     */
+    public static double inbarDown(double pos) {
+        double below = firstInbarPosBelow(pos);
+        // if close enough to next, go one next further
+        if (nearInbarPos(pos, below)) {
+            return firstInbarPosBelow(below);
+        } else {
+            return below;
+        }
+    }
 }
