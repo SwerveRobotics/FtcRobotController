@@ -289,7 +289,7 @@ public final class MecanumDrive {
         if(!isDevBot) {
             // preset servo positions
             intakeServo.setPosition(Constants.INBAR_MAX_POSITION);
-            dumperServo.setPosition((Constants.DUMPER_INITIALIZATION_POS));
+            dumperServo.setPosition((Constants.DUMPER_POSITIONS[0]));
             //pixelLatchFront.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
             //pixelLatchBack.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
         }

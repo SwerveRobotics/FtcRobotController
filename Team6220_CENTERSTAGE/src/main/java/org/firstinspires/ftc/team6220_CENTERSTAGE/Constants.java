@@ -22,8 +22,6 @@ public class Constants {
     public static final double DRONE_SERVO_PRIMED_POS = 1;
     public static final double DRONE_SERVO_LAUNCHING_POS = 0.3;
 
-    public static final double DUMPER_INITIALIZATION_POS = 0.6;
-
     public static final double[] PIXEL_LATCH_POSITIONS = {
             0.5, // closed
             1, // open
@@ -47,13 +45,13 @@ public class Constants {
     };
 
     public static final double[] DUMPER_POSITIONS = {
-            0.0,
-            1.0
+            0.37, // open
+            0.9 // closed
     };
 
     public static final double[] OUTTAKE_GATE_POSITIONS = {
-            0.0, // closed
-            1.0 // open
+            1.0, // closed
+            0.0 // open
     };
 
     public static final double OUTTAKE_CONVEYOR_POWER = 0.5;
