@@ -17,8 +17,8 @@ public class AutoDriveTo {
     public static double linearDriveAccel = MecanumDrive.PARAMS.maxProfileAccel;
     public static double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel;
     public static double maxLinearSpeed = MecanumDrive.PARAMS.maxWheelVel;
-    public static double rotationalDriveAccel = MecanumDrive.PARAMS.maxAngAccel;
-    public static double rotationalDriveDeccel = -MecanumDrive.PARAMS.maxAngAccel;
+    public static double rotationalDriveAccel = 0.5;
+    public static double rotationalDriveDeccel = -0.5;
     public static double maxRotationalSpeed = MecanumDrive.PARAMS.maxAngVel;
     //public static double currentVX = 6;
     //public static double currentVY = 0.1;
@@ -149,43 +149,56 @@ public class AutoDriveTo {
         return num;
     }
 
+    public static double currentSpeed = 0;
+
     public double rotationalSpeedCalculations(double goalRotation, double deltaTime) {
         double rotRemaining;
         double differenceOfSpeeds;
         double rotationalSpeed;
         double rotationDirection;
-        final double epsilon = 7.5;
+        final double rotationalEpsilon = Math.toRadians(1);
+        final double velocityEpsilon = 5.0;
+        final double epsilon  = 3;
 
         rotRemaining = confineToScope(goalRotation - drive.pose.heading.log());
-        packet.put("rotRemaining", rotRemaining);
+        packet.put("rotRemaining", Math.toDegrees(rotRemaining));
 
-        rotationalSpeed = currentVelocity.angVel;
-        packet.put("rotationalSpeed", rotationalSpeed);
+        rotationalSpeed = Math.toRadians(currentSpeed);
+        packet.put("rotationalSpeed1", Math.toDegrees(rotationalSpeed));
+
+        if (Math.abs(rotRemaining) < rotationalEpsilon && rotationalSpeed < velocityEpsilon)
+            return 0;
 
         differenceOfSpeeds = lastRotationalSpeed - rotationalSpeed;
         if (Math.abs(differenceOfSpeeds) > epsilon)
             differenceOfSpeeds = 0;
-        packet.put("differenceOfSpeeds", differenceOfSpeeds);
+        packet.put("rotDifferenceOfSpeeds", differenceOfSpeeds);
 
         rotationDirection = rotationalSpeed / Math.abs(rotationalSpeed);
+        if (rotationalSpeed == 0)
+            rotationDirection = 1;
+        packet.put("rotationDirection", rotationDirection);
 
-        if (rotRemaining * rotationalSpeed <= 0) {
+        if (rotRemaining * lastRotationalSpeed <= 0) {
             rotationalSpeed = Math.abs(rotationalSpeed) + (rotationalDriveAccel * deltaTime);
-            packet.put("radialSpeed2", rotationalSpeed);
+            packet.put("hi", 1);
         } else {
+
             rotationalSpeed = Math.abs(rotationalSpeed) + (rotationalDriveDeccel * deltaTime);
-            packet.put("radialSpeed2", rotationalSpeed);
+            packet.put("hi", 0);
         }
+        packet.put("rotationalSpeed2", Math.toDegrees(rotationalSpeed));
 
         rotationalSpeed = Math.min(rotationalSpeed, maxRotationalSpeed);
-        packet.put("rotationalSpeed", rotationalSpeed);
+        packet.put("rotationalSpeed3", Math.toDegrees(rotationalSpeed));
         rotationalSpeed = Math.min(rotationalSpeed, Math.sqrt(Math.abs(2.0 * rotationalDriveDeccel * rotRemaining)));
-        packet.put("rotationalSpeed", rotationalSpeed);
-        rotationalSpeed = rotationalSpeed * rotationDirection + differenceOfSpeeds;
+        packet.put("rotationalSpeed4", Math.toDegrees(rotationalSpeed));
+        rotationalSpeed = rotationalSpeed * rotationDirection;// + differenceOfSpeeds;
+        packet.put("rotationalSpeed5", Math.toDegrees(rotationalSpeed));
         lastRotationalSpeed = rotationalSpeed;
-        packet.put("lastRotationalSpeed", lastRotationalSpeed);
+        packet.put("lastRotationalSpeed", Math.toDegrees(lastRotationalSpeed));
 
-        return rotationalSpeed;
+        return -rotationalSpeed;
     }
 
     PoseVelocity2d currentVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
@@ -214,15 +227,16 @@ public class AutoDriveTo {
         printVectorData("currentVelocity", currentVelocity.linearVel);
         packet.put("PoseVelocity",drive.poseVelocity);
 
-        if (Math.hypot(finalLinearVelocity.x, finalLinearVelocity.y) < velocityEpsilon && Math.abs(distVector.x - drive.pose.position.x) < distEpsilon && Math.abs(distVector.y - drive.pose.position.y) < distEpsilon){
-            return new PoseVelocity2d(new Vector2d(0, 0), 0);
-        }
-
         timeSinceInit = BaseOpMode.TIME.seconds() - initTime;
         deltaTime = timeSinceInit - lastTime;
 
-        radialVelocity = radialVectorCalculations(distVector, deltaTime);
-        tangentialVelocity = tangentialVectorCalculations(distVector, deltaTime);
+        if (Math.hypot(finalLinearVelocity.x, finalLinearVelocity.y) < velocityEpsilon && Math.abs(distVector.x - drive.pose.position.x) < distEpsilon && Math.abs(distVector.y - drive.pose.position.y) < distEpsilon){
+            radialVelocity = new Vector2d(0, 0);
+            tangentialVelocity = new Vector2d(0, 0);
+        } else {
+            radialVelocity = radialVectorCalculations(distVector, deltaTime);
+            tangentialVelocity = tangentialVectorCalculations(distVector, deltaTime);
+        }
         rotationalSpeed = rotationalSpeedCalculations(goalRotation, deltaTime);
 
         finalLinearVelocity = radialVelocity.plus(tangentialVelocity);
@@ -246,8 +260,7 @@ public class AutoDriveTo {
     public void driveTo(double goalX, double goalY, double goalRotation, boolean hasDriveToInit) {
         PoseVelocity2d motionProfileVel = motionProfileWithVector(new Vector2d(goalX - drive.pose.position.x,
                                                                                goalY - drive.pose.position.y),
-                goalRotation, hasDriveToInit);
-        //Vector2d motionProfileVel = motionProfileWithVector(new Vector2d(-24, 0.1), hasDriveToInit);
+                                                                  goalRotation, hasDriveToInit);
         drive.setDrivePowers(null, motionProfileVel);
     }
 }
