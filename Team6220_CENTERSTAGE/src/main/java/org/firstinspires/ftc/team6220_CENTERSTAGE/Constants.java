@@ -41,6 +41,13 @@ public class Constants {
             0.37,
             0.87,
     };
+
+    public static final double[] DUMPER_POSITIONS = {
+            0.0,
+            1.0
+    };
+
+
     public static final double INBAR_MIN_POSITION = INBAR_POSITIONS[0];
     public static final double INBAR_MAX_POSITION = INBAR_POSITIONS[INBAR_POSITIONS.length - 1];
     public static final double INBAR_POS_TOLERANCE = 0.03;
