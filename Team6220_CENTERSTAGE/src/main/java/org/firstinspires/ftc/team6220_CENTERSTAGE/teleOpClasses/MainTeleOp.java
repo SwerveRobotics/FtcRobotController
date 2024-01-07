@@ -5,10 +5,10 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.Const;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.Constants;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.ExtendedDriveFeatures;
 import org.firstinspires.ftc.team6220_CENTERSTAGE.MecanumDrive;
@@ -57,6 +57,9 @@ public class MainTeleOp extends LinearOpMode {
     // holds heading from imu read which is done in roadrunner's mecanum drive class for us
     double currentHeading = 0.0;
     double targetHeading = 0.0;
+
+    // tracks whether the dumper is extended or not (best way I could think of to do this)
+    boolean dumperExtended;
 
     // represents the driving direction vector that is given to roadrunner
     DriveVector driveVector = new DriveVector(0, 0);
@@ -259,8 +262,12 @@ public class MainTeleOp extends LinearOpMode {
                         * (gp1.getButton(GamepadKeys.Button.X) || gp2.getButton(GamepadKeys.Button.X) ? -1 : 1)
                         * Constants.INTAKE_POWER_MULTIPLIER;
 
-                // apply intake instructions
+                // apply intake instructions (and make sure the belt and gate work with Gavins janky solution :D)
                 drive.intakeMotor.setPower(-intakePower); // will self stop with 0 power
+                drive.outtakeConveyor.setPower(intakePower);
+                if(Math.abs(intakePower) > 0) {
+                    drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[0]);
+                }
 
 
                 // run inbar (aka intakeServo, intake bar):
@@ -291,12 +298,8 @@ public class MainTeleOp extends LinearOpMode {
                 // apply inbar position
                 drive.intakeServo.setPosition(inbarPos);
 
-
-
-
-                // run slides:
-
-                // move the slides up and down
+              
+                // run slides:              
                 slidesPower = gp2.getLeftY() * Constants.SLIDE_MANUAL_MULTIPLIER;
 
                 // if doing manual override let any input through
@@ -320,15 +323,43 @@ public class MainTeleOp extends LinearOpMode {
                 }
 
 
-                /*
+                // run outtake:
+               
+                // toggle outtake position
+                if(gp2.wasJustReleased(GamepadKeys.Button.B)) {
+                    if (dumperExtended) {
+                        drive.dumperServo.setPosition(Constants.DUMPER_POSITIONS[0]);
+                        dumperExtended = false;
+                    } else {
+                        drive.dumperServo.setPosition(Constants.DUMPER_POSITIONS[1]);
+                        dumperExtended = true;
+                    }
+                }
+
+                // drive belt when gp2 [A] is pressed
+                if(gp2.isDown(GamepadKeys.Button.A)) {
+                    drive.outtakeConveyor.setPower(Constants.OUTTAKE_CONVEYOR_POWER);
+                } else {
+                    drive.outtakeConveyor.setPower(0);
+                }
+              
+
+                // opens gate when gp2 [A] is pressed
+                if(gp2.wasJustPressed(GamepadKeys.Button.A)) {
+                    drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[0]);
+                } else if (gp2.wasJustReleased(GamepadKeys.Button.A)) {
+                    drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[1]);
+                }
 
                 // drive Drone Launcher
-                if (gp2.wasJustPressed(GamepadKeys.Button.Y) && !hasDroneLaunched) {
+                if (gp1.wasJustPressed(GamepadKeys.Button.Y) && !hasDroneLaunched) {
                     drive.droneServo.setPosition(Constants.DRONE_SERVO_LAUNCHING_POS);
-                } else if (gp2.wasJustReleased(GamepadKeys.Button.Y)){
+                } else if (gp1.wasJustReleased(GamepadKeys.Button.Y)){
                     drive.droneServo.setPosition(Constants.DRONE_SERVO_PRIMED_POS);
                     hasDroneLaunched = true;
                 }
+
+                /*
 
                 // Slides stuff
                 if (gp2.getButton(GamepadKeys.Button.LEFT_BUMPER)) {
