@@ -23,8 +23,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     public AprilTagPoseEstimator myATPoseEstimator;
 
-    @Override
-    public void runOpMode() {
+    public void runTeleOp(boolean driveTo) {
         initializeHardware();
 
         // Initialize April Tags (if enabled)

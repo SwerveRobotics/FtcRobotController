@@ -31,8 +31,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
     public static double APRIL_TAG_SLEEP_TIME = 500;
     public static double NO_APRIL_TAG_SLEEP_TIME = 5000;
 
-    private final boolean USE_APRIL_TAGS = false;
-    private final boolean USE_OPEN_CV_PROP_DETECTION = true;
+    private boolean USE_APRIL_TAGS = false;
+    private boolean USE_OPEN_CV_PROP_DETECTION = true;
 
     public static double INTAKE_SPEED = 1;
     public static double INTAKE_TIME = 2; // in seconds
@@ -74,7 +74,10 @@ abstract public class BaseAutonomous extends BaseOpMode {
         }
     }
 
-    public void runAuto(boolean red, boolean close, boolean test) {
+    public void runAuto(boolean red, boolean close, boolean openCV, boolean aprilTags) {
+        USE_OPEN_CV_PROP_DETECTION = openCV;
+        USE_APRIL_TAGS = aprilTags;
+
         initializeAuto();
 
         if (myColorDetection != null) {
@@ -153,8 +156,10 @@ abstract public class BaseAutonomous extends BaseOpMode {
             drive.runParallel(new ATContinuallyEstimatePoseAction());
         }
 
-        if (!test) {
-            Actions.runBlocking(poseAndAction.action);
+        drive.runParallel(poseAndAction.action);
+
+        while (opModeIsActive()) {
+            drive.doActionsWork();
         }
 
         telemetry.addLine("Running closing procedure: ");
@@ -163,11 +168,6 @@ abstract public class BaseAutonomous extends BaseOpMode {
         if (myATPoseEstimator != null) {
             myATPoseEstimator.visionPortal.close();
         }
-    }
-
-    public void runAuto(boolean red, boolean close) {
-
-        runAuto(red, close, false);
     }
 
     //Action: Spits out pixel in trajectory; see usage in AutonDriveFactory below.

@@ -4,10 +4,12 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseAutonomous;
 
-@Autonomous (name="Red Close Auto ")
+@Autonomous(name = "Competition Autonomous")
 
-public class RedCloseAuto extends BaseAutonomous {
+public class CompetitionAuto extends BaseAutonomous {
+    @Override
     public void runOpMode() {
-      runAuto(true, true);
+        Config.menu(telemetry, gamepad1);
+        runAuto(Config.isRed, Config.isClose, Config.useOpenCV, Config.useAprilTags);
     }
 }
