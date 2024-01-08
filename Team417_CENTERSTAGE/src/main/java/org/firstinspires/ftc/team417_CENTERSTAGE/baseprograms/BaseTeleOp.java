@@ -19,7 +19,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     ElapsedTime time = new ElapsedTime();
 
-    public static boolean USE_APRIL_TAGS = false;
+    public static boolean USE_APRIL_TAGS = true;
 
     public AprilTagPoseEstimator myATPoseEstimator;
 

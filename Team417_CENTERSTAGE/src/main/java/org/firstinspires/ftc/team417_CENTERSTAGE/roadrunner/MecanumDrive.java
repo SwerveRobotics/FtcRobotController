@@ -486,10 +486,7 @@ public final class MecanumDrive {
             ATLHelper.addTwist(twist);
         }
 
-        System.out.println(twist.value());
-        System.out.println(pose);
         pose = pose.plus(twist.value());
-        System.out.println(pose);
 
         poseHistory.add(pose);
         while (poseHistory.size() > 100) {
@@ -498,7 +495,6 @@ public final class MecanumDrive {
 
         if (ATLHelper != null) {
             Pose2d tentativePose = ATLHelper.refinePose();
-            System.out.println(tentativePose);
 
             if (tentativePose != null) {
                 pose = new Pose2d(tentativePose.position.x, tentativePose.position.y, tentativePose.heading.log());

@@ -256,8 +256,6 @@ public class AprilTagPoseEstimator {
      * Produce a pose estimate from current frames and update it
      */
     public void updatePoseEstimate() {
-        System.out.println("PoseEsitmator: " + robotPoseEstimate);
-
         myAprilTagLatencyHelper.updateFPS(visionPortal.getFps());
 
         ArrayList<AprilTagDetection> currentDetections = aprilTag.getDetections();
@@ -275,11 +273,9 @@ public class AprilTagPoseEstimator {
         boolean detecting;
         InfoWithDetection best = chooseBestAprilTag(knownAprilTagsDetected);
         if (best != null) {
-            System.out.println("ID: "+best.detection.id);
             robotPoseEstimate = calculatePoseEstimate(best.detection, best.info);
             detecting = true;
         } else {
-            System.out.println("None");
             robotPoseEstimate = null;
             detecting = false;
         }
