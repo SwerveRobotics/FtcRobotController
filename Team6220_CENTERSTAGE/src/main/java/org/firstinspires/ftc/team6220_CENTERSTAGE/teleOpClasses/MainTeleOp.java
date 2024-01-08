@@ -93,12 +93,14 @@ public class MainTeleOp extends LinearOpMode {
 
         boolean hasDroneLaunched = false;
 
-
+        // don't reset so that the zero stays accurate between programs
+        /*
         // Reset encoders of slide motor
         if (!drive.isDevBot) { // is competition bot
             drive.slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             drive.slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         }
+         */
 
 
         // stops the imu from unwanted continuing of previous tracking
@@ -262,12 +264,8 @@ public class MainTeleOp extends LinearOpMode {
                         * (gp1.getButton(GamepadKeys.Button.X) || gp2.getButton(GamepadKeys.Button.X) ? -1 : 1)
                         * Constants.INTAKE_POWER_MULTIPLIER;
 
-                // apply intake instructions (and make sure the belt and gate work with Gavins janky solution :D)
+                // apply intake instructions
                 drive.intakeMotor.setPower(-intakePower); // will self stop with 0 power
-                drive.outtakeConveyor.setPower(intakePower);
-                if(Math.abs(intakePower) > 0) {
-                    drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[0]);
-                }
 
 
                 // run inbar (aka intakeServo, intake bar):
@@ -279,20 +277,10 @@ public class MainTeleOp extends LinearOpMode {
                     inbarPos = Constants.INBAR_MIN_POSITION;
 
                 // manual up and down (limited to max and min pos)
-                } else if (gp2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > Constants.INBAR_MANUAL_MODE_TRIGGER_THRESHOLD) {
-                    if (gp2.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
-                        inbarPos = Math.min(Constants.INBAR_MAX_POSITION, inbarPos + Constants.INBAR_MANUAL_RATE);
-                    } else if (gp2.getButton(GamepadKeys.Button.DPAD_LEFT)) {
-                        inbarPos = Math.max(Constants.INBAR_MIN_POSITION, inbarPos - Constants.INBAR_MANUAL_RATE);
-                    }
-
-                // preset up and down
-                } else {
-                    if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT)) {
-                        inbarPos = Utilities.inbarUp(inbarPos);
-                    } else if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT)) {
-                        inbarPos = Utilities.inbarDown(inbarPos);
-                    }
+                } else if (gp2.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
+                    inbarPos = Math.min(Constants.INBAR_MAX_POSITION, inbarPos + Constants.INBAR_MANUAL_RATE);
+                } else if (gp2.getButton(GamepadKeys.Button.DPAD_LEFT)) {
+                    inbarPos = Math.max(Constants.INBAR_MIN_POSITION, inbarPos - Constants.INBAR_MANUAL_RATE);
                 }
 
                 // apply inbar position
@@ -337,17 +325,22 @@ public class MainTeleOp extends LinearOpMode {
                 }
 
                 // drive belt when gp2 [A] is pressed
-                if(gp2.isDown(GamepadKeys.Button.A)) {
-                    drive.outtakeConveyor.setPower(Constants.OUTTAKE_CONVEYOR_POWER);
+                if (gp2.isDown(GamepadKeys.Button.A)) {
+                    drive.outtakeConveyor.setPower(-Constants.OUTTAKE_CONVEYOR_POWER);
+                // otherwise if intake is running
+                } else if (Math.abs(intakePower) > 0) {
+                    // follow intake power
+                    drive.outtakeConveyor.setPower(-intakePower);
+                // but if nothing's happening power should be zero
                 } else {
                     drive.outtakeConveyor.setPower(0);
                 }
               
 
                 // opens gate when gp2 [A] is pressed
-                if(gp2.wasJustPressed(GamepadKeys.Button.A)) {
+                if (gp2.getButton(GamepadKeys.Button.A)) {
                     drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[0]);
-                } else if (gp2.wasJustReleased(GamepadKeys.Button.A)) {
+                } else {
                     drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[1]);
                 }
 
@@ -453,25 +446,6 @@ public class MainTeleOp extends LinearOpMode {
                 //telemetry.addData("slide target", slidePreset);
                 //telemetry.addData("slide encoder pos", drive.slideMotor.getCurrentPosition());
 
-                // some questionable code to let the drivers know which index the inbar is at
-                // if it's between because it's on manual mode, it estimates between indexes
-                double inbarIndex = -1;
-                double lowerIndex = -1;
-                for (int i = 0; i < Constants.INBAR_POSITIONS.length; i++) {
-                    if (Utilities.nearInbarPos(inbarPos, Constants.INBAR_POSITIONS[i])) {
-                        inbarIndex = i;
-                    }
-                    if (inbarPos >= Constants.INBAR_POSITIONS[i]) {
-                        lowerIndex = i;
-                    }
-                }
-                if (inbarIndex == -1) {
-                    double base = inbarPos - Utilities.inbarDown(inbarPos);
-                    double range = Utilities.inbarUp(inbarPos) - Utilities.inbarDown(inbarPos);
-                    double between = base / range;
-                    inbarIndex = lowerIndex + between;
-                }
-                telemetry.addLine(String.format("Intake bar index: %.2f", inbarIndex));
                 telemetry.addData("inbar pos", inbarPos);
                 telemetry.addLine();
                 telemetry.addData("slides pos", drive.slideMotor.getCurrentPosition());

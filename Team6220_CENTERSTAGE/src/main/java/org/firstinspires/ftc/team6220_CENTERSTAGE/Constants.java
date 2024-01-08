@@ -45,19 +45,20 @@ public class Constants {
     };
 
     public static final double[] DUMPER_POSITIONS = {
-            0.37, // open
-            0.9 // closed
+            0, // extended
+            0.89 // retracted
     };
 
     public static final double[] OUTTAKE_GATE_POSITIONS = {
-            1.0, // closed
-            0.0 // open
+            0.7, // open
+            0.0 // closed
     };
 
     public static final double OUTTAKE_CONVEYOR_POWER = 0.5;
 
     public static final double INBAR_MIN_POSITION = INBAR_POSITIONS[0];
     public static final double INBAR_MAX_POSITION = INBAR_POSITIONS[INBAR_POSITIONS.length - 1];
+    public static final double INBAR_INIT_POSITION = 1.0;
     public static final double INBAR_POS_TOLERANCE = 0.03;
     public static final double INBAR_MANUAL_RATE = 0.01;
     public static final double INBAR_MANUAL_MODE_TRIGGER_THRESHOLD = 0.1;
