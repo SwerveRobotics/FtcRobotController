@@ -34,7 +34,7 @@ public class ExtendedDriveFeatures {
     public boolean moveSlidesPreset(int targetPos) {
         double power = (targetPos - this.drive.slideMotor.getCurrentPosition()) * Constants.SLIDE_P_GAIN;
         this.moveSlides(Utilities.clamp(power, -Constants.AUTO_SLIDES_MAX_SPEED, Constants.AUTO_SLIDES_MAX_SPEED));
-        return Math.abs(power) >= Constants.AUTO_SLIDES_PRESET_TOLERANCE;
+        return Math.abs(power) >= Constants.AUTO_SLIDES_TOLERANCE;
     }
 
     // PLACEHOLDER UNTIL WE HAVE THE ARM

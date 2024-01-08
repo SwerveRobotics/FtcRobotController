@@ -35,9 +35,15 @@ public class Constants {
     public static final double SLIDE_MAX_POSITION = 4000;
     public static final double SLIDE_POSITION_TOLERANCE = 20;
 
-    public static final double AUTO_SLIDES_MAX_SPEED = 0.8;
-    public static final double AUTO_SLIDES_PRESET_TOLERANCE = 0.1;
-    public static final double SLIDE_P_GAIN = 0.3; // Multiplier modifier constant for slide power, used in preset moveSlides method.
+    public static final double AUTO_SLIDES_MAX_SPEED = 0.7;
+    public static final double AUTO_SLIDES_TOLERANCE = 20;
+    public static final double SLIDE_P_GAIN = 0.001; // Multiplier modifier constant for slide power, used in preset moveSlides method.
+
+    public static final double[] SLIDE_TELEOP_POSITIONS = {
+        0,
+        2000,
+        4000,
+    }
 
     public static final double[] INBAR_POSITIONS = { // Preset positions that the intake can travel to through use of Dpad Controls.
             0.37,
