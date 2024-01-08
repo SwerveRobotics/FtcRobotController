@@ -155,7 +155,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
         stopDriving();
     }
 
-    public void runIntake(double power, int rotations) {
+    /*public void runIntake(double power, int rotations) {
         motorIntakeWheels.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         double targetMotorIntakeWheels = rotations * TICKS_PER_REVOLUTION;
         targetMotorIntakeWheels += motorIntakeWheels.getCurrentPosition();
@@ -167,6 +167,15 @@ abstract public class BaseAutonomous extends BaseOpMode {
                 (motorFL.isBusy() && motorFR.isBusy() && motorBL.isBusy() && motorBR.isBusy())) {
         }
         motorIntakeWheels.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+    }*/
+
+    public void runIntake(double power, int time) {
+        ElapsedTime t = new ElapsedTime();
+        t.startTime();
+        while (t.milliseconds() < time) {
+            motorIntakeWheels.setPower(-power);
+        }
+        motorIntakeWheels.setPower(0.0);
     }
 
     private void stopDriving() {

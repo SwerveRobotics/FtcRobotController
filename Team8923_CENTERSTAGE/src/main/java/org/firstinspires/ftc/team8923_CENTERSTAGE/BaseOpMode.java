@@ -51,6 +51,8 @@ abstract public class BaseOpMode extends LinearOpMode {
         motorBL = hardwareMap.dcMotor.get("motorBL");
         motorBR = hardwareMap.dcMotor.get("motorBR");
 
+        motorIntakeWheels = hardwareMap.dcMotor.get("motorIntakeWheels");
+
         motorFL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorFR.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         motorBL.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
