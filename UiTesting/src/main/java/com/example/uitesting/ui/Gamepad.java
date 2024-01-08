@@ -20,6 +20,8 @@ class KeyDispatcher implements KeyEventDispatcher {
         switch (code) {
             case KeyEvent.VK_UP: gamepad.dpad_up = isPressed; break;
             case KeyEvent.VK_DOWN: gamepad.dpad_down = isPressed; break;
+            case KeyEvent.VK_LEFT: gamepad.dpad_left = isPressed; break;
+            case KeyEvent.VK_RIGHT: gamepad.dpad_right = isPressed; break;
             case KeyEvent.VK_A: gamepad.a = isPressed; break;
             case KeyEvent.VK_B: gamepad.b = isPressed; break;
             case KeyEvent.VK_X: gamepad.x = isPressed; break;
@@ -35,6 +37,8 @@ class KeyDispatcher implements KeyEventDispatcher {
 public class Gamepad {
     volatile public boolean dpad_down;
     volatile public boolean dpad_up;
+    volatile public boolean dpad_left;
+    volatile public boolean dpad_right;
     volatile public boolean a;
     volatile public boolean b;
     volatile public boolean x;

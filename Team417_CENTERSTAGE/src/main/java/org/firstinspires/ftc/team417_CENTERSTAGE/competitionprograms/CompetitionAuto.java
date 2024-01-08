@@ -9,7 +9,10 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseAutonomous;
 public class CompetitionAuto extends BaseAutonomous {
     @Override
     public void runOpMode() {
-        Config.menu(telemetry, gamepad1);
+        Config.init();
+        while (!isStarted()) {
+            Config.menu(telemetry, gamepad1);
+        }
         runAuto(Config.isRed, Config.isClose, Config.useOpenCV, Config.useAprilTags);
     }
 }
