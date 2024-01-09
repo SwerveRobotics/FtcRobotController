@@ -22,6 +22,10 @@ public class Telemetry {
         lineList.add(lineCaption);
     }
 
+    public void addLine() {
+        lineList.add("");
+    }
+
     public void addData(String caption, Object value) {
         lineList.add(String.format("%s: %s", caption, value.toString()));
     }

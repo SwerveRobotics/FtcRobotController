@@ -26,6 +26,7 @@ class KeyDispatcher implements KeyEventDispatcher {
             case KeyEvent.VK_B: gamepad.b = isPressed; break;
             case KeyEvent.VK_X: gamepad.x = isPressed; break;
             case KeyEvent.VK_Y: gamepad.y = isPressed; break;
+            case KeyEvent.VK_ENTER: gamepad.start = isPressed; break;
         }
         return true;
     }
@@ -43,6 +44,7 @@ public class Gamepad {
     volatile public boolean b;
     volatile public boolean x;
     volatile public boolean y;
+    volatile public boolean start;
 
     public Gamepad() {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyDispatcher(this));

@@ -12,9 +12,7 @@ public class CompetitionAuto extends BaseAutonomous {
     public void runOpMode() {
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
         Config.init();
-        while (!isStarted()) {
-            Config.menu(telemetry, gamepad1);
-        }
+        while (!isStarted() && !Config.menu(telemetry, gamepad1));
         runAuto(Config.isRed, Config.isClose, Config.useOpenCV, Config.useAprilTags);
     }
 }

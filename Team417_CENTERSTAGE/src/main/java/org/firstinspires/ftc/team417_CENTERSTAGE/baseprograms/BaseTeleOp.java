@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagPoseEstimator;
@@ -23,8 +24,12 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     public AprilTagPoseEstimator myATPoseEstimator;
 
-    public void runTeleOp(boolean driveTo) {
+    public void runTeleOp(boolean driveTo, boolean aprilTags, Pose2d pose) {
         initializeHardware();
+
+        USE_APRIL_TAGS = aprilTags;
+
+        drive.pose = new Pose2d(pose.position.x, pose.position.y, pose.heading.log());
 
         // Initialize April Tags (if enabled)
         if (USE_APRIL_TAGS) {
@@ -45,6 +50,8 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
         while (opModeIsActive()) {
             double startOfLoop = time.nanoseconds();
+
+            telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
 
             driveUsingControllers(false);
 

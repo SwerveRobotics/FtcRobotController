@@ -28,42 +28,20 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
     private ElapsedTime runtime = new ElapsedTime();
 
-    public static double APRIL_TAG_SLEEP_TIME = 500;
-    public static double NO_APRIL_TAG_SLEEP_TIME = 5000;
-
     private boolean USE_APRIL_TAGS = false;
     private boolean USE_OPEN_CV_PROP_DETECTION = true;
 
-    public static double INTAKE_SPEED = 1;
-    public static double INTAKE_TIME = 2; // in seconds
-    public static double INTAKE_SPEED2 = 1;
-    public static double INTAKE_TIME2 = 10; // in seconds
     public static double NANO_TO_SECONDS_MULTIPLIER = 1e-9;
 
     public OpenCvColorDetection myColorDetection;
     public AprilTagPoseEstimator myATPoseEstimator;
 
     public void initializeAuto() {
-        telemetry.addData("Init State", "Init Started");
-        telemetry.update();
         if (USE_OPEN_CV_PROP_DETECTION) {
             myColorDetection = new OpenCvColorDetection(this);
             myColorDetection.init();
         }
         initializeHardware();
-
-        telemetry.addData("Init State", "Init Finished");
-
-        // Allow the OpenCV to process
-        if (USE_APRIL_TAGS) {
-            sleep((long) APRIL_TAG_SLEEP_TIME);
-        } else {
-            sleep((long) NO_APRIL_TAG_SLEEP_TIME);
-        }
-
-        telemetry.clear();
-        telemetry.addLine("Initialized. Ready to start!");
-        telemetry.update();
     }
 
     class ATContinuallyEstimatePoseAction implements Action {
@@ -74,25 +52,47 @@ abstract public class BaseAutonomous extends BaseOpMode {
         }
     }
 
+    class UpdatePoseInConfig implements Action {
+        public boolean run(TelemetryPacket packet) {
+            if (!opModeIsActive()) return false;
+            org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.pose = drive.pose;
+            return true;
+        }
+    }
+
+    class DoTelemetry implements Action {
+        public boolean run(TelemetryPacket packet) {
+            if (!opModeIsActive()) return false;
+            telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+            telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)",
+                    drive.pose.position.x, drive.pose.position.y,
+                    Math.toDegrees(drive.pose.heading.log())));
+            telemetry.update();
+            return true;
+        }
+    }
+
     public void runAuto(boolean red, boolean close, boolean openCV, boolean aprilTags) {
+        telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+        telemetry.addData("Init State", "Init Started");
+        telemetry.update();
+
         USE_OPEN_CV_PROP_DETECTION = openCV;
-        USE_APRIL_TAGS = aprilTags;
+        USE_APRIL_TAGS = false; // Just not using April Tags for auto, adds unpredicability
 
         initializeAuto();
 
-        if (myColorDetection != null) {
-            if (red) {
-                myColorDetection.setDetectColor(OpenCvColorDetection.DetectColorType.RED);
-                telemetry.addLine("Looking for red");
-            } else {
-                myColorDetection.setDetectColor(OpenCvColorDetection.DetectColorType.BLUE);
-                telemetry.addLine("Looking for blue");
-            }
-        }
+        AutonDriveFactory auton = new AutonDriveFactory(drive);
+        AutonDriveFactory.PoseAndAction leftPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.LEFT, dropPixel(1, 2));
+        AutonDriveFactory.PoseAndAction centerPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.CENTER, dropPixel(1, 2));
+        AutonDriveFactory.PoseAndAction rightPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.RIGHT, dropPixel(1, 2));
+
+        telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+        telemetry.addLine("Initialized. Ready to start!");
         telemetry.update();
 
         while (!isStarted()) {
-            telemetry.addData("Looking for", myColorDetection.myColor);
+            telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
             telemetry.addData("Side detected", myColorDetection.detectTeamProp());
             telemetry.update();
         }
@@ -103,6 +103,11 @@ abstract public class BaseAutonomous extends BaseOpMode {
         AutonDriveFactory.SpikeMarks translateEnum;
 
         if (myColorDetection != null) {
+            while (myColorDetection.detectTeamProp() == OpenCvColorDetection.SideDetected.INITIALIZED);
+
+            // Just in case (flash after camera is completely initialized, could lead to instability)
+            sleep(100);
+
             OpenCvColorDetection.SideDetected result = myColorDetection.detectTeamProp();
 
             if (result == OpenCvColorDetection.SideDetected.LEFT) {
@@ -147,16 +152,32 @@ abstract public class BaseAutonomous extends BaseOpMode {
             drive.setATLHelper(myATPoseEstimator.myAprilTagLatencyHelper);
         }
 
-        AutonDriveFactory auton = new AutonDriveFactory(drive);
-        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(1, 2));
+        AutonDriveFactory.PoseAndAction poseAndAction;
+        switch (translateEnum) {
+            case LEFT:
+                poseAndAction = leftPoseAndAction;
+                break;
+            case CENTER:
+                poseAndAction = centerPoseAndAction;
+                break;
+            case RIGHT:
+                poseAndAction = rightPoseAndAction;
+                break;
+            default:
+                poseAndAction = centerPoseAndAction;
+        }
 
         drive.pose = poseAndAction.startPose;
+
+        drive.runParallel(poseAndAction.action);
 
         if (USE_APRIL_TAGS) {
             drive.runParallel(new ATContinuallyEstimatePoseAction());
         }
 
-        drive.runParallel(poseAndAction.action);
+        drive.runParallel(new UpdatePoseInConfig());
+
+        drive.runParallel(new DoTelemetry());
 
         while (opModeIsActive()) {
             drive.doActionsWork();

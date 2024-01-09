@@ -8,6 +8,6 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseTeleOp;
 public class CompetitionTeleOp extends BaseTeleOp {
     @Override
     public void runOpMode() {
-        runTeleOp(Config.useDriveTo);
+        runTeleOp(Config.useDriveTo, Config.useAprilTags, Config.pose);
     }
 }
