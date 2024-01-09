@@ -81,69 +81,61 @@ public class Utilities {
     }
 
 
-    /**
-     * checks if a inbar position is close enough to a target position
-     * @param pos current inbar position
-     * @param target destination inbar position
-     * @return true if within tolerance constant
-     */
-    public static boolean nearInbarPos(double pos, double target) {
-        return Math.abs(pos - target) < Constants.INBAR_POS_TOLERANCE;
-    }
+    // these methods are generalized but are mainly meant for slide presets in teleop:
 
     /**
-     * finds the next inbar pos above current
-     * @param pos current inbar position
+     * finds the next pos above current
+     * @param pos current position
      * @return next pos, limited to max position
      */
-    public static double firstInbarPosAbove(double pos) {
-        for (int i = 0; i < Constants.INBAR_POSITIONS.length; i++) {
-            if (pos < Constants.INBAR_POSITIONS[i]) {
-                return Constants.INBAR_POSITIONS[i];
+    public static double firstPosAbove(double pos, double[] positions) {
+        for (int i = 0; i < positions.length; i++) {
+            if (pos < positions[i]) {
+                return positions[i];
             }
         }
         // limit to the highest inbar pos
-        return Constants.INBAR_MAX_POSITION;
+        return positions[positions.length - 1];
     }
     /**
-     * finds the next inbar pos below current
-     * @param pos current inbar position
+     * finds the next pos below current
+     * @param pos current position
      * @return next pos, limited to min position
      */
-    public static double firstInbarPosBelow(double pos) {
-        for (int i = Constants.INBAR_POSITIONS.length - 1; i >= 0; i--) {
-            if (pos > Constants.INBAR_POSITIONS[i]) {
-                return Constants.INBAR_POSITIONS[i];
+    public static double firstPosBelow(double pos, double[] positions) {
+        for (int i = positions.length - 1; i >= 0; i--) {
+            if (pos > positions[i]) {
+                return Cpositions[i];
             }
         }
         // limit to the lowest inbar pos
-        return Constants.INBAR_MIN_POSITION;
+        return positions[0];
     }
 
     /**
-     * find the inbar position above the current, whether between or on a preset position
-     * @param pos current inbar position
+     * find the position above the current, whether between or on a preset position
+     * @param pos current position
      * @return next position above
      */
-    public static double inbarUp(double pos) {
-        double above = firstInbarPosAbove(pos);
+    public static double positionUp(double pos, double[] positions, double tolerance) {
+        double above = firstInbarPosAbove(pos, positions);
         // if close enough to next, go one next further
-        if (nearInbarPos(pos, above)) {
-            return firstInbarPosAbove(above);
+        if (Math.abs(pos - above) < tolerance) {
+            return firstInbarPosAbove(above, positions);
         } else {
             return above;
         }
     }
     /**
-     * find the inbar position below the current, whether between or on a preset position
-     * @param pos current inbar position
+     * find the position below the current, whether between or on a preset position
+     * @param pos current position
      * @return next position below
      */
-    public static double inbarDown(double pos) {
-        double below = firstInbarPosBelow(pos);
+    public static double positionDown(double pos, double[] positions, double tolerance) {
+        double below = firstInbarPosBelow(pos, positions);
         // if close enough to next, go one next further
-        if (nearInbarPos(pos, below)) {
-            return firstInbarPosBelow(below);
+        if (Math.abs(pos - below) < tolerance) {
+            return firstInbarPosBelow(below, positions);
         } else {
             return below;
         }

@@ -44,12 +44,19 @@ public class MainTeleOp extends LinearOpMode {
         TURNING_FIELD_CENTRIC
     }
 
+    SlideStates curSlideState = SlideStates.SLIDES_MANUAL;
+    enum SlideStates {
+        SLIDES_MANUAL,
+        SLIDES_TO_POSITION, // for slide preset buttons
+    }
+
     // drive powers, read from input and then manipulated every loop
     double drivePowerX = 0.0;
     double drivePowerY = 0.0;
     double turnPower = 0.0;
     double intakePower = 0.0;
     double slidesPower = 0.0;
+    double slidesTargetPos = 0.0;
 
     // 1.0 represents 100% speed; applied too drive and turn
     double slowMultiplier = 0.0;
@@ -287,28 +294,75 @@ public class MainTeleOp extends LinearOpMode {
                 drive.intakeServo.setPosition(inbarPos);
 
               
-                // run slides:              
-                slidesPower = gp2.getLeftY() * Constants.SLIDE_MANUAL_MULTIPLIER;
+                // run slides:        
 
-                // if doing manual override let any input through
-                if (gp2.getButton(GamepadKeys.Button.Y)) {
-                    exDrive.moveSlides(slidesPower);
-                // if stopping manual override (releasing the button), set the new zero
-                } else if (gp2.wasJustReleased(GamepadKeys.Button.Y)) {
-                    drive.slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                    drive.slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-                // otherwise do normal slide input with lower and upper limits
-
-                // if going up and not within tolerance of or above max position
-                // or if going down and not within tolerance of or below min position...
-                } else if ((slidesPower > 0 && drive.slideMotor.getCurrentPosition() < Constants.SLIDE_MAX_POSITION - Constants.SLIDE_POSITION_TOLERANCE)
-                        || (slidesPower < 0 && drive.slideMotor.getCurrentPosition() > Constants.SLIDE_POSITION_TOLERANCE)) {
-                    // ...then apply slides power
-                    exDrive.moveSlides(slidesPower);
-                } else {
-                    exDrive.moveSlides(0);
+                // slide presets
+                // preset down
+                if (gp2.wasJustPressed(GamepadKeys.Button.LEFT_BUMPER)) {
+                    switch (curSlideState) {
+                        case SLIDES_MANUAL:
+                            // take the current position
+                            slidesTargetPos = drive.slideMotor.getCurrentPosition();
+                            // fall through to set target to next down
+                        case SLIDES_TO_POSITION:
+                            curSlideState = SlideStates.SLIDES_TO_POSITION;
+                            // next down from target (if we've already set target, it goes one more next!)
+                            slidesTargetPos = positionDown(slidesTargetPos, Constants.SLIDE_TELEOP_POSITIONS, Constants.AUTO_SLIDES_TOLERANCE);
+                    }
+                // preset up
+                } else if (gp2.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
+                    switch (curSlideState) {
+                        case SLIDES_MANUAL:
+                            // take the current position
+                            slidesTargetPos = drive.slideMotor.getCurrentPosition();
+                            // fall through to set target to next up
+                        case SLIDES_TO_POSITION:
+                            curSlideState = SlideStates.SLIDES_TO_POSITION;
+                            // next down from target (if we've already set target, it goes one more next!)
+                            slidesTargetPos = positionUp(slidesTargetPos, Constants.SLIDE_TELEOP_POSITIONS, Constants.AUTO_SLIDES_TOLERANCE);
+                    }
+                // switch to manual if slides stick is given input or slides override is active
+                } else if (Math.abs(gp2.getLeftY()) > Constants.SLIDES_STICK_DEADZONE || gp2.getButton(GamepadKeys.Button.Y)) {
+                    curSlideState = SlideStates.SLIDES_MANUAL;
                 }
+
+                switch (curSlideState) {
+                    // if the slides are being moved by stick input
+                    case SLIDES_MANUAL:
+
+                        slidesPower = gp2.getLeftY() * Constants.SLIDE_MANUAL_MULTIPLIER;
+
+                        // if doing manual override let any input through
+                        if (gp2.getButton(GamepadKeys.Button.Y)) {
+                            exDrive.moveSlides(slidesPower);
+                        // if stopping manual override (releasing the button), set the new zero
+                        } else if (gp2.wasJustReleased(GamepadKeys.Button.Y)) {
+                            drive.slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                            drive.slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+                        // otherwise do normal slide input with lower and upper limits
+
+                        // if going up and not within tolerance of or above max position
+                        // or if going down and not within tolerance of or below min position...
+                        } else if ((slidesPower > 0 && drive.slideMotor.getCurrentPosition() < Constants.SLIDE_MAX_POSITION - Constants.SLIDE_POSITION_TOLERANCE)
+                                || (slidesPower < 0 && drive.slideMotor.getCurrentPosition() > Constants.SLIDE_POSITION_TOLERANCE)) {
+                            // ...then apply slides power
+                            exDrive.moveSlides(slidesPower);
+                        } else {
+                            exDrive.moveSlides(0);
+                        }
+                        break;
+
+                    // if the slides are being moved by 
+                    case SLIDES_TO_POSITION:
+                        // moves slides to target, if it returns false it has reached target
+                        if (!exDrive.moveSlidesToPosition(slidesTargetPos)) {
+                            // so stop moving to position
+                            curSlideState = SlideStates.SLIDES_MANUAL;
+                        }
+                        break;
+                }
+
 
 
                 // run outtake:

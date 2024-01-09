@@ -27,6 +27,7 @@ public class Constants {
             1, // open
     };
 
+    public static final double SLIDES_STICK_DEADZONE = 0.01;
     public static final double SLIDE_MANUAL_MULTIPLIER = 0.5;
     public static final double SLIDE_RETURN_POWER_MULTIPLIER = 1.2;
     public static final double SLIDE_RETURN_POWER_OFFSET = -0.05;
@@ -36,7 +37,7 @@ public class Constants {
     public static final double SLIDE_POSITION_TOLERANCE = 20;
 
     public static final double AUTO_SLIDES_MAX_SPEED = 0.7;
-    public static final double AUTO_SLIDES_TOLERANCE = 20;
+    public static final double AUTO_SLIDES_TOLERANCE = 40;
     public static final double SLIDE_P_GAIN = 0.001; // Multiplier modifier constant for slide power, used in preset moveSlides method.
 
     public static final double[] SLIDE_TELEOP_POSITIONS = {

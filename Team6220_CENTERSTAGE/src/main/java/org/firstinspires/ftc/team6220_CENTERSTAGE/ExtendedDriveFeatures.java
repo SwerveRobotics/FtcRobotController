@@ -31,7 +31,7 @@ public class ExtendedDriveFeatures {
      * @param targetPos the destination position of the slides
      * @return true if it is NOT yet close enough to target pos
      */
-    public boolean moveSlidesPreset(int targetPos) {
+    public boolean moveSlidesToPosition(int targetPos) {
         double power = (targetPos - this.drive.slideMotor.getCurrentPosition()) * Constants.SLIDE_P_GAIN;
         this.moveSlides(Utilities.clamp(power, -Constants.AUTO_SLIDES_MAX_SPEED, Constants.AUTO_SLIDES_MAX_SPEED));
         return Math.abs(power) >= Constants.AUTO_SLIDES_TOLERANCE;
