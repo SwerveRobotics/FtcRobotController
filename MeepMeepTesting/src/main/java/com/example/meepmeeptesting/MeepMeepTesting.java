@@ -129,10 +129,14 @@ class AutonDriveFactory {
         spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -36)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-38, -34)), xForm(Math.toRadians(180) + (1e-6)))
                 .stopAndAdd(intake)
-                .splineToConstantHeading(xForm(new Vector2d(-30, -34)), xForm(Math.toRadians(180)))
-                .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
+                .setTangent(xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(12 - xOffset, -34)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -30)), xForm(Math.toRadians(0)))
+                .setTangent(xForm(Math.toRadians(90)))
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -12)), xForm(Math.toRadians(90)));
+                /*.splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
+                .splineToConstantHeading(xForm(new Vector2d(24, -10)), xForm(Math.toRadians(0)));*/
 
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
         spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -33)), xForm(Math.toRadians(90)))
@@ -145,12 +149,17 @@ class AutonDriveFactory {
 
 
         TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
-        spikeRight = spikeRight.splineToSplineHeading(xForm(new Pose2d(-35, -32, Math.toRadians(0))), xForm(Math.toRadians(90)))
+        spikeRight = spikeRight.splineToSplineHeading(xForm(new Pose2d(-24, -33, Math.toRadians(180))), xForm(Math.toRadians(0)))
+                               .splineToConstantHeading(xForm(new Vector2d(-15, -33)), xForm(Math.toRadians(0)))
+                                .splineToConstantHeading(xForm(new Vector2d(12 - xOffset, -33)), xForm(Math.toRadians(0)))
+                                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -30)), xForm(Math.toRadians(0)))
+                                .setTangent(xForm(Math.toRadians(90)))
+                                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -12)), xForm(Math.toRadians(90)));
                 // arm action
-                .splineToConstantHeading(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
+                /*.splineToConstantHeading(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
                 .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));
+                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));*/
 
         if(location == SpikeMarks.LEFT) {
             return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
@@ -181,7 +190,7 @@ class AutonDriveFactory {
      * arguments here to test your different code paths.
      */
     Action getMeepMeepAction() {
-        return getDriveAction(false, true, SpikeMarks.LEFT, null).action;
+        return getDriveAction(true, true, SpikeMarks.RIGHT, null).action;
     }
 }
 

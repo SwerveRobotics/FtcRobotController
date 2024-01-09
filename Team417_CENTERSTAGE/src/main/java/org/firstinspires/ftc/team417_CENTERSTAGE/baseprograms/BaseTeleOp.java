@@ -61,6 +61,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             telemetry.addData("x", drive.pose.position.x);
             telemetry.addData("y", drive.pose.position.y);
             telemetry.addData("heading", drive.pose.heading);
+            telemetry.addData("arm position", armMotor.getCurrentPosition());
 
             // Code added to draw the pose, use only when testing
             if (TESTING) {

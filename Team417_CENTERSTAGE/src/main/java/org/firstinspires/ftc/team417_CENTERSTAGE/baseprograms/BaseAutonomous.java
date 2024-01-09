@@ -140,7 +140,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
         }
 
         AutonDriveFactory auton = new AutonDriveFactory(drive);
-        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(1, 2));
+        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(0.2, 0.5), moveArmAction(2800), moveDumperAction(0));
 
         drive.pose = poseAndAction.startPose;
 
@@ -197,6 +197,33 @@ abstract public class BaseAutonomous extends BaseOpMode {
             }
         };
     }
+
+    public Action moveArmAction(double armGoalPos) {
+        return new Action() {
+            @Override
+            public boolean run(TelemetryPacket packet) {
+                armMotor.setPower(0.7);
+
+
+                if (armMotor.getCurrentPosition() < armGoalPos)
+                    return true;
+
+                armMotor.setPower(0);
+                dumperServo.setPosition(DUMPER_SERVO_DUMP_POSITION);
+                return false;
+            }
+        };
+    }
+
+    public Action moveDumperAction(double armGoalPos) {
+        return new Action() {
+            @Override
+            public boolean run(TelemetryPacket packet) {
+                dumperServo.setPosition(DUMPER_SERVO_TILT_POSITION);
+                return false;
+            }
+        };
+    }
 }
 
 class AutonDriveFactory {
@@ -239,7 +266,7 @@ class AutonDriveFactory {
     /* Booleans 'isRed' (red or blue side), 'isFar' (far or close to backdrop)
      'location' (center, middle, or right), and 'intake' (Action for use).
      */
-    PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake) {
+    PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake, Action moveArm, Action moveDumper) {
 
         if (isFar) {
             xOffset = 0;
@@ -267,14 +294,18 @@ class AutonDriveFactory {
             intake = new SleepAction(3);
         }
 
-        TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
-        spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-35, -34)), xForm((Math.toRadians(180) + (1e-6))))
+        TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+        spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -36)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-35, -34)), xForm(Math.toRadians(180)))
                 .stopAndAdd(intake)
-                .splineToConstantHeading(xForm(new Vector2d(-30, -34)), xForm(Math.toRadians(180)))
-                .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -10)), xForm(Math.toRadians(0)));
+                .setTangent(Math.toRadians(0))
+                .splineToConstantHeading(xForm(new Vector2d(0, -34)), xForm(Math.toRadians(0)))
+                .afterTime(0, moveDumper)
+                .afterTime(0.5, moveArm)
+                .splineToConstantHeading(xForm(new Vector2d(47.5, -23.5)), xForm(Math.toRadians(0)))
+                .stopAndAdd(new SleepAction(10000000));
+                //.setTangent(Math.toRadians(-90))
+                //.splineToConstantHeading(xForm(new Vector2d(48, -12)), xForm(Math.toRadians(90)));
 
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
         spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
@@ -340,7 +371,7 @@ class AutonDriveFactory {
      * arguments here to test your different code paths.
      */
     Action getMeepMeepAction() {
-        return getDriveAction(true, true, SpikeMarks.LEFT, null).action;
+        return getDriveAction(true, true, SpikeMarks.LEFT, null, null, null).action;
     }
 }
 
