@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms;
 
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -16,6 +17,8 @@ public class Config {
     public static boolean useOpenCV = true;
     public static boolean useDriveTo = true;
 
+    public static Pose2d pose;
+
     static ArrayList<HashMap<Boolean, String>> configStrings;
 
     /**
@@ -25,28 +28,28 @@ public class Config {
         configStrings = new ArrayList<>();
 
         HashMap<Boolean, String> redStrings = new HashMap<>();
-        redStrings.put(true, "RED");
-        redStrings.put(false, "BLUE");
+        redStrings.put(true, "\uD83D\uDFE5 RED");
+        redStrings.put(false, "\uD83D\uDD35 BLUE");
         configStrings.add(redStrings);
 
         HashMap<Boolean, String> closeStrings = new HashMap<>();
-        closeStrings.put(true, "CLOSE to");
-        closeStrings.put(false, "FAR from");
+        closeStrings.put(true, "\u23f1\ufe0f CLOSE to");
+        closeStrings.put(false, "\u231b FAR from");
         configStrings.add(closeStrings);
 
         HashMap<Boolean, String> openCVStrings = new HashMap<>();
-        openCVStrings.put(true, "OPENCV CAMERA");
-        openCVStrings.put(false, "DISTANCE SENSOR");
+        openCVStrings.put(true, "\uD83D\uDCF8 OPENCV CAMERA");
+        openCVStrings.put(false, "\uD83D\uDCA5 DISTANCE SENSOR");
         configStrings.add(openCVStrings);
 
         HashMap<Boolean, String> driveToStrings = new HashMap<>();
-        driveToStrings.put(true, "ENABLING");
-        driveToStrings.put(false, "DISABLING");
+        driveToStrings.put(true, "\uD83D\uDE97 ENABLING");
+        driveToStrings.put(false, "\uD83C\uDFC3 DISABLING");
         configStrings.add(driveToStrings);
 
         HashMap<Boolean, String> aprilTagStrings = new HashMap<>();
-        aprilTagStrings.put(true, "INCORPORATING");
-        aprilTagStrings.put(false, "NOT INCORPORATING");
+        aprilTagStrings.put(true, "\uD83C\uDFFF INCORPORATING");
+        aprilTagStrings.put(false, "\uD83D\uDEAB NOT INCORPORATING");
         configStrings.add(aprilTagStrings);
     }
 
@@ -61,15 +64,15 @@ public class Config {
     static void menu(Telemetry telemetry, Gamepad gamepad) {
         telemetry.addLine("We are playing on the ");
         telemetry.addLine(String.format("%s%s alliance, positioned ",
-                choice == 0 ? "> " : "   ", configStrings.get(0).get(isRed)));
+                choice == 0 ? "->" : "  ", configStrings.get(0).get(isRed)));
         telemetry.addLine(String.format("%s%s the backdrop, using ",
-                choice == 1 ? "> " : "   ", configStrings.get(1).get(isClose)));
+                choice == 1 ? "->" : "  ", configStrings.get(1).get(isClose)));
         telemetry.addLine(String.format("%s%s as our Team Prop Detection, ",
-                choice == 2 ? "> " : "   ", configStrings.get(2).get(useOpenCV)));
+                choice == 2 ? "->" : "  ", configStrings.get(2).get(useOpenCV)));
         telemetry.addLine(String.format("%s%s drive assistance, and ",
-                choice == 3 ? "> " : "   ", configStrings.get(3).get(useDriveTo)));
+                choice == 3 ? "->" : "  ", configStrings.get(3).get(useDriveTo)));
         telemetry.addLine(String.format("%s%s information from April Tags into our pose estimate.",
-                choice == 4 ? "> " : "   ", configStrings.get(4).get(useAprilTags)));
+                choice == 4 ? "->" : "  ", configStrings.get(4).get(useAprilTags)));
         telemetry.update();
 
         if (gamepad.dpad_up && !upIsPressed && choice > 0) {
