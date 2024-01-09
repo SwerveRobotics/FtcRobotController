@@ -140,7 +140,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
         }
 
         AutonDriveFactory auton = new AutonDriveFactory(drive);
-        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(0.2, 0.5), moveArmAction(2800), moveDumperAction(0));
+        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(0.2, 0.5), moveArmAction(2750), moveDumperAction(0));
 
         drive.pose = poseAndAction.startPose;
 
@@ -294,18 +294,15 @@ class AutonDriveFactory {
             intake = new SleepAction(3);
         }
 
-        TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+        TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -36)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-35, -34)), xForm(Math.toRadians(180)))
                 .stopAndAdd(intake)
-                .setTangent(Math.toRadians(0))
-                .splineToConstantHeading(xForm(new Vector2d(0, -34)), xForm(Math.toRadians(0)))
-                .afterTime(0, moveDumper)
-                .afterTime(0.5, moveArm)
-                .splineToConstantHeading(xForm(new Vector2d(47.5, -23.5)), xForm(Math.toRadians(0)))
-                .stopAndAdd(new SleepAction(10000000));
-                //.setTangent(Math.toRadians(-90))
-                //.splineToConstantHeading(xForm(new Vector2d(48, -12)), xForm(Math.toRadians(90)));
+                .setTangent(xForm(Math.toRadians(90)))
+                .splineToConstantHeading(xForm(new Vector2d(-27, -12)), xForm(Math.toRadians(0)))
+                .setTangent(xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(6, -12)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -23.5)), xForm(Math.toRadians(0)));
 
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
         spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))

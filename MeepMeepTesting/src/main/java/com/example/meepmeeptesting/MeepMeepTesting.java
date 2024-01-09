@@ -127,10 +127,12 @@ class AutonDriveFactory {
 
         TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -60, Math.toRadians(90))));
         spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -36)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-38, -34)), xForm(Math.toRadians(180) + (1e-6)))
+                .splineTo(xForm(new Vector2d(-35, -34)), xForm(Math.toRadians(180)))
                 .stopAndAdd(intake)
+                .setTangent(xForm(Math.toRadians(90)))
+                .splineToConstantHeading(xForm(new Vector2d(-24, -12)), xForm(Math.toRadians(0)))
                 .setTangent(xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(12 - xOffset, -34)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(6, -12)), xForm(Math.toRadians(0)))
                 .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -30)), xForm(Math.toRadians(0)))
                 .setTangent(xForm(Math.toRadians(90)))
                 .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -12)), xForm(Math.toRadians(90)));
@@ -190,7 +192,7 @@ class AutonDriveFactory {
      * arguments here to test your different code paths.
      */
     Action getMeepMeepAction() {
-        return getDriveAction(true, true, SpikeMarks.RIGHT, null).action;
+        return getDriveAction(true, true, SpikeMarks.LEFT, null).action;
     }
 }
 

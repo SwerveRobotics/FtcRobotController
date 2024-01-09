@@ -28,7 +28,7 @@ public abstract class BaseOpMode extends LinearOpMode {
     public Servo dumperServo;
     public static double DUMPER_SERVO_TILT_POSITION = 0.4;
     public static double DUMPER_SERVO_RESET_POSITION = 0.52;
-    public static double DUMPER_SERVO_DUMP_POSITION = 0.1;
+    public static double DUMPER_SERVO_DUMP_POSITION = 0;
 
     public CRServo dumperWheelServo;
 
