@@ -15,8 +15,8 @@ public class Config {
     public static boolean isClose = false;
 
     public static boolean useOpenCV = true;
-    public static boolean useDriveTo = true;
     public static boolean doBackdropPixel = true;
+    public static boolean useDriveTo = true;
     public static boolean useAprilTags = false;
 
     public static String summary = "Config menu was not used :(";
@@ -25,6 +25,7 @@ public class Config {
 
     static ArrayList<HashMap<Boolean, String>> configStrings;
     static ArrayList<HashMap<Boolean, String>> summaryStrings;
+    static ArrayList<Boolean> defaults;
 
     /**
      * Initialize the menu.
@@ -93,10 +94,19 @@ public class Config {
         aprilTagSummaryStrings.put(true, "\uD83C\uDFFD APRIL TAGS YES");
         aprilTagSummaryStrings.put(false, "\u274c APRIL TAGS NO");
         summaryStrings.add(aprilTagSummaryStrings);
+
+        defaults = new ArrayList<>();
+        defaults.add(isRed);
+        defaults.add(isClose);
+        defaults.add(useOpenCV);
+        defaults.add(doBackdropPixel);
+        defaults.add(useDriveTo);
+        defaults.add(useAprilTags);
     }
 
     static int choice;
     static boolean aIsPressed;
+    static boolean xIsPressed;
     static boolean upIsPressed;
     static boolean downIsPressed;
 
@@ -128,14 +138,6 @@ public class Config {
 
         telemetry.update();
 
-        if (gamepad.dpad_up && !upIsPressed && choice > 0) {
-            choice--;
-        }
-
-        if (gamepad.dpad_down && !downIsPressed && choice < configStrings.size() - 1) {
-            choice++;
-        }
-
         if (gamepad.a && !aIsPressed) {
             switch (choice) {
                 case 0:
@@ -159,18 +161,36 @@ public class Config {
             }
         }
 
+        if (gamepad.x && !xIsPressed) {
+            isRed = defaults.get(0);
+            isClose = defaults.get(1);
+            useOpenCV = defaults.get(2);
+            doBackdropPixel = defaults.get(3);
+            useDriveTo = defaults.get(4);
+            useAprilTags = defaults.get(5);
+        }
+
+        if (gamepad.dpad_up && !upIsPressed && choice > 0) {
+            choice--;
+        }
+
+        if (gamepad.dpad_down && !downIsPressed && choice < configStrings.size() - 1) {
+            choice++;
+        }
+
         if (gamepad.start) {
             end = true;
         }
 
         aIsPressed = gamepad.a;
+        xIsPressed = gamepad.x;
         upIsPressed = gamepad.dpad_up;
         downIsPressed = gamepad.dpad_down;
 
         summary = String.format(
-                "CONFIG: %s — %s — %s — %s YELLOW PIXEL — %s DRIVE TO — %s APRIL TAGS",
+                "%s — %s — %s — %s — %s — %s",
                 summaryStrings.get(0).get(isRed),
-                summaryStrings.get(1).get(isClose).replaceAll("[a-z]", "."),
+                summaryStrings.get(1).get(isClose),
                 summaryStrings.get(2).get(useOpenCV),
                 summaryStrings.get(3).get(doBackdropPixel),
                 summaryStrings.get(4).get(useDriveTo),

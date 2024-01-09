@@ -72,7 +72,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
         }
     }
 
-    public void runAuto(boolean red, boolean close, boolean openCV, boolean aprilTags) {
+    public void runAuto(boolean red, boolean close, boolean openCV, boolean backdropPixel, boolean aprilTags) {
         telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
         telemetry.addData("Init State", "Init Started");
         telemetry.update();
