@@ -79,6 +79,14 @@ class AutonDriveFactory {
     MecanumDrive drive;
     double xOffset;
     double yMultiplier;
+
+    double parkingOffset;
+
+    double parkingOffsetCenterFar;
+
+    double centerMultiplier;
+
+    double centerOffset;
     AutonDriveFactory(MecanumDrive drive) {
         this.drive = drive;
     }
@@ -108,10 +116,19 @@ class AutonDriveFactory {
      */
     PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake) {
 
-        if (isFar) {
+         if (isFar) {
             xOffset = 0;
+            parkingOffset = 55;
+            centerMultiplier = 1;
+            centerOffset = 0;
+            if (location == xForm(SpikeMarks.CENTER)) {
+                parkingOffset = 100;
+            }
         } else {
             xOffset = 48;
+            parkingOffset = 2;
+            centerMultiplier = -1;
+            centerOffset = 96;
         }
 
         if (isRed) {
@@ -119,7 +136,6 @@ class AutonDriveFactory {
         } else {
             yMultiplier = -1;
         }
-
         // in MeepMeep, intake needs to be null however .stopAndAdd() can't be null because it will crash so we set to a random sleep
         if(intake == null) {
             intake = new SleepAction(3);
@@ -185,12 +201,32 @@ class AutonDriveFactory {
         return new Pose2d(pose.position.x + xOffset, pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
     }
 
+    Pose2d xFormCenter(Pose2d pose) {
+        return new Pose2d((pose.position.x + centerOffset), pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
+    }
+
     Vector2d xForm(Vector2d vector) {
         return new Vector2d(vector.x + xOffset, vector.y * yMultiplier);
     }
 
     double xForm(double angle) {
         return (angle * yMultiplier);
+    }
+
+    Vector2d xFormCenter(Vector2d vector) {
+        return new Vector2d((vector.x + centerOffset), vector.y * yMultiplier);
+    }
+
+    SpikeMarks xForm(SpikeMarks spike) {
+        if (yMultiplier == -1) {
+            switch (spike) {
+                case LEFT:
+                    return SpikeMarks.RIGHT;
+                case RIGHT:
+                    return SpikeMarks.LEFT;
+            }
+        }
+        return spike;
     }
 
 
