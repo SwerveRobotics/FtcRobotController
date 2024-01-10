@@ -132,7 +132,7 @@ public class Config {
         telemetry.addLine("Press D-pad Up and D-Pad Down to choose an item");
         telemetry.addLine("Press A to modify the chosen item");
         telemetry.addLine("Press X to reset to the default configuration");
-        telemetry.addLine("Press Left Bumper to exit the menu and start robot initialization");
+        telemetry.addLine("Press Right Trigger to exit the menu and start robot initialization");
 
         telemetry.update();
 
@@ -176,7 +176,7 @@ public class Config {
             choice++;
         }
 
-        if (gamepad.left_bumper) {
+        if (gamepad.right_trigger >= 0.5) {
             end = true;
         }
 

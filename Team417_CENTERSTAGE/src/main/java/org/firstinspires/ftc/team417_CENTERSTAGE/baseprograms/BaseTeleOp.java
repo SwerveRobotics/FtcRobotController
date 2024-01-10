@@ -4,8 +4,6 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
-import com.qualcomm.robotcore.hardware.IMU;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -66,7 +64,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
             telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)",
                     drive.pose.position.x, drive.pose.position.y,
                    Math.toDegrees(drive.pose.heading.log())));
-            telemetry.addData("Arm Position", armMotor.getCurrentPosition());
 
             // Code added to draw the pose, use only when testing
             if (TESTING) {
@@ -82,9 +79,9 @@ public abstract class BaseTeleOp extends BaseOpMode {
             if (armMotor != null && dumperServo != null && gateServo != null) {
                 outputUsingControllers();
                 intakeUsingControllers();
-                telemetry.addData("ArmMotor", armMotor.getCurrentPosition());
-                telemetry.addData("DumperServo", dumperServo.getPosition());
-                telemetry.addData("GateServo", gateServo.getPosition());
+                telemetry.addData("Arm Position", armMotor.getCurrentPosition());
+                telemetry.addData("Dumper Position", dumperServo.getPosition());
+                telemetry.addData("Gate Position", gateServo.getPosition());
             }
 
             double elapsedTimeInLoop = time.nanoseconds() - startOfLoop;
