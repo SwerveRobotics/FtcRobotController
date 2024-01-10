@@ -4,7 +4,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 
-public class autoDriveTo {
+public class AutoDriveTo {
 
     //replace vars with vars from road runner.
     public static double driveAccel = 1;
@@ -14,7 +14,7 @@ public class autoDriveTo {
     double initialDist;
     boolean hasInit;
 
-    public autoDriveTo() {
+    public AutoDriveTo() {
         hasInit = false;
     }
     private double findDecelerationVelocity(double acceleration, double distance) {

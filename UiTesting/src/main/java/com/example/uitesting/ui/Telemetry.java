@@ -1,7 +1,5 @@
 package com.example.uitesting.ui;
 
-import com.example.uitesting.ui.WindowFrame;
-
 import java.awt.Canvas;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -20,8 +18,16 @@ public class Telemetry {
         windowFrame.setVisible(true);
     }
 
-    public void addLine(String string) {
-        lineList.add(string);
+    public void addLine(String lineCaption) {
+        lineList.add(lineCaption);
+    }
+
+    public void addLine() {
+        lineList.add("");
+    }
+
+    public void addData(String caption, Object value) {
+        lineList.add(String.format("%s: %s", caption, value.toString()));
     }
 
     public void update() {
