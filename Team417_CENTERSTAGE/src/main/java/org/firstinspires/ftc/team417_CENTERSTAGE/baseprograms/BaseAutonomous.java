@@ -116,10 +116,12 @@ abstract public class BaseAutonomous extends BaseOpMode {
             }
         }
 
+        // In case of error: , driveToDistanceAndMoveArm(8, 2750), moveDumperAction(0)
+
         AutonDriveFactory auton = new AutonDriveFactory(drive);
-        AutonDriveFactory.PoseAndAction leftPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.LEFT, dropPixel(1, 2), driveToDistanceAndMoveArm(8, 2750), moveDumperAction(0));
-        AutonDriveFactory.PoseAndAction centerPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.CENTER, dropPixel(1, 2), driveToDistanceAndMoveArm(8, 2750), moveDumperAction(0));
-        AutonDriveFactory.PoseAndAction rightPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.RIGHT, dropPixel(1, 2), driveToDistanceAndMoveArm(8, 2750), moveDumperAction(0));
+        AutonDriveFactory.PoseAndAction leftPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.LEFT, dropPixel(1, 2));
+        AutonDriveFactory.PoseAndAction centerPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.CENTER, dropPixel(1, 2);
+        AutonDriveFactory.PoseAndAction rightPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.RIGHT, dropPixel(1, 2));
 
         telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
         telemetry.addLine("Initialized. Ready to start!");
@@ -319,7 +321,6 @@ class AutonDriveFactory {
     double centerMultiplier;
 
     double centerOffset;
-
     AutonDriveFactory(MecanumDrive drive) {
         this.drive = drive;
     }
@@ -347,7 +348,7 @@ class AutonDriveFactory {
     /* Booleans 'isRed' (red or blue side), 'isFar' (far or close to backdrop)
      'location' (center, middle, or right), and 'intake' (Action for use).
      */
-    PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake, Action moveArm, Action moveDumper) {
+    PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake) {
 
         if (isFar) {
             xOffset = 0;
@@ -369,29 +370,28 @@ class AutonDriveFactory {
         } else {
             yMultiplier = -1;
         }
-
         // in MeepMeep, intake needs to be null however .stopAndAdd() can't be null because it will crash so we set to a random sleep
-        if (intake == null) {
+        if(intake == null) {
             intake = new SleepAction(3);
         }
 
         TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-35, -34)), xForm((Math.toRadians(180))))
-                .stopAndAdd(intake)
+                //.stopAndAdd(intake)
                 .splineToConstantHeading(xForm(new Vector2d(-30, -34)), xForm(Math.toRadians(180)))
                 .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(24, -12)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(24 - xOffset , -12)), xForm(Math.toRadians(0)))
                 .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
                 .setTangent(xForm(Math.toRadians(0)))
-                .afterTime(0, moveDumper)
-                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -29.5)), xForm(Math.toRadians(0)))
-                .stopAndAdd(moveArm);
+                //.afterTime(0, moveDumper)
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -29.5)), xForm(Math.toRadians(0)));
+        //.stopAndAdd(moveArm);
 
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
         spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
-                .stopAndAdd(intake)
+                //.stopAndAdd(intake)
                 //.splineTo(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
                 //.splineTo(xForm(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
@@ -412,14 +412,24 @@ class AutonDriveFactory {
                 .setTangent(xForm(Math.toRadians(0)))
                 .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -44)), xForm(Math.toRadians(0)));
 
-        if (location == xForm(SpikeMarks.LEFT)) {
-            return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
-        } else if (location == xForm(SpikeMarks.RIGHT)) {
-            return new PoseAndAction(spikeRight.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
+        if(location == SpikeMarks.LEFT) {
+            return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+        } else if(location == SpikeMarks.CENTER) {
+            return new PoseAndAction(spikeCenter.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
         } else {
-            return new PoseAndAction(spikeCenter.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
+            return new PoseAndAction(spikeRight.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
         }
     }
+
+    // arm action
+                /*.splineToConstantHeading(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
+                .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(58, -10)), xForm(Math.toRadians(0)));*/
+
+
+
+
 
     Pose2d xForm(Pose2d pose) {
         return new Pose2d(pose.position.x + xOffset, pose.position.y * yMultiplier, pose.heading.log() * yMultiplier);
@@ -453,12 +463,13 @@ class AutonDriveFactory {
         return spike;
     }
 
+
     /*
      * MeepMeep calls this routine to get a trajectory sequence action to draw. Modify the
      * arguments here to test your different code paths.
      */
     Action getMeepMeepAction() {
-        return getDriveAction(true, true, SpikeMarks.LEFT, null, null, null).action;
+        return getDriveAction(false, false, SpikeMarks.CENTER, null).action;
     }
 }
 
