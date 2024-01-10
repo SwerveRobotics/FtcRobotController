@@ -146,8 +146,6 @@ class Config {
                     choice == 4 ? "->" : "  ", configStrings.get(4).get(useDriveTo)));
             telemetry.addLine(String.format("%s%s information from April Tags into our pose estimate (ONLY IN TELEOP).",
                     choice == 5 ? "->" : "  ", configStrings.get(5).get(useAprilTags)));
-
-            telemetry.addLine();
             telemetry.addLine("Press D-pad Up and D-Pad Down to choose an item");
             telemetry.addLine("Press A to modify the chosen item");
             telemetry.addLine("Press X to reset to the default configuration");

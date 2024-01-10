@@ -82,6 +82,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
         initializeAuto();
 
+        
+
         AutonDriveFactory auton = new AutonDriveFactory(drive);
         AutonDriveFactory.PoseAndAction leftPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.LEFT, dropPixel(1, 2));
         AutonDriveFactory.PoseAndAction centerPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.CENTER, dropPixel(1, 2));
