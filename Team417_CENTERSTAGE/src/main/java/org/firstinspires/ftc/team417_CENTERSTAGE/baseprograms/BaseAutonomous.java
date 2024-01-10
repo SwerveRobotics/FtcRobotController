@@ -120,7 +120,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
         AutonDriveFactory auton = new AutonDriveFactory(drive);
         AutonDriveFactory.PoseAndAction leftPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.LEFT, dropPixel(1, 2));
-        AutonDriveFactory.PoseAndAction centerPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.CENTER, dropPixel(1, 2);
+        AutonDriveFactory.PoseAndAction centerPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.CENTER, dropPixel(1, 2));
         AutonDriveFactory.PoseAndAction rightPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.RIGHT, dropPixel(1, 2));
 
         telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
