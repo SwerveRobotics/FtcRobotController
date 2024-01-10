@@ -4,6 +4,7 @@ import static java.lang.System.nanoTime;
 
 import android.graphics.PointF;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -25,6 +26,8 @@ import java.util.ArrayList;
 
 @Config
 abstract public class BaseAutonomous extends BaseOpMode {
+    // Set to false for competitions to remove lags
+    public static final boolean TESTING = true;
 
     private ElapsedTime runtime = new ElapsedTime();
 
@@ -68,6 +71,29 @@ abstract public class BaseAutonomous extends BaseOpMode {
                     drive.pose.position.x, drive.pose.position.y,
                     Math.toDegrees(drive.pose.heading.log())));
             telemetry.update();
+            return true;
+        }
+    }
+
+    class updateToDashboard implements Action {
+        Action path;
+
+        public updateToDashboard(Action path) {
+            this.path = path;
+        }
+
+        public boolean run(TelemetryPacket packet) {
+            if (!opModeIsActive()) return false;
+            // Code added to draw the pose, use only when testing
+            if (TESTING) {
+                TelemetryPacket p = new TelemetryPacket();
+                Canvas c = p.fieldOverlay();
+
+                path.preview(c);
+
+                FtcDashboard dashboard = FtcDashboard.getInstance();
+                dashboard.sendTelemetryPacket(p);
+            }
             return true;
         }
     }
@@ -186,6 +212,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
         drive.runParallel(new UpdatePoseInConfig());
 
         drive.runParallel(new DoTelemetry());
+
+        drive.runParallel(new updateToDashboard(poseAndAction.action));
 
         while (opModeIsActive()) {
             drive.doActionsWork();
