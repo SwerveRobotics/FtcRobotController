@@ -6,6 +6,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagPoseEstimator;
@@ -21,13 +22,16 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     ElapsedTime time = new ElapsedTime();
 
-    private final boolean USE_APRIL_TAGS = false;
+    public static boolean USE_APRIL_TAGS = false;
 
     public AprilTagPoseEstimator myATPoseEstimator;
 
-    @Override
-    public void runOpMode() {
+    public void runTeleOp(boolean driveTo, boolean aprilTags, Pose2d pose) {
         initializeHardware();
+
+        USE_APRIL_TAGS = aprilTags;
+
+        drive.pose = new Pose2d(pose.position.x, pose.position.y, pose.heading.log());
 
         // Initialize April Tags (if enabled)
         if (USE_APRIL_TAGS) {
@@ -53,6 +57,8 @@ public abstract class BaseTeleOp extends BaseOpMode {
         while (opModeIsActive()) {
             double startOfLoop = time.nanoseconds();
 
+            telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+
             driveUsingControllers(false);
 
             drive.updatePoseEstimate();
@@ -60,7 +66,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)",
                     drive.pose.position.x, drive.pose.position.y,
                    Math.toDegrees(drive.pose.heading.log())));
-            telemetry.addData("arm position", armMotor.getCurrentPosition());
+            telemetry.addData("Arm Position", armMotor.getCurrentPosition());
 
             // Code added to draw the pose, use only when testing
             if (TESTING) {
@@ -191,6 +197,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
         yIsPressed = gamepad2.y;
     }
+
     boolean downIsPressed = false;
     boolean wheelOn = true;
     public void controlDumperWheelUsingControllers() {

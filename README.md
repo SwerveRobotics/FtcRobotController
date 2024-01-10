@@ -1326,7 +1326,7 @@ Changes include:
  * Added getCallbackCount() to I2cDevice.
  * Added missing clearI2cPortActionFlag.
  * Added code to create log messages while waiting for LinearOpMode shutdown.
- * Fix so Wi-Fi Direct Config activity will no longer launch multiple times.
+ * Fix so Wi-Fi Direct org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config activity will no longer launch multiple times.
  * Added the ability to specify an alternate i2c address in software for the Modern Robotics gyro.
 
 ## Release 16.02.09
