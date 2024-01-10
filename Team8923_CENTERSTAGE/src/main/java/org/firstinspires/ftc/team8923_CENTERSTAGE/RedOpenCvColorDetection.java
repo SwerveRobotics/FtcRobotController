@@ -90,7 +90,7 @@ public class RedOpenCvColorDetection {
         int cameraMonitorViewId = myOpMode.hardwareMap.appContext.getResources().getIdentifier("cameraMonitorViewId", "id", myOpMode.hardwareMap.appContext.getPackageName());
         robotCamera = OpenCvCameraFactory.getInstance().createWebcam(myOpMode.hardwareMap.get(WebcamName.class, "RobotCamera"), cameraMonitorViewId);
 
-        setDetectColor(detectColorType.BLUE);
+        setDetectColor(detectColorType.RED);
         robotCamera.setPipeline(new ColorDetectPipeline());
 
         robotCamera.openCameraDeviceAsync(new OpenCvCamera.AsyncCameraOpenListener() {
