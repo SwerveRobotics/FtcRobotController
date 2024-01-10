@@ -82,7 +82,13 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
         initializeAuto();
 
-        
+        if (myColorDetection != null) {
+            if (red) {
+                myColorDetection.setDetectColor(OpenCvColorDetection.DetectColorType.RED);
+            } else {
+                myColorDetection.setDetectColor(OpenCvColorDetection.DetectColorType.BLUE);
+            }
+        }
 
         AutonDriveFactory auton = new AutonDriveFactory(drive);
         AutonDriveFactory.PoseAndAction leftPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.LEFT, dropPixel(1, 2));
