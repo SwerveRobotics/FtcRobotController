@@ -140,7 +140,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
         }
 
         AutonDriveFactory auton = new AutonDriveFactory(drive);
-        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(0.2, 0.5), moveArmAction(2750), moveDumperAction(0));
+        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(0.2, 0.5), driveToDistanceAndMoveArm(8, 2750), moveDumperAction(0));
 
         drive.pose = poseAndAction.startPose;
 
@@ -198,19 +198,38 @@ abstract public class BaseAutonomous extends BaseOpMode {
         };
     }
 
-    public Action moveArmAction(double armGoalPos) {
+    public void setMotorPower(double speed) {
+        drive.leftFront.setPower(speed);
+        drive.rightFront.setPower(speed);
+        drive.leftBack.setPower(speed);
+        drive.rightBack.setPower(speed);
+    }
+
+    public Action driveToDistanceAndMoveArm(double goalDistance, double armGoalPos) {
         return new Action() {
+            final double epsilon = 0.3;
             @Override
             public boolean run(TelemetryPacket packet) {
-                armMotor.setPower(0.7);
+                if (Math.abs(goalDistance - distSensor.getDistance(DistanceUnit.INCH)) < epsilon) {
+                    setMotorPower(0);
 
+                    if (drive.isDevBot)
+                        return false;
 
-                if (armMotor.getCurrentPosition() < armGoalPos)
-                    return true;
+                    armMotor.setPower(0.7);
 
-                armMotor.setPower(0);
-                dumperServo.setPosition(DUMPER_SERVO_DUMP_POSITION);
-                return false;
+                    if (armMotor.getCurrentPosition() < armGoalPos)
+                        return true;
+
+                    armMotor.setPower(0);
+                    dumperServo.setPosition(DUMPER_SERVO_DUMP_POSITION);
+                    return false;
+                }
+                else if (distSensor.getDistance(DistanceUnit.INCH) < goalDistance)
+                    setMotorPower(0.1);
+                else
+                    setMotorPower(-0.1);
+                return true;
             }
         };
     }
@@ -295,23 +314,29 @@ class AutonDriveFactory {
         }
 
         TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
-        spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -36)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-35, -34)), xForm(Math.toRadians(180)))
+        spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-35, -34)), xForm((Math.toRadians(180))))
                 .stopAndAdd(intake)
-                .setTangent(xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xForm(new Vector2d(-27, -12)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(-30, -34)), xForm(Math.toRadians(180)))
+                .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(24, -12)), xForm(Math.toRadians(0)))
+                .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
                 .setTangent(xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(6, -12)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -23.5)), xForm(Math.toRadians(0)));
+                .afterTime(0, moveDumper)
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -29.5)), xForm(Math.toRadians(0)))
+                .stopAndAdd(moveArm);
 
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
         spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
                 .stopAndAdd(intake)
-                .splineToConstantHeading(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xFormCenter(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
-                .splineToConstantHeading(xFormCenter(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
-                .splineTo(xFormCenter(new Vector2d(parkingOffset - 43, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xFormCenter(new Vector2d(parkingOffset - 43, -10)), xForm(Math.toRadians(0)));
+                //.splineTo(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
+                //.splineTo(xForm(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(24, -12)), xForm(Math.toRadians(0)))
+                .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
+                .setTangent(xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -36)), xForm(Math.toRadians(0)));
 
         TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         spikeRight = spikeRight.splineTo(xForm(new Vector2d(-35, -37)), xForm(Math.toRadians(90)))
@@ -320,7 +345,10 @@ class AutonDriveFactory {
                 .splineToConstantHeading(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
                 .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(parkingOffset, -10)), xForm(Math.toRadians(0)));
+                .splineToConstantHeading(xForm(new Vector2d(24, -12)), xForm(Math.toRadians(0)))
+                .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
+                .setTangent(xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -44)), xForm(Math.toRadians(0)));
 
         if (location == xForm(SpikeMarks.LEFT)) {
             return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
