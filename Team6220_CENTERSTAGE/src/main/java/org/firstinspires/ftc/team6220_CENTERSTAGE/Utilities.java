@@ -105,7 +105,7 @@ public class Utilities {
     public static double firstPosBelow(double pos, double[] positions) {
         for (int i = positions.length - 1; i >= 0; i--) {
             if (pos > positions[i]) {
-                return Cpositions[i];
+                return positions[i];
             }
         }
         // limit to the lowest inbar pos
@@ -118,10 +118,10 @@ public class Utilities {
      * @return next position above
      */
     public static double positionUp(double pos, double[] positions, double tolerance) {
-        double above = firstInbarPosAbove(pos, positions);
+        double above = firstPosAbove(pos, positions);
         // if close enough to next, go one next further
         if (Math.abs(pos - above) < tolerance) {
-            return firstInbarPosAbove(above, positions);
+            return firstPosAbove(above, positions);
         } else {
             return above;
         }
@@ -132,10 +132,10 @@ public class Utilities {
      * @return next position below
      */
     public static double positionDown(double pos, double[] positions, double tolerance) {
-        double below = firstInbarPosBelow(pos, positions);
+        double below = firstPosBelow(pos, positions);
         // if close enough to next, go one next further
         if (Math.abs(pos - below) < tolerance) {
-            return firstInbarPosBelow(below, positions);
+            return firstPosBelow(below, positions);
         } else {
             return below;
         }

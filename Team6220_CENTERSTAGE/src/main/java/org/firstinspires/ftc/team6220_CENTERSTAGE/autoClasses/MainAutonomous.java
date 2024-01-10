@@ -484,7 +484,7 @@ class AutoMechanismActions {
         return new Action() {
             @Override
             public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                return exDrive.moveSlidesPreset(position); // returns if it's not close enough
+                return exDrive.moveSlidesToPosition(position); // returns if it's not close enough
             }
         };
     };

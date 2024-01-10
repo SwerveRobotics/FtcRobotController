@@ -32,9 +32,9 @@ public class ExtendedDriveFeatures {
      * @return true if it is NOT yet close enough to target pos
      */
     public boolean moveSlidesToPosition(int targetPos) {
-        double power = (targetPos - this.drive.slideMotor.getCurrentPosition()) * Constants.SLIDE_P_GAIN;
-        this.moveSlides(Utilities.clamp(power, -Constants.AUTO_SLIDES_MAX_SPEED, Constants.AUTO_SLIDES_MAX_SPEED));
-        return Math.abs(power) >= Constants.AUTO_SLIDES_TOLERANCE;
+        double posDifference = targetPos - this.drive.slideMotor.getCurrentPosition();
+        this.moveSlides(Utilities.clamp(posDifference * Constants.SLIDE_P_GAIN, -Constants.AUTO_SLIDES_MAX_SPEED, Constants.AUTO_SLIDES_MAX_SPEED));
+        return Math.abs(posDifference) >= Constants.SLIDE_TO_POS_TOLERANCE;
     }
 
     // PLACEHOLDER UNTIL WE HAVE THE ARM

@@ -34,22 +34,23 @@ public class Constants {
     public static final double SLIDE_RETURN_UP_MUL = 0.66;
 
     public static final double SLIDE_MAX_POSITION = 4000;
-    public static final double SLIDE_POSITION_TOLERANCE = 20;
 
     public static final double AUTO_SLIDES_MAX_SPEED = 0.7;
-    public static final double AUTO_SLIDES_TOLERANCE = 40;
+    // the tolerance for lowest and highest position when using stick manual:
+    public static final double SLIDE_LIMIT_TOLERANCE = 20;
+    // how close the slides need to be to count as "at" a preset during teleop,
+    // only used for finding the next preset, NOT involved in moving slides to a position:
+    public static final double SLIDE_NEAR_PRESET_RANGE = 100;
+    // how close the slides need to be to target when moving to position:
+    public static final double SLIDE_TO_POS_TOLERANCE = 50;
     public static final double SLIDE_P_GAIN = 0.001; // Multiplier modifier constant for slide power, used in preset moveSlides method.
 
     public static final double[] SLIDE_TELEOP_POSITIONS = {
         0,
         2000,
         4000,
-    }
-
-    public static final double[] INBAR_POSITIONS = { // Preset positions that the intake can travel to through use of Dpad Controls.
-            0.37,
-            0.87,
     };
+
 
     public static final double[] DUMPER_POSITIONS = {
             0, // extended
@@ -62,13 +63,14 @@ public class Constants {
     };
 
     public static final double OUTTAKE_CONVEYOR_POWER = 0.5;
-
+    public static final double[] INBAR_POSITIONS = { // Preset positions that the intake can travel to through use of Dpad Controls.
+            0.37, // down
+            0.87, // up
+    };
     public static final double INBAR_MIN_POSITION = INBAR_POSITIONS[0];
     public static final double INBAR_MAX_POSITION = INBAR_POSITIONS[INBAR_POSITIONS.length - 1];
     public static final double INBAR_INIT_POSITION = 1.0;
-    public static final double INBAR_POS_TOLERANCE = 0.03;
     public static final double INBAR_MANUAL_RATE = 0.01;
-    public static final double INBAR_MANUAL_MODE_TRIGGER_THRESHOLD = 0.1;
 
   
     /* Constants used in AutoFramework */

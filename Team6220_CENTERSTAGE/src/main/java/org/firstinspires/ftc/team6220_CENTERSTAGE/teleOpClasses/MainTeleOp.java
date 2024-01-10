@@ -307,7 +307,7 @@ public class MainTeleOp extends LinearOpMode {
                         case SLIDES_TO_POSITION:
                             curSlideState = SlideStates.SLIDES_TO_POSITION;
                             // next down from target (if we've already set target, it goes one more next!)
-                            slidesTargetPos = positionDown(slidesTargetPos, Constants.SLIDE_TELEOP_POSITIONS, Constants.AUTO_SLIDES_TOLERANCE);
+                            slidesTargetPos = Utilities.positionDown(slidesTargetPos, Constants.SLIDE_TELEOP_POSITIONS, Constants.SLIDE_NEAR_PRESET_RANGE);
                     }
                 // preset up
                 } else if (gp2.wasJustPressed(GamepadKeys.Button.RIGHT_BUMPER)) {
@@ -319,7 +319,7 @@ public class MainTeleOp extends LinearOpMode {
                         case SLIDES_TO_POSITION:
                             curSlideState = SlideStates.SLIDES_TO_POSITION;
                             // next down from target (if we've already set target, it goes one more next!)
-                            slidesTargetPos = positionUp(slidesTargetPos, Constants.SLIDE_TELEOP_POSITIONS, Constants.AUTO_SLIDES_TOLERANCE);
+                            slidesTargetPos = Utilities.positionUp(slidesTargetPos, Constants.SLIDE_TELEOP_POSITIONS, Constants.SLIDE_NEAR_PRESET_RANGE);
                     }
                 // switch to manual if slides stick is given input or slides override is active
                 } else if (Math.abs(gp2.getLeftY()) > Constants.SLIDES_STICK_DEADZONE || gp2.getButton(GamepadKeys.Button.Y)) {
@@ -344,8 +344,8 @@ public class MainTeleOp extends LinearOpMode {
 
                         // if going up and not within tolerance of or above max position
                         // or if going down and not within tolerance of or below min position...
-                        } else if ((slidesPower > 0 && drive.slideMotor.getCurrentPosition() < Constants.SLIDE_MAX_POSITION - Constants.SLIDE_POSITION_TOLERANCE)
-                                || (slidesPower < 0 && drive.slideMotor.getCurrentPosition() > Constants.SLIDE_POSITION_TOLERANCE)) {
+                        } else if ((slidesPower > 0 && drive.slideMotor.getCurrentPosition() < Constants.SLIDE_MAX_POSITION - Constants.SLIDE_LIMIT_TOLERANCE)
+                                || (slidesPower < 0 && drive.slideMotor.getCurrentPosition() > Constants.SLIDE_LIMIT_TOLERANCE)) {
                             // ...then apply slides power
                             exDrive.moveSlides(slidesPower);
                         } else {
@@ -356,13 +356,12 @@ public class MainTeleOp extends LinearOpMode {
                     // if the slides are being moved by 
                     case SLIDES_TO_POSITION:
                         // moves slides to target, if it returns false it has reached target
-                        if (!exDrive.moveSlidesToPosition(slidesTargetPos)) {
+                        if (!exDrive.moveSlidesToPosition((int)slidesTargetPos)) {
                             // so stop moving to position
                             curSlideState = SlideStates.SLIDES_MANUAL;
                         }
                         break;
                 }
-
 
 
                 // run outtake:
@@ -506,6 +505,7 @@ public class MainTeleOp extends LinearOpMode {
             }
 
             telemetry.addData("imu reading", currentHeading);
+            telemetry.addData("slide state", curSlideState);
 
             // Code added to draw the pose:
             TelemetryPacket p = new TelemetryPacket();
