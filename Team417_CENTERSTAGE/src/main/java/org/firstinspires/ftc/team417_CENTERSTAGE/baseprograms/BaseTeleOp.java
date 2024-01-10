@@ -51,16 +51,15 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
 
         while (opModeIsActive()) {
-            double startOfLoop = time.startTimeNanoseconds();
+            double startOfLoop = time.nanoseconds();
 
-            resetIMUIfNeeded();
             driveUsingControllers(false);
 
             drive.updatePoseEstimate();
 
-            telemetry.addData("x", drive.pose.position.x);
-            telemetry.addData("y", drive.pose.position.y);
-            telemetry.addData("heading", drive.pose.heading);
+            telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)",
+                    drive.pose.position.x, drive.pose.position.y,
+                   Math.toDegrees(drive.pose.heading.log())));
             telemetry.addData("arm position", armMotor.getCurrentPosition());
 
             // Code added to draw the pose, use only when testing
@@ -82,9 +81,13 @@ public abstract class BaseTeleOp extends BaseOpMode {
                 telemetry.addData("GateServo", gateServo.getPosition());
             }
 
-            double elapsedTimeInLoop = time.startTimeNanoseconds() - startOfLoop;
+            double elapsedTimeInLoop = time.nanoseconds() - startOfLoop;
 
             telemetry.addData("Loop Time", Integer.toString((int) (elapsedTimeInLoop * 1e-6)));
+
+            if (USE_APRIL_TAGS) {
+                myATPoseEstimator.updatePoseEstimate();
+            }
 
             telemetry.update();
         }
@@ -92,43 +95,10 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     boolean leftBumperIsPressed = false;
 
-    public void resetIMUIfNeeded() {
-        if (gamepad1.left_bumper && !leftBumperIsPressed) {
-            IMU.Parameters parameters;
-            if (drive.isDevBot) {
-                parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.UP,
-                        RevHubOrientationOnRobot.UsbFacingDirection.FORWARD));
-            } else {
-                parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                        RevHubOrientationOnRobot.LogoFacingDirection.RIGHT,
-                        RevHubOrientationOnRobot.UsbFacingDirection.UP)); }
-            drive.imu.initialize(parameters);
-        }
-        leftBumperIsPressed = gamepad1.left_bumper;
-    }
-
     public boolean sensitive = false;
 
     public void driveUsingControllers() {
-        sensitive = gamepad1.right_bumper;
-
-        double sensitivity, rotSensitivity;
-        double strafeConstant = 1.1;
-
-        if (sensitive) {
-            sensitivity = 0.5;
-            rotSensitivity = 0.8;
-        } else {
-            sensitivity = 1;
-            rotSensitivity = 1;
-        }
-
-        double x = curveStick(gamepad1.left_stick_x) * strafeConstant * sensitivity;
-        double y = curveStick(-gamepad1.left_stick_y) * sensitivity;
-        double rot = curveStick(gamepad1.right_stick_x) * rotSensitivity;
-
-        mecanumDrive(x, y, rot);
+        driveUsingControllers(false);
     }
 
     public void driveUsingControllers(boolean curve) {

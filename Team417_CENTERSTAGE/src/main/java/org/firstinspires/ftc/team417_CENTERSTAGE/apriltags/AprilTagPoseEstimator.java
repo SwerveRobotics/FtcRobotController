@@ -273,18 +273,14 @@ public class AprilTagPoseEstimator {
         boolean detecting;
         InfoWithDetection best = chooseBestAprilTag(knownAprilTagsDetected);
         if (best != null) {
-            telemetry.addLine(Integer.toString(best.detection.id));
             robotPoseEstimate = calculatePoseEstimate(best.detection, best.info);
             detecting = true;
         } else {
-            telemetry.addLine("None");
             robotPoseEstimate = null;
             detecting = false;
         }
 
-        if (robotPoseEstimate != null) {
-            myAprilTagLatencyHelper.updateMecanumDrive(estimatePose());
-        }
+        myAprilTagLatencyHelper.updateMecanumDrive(estimatePose());
 
         // setState is reversed (true = off, false = on) so the extra ! in front is necessary
         // Cannot fix this, SDK problem

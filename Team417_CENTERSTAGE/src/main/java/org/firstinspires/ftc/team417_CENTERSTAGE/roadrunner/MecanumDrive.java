@@ -501,6 +501,15 @@ public final class MecanumDrive {
             poseHistory.removeFirst();
         }
 
+        if (ATLHelper != null) {
+            Pose2d tentativePose = ATLHelper.refinePose();
+
+            if (tentativePose != null) {
+                pose = new Pose2d(tentativePose.position.x, tentativePose.position.y, tentativePose.heading.log());
+                // pose = tentativePose;
+            }
+        }
+
         FlightRecorder.write("ESTIMATED_POSE", new PoseMessage(pose));
 
         poseVelocity = twist.velocity().value();

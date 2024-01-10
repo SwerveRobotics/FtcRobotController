@@ -93,7 +93,7 @@ public class LocalizationBenchmark extends BaseOpMode {
                 telemetry.addLine(message);
                 telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)",
                         drive.pose.position.x, drive.pose.position.y,
-                        Math.toDegrees(Math.atan2(drive.pose.heading.imag, drive.pose.heading.real))));
+                        Math.toDegrees(drive.pose.heading.log())));
                 telemetry.addLine("Press A to continue:");
                 telemetry.addLine("Or press X to reset position and continue:");
                 if (gamepad1.x) {
