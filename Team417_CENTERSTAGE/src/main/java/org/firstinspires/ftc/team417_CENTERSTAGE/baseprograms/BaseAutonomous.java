@@ -145,7 +145,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
         }
 
         AutonDriveFactory auton = new AutonDriveFactory(drive);
-        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(0.2, 0.5), driveToDistanceAndMoveArm(8, 2750), moveDumperAction(0));
+        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(0.2, 0.5), driveToDistanceAndMoveArm(10, 2700), moveDumperAction(0));
 
         drive.pose = poseAndAction.startPose;
 
@@ -212,22 +212,29 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
     public Action driveToDistanceAndMoveArm(double goalDistance, double armGoalPos) {
         return new Action() {
-            final double epsilon = 0.3;
+            final double epsilon = 0.6;
+            double iterations;
+            double goalIterations = 50;
             @Override
             public boolean run(TelemetryPacket packet) {
                 if (Math.abs(goalDistance - distSensor.getDistance(DistanceUnit.INCH)) < epsilon) {
+                    iterations++;
+
                     setMotorPower(0);
+
+                    if (iterations < goalIterations)
+                        return true;
 
                     if (drive.isDevBot)
                         return false;
 
+                    dumperServo.setPosition(DUMPER_SERVO_DUMP_POSITION);
                     armMotor.setPower(0.7);
 
                     if (armMotor.getCurrentPosition() < armGoalPos)
                         return true;
 
                     armMotor.setPower(0);
-                    dumperServo.setPosition(DUMPER_SERVO_DUMP_POSITION);
                     return false;
                 }
                 else if (distSensor.getDistance(DistanceUnit.INCH) < goalDistance)
@@ -250,6 +257,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
     }
 }
 
+@Config
 class AutonDriveFactory {
     MecanumDrive drive;
     double xOffset;
@@ -262,6 +270,8 @@ class AutonDriveFactory {
     double centerMultiplier;
 
     double centerOffset;
+
+    public static double turnToBackdropAmount = 195;
 
     AutonDriveFactory(MecanumDrive drive) {
         this.drive = drive;
@@ -326,10 +336,10 @@ class AutonDriveFactory {
                 .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
                 .splineToConstantHeading(xForm(new Vector2d(24, -12)), xForm(Math.toRadians(0)))
-                .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
+                .turn(Math.toRadians(turnToBackdropAmount)) //Turn so the arm faces the backdrop
                 .setTangent(xForm(Math.toRadians(0)))
                 .afterTime(0, moveDumper)
-                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -29.5)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -38)), xForm(Math.toRadians(0)))
                 .stopAndAdd(moveArm);
 
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
