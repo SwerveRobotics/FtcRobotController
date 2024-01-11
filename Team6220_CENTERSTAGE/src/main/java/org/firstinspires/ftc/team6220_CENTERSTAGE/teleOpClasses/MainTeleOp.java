@@ -125,7 +125,7 @@ public class MainTeleOp extends LinearOpMode {
             telemetry.addLine("No saved heading offset detected.");
             telemetry.addLine();
         }
-        telemetry.addLine("[RUN] or [B] : Skip menu");
+        telemetry.addLine("[RUN] or [B] : Skip menu, make new forward");
         telemetry.addLine();
         telemetry.addLine("[X]+[Y] : Run without field centric mode (only for emergencies!)");
         telemetry.update();

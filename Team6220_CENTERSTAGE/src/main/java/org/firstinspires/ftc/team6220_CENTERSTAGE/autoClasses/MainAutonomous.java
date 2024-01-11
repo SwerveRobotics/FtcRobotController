@@ -329,10 +329,22 @@ class AutonDriveFactory {
             build = build.splineToConstantHeading(new Vector2d(46, 36 * teamInvert), Math.toRadians(0), limitVelo(20))
                     .splineToConstantHeading(new Vector2d(50, 36 * teamInvert), Math.toRadians(0), limitVelo(4));
 
-            // place yellow pixel (hopefully works :D)
-            build = build.stopAndAdd(new AutoMechanismActions(drive).slideMove(800));  //schmove up
-            build = build.stopAndAdd(new AutoMechanismActions(drive).releaseOuttake()); // ploink
-            build = build.stopAndAdd(new AutoMechanismActions(drive).slideMove(100)); // schmove down
+            // place yellow pixel on backdrop:
+
+            // move slides up to ~halfway position
+            build = build.stopAndAdd(new AutoMechanismActions(drive).moveSlidesToPosition(2000));
+            // extend dumper servo
+            build = build.stopAndAdd(new AutoMechanismActions(drive).extendDumper(true));
+            // open gate
+            build = build.stopAndAdd(new AutoMechanismActions(drive).openOuttakeGate(true));
+            // spin conveyor to outtake
+            build = build.stopAndAdd(new AutoMechanismActions(drive).spinOuttakeFor(5, -Constants.OUTTAKE_CONVEYOR_POWER));
+            // close gate
+            build = build.stopAndAdd(new AutoMechanismActions(drive).openOuttakeGate(false));
+            // retract dumper servo
+            build = build.stopAndAdd(new AutoMechanismActions(drive).extendDumper(false));
+            // moveslides to bottom position
+            build = build.stopAndAdd(new AutoMechanismActions(drive).moveSlidesToPosition(0));
 
         } // end of params.placeYellowPixel
 
@@ -425,78 +437,125 @@ class AutoParams {
 // mechanism action classes
 
 class AutoMechanismActions {
-    private DcMotorEx intakeMotor;
-    private Servo dumperServo;
-    private Servo pixelLatchFront;
-    private DcMotorEx slideMotor;
-    private DcMotorEx returnMotor;
     private MecanumDrive drive;
     private ExtendedDriveFeatures exDrive;
 
     public AutoMechanismActions(MecanumDrive drive) {
         this.drive = drive;
-        intakeMotor = drive.intakeMotor;
-        dumperServo = drive.dumperServo;
-        pixelLatchFront = drive.outtakeGate; //TEMPORARY LOL
-        slideMotor = drive.slideMotor;
-        returnMotor = drive.returnMotor;
         this.exDrive = new ExtendedDriveFeatures(drive);
     }
 
+    // spins the intake for an ammount of time at a certain power
     public Action spinIntakeFor(double timeSec, double power) {
         return new Action() {
 
             double spinTimer = 0.0;
+            DeltaTimer timer = new DeltaTimer();
             @Override
             public boolean run(TelemetryPacket packet) {
+                if (drive.isDevBot) {
+                    return false;
+                } else {
+                    timer.updateDeltaTime();
+                    spinTimer += timer.deltaTime;
 
-                updateDeltaTime();
-                spinTimer += deltaTime;
-
-                if (intakeMotor != null) {
                     if (spinTimer > timeSec) {
-                        intakeMotor.setPower(0);
+                        drive.intakeMotor.setPower(0);
                     } else {
-                        intakeMotor.setPower(power);
+                        drive.intakeMotor.setPower(power);
                     }
+                    return spinTimer <= timeSec;
                 }
-                return spinTimer <= timeSec;
             }
         };
     }
 
-    //make sure to schmove the slides before doing this
-    public Action releaseOuttake() {
+    // moves the slides to a given position
+    public Action moveSlidesToPosition(int position) {
         return new Action() {
             @Override
-            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                dumperServo.setPosition(0.5); // PLACEHOLDER HEHEHEHA
-                pixelLatchFront.setPosition(Constants.PIXEL_LATCH_POSITIONS[1]);
-                dumperServo.setPosition(0);
-                return false;
+            public boolean run(TelemetryPacket packet) {
+                if (drive.isDevBot) {
+                    return false;
+                } else {
+                    return exDrive.moveSlidesToPosition(position);
+                }
             }
         };
-    };
+    }
 
-
-    // thingy to schmove the slides
-    public Action slideMove(Integer position) {
+    // changes the position of the dumper servo
+    // true = extend, false = retract
+    public Action extendDumper(boolean extend) {
         return new Action() {
             @Override
-            public boolean run(@NonNull TelemetryPacket telemetryPacket) {
-                return exDrive.moveSlidesToPosition(position); // returns if it's not close enough
+            public boolean run(TelemetryPacket packet) {
+                if (drive.isDevBot) {
+                    return false;
+                } else {
+                    drive.dumperServo.setPosition(Constants.DUMPER_POSITIONS[extend ? 0 : 1]);
+                    return false;
+                }
             }
         };
-    };
+    }
 
-    private double deltaTime = 0.0;
-    private Long lastTime = null;
+    // changes the position of the outtake gate
+    // true = open, false = close
+    public Action openOuttakeGate(boolean open) {
+        return new Action() {
+            @Override
+            public boolean run(TelemetryPacket packet) {
+                if (drive.isDevBot) {
+                    return false;
+                } else {
+                    drive.outtakeGate.setPosition(Constants.OUTTAKE_GATE_POSITIONS[open ? 0 : 1]);
+                    return false;
+                }
+            }
+        };
+    }
 
-    // updates the deltatime in seconds
-    private void updateDeltaTime() {
-        if (this.lastTime != null) {
-            this.deltaTime = (double)(System.nanoTime() - this.lastTime) / 1_000_000_000.0;
+    // spins the outtake conveyor for an ammount of time at a certain power
+    public Action spinOuttakeFor(double timeSec, double power) {
+        return new Action() {
+
+            double spinTimer = 0.0;
+            DeltaTimer timer = new DeltaTimer();
+            @Override
+            public boolean run(TelemetryPacket packet) {
+                if (drive.isDevBot) {
+                    return false;
+                } else {
+                    timer.updateDeltaTime();
+                    spinTimer += timer.deltaTime;
+
+                    if (spinTimer > timeSec) {
+                        drive.outtakeConveyor.setPower(0);
+                    } else {
+                        drive.outtakeConveyor.setPower(power);
+                    }
+                    return spinTimer <= timeSec;
+                }
+            }
+        };
+    }
+
+    class DeltaTimer {
+        public DeltaTimer() {
+            this.deltaTime = 0.0;
+            this.lastTime = null;
         }
-        this.lastTime = System.nanoTime();
+        // deltaTime is in seconds
+        public double deltaTime;
+        private Long lastTime;
+
+        // updates the deltatime in seconds
+        public void updateDeltaTime() {
+            if (this.lastTime != null) {
+                this.deltaTime = (double) (System.nanoTime() - this.lastTime) / 1_000_000_000.0;
+            }
+            this.lastTime = System.nanoTime();
+        }
     }
 }

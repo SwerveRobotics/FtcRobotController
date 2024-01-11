@@ -62,7 +62,7 @@ public class Constants {
             0.0 // closed
     };
 
-    public static final double OUTTAKE_CONVEYOR_POWER = 0.5;
+    public static final double OUTTAKE_CONVEYOR_POWER = 0.8;
     public static final double[] INBAR_POSITIONS = { // Preset positions that the intake can travel to through use of Dpad Controls.
             0.37, // down
             0.87, // up
