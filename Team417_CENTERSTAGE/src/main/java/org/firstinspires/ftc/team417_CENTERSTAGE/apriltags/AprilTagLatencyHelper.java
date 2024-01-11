@@ -91,7 +91,6 @@ public class AprilTagLatencyHelper {
             wasNullLastLoop = false;
             newResult = true;
 
-            /*
             // Latency compensation code
             double currentTime = clock.milliseconds();
 
@@ -107,9 +106,9 @@ public class AprilTagLatencyHelper {
                 currentTime = clock.milliseconds();
 
             }
-            */
             addPose(robotPoseEstimate);
         } else if (!wasNullLastLoop) {
+            wasNullLastLoop = true;
             /*
             wasNullLastLoop = true;
             newResult = true;
