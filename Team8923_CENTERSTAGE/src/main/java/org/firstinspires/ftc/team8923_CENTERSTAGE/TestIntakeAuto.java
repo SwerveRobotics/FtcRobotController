@@ -7,6 +7,8 @@ public class TestIntakeAuto extends BaseAutonomous {
     public void runOpMode() {
         initHardware();
         waitForStart();
-        runIntake(0.5, 2000);
+        pivot(-90);
+        pivot(90);
+        pivot(-90);
     }
 }

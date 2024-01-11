@@ -200,9 +200,9 @@ public class RedOpenCvColorDetection {
 
     public Position detectColor() {
         Position position = Position.FOUR;
-        if (targetPoint.x < 200.3) {
+        if (targetPoint.x < 230.3) {
             position = Position.ONE;//left
-        } else if (((targetPoint.x > 200.3) && (targetPoint.x < 640))) {
+        } else if (((targetPoint.x > 230.3) && (targetPoint.x < 640))) {
             position = Position.TWO;//center
         } else if (/* (targetPoint.x > 426.6) && (targetPoint.x < 640) || */targetDetected == false) {
             position = Position.THREE;//right

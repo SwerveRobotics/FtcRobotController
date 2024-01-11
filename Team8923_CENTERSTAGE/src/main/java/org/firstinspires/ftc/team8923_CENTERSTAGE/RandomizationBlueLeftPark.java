@@ -10,15 +10,15 @@ public class RandomizationBlueLeftPark extends BaseAutonomous {
         switch (myBlueColorDetection.detectColor()) {
             case ONE:
                 // forward 1 tile
-                driveInches(0, 24);
+                driveInches(0, 32);
                 // pivot 90 degrees left
                 pivot(-90);
                 // release pixel
-                runIntake(0.5, 2);
+                runIntake(0.5, 2000);
                 // pivot 90 degrees right
-                pivot(90);
+                pivot(-180);
                 // backward 1 tile
-                driveInches(0, -24);
+                driveInches(0, -32);
                 // pivot 90 degrees left
                 pivot(-90);
                 // forward 2 tiles
@@ -26,9 +26,10 @@ public class RandomizationBlueLeftPark extends BaseAutonomous {
                 break;
             case TWO:
                 // forward 1 tile
-                driveInches(0, 24);
+                driveInches(0, 28);
+                driveInches(0, -3);
                 // release pixel
-                runIntake(0.5, 2);
+                runIntake(0.5, 2000);
                 // backward 1 tile
                 driveInches(0, -24);
                 // pivot 90 degrees left
@@ -42,7 +43,7 @@ public class RandomizationBlueLeftPark extends BaseAutonomous {
                 // pivot 90 degrees right
                 pivot(90);
                 // release pixel
-                runIntake(0.5, 2);
+                runIntake(0.5, 2000);
                 // pivot 90 degrees left
                 pivot(-90);
                 // backward 1 tile
