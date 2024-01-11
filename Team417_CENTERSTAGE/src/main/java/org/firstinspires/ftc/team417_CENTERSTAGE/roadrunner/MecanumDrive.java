@@ -51,6 +51,7 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagLatencyHelper;
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseAutonomous;
+import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 import org.firstinspires.inspection.InspectionState;
 
 import java.util.Arrays;
@@ -349,13 +350,6 @@ public final class MecanumDrive {
 
             PoseVelocity2d robotVelRobot = updatePoseEstimate();
 
-            if (BaseAutonomous.USE_APRIL_TAGS) {
-                Pose2d tentativePose = ATLHelper.refinePose();
-                if (tentativePose != null) {
-                    pose = tentativePose;
-                }
-            }
-
             PoseVelocity2dDual<Time> command = new HolonomicController(
                     PARAMS.axialGain, PARAMS.lateralGain, PARAMS.headingGain,
                     PARAMS.axialVelGain, PARAMS.lateralVelGain, PARAMS.headingVelGain
@@ -501,7 +495,7 @@ public final class MecanumDrive {
             poseHistory.removeFirst();
         }
 
-        if (ATLHelper != null) {
+        if (ATLHelper != null && BaseOpMode.isEpsilonEquals(leftFront.getPower(), 0) && BaseOpMode.isEpsilonEquals(rightFront.getPower(), 0) && BaseOpMode.isEpsilonEquals(leftFront.getPower(), 0) && BaseOpMode.isEpsilonEquals(leftFront.getPower(), 0)) {
             Pose2d tentativePose = ATLHelper.refinePose();
 
             if (tentativePose != null) {

@@ -4,6 +4,7 @@ import static java.lang.System.nanoTime;
 
 import android.graphics.PointF;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -25,45 +26,25 @@ import java.util.ArrayList;
 
 @Config
 abstract public class BaseAutonomous extends BaseOpMode {
+    // Set to false for competitions to remove lags
+    public static final boolean TESTING = true;
 
     private ElapsedTime runtime = new ElapsedTime();
 
-    public static double APRIL_TAG_SLEEP_TIME = 500;
-    public static double NO_APRIL_TAG_SLEEP_TIME = 5000;
+    private boolean USE_APRIL_TAGS = false;
+    private boolean USE_OPEN_CV_PROP_DETECTION = true;
 
-    public static boolean USE_APRIL_TAGS = false;
-    public static boolean USE_OPEN_CV_PROP_DETECTION = true;
-
-    public static double INTAKE_SPEED = 1;
-    public static double INTAKE_TIME = 2; // in seconds
-    public static double INTAKE_SPEED2 = 1;
-    public static double INTAKE_TIME2 = 10; // in seconds
     public static double NANO_TO_SECONDS_MULTIPLIER = 1e-9;
 
     public OpenCvColorDetection myColorDetection;
     public AprilTagPoseEstimator myATPoseEstimator;
 
     public void initializeAuto() {
-        telemetry.addData("Init State", "Init Started");
-        telemetry.update();
         if (USE_OPEN_CV_PROP_DETECTION) {
             myColorDetection = new OpenCvColorDetection(this);
             myColorDetection.init();
         }
         initializeHardware();
-
-        telemetry.addData("Init State", "Init Finished");
-
-        // Allow the OpenCV to process
-        if (USE_APRIL_TAGS) {
-            sleep((long) APRIL_TAG_SLEEP_TIME);
-        } else {
-            sleep((long) NO_APRIL_TAG_SLEEP_TIME);
-        }
-
-        telemetry.clear();
-        telemetry.addLine("Initialized. Ready to start!");
-        telemetry.update();
     }
 
     class ATContinuallyEstimatePoseAction implements Action {
@@ -74,22 +55,84 @@ abstract public class BaseAutonomous extends BaseOpMode {
         }
     }
 
-    public void runAuto(boolean red, boolean close, boolean test) {
+    class UpdatePoseInConfig implements Action {
+        public boolean run(TelemetryPacket packet) {
+            if (!opModeIsActive()) return false;
+            org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.pose = drive.pose;
+            return true;
+        }
+    }
+
+    class DoTelemetry implements Action {
+        public boolean run(TelemetryPacket packet) {
+            if (!opModeIsActive()) return false;
+            telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+            telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)",
+                    drive.pose.position.x, drive.pose.position.y,
+                    Math.toDegrees(drive.pose.heading.log())));
+            telemetry.update();
+            return true;
+        }
+    }
+
+    class updateToDashboard implements Action {
+        Action path;
+
+        public updateToDashboard(Action path) {
+            this.path = path;
+        }
+
+        public boolean run(TelemetryPacket packet) {
+            if (!opModeIsActive()) return false;
+            // Code added to draw the pose, use only when testing
+            if (TESTING) {
+                TelemetryPacket p = new TelemetryPacket();
+                Canvas c = p.fieldOverlay();
+
+                path.preview(c);
+
+                FtcDashboard dashboard = FtcDashboard.getInstance();
+                dashboard.sendTelemetryPacket(p);
+            }
+            return true;
+        }
+    }
+
+    public void runAuto(boolean red, boolean close, boolean openCV, boolean backdropPixel, boolean aprilTags) {
+        telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+        telemetry.addData("Init State", "Init Started");
+        telemetry.update();
+
+        USE_OPEN_CV_PROP_DETECTION = openCV;
+        USE_APRIL_TAGS = false; // Just not using April Tags for auto, adds unpredicability
+
         initializeAuto();
 
         if (myColorDetection != null) {
             if (red) {
                 myColorDetection.setDetectColor(OpenCvColorDetection.DetectColorType.RED);
-                telemetry.addLine("Looking for red");
             } else {
                 myColorDetection.setDetectColor(OpenCvColorDetection.DetectColorType.BLUE);
-                telemetry.addLine("Looking for blue");
             }
         }
+
+        AutonDriveFactory auton = new AutonDriveFactory(drive);
+        AutonDriveFactory.PoseAndAction leftPoseAndAction = auton.getDriveAction(red, !close,
+                AutonDriveFactory.SpikeMarks.LEFT, dropPixel(0.5, 0.5),
+                driveToDistanceAndMoveArm(9, 2700), moveDumperAction(0), startMoveBackward(), endMoveBackward(), moveGateAction(0));
+        AutonDriveFactory.PoseAndAction centerPoseAndAction = auton.getDriveAction(red, !close,
+                AutonDriveFactory.SpikeMarks.CENTER, dropPixel(0.5, 0.5),
+                driveToDistanceAndMoveArm(9, 2700), moveDumperAction(0), startMoveBackward(), endMoveBackward(), moveGateAction(0));
+        AutonDriveFactory.PoseAndAction rightPoseAndAction = auton.getDriveAction(red, !close,
+                AutonDriveFactory.SpikeMarks.RIGHT, dropPixel(0.5, 0.5),
+                driveToDistanceAndMoveArm(9, 2700), moveDumperAction(0), startMoveBackward(), endMoveBackward(), moveGateAction(0));
+
+        telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+        telemetry.addLine("Initialized. Ready to start!");
         telemetry.update();
 
         while (!isStarted()) {
-            telemetry.addData("Looking for", myColorDetection.myColor);
+            telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
             telemetry.addData("Side detected", myColorDetection.detectTeamProp());
             telemetry.update();
         }
@@ -100,6 +143,11 @@ abstract public class BaseAutonomous extends BaseOpMode {
         AutonDriveFactory.SpikeMarks translateEnum;
 
         if (myColorDetection != null) {
+            while (myColorDetection.detectTeamProp() == OpenCvColorDetection.SideDetected.INITIALIZED);
+
+            // Just in case (flash after camera is completely initialized, could lead to instability)
+            sleep(100);
+
             OpenCvColorDetection.SideDetected result = myColorDetection.detectTeamProp();
 
             if (result == OpenCvColorDetection.SideDetected.LEFT) {
@@ -144,17 +192,37 @@ abstract public class BaseAutonomous extends BaseOpMode {
             drive.setATLHelper(myATPoseEstimator.myAprilTagLatencyHelper);
         }
 
-        AutonDriveFactory auton = new AutonDriveFactory(drive);
-        AutonDriveFactory.PoseAndAction poseAndAction = auton.getDriveAction(red, !close, translateEnum, dropPixel(0.2, 0.5), driveToDistanceAndMoveArm(10, 2700), moveDumperAction(0));
+        AutonDriveFactory.PoseAndAction poseAndAction;
+        switch (translateEnum) {
+            case LEFT:
+                poseAndAction = leftPoseAndAction;
+                break;
+            case CENTER:
+                poseAndAction = centerPoseAndAction;
+                break;
+            case RIGHT:
+                poseAndAction = rightPoseAndAction;
+                break;
+            default:
+                poseAndAction = centerPoseAndAction;
+        }
 
         drive.pose = poseAndAction.startPose;
+
+        drive.runParallel(poseAndAction.action);
 
         if (USE_APRIL_TAGS) {
             drive.runParallel(new ATContinuallyEstimatePoseAction());
         }
 
-        if (!test) {
-            Actions.runBlocking(poseAndAction.action);
+        drive.runParallel(new UpdatePoseInConfig());
+
+        drive.runParallel(new DoTelemetry());
+
+        drive.runParallel(new updateToDashboard(poseAndAction.action));
+
+        while (opModeIsActive()) {
+            drive.doActionsWork();
         }
 
         telemetry.addLine("Running closing procedure: ");
@@ -163,11 +231,6 @@ abstract public class BaseAutonomous extends BaseOpMode {
         if (myATPoseEstimator != null) {
             myATPoseEstimator.visionPortal.close();
         }
-    }
-
-    public void runAuto(boolean red, boolean close) {
-
-        runAuto(red, close, false);
     }
 
     //Action: Spits out pixel in trajectory; see usage in AutonDriveFactory below.
@@ -212,9 +275,9 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
     public Action driveToDistanceAndMoveArm(double goalDistance, double armGoalPos) {
         return new Action() {
-            final double epsilon = 0.6;
+            final double epsilon = 1;
             double iterations;
-            double goalIterations = 50;
+            double goalIterations = 20;
             @Override
             public boolean run(TelemetryPacket packet) {
                 if (Math.abs(goalDistance - distSensor.getDistance(DistanceUnit.INCH)) < epsilon) {
@@ -251,6 +314,36 @@ abstract public class BaseAutonomous extends BaseOpMode {
             @Override
             public boolean run(TelemetryPacket packet) {
                 dumperServo.setPosition(DUMPER_SERVO_TILT_POSITION);
+                return false;
+            }
+        };
+    }
+
+    public Action moveGateAction(double armGoalPos) {
+        return new Action() {
+            @Override
+            public boolean run(TelemetryPacket packet) {
+                gateServo.setPosition(GATE_SERVO_OPEN_POSITION);
+                return false;
+            }
+        };
+    }
+
+    public Action startMoveBackward() {
+        return new Action() {
+            @Override
+            public boolean run(TelemetryPacket packet) {
+                setMotorPower(0.1);
+                return false;
+            }
+        };
+    }
+
+    public Action endMoveBackward() {
+        return new Action() {
+            @Override
+            public boolean run(TelemetryPacket packet) {
+                setMotorPower(0);
                 return false;
             }
         };
@@ -300,7 +393,7 @@ class AutonDriveFactory {
     /* Booleans 'isRed' (red or blue side), 'isFar' (far or close to backdrop)
      'location' (center, middle, or right), and 'intake' (Action for use).
      */
-    PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake, Action moveArm, Action moveDumper) {
+    PoseAndAction getDriveAction(boolean isRed, boolean isFar, SpikeMarks location, Action intake, Action moveArm, Action moveDumper, Action startMoveBackward, Action endMoveBackward, Action moveGateAction) {
 
         if (isFar) {
             xOffset = 0;
@@ -340,18 +433,29 @@ class AutonDriveFactory {
                 .setTangent(xForm(Math.toRadians(0)))
                 .afterTime(0, moveDumper)
                 .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -38)), xForm(Math.toRadians(0)))
-                .stopAndAdd(moveArm);
+                .stopAndAdd(moveArm)
+                .afterTime(0.1, moveGateAction)
+                .afterTime(0.2, startMoveBackward)
+                .afterTime(0.45, endMoveBackward);
 
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
         spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
                 .stopAndAdd(intake)
-                //.splineTo(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
+                .setTangent(xForm(Math.toRadians(-90)))
+                .splineTo(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(-90)))
+                .setTangent(xForm(Math.toRadians(180)))
+                .splineTo(xForm(new Vector2d(-55, -39)), xForm(Math.toRadians(180)))
+                .setTangent(xForm(Math.toRadians(90)))
                 //.splineTo(xForm(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(24, -12)), xForm(Math.toRadians(0)))
-                .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
+                .turn(Math.toRadians(turnToBackdropAmount)) //Turn so the arm faces the backdrop
                 .setTangent(xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -36)), xForm(Math.toRadians(0)));
+                .stopAndAdd(moveDumper)
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -36)), xForm(Math.toRadians(0)))
+                .stopAndAdd(moveArm)
+                .afterTime(0.1, moveGateAction)
+                .afterTime(0.2, startMoveBackward)
+                .afterTime(0.45, endMoveBackward);
 
         TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         spikeRight = spikeRight.splineTo(xForm(new Vector2d(-35, -37)), xForm(Math.toRadians(90)))
@@ -361,9 +465,14 @@ class AutonDriveFactory {
                 .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
                 .splineToConstantHeading(xForm(new Vector2d(24, -12)), xForm(Math.toRadians(0)))
-                .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
+                .turn(Math.toRadians(turnToBackdropAmount)) //Turn so the arm faces the backdrop
                 .setTangent(xForm(Math.toRadians(0)))
-                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -44)), xForm(Math.toRadians(0)));
+                .afterTime(0, moveDumper)
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -50.5)), xForm(Math.toRadians(0)))
+                .stopAndAdd(moveArm)
+                .afterTime(0.1, moveGateAction)
+                .afterTime(0.2, startMoveBackward)
+                .afterTime(0.45, endMoveBackward);
 
         if (location == xForm(SpikeMarks.LEFT)) {
             return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
@@ -411,7 +520,7 @@ class AutonDriveFactory {
      * arguments here to test your different code paths.
      */
     Action getMeepMeepAction() {
-        return getDriveAction(true, true, SpikeMarks.LEFT, null, null, null).action;
+        return getDriveAction(true, true, SpikeMarks.LEFT, null, null, null, null, null, null).action;
     }
 }
 

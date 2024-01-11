@@ -33,8 +33,8 @@ public abstract class BaseOpMode extends LinearOpMode {
     public CRServo dumperWheelServo;
 
     public Servo gateServo;
-    public final double GATE_SERVO_OPEN_POSITION = 0;
-    public final double GATE_SERVO_CLOSE_POSITION = 0.55;
+    public static double GATE_SERVO_OPEN_POSITION = 0;
+    public static double GATE_SERVO_CLOSE_POSITION = 0.55;
     public Servo droneServo;
     public DistanceSensor distSensor;
     public static ElapsedTime TIME = new ElapsedTime();
