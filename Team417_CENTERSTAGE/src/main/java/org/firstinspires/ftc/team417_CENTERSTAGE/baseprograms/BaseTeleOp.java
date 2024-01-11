@@ -194,17 +194,8 @@ public abstract class BaseTeleOp extends BaseOpMode {
     boolean downIsPressed = false;
     boolean wheelOn = true;
     public void controlDumperWheelUsingControllers() {
-        if (!downIsPressed && gamepad1.dpad_down) {
-            if (!wheelOn) {
-                dumperWheelServo.setPower(-1);
-                wheelOn = true;
-            } else {
-                dumperWheelServo.setPower(0);
-                wheelOn = false;
-            }
-        }
-
-        downIsPressed = gamepad1.dpad_down;
+        double speed = -gamepad1.right_trigger;
+        dumperWheelServo.setPower(speed);
     }
 
 
