@@ -295,7 +295,6 @@ class AutonDriveFactory {
             // place purple pixel
             build = build.stopAndAdd(new AutoMechanismActions(drive).spinIntakeFor(3, 1));
 
-
         } // end of params.placePurplePixel
 
         // strafe to safe spot to turn

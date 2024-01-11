@@ -21,10 +21,12 @@ This is part of roadrunner.
 @Config
 public final class ThreeDeadWheelLocalizer implements Localizer {
     public static class Params {
-        public double par0YTicks = 0.0; // y position of the first parallel encoder (in tick units)
-        public double par1YTicks = 1.0; // y position of the second parallel encoder (in tick units)
-        public double perpXTicks = 0.0; // x position of the perpendicular encoder (in tick units)
+        public double par0YTicks = -2966.7203615184076; // y position of the first parallel encoder (in tick units)
+        public double par1YTicks = 2091.910969157418; // y position of the second parallel encoder (in tick units)
+        public double perpXTicks = 1224.7805483216387; // x position of the perpendicular encoder (in tick units)
     }
+
+    public static int pos0, pos1, posPerp;
 
     public static Params PARAMS = new Params();
 
@@ -53,6 +55,7 @@ public final class ThreeDeadWheelLocalizer implements Localizer {
     }
 
     public Twist2dDual<Time> update() {
+
         PositionVelocityPair par0PosVel = par0.getPositionAndVelocity();
         PositionVelocityPair par1PosVel = par1.getPositionAndVelocity();
         PositionVelocityPair perpPosVel = perp.getPositionAndVelocity();
@@ -60,6 +63,10 @@ public final class ThreeDeadWheelLocalizer implements Localizer {
         int par0PosDelta = par0PosVel.position - lastPar0Pos;
         int par1PosDelta = par1PosVel.position - lastPar1Pos;
         int perpPosDelta = perpPosVel.position - lastPerpPos;
+
+        pos0 = lastPar0Pos;
+        pos1 = lastPar1Pos;
+        posPerp = lastPerpPos;
 
         Twist2dDual<Time> twist = new Twist2dDual<>(
                 new Vector2dDual<>(
@@ -81,6 +88,8 @@ public final class ThreeDeadWheelLocalizer implements Localizer {
         lastPar0Pos = par0PosVel.position;
         lastPar1Pos = par1PosVel.position;
         lastPerpPos = perpPosVel.position;
+
+        System.out.println(inPerTick);
 
         return twist;
     }

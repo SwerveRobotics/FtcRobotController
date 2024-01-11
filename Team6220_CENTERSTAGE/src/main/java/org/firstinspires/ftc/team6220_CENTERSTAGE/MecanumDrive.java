@@ -114,9 +114,9 @@ public final class MecanumDrive {
             // is competition bot:
             } else {
                 // drive model parameters
-                inPerTick = 72.0 / 3146.5;
-                lateralInPerTick = 0.12535959467974306; // inPerTick * 56 / 72.0; OLD
-                trackWidthTicks = 1313.928196861614;
+                inPerTick = 72.0 / 24071.0; // 72.0 / 3146.5; OLD
+                lateralInPerTick = 0.016345035761204534; // inPerTick * 56 / 72.0; OLD
+                trackWidthTicks = 1116.6094737316926;
 
                 // feedforward parameters (in tick units)
                 kS = 0.7120066356750563;
@@ -124,9 +124,9 @@ public final class MecanumDrive {
                 kA = 0.00065;
 
                 // path controller gains
-                axialGain = 20;
-                lateralGain = 10;
-                headingGain = 4; // shared with turn
+                axialGain = 10.0;
+                lateralGain = 10.0;
+                headingGain = 10.0; // shared with turn
             }
 
             // path profile parameters (in inches)
