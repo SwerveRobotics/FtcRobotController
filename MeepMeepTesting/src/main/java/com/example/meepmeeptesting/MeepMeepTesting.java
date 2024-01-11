@@ -158,8 +158,11 @@ class AutonDriveFactory {
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
         spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
                 //.stopAndAdd(intake)
-                //.splineTo(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-55, -39)), xForm(Math.toRadians(90)))
+                .setTangent(xForm(Math.toRadians(-90)))
+                .splineTo(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(-90)))
+                .setTangent(xForm(Math.toRadians(180)))
+                .splineTo(xForm(new Vector2d(-55, -39)), xForm(Math.toRadians(180)))
+                .setTangent(xForm(Math.toRadians(90)))
                 //.splineTo(xForm(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(24, -12)), xForm(Math.toRadians(0)))
                 .turn(Math.toRadians(180)) //Turn so the arm faces the backdrop
@@ -235,7 +238,7 @@ class AutonDriveFactory {
      * arguments here to test your different code paths.
      */
     Action getMeepMeepAction() {
-        return getDriveAction(false, false, SpikeMarks.CENTER, null).action;
+        return getDriveAction(false, true, SpikeMarks.CENTER, null).action;
     }
 }
 
