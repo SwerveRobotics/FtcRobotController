@@ -40,10 +40,19 @@ abstract public class BaseAutonomous extends BaseOpMode {
     public AprilTagPoseEstimator myATPoseEstimator;
 
     public void initializeAuto() {
+        telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+        telemetry.addData("Init State", "Initializing Computer Vision");
+        telemetry.update();
+
         if (USE_OPEN_CV_PROP_DETECTION) {
             myColorDetection = new OpenCvColorDetection(this);
             myColorDetection.init();
         }
+
+        telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+        telemetry.addData("Init State", "Initializing Hardware");
+        telemetry.update();
+
         initializeHardware();
     }
 
@@ -108,6 +117,10 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
         initializeAuto();
 
+        telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+        telemetry.addData("Init State", "Setting Color");
+        telemetry.update();
+
         if (myColorDetection != null) {
             if (red) {
                 myColorDetection.setDetectColor(OpenCvColorDetection.DetectColorType.RED);
@@ -116,11 +129,30 @@ abstract public class BaseAutonomous extends BaseOpMode {
             }
         }
 
+        telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+        telemetry.addData("Init State", "Creating Drive Factory");
+        telemetry.update();
+
         // In case of error: , driveToDistanceAndMoveArm(8, 2750), moveDumperAction(0)
 
         AutonDriveFactory auton = new AutonDriveFactory(drive);
+
+        telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+        telemetry.addData("Init State", "Building Left Path");
+        telemetry.update();
+
         AutonDriveFactory.PoseAndAction leftPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.LEFT, dropPixel(1, 2));
+
+        telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+        telemetry.addData("Init State", "Building Center Path");
+        telemetry.update();
+
         AutonDriveFactory.PoseAndAction centerPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.CENTER, dropPixel(1, 2));
+
+        telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
+        telemetry.addData("Init State", "Building Right Path");
+        telemetry.update();
+
         AutonDriveFactory.PoseAndAction rightPoseAndAction = auton.getDriveAction(red, !close, AutonDriveFactory.SpikeMarks.RIGHT, dropPixel(1, 2));
 
         telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
