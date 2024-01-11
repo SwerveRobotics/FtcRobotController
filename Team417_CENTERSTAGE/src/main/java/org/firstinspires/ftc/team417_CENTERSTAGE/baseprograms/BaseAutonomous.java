@@ -118,13 +118,13 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
         AutonDriveFactory auton = new AutonDriveFactory(drive);
         AutonDriveFactory.PoseAndAction leftPoseAndAction = auton.getDriveAction(red, !close,
-                AutonDriveFactory.SpikeMarks.LEFT, dropPixel(0.5, 0.5),
-                driveToDistanceAndMoveArm(9, 2700), moveDumperAction(0), startMoveBackward(), endMoveBackward(), moveGateAction(0));
+                AutonDriveFactory.SpikeMarks.LEFT, dropPixel(0.5, 0.3),
+                driveToDistanceAndMoveArm(8, 2700), moveDumperAction(0), startMoveBackward(), endMoveBackward(), moveGateAction(0));
         AutonDriveFactory.PoseAndAction centerPoseAndAction = auton.getDriveAction(red, !close,
                 AutonDriveFactory.SpikeMarks.CENTER, dropPixel(0.5, 0.5),
                 driveToDistanceAndMoveArm(9, 2700), moveDumperAction(0), startMoveBackward(), endMoveBackward(), moveGateAction(0));
         AutonDriveFactory.PoseAndAction rightPoseAndAction = auton.getDriveAction(red, !close,
-                AutonDriveFactory.SpikeMarks.RIGHT, dropPixel(0.5, 0.5),
+                AutonDriveFactory.SpikeMarks.RIGHT, dropPixel(0.5, 0.3),
                 driveToDistanceAndMoveArm(9, 2700), moveDumperAction(0), startMoveBackward(), endMoveBackward(), moveGateAction(0));
 
         telemetry.addLine(org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.summary);
@@ -423,7 +423,7 @@ class AutonDriveFactory {
 
         TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-35, -34)), xForm((Math.toRadians(180))))
+                .splineTo(xForm(new Vector2d(-33.5, -34)), xForm((Math.toRadians(180))))
                 .stopAndAdd(intake)
                 .splineToConstantHeading(xForm(new Vector2d(-30, -34)), xForm(Math.toRadians(180)))
                 .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
@@ -436,7 +436,7 @@ class AutonDriveFactory {
                 .stopAndAdd(moveArm)
                 .afterTime(0.1, moveGateAction)
                 .afterTime(0.2, startMoveBackward)
-                .afterTime(0.45, endMoveBackward);
+                .afterTime(0.70, endMoveBackward);
 
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
         spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
@@ -451,15 +451,15 @@ class AutonDriveFactory {
                 .turn(Math.toRadians(turnToBackdropAmount)) //Turn so the arm faces the backdrop
                 .setTangent(xForm(Math.toRadians(0)))
                 .stopAndAdd(moveDumper)
-                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -36)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -43)), xForm(Math.toRadians(0)))
                 .stopAndAdd(moveArm)
                 .afterTime(0.1, moveGateAction)
                 .afterTime(0.2, startMoveBackward)
-                .afterTime(0.45, endMoveBackward);
+                .afterTime(0.70, endMoveBackward);
 
         TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         spikeRight = spikeRight.splineTo(xForm(new Vector2d(-35, -37)), xForm(Math.toRadians(90)))
-                .splineTo(xForm(new Vector2d(-33, -37)), xForm(Math.toRadians(0)))
+                .splineTo(xForm(new Vector2d(-34.5, -37)), xForm(Math.toRadians(0)))
                 .stopAndAdd(intake)
                 .splineToConstantHeading(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
                 .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
@@ -472,7 +472,7 @@ class AutonDriveFactory {
                 .stopAndAdd(moveArm)
                 .afterTime(0.1, moveGateAction)
                 .afterTime(0.2, startMoveBackward)
-                .afterTime(0.45, endMoveBackward);
+                .afterTime(0.70, endMoveBackward);
 
         if (location == xForm(SpikeMarks.LEFT)) {
             return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));

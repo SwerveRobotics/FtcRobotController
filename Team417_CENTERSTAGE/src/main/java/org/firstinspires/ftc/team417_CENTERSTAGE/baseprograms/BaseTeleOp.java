@@ -154,6 +154,9 @@ public abstract class BaseTeleOp extends BaseOpMode {
     public static double droneServoReleasedPos = 0.5;
     public static double droneServoHoldingPos = 0.08;
 
+    public static boolean droneLaunched = false;
+
+    public static boolean xIsPressed = false;
     private void controlDroneLauncher() {
         if (!droneLauncherInited) {
             droneLauncherInitTime = time.milliseconds();
