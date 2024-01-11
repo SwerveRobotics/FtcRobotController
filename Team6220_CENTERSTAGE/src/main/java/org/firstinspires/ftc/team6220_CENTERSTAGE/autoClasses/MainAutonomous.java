@@ -203,7 +203,7 @@ class AutonDriveFactory {
                 startInvert = -1;
                 break;
         }
-        Pose2d startingPose = new Pose2d(startingPosX, 63 * teamInvert, Math.toRadians(-90 * teamInvert));
+        Pose2d startingPose = new Pose2d(startingPosX, 62 * teamInvert, Math.toRadians(-90 * teamInvert));
 
         // apply to drive so it doesn't think it's starting at (0,0,0)
         this.drive.pose = startingPose;
@@ -271,45 +271,39 @@ class AutonDriveFactory {
             switch (spikeType) {
 
                 case OPEN:
-                    build = build.strafeTo(new Vector2d(startingPosX + 11 * startInvert, 40 * teamInvert));
+                    build = build.strafeTo(new Vector2d(startingPosX + 11 * startInvert, 40 * teamInvert)).endTrajectory();
+                    // nudge prop out of the way
+                    build = build.lineToY(36 * teamInvert).endTrajectory();
+                    build = build.lineToY(40 * teamInvert);
                     break;
 
                 case MIDDLE:
+                    build = build.lineToY(34 * teamInvert).endTrajectory();
+                    // nudge prop out of the way
                     build = build.lineToY(30 * teamInvert).endTrajectory();
                     build = build.lineToY(34 * teamInvert);
                     break;
 
                 case TRUSS:
                     build = build.lineToY(36 * teamInvert)
-                            .turnTo(Math.toRadians(90 + 90 * startInvert))
-                            .lineToX(startingPosX - 2 * startInvert);
+                            .turnTo(Math.toRadians(90 + 90 * startInvert));
+                    build = build.lineToX(startingPosX - 6 * startInvert).endTrajectory();
+                    build = build.lineToX(startingPosX - 2 * startInvert);
                     break;
             }
 
             // place purple pixel
             build = build.stopAndAdd(new AutoMechanismActions(drive).spinIntakeFor(3, 1));
 
-            // return to the side of the field so that we can go towards the backdrop
-            switch (spikeType) {
 
-                case OPEN:
-                case MIDDLE:
-                    build = build.lineToY(60 * teamInvert)
-                            .turnTo(Math.toRadians(180));
-                    break;
+        } // end of params.placePurplePixel
 
-                case TRUSS:
-                    build = build.lineToX(startingPosX)
-                            .strafeTo(new Vector2d(startingPosX, 60 * teamInvert));
-                    break;
-            }
-            // end of params.placePurplePixel
-        } else {
-            build = build.lineToY(60 * teamInvert);
-        }
-
-        // turn to point outtake towards backdrop
-        build = build.turnTo(Math.toRadians(180));
+        // strafe to safe spot to turn
+        build = build.strafeTo(new Vector2d(startingPosX + 10 * startInvert, 55 * teamInvert));
+        // turn
+        build = build.turnTo(Math.toRadians(180.01));
+        // position almost against the side of the field
+        build = build.strafeTo(new Vector2d(startingPosX + 10 * startInvert, 60 * teamInvert));
 
         // get to known spot before spline to backdrop
         switch (params.startingPosition) {
@@ -338,7 +332,7 @@ class AutonDriveFactory {
             // open gate
             build = build.stopAndAdd(new AutoMechanismActions(drive).openOuttakeGate(true));
             // spin conveyor to outtake
-            build = build.stopAndAdd(new AutoMechanismActions(drive).spinOuttakeFor(5, -Constants.OUTTAKE_CONVEYOR_POWER));
+            build = build.stopAndAdd(new AutoMechanismActions(drive).spinOuttakeFor(5, 1));
             // close gate
             build = build.stopAndAdd(new AutoMechanismActions(drive).openOuttakeGate(false));
             // retract dumper servo
