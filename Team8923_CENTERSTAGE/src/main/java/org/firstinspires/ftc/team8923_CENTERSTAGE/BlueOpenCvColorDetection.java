@@ -204,11 +204,9 @@ public class BlueOpenCvColorDetection {
             position = Position.ONE;//left
         } else if (((targetPoint.x > 230.3) && (targetPoint.x < 640))) {
             position = Position.TWO;//center
-        } else if (/* (targetPoint.x > 426.6) && (targetPoint.x < 640) || */targetDetected == false) {
+        } else if (targetDetected == false) {
             position = Position.THREE;//right
-        } /*else {
-            position = Position.FOUR;
-        }*/
+        }
         return position;
     }
 }
