@@ -22,7 +22,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     ElapsedTime time = new ElapsedTime();
     AutoDriveTo autoDrive;
-    TelemetryPacket packet = new TelemetryPacket();
 
     @Override
     public void runOpMode() {
@@ -36,14 +35,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
         autoDrive = new AutoDriveTo(drive);
 
-        packet.put("velocity", 0);
-        packet.put("radialSpeed1", 0);
-        packet.put("radialSpeed2", 0);
-        packet.put("radialSpeed3", 0);
-        packet.put("finalVelocity Hypot", 0);
-        packet.put("actualSpeed", 0);
-        packet.put("differenceOfSpeeds", 0);
-
         waitForStart();
 
         drive.pose = new Pose2d(12, -60, Math.toRadians(90)); //@@@@@@@@@@@@@@@@
@@ -53,8 +44,11 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
         while (opModeIsActive()) {
 
+            TelemetryPacket packet = new TelemetryPacket();
+
+
             resetIMUIfNeeded();
-            driveUsingControllers(false);
+            driveUsingControllers(false, packet);
 
             drive.updatePoseEstimate();
 
@@ -130,7 +124,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
     boolean usingStick = true;
     boolean dPadUpPressed;
 
-    public void driveUsingControllers(boolean curve) {
+    public void driveUsingControllers(boolean curve, TelemetryPacket packet) {
         sensitive = gamepad1.right_bumper;
 
         double sensitivity, rotSensitivity;
