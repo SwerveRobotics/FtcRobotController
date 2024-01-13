@@ -20,10 +20,11 @@ This is part of roadrunner.
  */
 @Config
 public final class ThreeDeadWheelLocalizer implements Localizer {
+    public static final double correctionFactor = 1.03333333333; // funny number to correct turning too far
     public static class Params {
-        public double par0YTicks = -2572.624848272324; // y position of the first parallel encoder (in tick units)
-        public double par1YTicks = 2472.687387963645; // y position of the second parallel encoder (in tick units)
-        public double perpXTicks = -1154.0805715416507; // x position of the perpendicular encoder (in tick units)
+        public double par0YTicks = -2572.624848272324 * correctionFactor; // y position of the first parallel encoder (in tick units)
+        public double par1YTicks = 2472.687387963645 * correctionFactor; // y position of the second parallel encoder (in tick units)
+        public double perpXTicks = -1154.0805715416507 * correctionFactor; // x position of the perpendicular encoder (in tick units)
     }
 
     public static int pos0, pos1, posPerp;

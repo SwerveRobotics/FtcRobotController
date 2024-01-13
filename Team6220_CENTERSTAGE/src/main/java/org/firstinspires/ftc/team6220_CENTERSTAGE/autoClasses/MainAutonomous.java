@@ -132,6 +132,16 @@ public class MainAutonomous extends LinearOpMode {
 
         waitForStart();
 
+        
+        // Reset the encoders to zero so that the robot starts from its current location.
+        // If this weren't done, and if the robot was physically repositioned in between "init"
+        // and "start", at this point the PID would immediately move the robot back to the
+        // "init" location:
+        Pose2d pose = new Pose2d(autoDrive.drive.pose.position.x, autoDrive.drive.pose.position.y, autoDrive.drive.pose.heading.log());
+        autoDrive.drive.updatePoseEstimate();
+        autoDrive.drive.pose = pose;
+
+
         // move inbar down to safe position that won't rub the belts
         autoDrive.drive.intakeServo.setPosition(Constants.INBAR_MAX_POSITION);
 
