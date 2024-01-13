@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -43,10 +44,9 @@ public abstract class BaseTeleOp extends BaseOpMode {
         packet.put("actualSpeed", 0);
         packet.put("differenceOfSpeeds", 0);
 
-        FtcDashboard dashboard = FtcDashboard.getInstance();
-        dashboard.sendTelemetryPacket(packet);
-
         waitForStart();
+
+        drive.pose = new Pose2d(12, -60, Math.toRadians(90)); //@@@@@@@@@@@@@@@@
 
         if (dumperWheelServo != null)
             dumperWheelServo.setPower(-1.0);
@@ -64,12 +64,9 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
             // Code added to draw the pose, use only when testing
             if (TESTING) {
-                TelemetryPacket p = new TelemetryPacket();
-                Canvas c = p.fieldOverlay();
+                Canvas c = packet.fieldOverlay();
                 c.setStroke("#3F5100");
                 MecanumDrive.drawRobot(c, drive.pose);
-
-                dashboard.sendTelemetryPacket(p);
             }
 
             if (armMotor != null && dumperServo != null && gateServo != null) {
@@ -79,6 +76,9 @@ public abstract class BaseTeleOp extends BaseOpMode {
                 telemetry.addData("DumperServo", dumperServo.getPosition());
                 telemetry.addData("GateServo", gateServo.getPosition());
             }
+
+            /*FtcDashboard dashboard = FtcDashboard.getInstance();
+            dashboard.sendTelemetryPacket(packet);*/
 
             telemetry.update();
         }
@@ -170,7 +170,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             }
             mecanumDrive(x, y, rot);
         } else
-            autoDrive.driveTo(0, 0, 0, driveToInit);
+            autoDrive.driveTo(48, -36, Math.toRadians(180), driveToInit, packet);
 
         dPadUpPressed = gamepad1.dpad_up;
     }
