@@ -19,13 +19,8 @@ public class Constants {
     public static final double TELEOP_MIN_HEADING_ACCURACY = 2.0; // degrees off from target
     public static final double SLOWMODE_MULTIPLIER = 0.3;
     public static final double INTAKE_POWER_MULTIPLIER = 0.8;
-    public static final double DRONE_SERVO_PRIMED_POS = 1;
-    public static final double DRONE_SERVO_LAUNCHING_POS = 0.3;
-
-    public static final double[] PIXEL_LATCH_POSITIONS = {
-            0.5, // closed
-            1, // open
-    };
+    public static final double DRONE_LAUNCHER_SERVO_PRIMED_POS = 0;
+    public static final double DRONE_LAUNCHER_SERVO_LAUNCHING_POS = 0.2;
 
     public static final double SLIDES_STICK_DEADZONE = 0.01;
     public static final double SLIDE_MANUAL_MULTIPLIER = 0.5;
@@ -65,11 +60,11 @@ public class Constants {
     public static final double OUTTAKE_CONVEYOR_POWER = 0.8;
     public static final double[] INBAR_POSITIONS = { // Preset positions that the intake can travel to through use of Dpad Controls.
             0.37, // down
-            0.87, // up
+            0.80, // up
     };
     public static final double INBAR_MIN_POSITION = INBAR_POSITIONS[0];
     public static final double INBAR_MAX_POSITION = INBAR_POSITIONS[INBAR_POSITIONS.length - 1];
-    public static final double INBAR_INIT_POSITION = 1.0;
+    public static final double INBAR_INIT_POSITION = 0.85;
     public static final double INBAR_MANUAL_RATE = 0.01;
 
   

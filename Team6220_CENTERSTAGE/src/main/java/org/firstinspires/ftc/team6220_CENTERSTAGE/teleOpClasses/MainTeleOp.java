@@ -98,8 +98,6 @@ public class MainTeleOp extends LinearOpMode {
         GamepadEx gp1 = new GamepadEx(gamepad1);
         GamepadEx gp2 = new GamepadEx(gamepad2);
 
-        boolean hasDroneLaunched = false;
-
         // don't reset so that the zero stays accurate between programs
         /*
         // Reset encoders of slide motor
@@ -155,6 +153,9 @@ public class MainTeleOp extends LinearOpMode {
         telemetry.update();
 
         waitForStart();
+
+        // move inbar down to safe position that won't rub the belts
+        drive.intakeServo.setPosition(Constants.INBAR_MAX_POSITION);
 
         while (opModeIsActive()) {
             // update gamepads and read inputs
@@ -398,87 +399,11 @@ public class MainTeleOp extends LinearOpMode {
                 }
 
                 // drive Drone Launcher
-                if (gp1.wasJustPressed(GamepadKeys.Button.Y) && !hasDroneLaunched) {
-                    drive.droneServo.setPosition(Constants.DRONE_SERVO_LAUNCHING_POS);
+                if (gp1.wasJustPressed(GamepadKeys.Button.Y)) {
+                    drive.droneLauncherServo.setPosition(Constants.DRONE_LAUNCHER_SERVO_LAUNCHING_POS);
                 } else if (gp1.wasJustReleased(GamepadKeys.Button.Y)){
-                    drive.droneServo.setPosition(Constants.DRONE_SERVO_PRIMED_POS);
-                    hasDroneLaunched = true;
+                    drive.droneLauncherServo.setPosition(Constants.DRONE_LAUNCHER_SERVO_PRIMED_POS);
                 }
-
-                /*
-
-                // Slides stuff
-                if (gp2.getButton(GamepadKeys.Button.LEFT_BUMPER)) {
-                    exDrive.moveSlides(-0.5);
-                } else if (gp2.getButton(GamepadKeys.Button.RIGHT_BUMPER)) {
-                    exDrive.moveSlides(0.5);
-                } else {
-                    exDrive.moveSlides(0);
-                }
-
-                // move intake bar down to preset value with dpad but only if it can
-                if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_LEFT))
-                    if (intakePreset > 0) {
-                        intakePreset--;
-                    }
-
-                // move intake bar up to preset value with dpad but only if it can
-                if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_RIGHT))
-                    if (intakePreset < Constants.INTAKE_POSITIONS.length - 1) {
-                        intakePreset++;
-                    }
-
-                // move intake bar down to preset value with dpad but only if it can
-                if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_DOWN))
-                    intakePreset = 0;
-
-                // move intake bar up to preset value with dpad but only if it can
-                if (gp2.wasJustPressed(GamepadKeys.Button.DPAD_UP))
-                    intakePreset = Constants.INTAKE_POSITIONS.length - 1;
-
-                // Moves the suspension arm (will be added in 3-5 business days) into position using drone button only after drone has launched
-                if (gp2.wasJustPressed(GamepadKeys.Button.Y) && hasDroneLaunched) {
-                    telemetry.addLine("CONFIRM HANG INITIALIZATION ACTUATION DO THE THING");
-                    if (gp2.wasJustPressed(GamepadKeys.Button.Y)) {
-                        telemetry.addLine("SCHMOVING AND GROOVING (HOPE THAT WAS ON PURPOSE (SPRINGLOCKS ENGAGED))");
-                        drive.moveSuspensionArmPreset(300); // moves arm up (ready to engage yoinky sploinky)
-                        // add line for suspension actuator lock thing (idk what it will look like yet)
-                        drive.moveSuspensionArmPreset(100); // move it back down, bringing robot up after it locked in
-                    }
-                }
-
-
-                // drive the servo to position set by dpad using above code
-                drive.intakeServo.setPosition(Constants.INTAKE_POSITIONS[intakePreset]);
-
-                // go go gadget intake motor
-                drive.intakeMotor.setPower(-gp2.getLeftY());
-
-                // Sets everything back to constant positions if slides are at the bottom
-                if ((slidePreset == 0) && resetProced) {
-                    drive.dumperServo.setPosition(Constants.DUMPER_INITIALIZATION_POS);
-                    drive.pixelLatchBack.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
-                    drive.pixelLatchFront.setPosition(Constants.PIXEL_LATCH_POSITIONS[1]);
-                    resetProced = true;
-                }
-
-                // Manual control for the dumper
-                drive.dumperServo.setPosition(1 - (0.35 - Math.min(0.0, gp2.getRightY()) * 0.35));
-
-                // Determines whether to open or close the front pixel latch
-                if (gp2.wasJustPressed(GamepadKeys.Button.A)) {
-                    drive.pixelLatchFront.setPosition(Constants.PIXEL_LATCH_POSITIONS[1]);
-                } else if (gp2.wasJustReleased(GamepadKeys.Button.A)) {
-                    drive.pixelLatchFront.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
-                }
-
-                // Determines whether to open or close the back pixel latch
-                if (gp2.wasJustPressed(GamepadKeys.Button.B)) {
-                    drive.pixelLatchBack.setPosition(Constants.PIXEL_LATCH_POSITIONS[1]);
-                } else if (gp2.wasJustReleased(GamepadKeys.Button.B)) {
-                    drive.pixelLatchBack.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
-                }
-                */
             }
 
 
@@ -487,17 +412,7 @@ public class MainTeleOp extends LinearOpMode {
             telemetry.addData("driving field centric", runningFieldCentric);
             telemetry.addLine();
 
-            /* telemetry.addData("current turning state", curTurningState);
-            telemetry.addData("target heading", targetHeading);
-            telemetry.addData("turn power", turnPower);
-            telemetry.addData("drive power X", drivePowerX);
-            telemetry.addData("drive power Y", drivePowerY);
-            telemetry.addData("intake power", intakePower);
-            telemetry.addData("intake preset", intakePreset); */
-
             if (!drive.isDevBot) {
-                //telemetry.addData("slide target", slidePreset);
-                //telemetry.addData("slide encoder pos", drive.slideMotor.getCurrentPosition());
 
                 telemetry.addData("inbar pos", inbarPos);
                 telemetry.addLine();

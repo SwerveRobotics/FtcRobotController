@@ -130,7 +130,7 @@ public final class MecanumDrive {
             }
 
             // path profile parameters (in inches)
-            maxWheelVel = 50;
+            maxWheelVel = 20;//50;
             minProfileAccel = -30;
             maxProfileAccel = 50;
 
@@ -165,7 +165,7 @@ public final class MecanumDrive {
     public DcMotorEx returnMotor;
     //public DcMotorEx motSuspension; // unused without suspension mechanism
     public Servo intakeServo;
-    public Servo droneServo;
+    public Servo droneLauncherServo;
     public Servo dumperServo;
     public Servo outtakeGate;
     public CRServoImplEx outtakeConveyor;
@@ -264,7 +264,7 @@ public final class MecanumDrive {
             slideMotor = hardwareMap.get(DcMotorEx.class, "motSlides");
             returnMotor = hardwareMap.get(DcMotorEx.class, "motReturn");
             //motSuspension = hardwareMap.get(DcMotorEx.class, "motSuspension");
-            droneServo = hardwareMap.get(Servo.class, "droneServo");
+            droneLauncherServo = hardwareMap.get(Servo.class, "droneLauncherServo");
             intakeServo = hardwareMap.get(ServoImplEx.class, "intakeServo");
             dumperServo = hardwareMap.get(ServoImplEx.class, "outtakeServo");
             outtakeGate = hardwareMap.get(ServoImplEx.class, "gate");
@@ -290,8 +290,6 @@ public final class MecanumDrive {
             // preset servo positions
             intakeServo.setPosition(Constants.INBAR_INIT_POSITION);
             dumperServo.setPosition((Constants.DUMPER_POSITIONS[1]));
-            //pixelLatchFront.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
-            //pixelLatchBack.setPosition(Constants.PIXEL_LATCH_POSITIONS[0]);
         }
 
         leftFront.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER); // disabled for roadrunner

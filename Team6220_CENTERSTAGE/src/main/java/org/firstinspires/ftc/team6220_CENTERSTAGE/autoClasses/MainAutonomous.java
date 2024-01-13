@@ -132,7 +132,10 @@ public class MainAutonomous extends LinearOpMode {
 
         waitForStart();
 
-        if (!autoDrive.drive.isDevBot) {
+        // move inbar down to safe position that won't rub the belts
+        autoDrive.drive.intakeServo.setPosition(Constants.INBAR_MAX_POSITION);
+
+        if (!autoDrive.drive.isDevBot) { // is competition bot
             // capture the position of the prop
             params.propPosition = colorDetector.returnZone();
         } else {
