@@ -52,7 +52,7 @@ public class RedOpenCvColorDetection {
     /* Declare OpMode members. */
     private LinearOpMode myOpMode = null;   // gain access to methods in the calling OpMode.
 
-    enum detectColorType{
+    enum detectColorType {
         BLUE,
         RED
     }
@@ -61,7 +61,6 @@ public class RedOpenCvColorDetection {
         ONE,
         TWO,
         THREE,
-        FOUR
     }
 
     detectColorType myColor;
@@ -97,6 +96,7 @@ public class RedOpenCvColorDetection {
             public void onOpened() {
                 startStreaming();
             }
+
             public void onError(int errorCode) {
                 stopStreaming();
             }
@@ -199,15 +199,13 @@ public class RedOpenCvColorDetection {
 
 
     public Position detectColor() {
-        Position position = Position.FOUR;
+        Position position = Position.TWO;
         if (targetPoint.x < 230.3) {
             position = Position.ONE;//left
         } else if (((targetPoint.x > 230.3) && (targetPoint.x < 640))) {
             position = Position.TWO;//center
-        } else if (/* (targetPoint.x > 426.6) && (targetPoint.x < 640) || */targetDetected == false) {
+        } else if (targetDetected == false) {
             position = Position.THREE;//right
-        } else {
-            position = Position.FOUR;
         }
         return position;
     }

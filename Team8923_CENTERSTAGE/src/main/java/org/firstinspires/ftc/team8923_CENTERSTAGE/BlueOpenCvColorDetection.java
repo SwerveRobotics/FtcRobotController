@@ -61,7 +61,6 @@ public class BlueOpenCvColorDetection {
         ONE,
         TWO,
         THREE,
-        FOUR
     }
 
     detectColorType myColor;
@@ -199,7 +198,7 @@ public class BlueOpenCvColorDetection {
 
 
     public Position detectColor() {
-        Position position = Position.FOUR;
+        Position position = Position.TWO;
         if (targetPoint.x < 230.3) {
             position = Position.ONE;//left
         } else if (((targetPoint.x > 230.3) && (targetPoint.x < 640))) {

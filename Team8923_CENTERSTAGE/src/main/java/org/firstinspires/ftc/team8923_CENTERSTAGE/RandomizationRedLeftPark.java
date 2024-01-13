@@ -39,11 +39,7 @@ public class RandomizationRedLeftPark extends BaseAutonomous {
                 // pivot -90 degrees
                 driveInches(0, 96);
                 break;
-            /*case FOUR:
-                // pivot 90 degrees
-                pivot(90);
-                driveInches(0, 96);
-                break;*/
+
         }
     }
 }

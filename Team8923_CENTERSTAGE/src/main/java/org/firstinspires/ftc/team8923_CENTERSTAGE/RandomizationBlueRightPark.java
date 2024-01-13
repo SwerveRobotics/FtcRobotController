@@ -35,10 +35,7 @@ public class RandomizationBlueRightPark extends BaseAutonomous {
                     pivot(-90);
                     driveInches(0, 96);
                     break;
-                /*case FOUR:
-                    driveInches(0, 4);
-                    pivot(-90);
-                    driveInches(-96, 0);*/
+
             }
 
 

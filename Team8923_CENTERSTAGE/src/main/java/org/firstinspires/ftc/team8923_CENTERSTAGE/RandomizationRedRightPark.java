@@ -13,7 +13,7 @@ public class RandomizationRedRightPark extends BaseAutonomous {
                 pivot(-90);
                 driveInches(0, -4);
                 runIntake(0.5, 1100);
-                driveInches(0,4);
+                driveInches(0, 4);
                 pivot(0);
                 driveInches(0, -26);
                 pivot(90);
@@ -29,22 +29,15 @@ public class RandomizationRedRightPark extends BaseAutonomous {
                 break;
             case THREE:
                 driveInches(0, 28);
-                // pivot 90 degrees
-                pivot(-90);
-                // output pixel
-                runIntake(0.5, 2000);
-                // pivot 90 degrees
                 pivot(90);
-                driveInches(0, 24);
-                // pivot -90 degrees
-                pivot(-90);
+                driveInches(0, -4);
+                runIntake(0.5, 1100);
+                driveInches(0, 4);
+                pivot(0);
+                driveInches(0, -26);
+                pivot(90);
                 driveInches(0, 48);
                 break;
-            /*case FOUR:
-                // pivot 90 degrees
-                pivot(90);
-                driveInches(0, 48);
-                break;*/
         }
     }
 }
