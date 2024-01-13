@@ -21,9 +21,9 @@ This is part of roadrunner.
 @Config
 public final class ThreeDeadWheelLocalizer implements Localizer {
     public static class Params {
-        public double par0YTicks = -2966.7203615184076; // y position of the first parallel encoder (in tick units)
-        public double par1YTicks = 2091.910969157418; // y position of the second parallel encoder (in tick units)
-        public double perpXTicks = 1224.7805483216387; // x position of the perpendicular encoder (in tick units)
+        public double par0YTicks = -2572.624848272324; // y position of the first parallel encoder (in tick units)
+        public double par1YTicks = 2472.687387963645; // y position of the second parallel encoder (in tick units)
+        public double perpXTicks = -1154.0805715416507; // x position of the perpendicular encoder (in tick units)
     }
 
     public static int pos0, pos1, posPerp;
