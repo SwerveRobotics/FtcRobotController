@@ -7,22 +7,18 @@ public class TeleOp extends BaseTeleOp {
     public void runOpMode() {
         initHardware();
         waitForStart();
-        
+
         while (opModeIsActive()) {
             /* controls: left stick up and down = forward and backward
                left stick side to side = strafing
                right stick side to side = pivot
-             */
+            */
             double y = (-gamepad1.left_stick_y)* 0.8;
             double x = gamepad1.left_stick_x;
             double pivot = gamepad1.right_stick_x;
 
-            double angle = Math.toDegrees(Math.atan2(y, x));
-            double power = calculateDistance(x, y);
-
-            driveMecanumGyro(angle, power, pivot);
-
-            // driveMecanum(x, y, pivot);
+            driveMecanum(x, y, pivot);
+            driveMechanism();
 
             idle();
         }
