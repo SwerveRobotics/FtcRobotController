@@ -181,12 +181,41 @@ class AutonDriveFactory {
                 .setTangent(xForm(Math.toRadians(0)))
                 .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -44)), xForm(Math.toRadians(0)));
 
+        TrajectoryActionBuilder spikeLeftBackup = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
+        spikeLeftBackup = spikeLeftBackup.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(24 - xOffset , -12)), xForm(Math.toRadians(0)))
+                .setTangent(xForm(Math.toRadians(0)))
+                //.afterTime(0, moveDumper)
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -29.5)), xForm(Math.toRadians(0)));
+        //.stopAndAdd(moveArm);
+
+        TrajectoryActionBuilder spikeCenterBackup = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
+        spikeCenterBackup = spikeCenterBackup.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(-90)))
+                .splineTo(xForm(new Vector2d(-55, -39)), xForm(Math.toRadians(180)))
+                .setTangent(xForm(Math.toRadians(90)))
+                //.splineTo(xForm(new Vector2d(-55, -30)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(24, -12)), xForm(Math.toRadians(0)))
+                .setTangent(xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -36)), xForm(Math.toRadians(0)));
+
+        TrajectoryActionBuilder spikeRightBackup = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
+        spikeRightBackup = spikeRightBackup.splineTo(xForm(new Vector2d(-35, -37)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
+                .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(24, -12)), xForm(Math.toRadians(0)))
+                .setTangent(xForm(Math.toRadians(0)))
+                .splineToConstantHeading(xForm(new Vector2d(48 - xOffset, -44)), xForm(Math.toRadians(0)));
+
+
         if(location == SpikeMarks.LEFT) {
-            return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+            return new PoseAndAction(spikeLeftBackup.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
         } else if(location == SpikeMarks.CENTER) {
-            return new PoseAndAction(spikeCenter.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+            return new PoseAndAction(spikeCenterBackup.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
         } else {
-            return new PoseAndAction(spikeRight.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
+            return new PoseAndAction(spikeRightBackup.build(), xForm(new Pose2d(-34, -60, Math.toRadians(90))));
         }
     }
 
@@ -238,7 +267,7 @@ class AutonDriveFactory {
      * arguments here to test your different code paths.
      */
     Action getMeepMeepAction() {
-        return getDriveAction(true, true, SpikeMarks.CENTER, null).action;
+        return getDriveAction(true, true, SpikeMarks.RIGHT, null).action;
     }
 }
 
