@@ -24,7 +24,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     public AprilTagPoseEstimator myATPoseEstimator;
 
-    public void runTeleOp(boolean driveTo, boolean aprilTags, Pose2d pose) {
+    public void runTeleOp(boolean driveTo, boolean aprilTags, Pose2d pose, int armPosition) {
         initializeHardware();
 
         USE_APRIL_TAGS = aprilTags;
@@ -42,6 +42,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
         if (armMotor != null) {
             arm = new ArmMechanism(gamepad2, armMotor, dumperServo);
+            arm.currentArmLocation = armPosition;
             resetDumper();
             droneServo.setPosition(droneServoHoldingPos);
         }

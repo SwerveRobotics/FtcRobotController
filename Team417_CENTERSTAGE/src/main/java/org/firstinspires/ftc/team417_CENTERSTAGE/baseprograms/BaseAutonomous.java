@@ -55,10 +55,11 @@ abstract public class BaseAutonomous extends BaseOpMode {
         }
     }
 
-    class UpdatePoseInConfig implements Action {
+    class UpdateVariablesInConfig implements Action {
         public boolean run(TelemetryPacket packet) {
             if (!opModeIsActive()) return false;
             org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.pose = drive.pose;
+            org.firstinspires.ftc.team417_CENTERSTAGE.competitionprograms.Config.armPosition = armMotor.getCurrentPosition();
             return true;
         }
     }
@@ -215,7 +216,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
             drive.runParallel(new ATContinuallyEstimatePoseAction());
         }
 
-        drive.runParallel(new UpdatePoseInConfig());
+        drive.runParallel(new UpdateVariablesInConfig());
 
         drive.runParallel(new DoTelemetry());
 

@@ -22,6 +22,7 @@ public class Config {
     public static String summary = "Config menu was not used :(";
 
     public static Pose2d pose = new Pose2d(0, 0, 0);
+    public static int armPosition = 0;
 
     static ArrayList<HashMap<Boolean, String>> configStrings;
     static ArrayList<HashMap<Boolean, String>> summaryStrings;
