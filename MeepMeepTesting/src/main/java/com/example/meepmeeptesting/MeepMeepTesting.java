@@ -238,7 +238,7 @@ class AutonDriveFactory {
      * arguments here to test your different code paths.
      */
     Action getMeepMeepAction() {
-        return getDriveAction(false, true, SpikeMarks.CENTER, null).action;
+        return getDriveAction(true, true, SpikeMarks.CENTER, null).action;
     }
 }
 
