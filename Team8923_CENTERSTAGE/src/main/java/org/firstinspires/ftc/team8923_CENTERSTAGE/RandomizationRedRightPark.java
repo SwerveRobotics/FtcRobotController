@@ -12,10 +12,10 @@ public class RandomizationRedRightPark extends BaseAutonomous {
                 driveInches(0, 28);
                 pivot(-90);
                 driveInches(0, -4);
-                runIntake(0.5, 1100);
+                runIntake(0.55, 1500);
                 driveInches(0, 4);
-                pivot(0);
-                driveInches(0, -26);
+                pivot(-180);
+                driveInches(0, 26);
                 pivot(90);
                 driveInches(0, 48);
                 break;
@@ -31,7 +31,7 @@ public class RandomizationRedRightPark extends BaseAutonomous {
                 driveInches(0, 28);
                 pivot(90);
                 driveInches(0, -4);
-                runIntake(0.5, 1100);
+                runIntake(0.5, 1500);
                 driveInches(0, 4);
                 pivot(0);
                 driveInches(0, -26);
