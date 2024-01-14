@@ -1,10 +1,12 @@
 package org.firstinspires.ftc.team6220_CENTERSTAGE.teleOpClasses;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 
+@Disabled
 @TeleOp(name="telemetry format test", group="amogus1")
 public class telemetry_format_test extends LinearOpMode {
     @Override

@@ -24,7 +24,7 @@ import org.firstinspires.ftc.team6220_CENTERSTAGE.Utilities;
 /*
 This is our main teleop class for competition driving.
  */
-@TeleOp(name="Main TeleOp", group="amogus1")
+@TeleOp(name=">>> Main TeleOp", group="amogus1")
 public class MainTeleOp extends LinearOpMode {
 
     // define states for turning, using slides, outtaking

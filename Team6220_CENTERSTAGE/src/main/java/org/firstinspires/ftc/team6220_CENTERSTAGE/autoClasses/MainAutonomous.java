@@ -33,7 +33,7 @@ import org.firstinspires.ftc.team6220_CENTERSTAGE.JavaTextMenu.*;
 /*
 This is our main autonomous class that is actively being developed/used.
  */
-@Autonomous(name="Main Autonomous", group ="amogus2")
+@Autonomous(name=">>> Main Autonomous", group ="amogus2")
 public class MainAutonomous extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
@@ -293,27 +293,28 @@ class AutonDriveFactory {
                 case OPEN:
                     build = build.strafeTo(new Vector2d(startingPosX + 11 * startInvert, 40 * teamInvert)).endTrajectory();
                     // nudge prop out of the way
-                    build = build.lineToY(36 * teamInvert).endTrajectory();
+                    build = build.lineToY(38 * teamInvert).endTrajectory();
                     build = build.lineToY(40 * teamInvert);
                     break;
 
                 case MIDDLE:
-                    build = build.lineToY(34 * teamInvert).endTrajectory();
+                    build = build.lineToY(35 * teamInvert).endTrajectory();
                     // nudge prop out of the way
-                    build = build.lineToY(30 * teamInvert).endTrajectory();
-                    build = build.lineToY(34 * teamInvert);
+                    build = build.lineToY(32 * teamInvert).endTrajectory();
+                    build = build.lineToY(35 * teamInvert);
                     break;
 
                 case TRUSS:
                     build = build.lineToY(36 * teamInvert)
                             .turnTo(Math.toRadians(90 + 90 * startInvert));
-                    build = build.lineToX(startingPosX - 6 * startInvert).endTrajectory();
-                    build = build.lineToX(startingPosX - 2 * startInvert);
+                    // nudge prop out of the way
+                    build = build.lineToX(startingPosX - 3 * startInvert).endTrajectory();
+                    build = build.lineToX(startingPosX - 1 * startInvert);
                     break;
             }
 
             // place purple pixel
-            build = build.stopAndAdd(new AutoMechanismActions(drive).spinIntakeFor(1.5, 1));
+            build = build.stopAndAdd(new AutoMechanismActions(drive).spinIntakeFor(1.3, 1));
 
         } // end of params.placePurplePixel
 
@@ -351,7 +352,7 @@ class AutonDriveFactory {
             // open gate
             build = build.stopAndAdd(new AutoMechanismActions(drive).openOuttakeGate(true));
             // spin conveyor to outtake
-            build = build.stopAndAdd(new AutoMechanismActions(drive).spinOuttakeFor(3, -1));
+            build = build.stopAndAdd(new AutoMechanismActions(drive).spinOuttakeFor(2, -1));
             // close gate
             build = build.stopAndAdd(new AutoMechanismActions(drive).openOuttakeGate(false));
             // retract dumper servo
@@ -382,7 +383,7 @@ class AutonDriveFactory {
         }
 
         // finish parking
-        build = build.splineToConstantHeading(new Vector2d(50, (36 + 24 * parkInvert) * teamInvert), Math.toRadians(0), limitVelo(15));
+        build = build.splineToConstantHeading(new Vector2d(50, (36 + 23 * parkInvert) * teamInvert), Math.toRadians(0), limitVelo(15));
 
         // finish build
         return build.build();

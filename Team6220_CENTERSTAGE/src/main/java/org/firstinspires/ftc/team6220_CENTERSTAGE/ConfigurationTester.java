@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.team6220_CENTERSTAGE;
 
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -48,6 +49,7 @@ class Buttons {
         return result;
     }
 }
+@Disabled
 @TeleOp
 public class ConfigurationTester extends LinearOpMode {
     ArrayList<String> deviceNames = new ArrayList<>();
