@@ -291,7 +291,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
                     if (drive.isDevBot)
                         return false;
 
-                    dumperServo.setPosition(DUMPER_SERVO_DUMP_POSITION);
+                    dumperServo.setPosition(DUMPER_SERVO_DUMP_POSITION_AUTON);
                     armMotor.setPower(0.7);
 
                     if (armMotor.getCurrentPosition() < armGoalPos)
