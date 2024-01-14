@@ -132,7 +132,14 @@ public class MainAutonomous extends LinearOpMode {
 
         waitForStart();
 
-        
+
+        // Reset encoders of slide motor
+        if (!autoDrive.drive.isDevBot) { // is competition bot
+            autoDrive.drive.slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            autoDrive.drive.slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+
+
         // Reset the encoders to zero so that the robot starts from its current location.
         // If this weren't done, and if the robot was physically repositioned in between "init"
         // and "start", at this point the PID would immediately move the robot back to the
@@ -216,7 +223,7 @@ class AutonDriveFactory {
                 startInvert = -1;
                 break;
         }
-        Pose2d startingPose = new Pose2d(startingPosX, 62 * teamInvert, Math.toRadians(-90 * teamInvert));
+        Pose2d startingPose = new Pose2d(startingPosX, 63 * teamInvert, Math.toRadians(-90 * teamInvert));
 
         // apply to drive so it doesn't think it's starting at (0,0,0)
         this.drive.pose = startingPose;
@@ -306,7 +313,7 @@ class AutonDriveFactory {
             }
 
             // place purple pixel
-            build = build.stopAndAdd(new AutoMechanismActions(drive).spinIntakeFor(3, 1));
+            build = build.stopAndAdd(new AutoMechanismActions(drive).spinIntakeFor(1.5, 1));
 
         } // end of params.placePurplePixel
 
@@ -333,7 +340,7 @@ class AutonDriveFactory {
 
             // drive to face backdrop (move slowly when close)
             build = build.splineToConstantHeading(new Vector2d(46, 36 * teamInvert), Math.toRadians(0), limitVelo(20))
-                    .splineToConstantHeading(new Vector2d(50, 36 * teamInvert), Math.toRadians(0), limitVelo(4));
+                    .splineToConstantHeading(new Vector2d(54, 36 * teamInvert), Math.toRadians(0), limitVelo(10));
 
             // place yellow pixel on backdrop:
 
@@ -344,7 +351,7 @@ class AutonDriveFactory {
             // open gate
             build = build.stopAndAdd(new AutoMechanismActions(drive).openOuttakeGate(true));
             // spin conveyor to outtake
-            build = build.stopAndAdd(new AutoMechanismActions(drive).spinOuttakeFor(5, 1));
+            build = build.stopAndAdd(new AutoMechanismActions(drive).spinOuttakeFor(3, -1));
             // close gate
             build = build.stopAndAdd(new AutoMechanismActions(drive).openOuttakeGate(false));
             // retract dumper servo
@@ -484,7 +491,11 @@ class AutoMechanismActions {
                 if (drive.isDevBot) {
                     return false;
                 } else {
-                    return exDrive.moveSlidesToPosition(position);
+                    boolean movingState = exDrive.moveSlidesToPosition(position);
+                    if (!movingState) {
+                        exDrive.moveSlides(0);
+                    }
+                    return movingState;
                 }
             }
         };
