@@ -17,6 +17,7 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 public abstract class BaseTeleOp extends BaseOpMode {
     // Set to false for competitions to remove lags
     public static final boolean TESTING = true;
+    public static final boolean USING_AUTO_DRIVE_TO = false;
 
     private ArmMechanism arm;
 
@@ -33,11 +34,10 @@ public abstract class BaseTeleOp extends BaseOpMode {
             droneServo.setPosition(droneServoHoldingPos);
         }
 
-        autoDrive = new AutoDriveTo(drive);
+        if (USING_AUTO_DRIVE_TO)
+            autoDrive = new AutoDriveTo(drive);
 
         waitForStart();
-
-        drive.pose = new Pose2d(12, -60, Math.toRadians(90)); //@@@@@@@@@@@@@@@@
 
         if (dumperWheelServo != null)
             dumperWheelServo.setPower(-1.0);
@@ -163,7 +163,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
                 rot = gamepad1.right_stick_x * rotSensitivity;
             }
             mecanumDrive(x, y, rot);
-        } else
+        } else if (USING_AUTO_DRIVE_TO)
             autoDrive.driveTo(48, -36, Math.toRadians(180), driveToInit, packet);
 
         dPadUpPressed = gamepad1.dpad_up;
