@@ -410,17 +410,15 @@ public class MainTeleOp extends LinearOpMode {
             // telemetry
 
             telemetry.addData("driving field centric", runningFieldCentric);
+            telemetry.addData("imu reading", currentHeading);
             telemetry.addLine();
 
             if (!drive.isDevBot) {
-
-                telemetry.addData("inbar pos", inbarPos);
-                telemetry.addLine();
                 telemetry.addData("slides pos", drive.slideMotor.getCurrentPosition());
+                telemetry.addData("slide state", curSlideState);
+                telemetry.addLine();
             }
 
-            telemetry.addData("imu reading", currentHeading);
-            telemetry.addData("slide state", curSlideState);
 
             // Code added to draw the pose:
             TelemetryPacket p = new TelemetryPacket();
