@@ -85,6 +85,7 @@ public class Constants {
 
     // degrees off from target
     public static final double AUTO_MIN_HEADING_ACCURACY = 5.0;
+    public static final int AUTO_SLIDES_HEIGHT = 2200;
 
   
   

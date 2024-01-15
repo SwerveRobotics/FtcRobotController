@@ -195,6 +195,9 @@ class AutonDriveFactory {
      */
     Action getDriveAction(AutoParams params) {
 
+        // defined here so that it has scope of purple and yellow path setups
+        SpikeType spikeType = null;
+
         // use 1 if blue team, -1 if red
         int teamInvert = 0;
         switch (params.allianceTeam) {
@@ -263,7 +266,7 @@ class AutonDriveFactory {
             and middle is always middle so only apply if it's left or right
              */
 
-            SpikeType spikeType = SpikeType.MIDDLE; // default to middle
+            spikeType = SpikeType.MIDDLE; // default to middle
 
             // refer to block comment above
             int invertSum = teamInvert + startInvert;
@@ -339,16 +342,33 @@ class AutonDriveFactory {
 
         if (params.placeYellowPixel) {
 
+            // adjust the position to go to on the backdrop to match the prop position
+            int yellowPlaceOffset = 0;
+            if (params.propPosition != null) {
+                switch (params.propPosition) {
+                    case LEFT:
+                        yellowPlaceOffset = 4;
+                        break;
+                    case RIGHT:
+                        yellowPlaceOffset = -4;
+                        break;
+                    default:
+                        yellowPlaceOffset = 0;
+                        break;
+                }
+            }
+
             // drive to face backdrop (move slowly when close)
-            build = build.splineToConstantHeading(new Vector2d(46, 36 * teamInvert), Math.toRadians(0), limitVelo(20))
-                    .splineToConstantHeading(new Vector2d(54, 36 * teamInvert), Math.toRadians(0), limitVelo(10));
+            build = build.splineToConstantHeading(new Vector2d(46, 36 * teamInvert + yellowPlaceOffset), Math.toRadians(0), limitVelo(20))
+                    .splineToConstantHeading(new Vector2d(54.5, 36 * teamInvert + yellowPlaceOffset), Math.toRadians(0), limitVelo(7));
 
             // place yellow pixel on backdrop:
 
             // move slides up to ~halfway position
-            build = build.stopAndAdd(new AutoMechanismActions(drive).moveSlidesToPosition(2000));
+            build = build.stopAndAdd(new AutoMechanismActions(drive).moveSlidesToPosition(Constants.AUTO_SLIDES_HEIGHT));
             // extend dumper servo
             build = build.stopAndAdd(new AutoMechanismActions(drive).extendDumper(true));
+            build = build.waitSeconds(0.5);
             // open gate
             build = build.stopAndAdd(new AutoMechanismActions(drive).openOuttakeGate(true));
             // spin conveyor to outtake

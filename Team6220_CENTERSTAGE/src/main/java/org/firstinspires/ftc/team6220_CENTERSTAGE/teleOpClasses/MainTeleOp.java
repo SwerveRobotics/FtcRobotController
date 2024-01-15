@@ -67,6 +67,7 @@ public class MainTeleOp extends LinearOpMode {
 
     // tracks whether the dumper is extended or not (best way I could think of to do this)
     boolean dumperExtended;
+    boolean justResetFieldCentric = false;
 
     // represents the driving direction vector that is given to roadrunner
     DriveVector driveVector = new DriveVector(0, 0);
@@ -131,13 +132,13 @@ public class MainTeleOp extends LinearOpMode {
         // take input for using offset or not
         boolean waitingForResponse = true;
         while (!isStopRequested() && waitingForResponse && !opModeIsActive()) {
-            if ((gp1.getButton(GamepadKeys.Button.A) || gp2.getButton(GamepadKeys.Button.A))
+            if ((gp1.getButton(GamepadKeys.Button.A))
                     && PersistentValues.HEADING_OFFSET != 0.0) {
                 waitingForResponse = false;
                 headingOffset = PersistentValues.HEADING_OFFSET;
                 telemetry.addLine(String.format("Using heading offset of %.2f", headingOffset));
 
-            } else if (gp1.getButton(GamepadKeys.Button.B) || gp2.getButton(GamepadKeys.Button.B)) {
+            } else if (gp1.getButton(GamepadKeys.Button.B)) {
                 waitingForResponse = false;
                 telemetry.addLine("(Not using heading offset)");
 
@@ -258,6 +259,16 @@ public class MainTeleOp extends LinearOpMode {
             // necessary feature
             if (gp1.wasJustPressed(GamepadKeys.Button.RIGHT_STICK_BUTTON) || gp2.wasJustPressed(GamepadKeys.Button.RIGHT_STICK_BUTTON)) {
                 telemetry.speak(Math.random() > 0.1 ? "HONK!" : "quack.");
+            }
+
+
+            // reset field centric forward hotkey
+            if (gp1.getButton(GamepadKeys.Button.B) && gp1.getButton(GamepadKeys.Button.LEFT_STICK_BUTTON) && !justResetFieldCentric) {
+                headingOffset = -currentHeading;
+                telemetry.speak("Resetting field centric forward!");
+                justResetFieldCentric = true;
+            } else if (!gp1.getButton(GamepadKeys.Button.B) && !gp1.getButton(GamepadKeys.Button.LEFT_STICK_BUTTON)){
+                justResetFieldCentric = false;
             }
 
 

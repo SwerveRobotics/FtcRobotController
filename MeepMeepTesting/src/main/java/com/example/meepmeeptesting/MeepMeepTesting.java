@@ -86,6 +86,9 @@ class AutonDriveFactory {
      */
     Action getDriveAction(AutoParams params) {
 
+        // defined here so that it has scope of purple and yellow path setups
+        SpikeType spikeType = null;
+
         // use 1 if blue team, -1 if red
         int teamInvert = 0;
         switch (params.allianceTeam) {
@@ -114,7 +117,7 @@ class AutonDriveFactory {
                 startInvert = -1;
                 break;
         }
-        Pose2d startingPose = new Pose2d(startingPosX, 62 * teamInvert, Math.toRadians(-90 * teamInvert));
+        Pose2d startingPose = new Pose2d(startingPosX, 63 * teamInvert, Math.toRadians(-90 * teamInvert));
 
         // apply to drive so it doesn't think it's starting at (0,0,0)
         this.drive.pose = startingPose;
@@ -154,7 +157,7 @@ class AutonDriveFactory {
             and middle is always middle so only apply if it's left or right
              */
 
-            SpikeType spikeType = SpikeType.MIDDLE; // default to middle
+            spikeType = SpikeType.MIDDLE; // default to middle
 
             // refer to block comment above
             int invertSum = teamInvert + startInvert;
@@ -184,28 +187,28 @@ class AutonDriveFactory {
                 case OPEN:
                     build = build.strafeTo(new Vector2d(startingPosX + 11 * startInvert, 40 * teamInvert)).endTrajectory();
                     // nudge prop out of the way
-                    build = build.lineToY(36 * teamInvert).endTrajectory();
+                    build = build.lineToY(38 * teamInvert).endTrajectory();
                     build = build.lineToY(40 * teamInvert);
                     break;
 
                 case MIDDLE:
-                    build = build.lineToY(34 * teamInvert).endTrajectory();
+                    build = build.lineToY(35 * teamInvert).endTrajectory();
                     // nudge prop out of the way
-                    build = build.lineToY(30 * teamInvert).endTrajectory();
-                    build = build.lineToY(34 * teamInvert);
+                    build = build.lineToY(32 * teamInvert).endTrajectory();
+                    build = build.lineToY(35 * teamInvert);
                     break;
 
                 case TRUSS:
                     build = build.lineToY(36 * teamInvert)
                             .turnTo(Math.toRadians(90 + 90 * startInvert));
-                    build = build.lineToX(startingPosX - 6 * startInvert).endTrajectory();
-                    build = build.lineToX(startingPosX - 2 * startInvert);
+                    // nudge prop out of the way
+                    build = build.lineToX(startingPosX - 3 * startInvert).endTrajectory();
+                    build = build.lineToX(startingPosX - 1 * startInvert);
                     break;
             }
 
             // place purple pixel
-            build = build.stopAndAdd(new AutoMechanismActions(drive).spinIntakeFor(3, 1));
-
+            build = build.stopAndAdd(new AutoMechanismActions(drive).spinIntakeFor(1.3, 1));
 
         } // end of params.placePurplePixel
 
@@ -230,9 +233,25 @@ class AutonDriveFactory {
 
         if (params.placeYellowPixel) {
 
+            // adjust the position to go to on the backdrop to match the prop position
+            int yellowPlaceOffset = 0;
+            if (params.propPosition != null) {
+                switch (params.propPosition) {
+                    case LEFT:
+                        yellowPlaceOffset = 4;
+                        break;
+                    case RIGHT:
+                        yellowPlaceOffset = -4;
+                        break;
+                    default:
+                        yellowPlaceOffset = 0;
+                        break;
+                }
+            }
+
             // drive to face backdrop (move slowly when close)
-            build = build.splineToConstantHeading(new Vector2d(46, 36 * teamInvert), Math.toRadians(0), limitVelo(20))
-                    .splineToConstantHeading(new Vector2d(50, 36 * teamInvert), Math.toRadians(0), limitVelo(4));
+            build = build.splineToConstantHeading(new Vector2d(46, 36 * teamInvert + yellowPlaceOffset), Math.toRadians(0), limitVelo(20))
+                    .splineToConstantHeading(new Vector2d(54, 36 * teamInvert + yellowPlaceOffset), Math.toRadians(0), limitVelo(10));
 
             // place yellow pixel on backdrop:
 
@@ -243,7 +262,7 @@ class AutonDriveFactory {
             // open gate
             build = build.stopAndAdd(new AutoMechanismActions(drive).openOuttakeGate(true));
             // spin conveyor to outtake
-            build = build.stopAndAdd(new AutoMechanismActions(drive).spinOuttakeFor(5, 1));
+            build = build.stopAndAdd(new AutoMechanismActions(drive).spinOuttakeFor(2, -1));
             // close gate
             build = build.stopAndAdd(new AutoMechanismActions(drive).openOuttakeGate(false));
             // retract dumper servo
@@ -274,7 +293,7 @@ class AutonDriveFactory {
         }
 
         // finish parking
-        build = build.splineToConstantHeading(new Vector2d(50, (36 + 24 * parkInvert) * teamInvert), Math.toRadians(0), limitVelo(15));
+        build = build.splineToConstantHeading(new Vector2d(50, (36 + 23 * parkInvert) * teamInvert), Math.toRadians(0), limitVelo(15));
 
         // finish build
         return build.build();
@@ -289,8 +308,8 @@ class AutonDriveFactory {
         AutoParams params = new AutoParams();
         params.allianceTeam = AutoParams.AllianceTeam.BLUE;
         params.startingPosition = AutoParams.StartingPosition.LONG;
-        params.parkLocation = AutoParams.ParkLocation.CENTER_FIELD_SIDE;
-        params.propPosition = ColorDetection.PropPosition.RIGHT;
+        params.parkLocation = AutoParams.ParkLocation.CORNER_SIDE;
+        params.propPosition = ColorDetection.PropPosition.LEFT;
         params.placePurplePixel = true;
         params.placeYellowPixel = true;
         params.startLongWaitTime = 1;
