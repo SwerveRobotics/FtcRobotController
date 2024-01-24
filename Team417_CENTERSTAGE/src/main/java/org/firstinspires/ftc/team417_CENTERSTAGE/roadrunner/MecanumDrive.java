@@ -50,7 +50,6 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagLatencyHelper;
-import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseAutonomous;
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 import org.firstinspires.inspection.InspectionState;
 
@@ -66,7 +65,9 @@ public final class MecanumDrive {
         Log.d("roadrunner", String.format("Device name:" + inspection.deviceName));
         return inspection.deviceName;
     }
+
     public static boolean isDevBot = getBotName().equals("DevBot");
+    public static boolean is6220sDevBot = getBotName().equals("6220-D-RC");
 
     public static class Params {
         public double inPerTick;
@@ -93,7 +94,7 @@ public final class MecanumDrive {
         public double headingVelGain;
 
         Params() {
-            if (isDevBot) {
+            if (isDevBot || is6220sDevBot) {
                 // drive model parameters
 
                 //(Push robot for 4 tiles) 96.0 inches / FTCDashboard value 4254.0.
@@ -248,7 +249,7 @@ public final class MecanumDrive {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        if (isDevBot) {
+        if (isDevBot || is6220sDevBot) {
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
             leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
             rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
@@ -282,7 +283,7 @@ public final class MecanumDrive {
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        if (isDevBot) {
+        if (isDevBot || is6220sDevBot) {
             localizer = new DriveLocalizer();
         } else {
             localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);

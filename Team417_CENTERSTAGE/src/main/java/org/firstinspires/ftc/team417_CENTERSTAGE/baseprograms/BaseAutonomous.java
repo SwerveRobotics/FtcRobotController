@@ -143,7 +143,8 @@ abstract public class BaseAutonomous extends BaseOpMode {
         AutonDriveFactory.SpikeMarks translateEnum;
 
         if (myColorDetection != null) {
-            while (myColorDetection.detectTeamProp() == OpenCvColorDetection.SideDetected.INITIALIZED);
+            while (myColorDetection.detectTeamProp() == OpenCvColorDetection.SideDetected.INITIALIZED)
+                ;
 
             // Just in case (flash after camera is completely initialized, could lead to instability)
             sleep(100);
@@ -278,33 +279,37 @@ abstract public class BaseAutonomous extends BaseOpMode {
             final double epsilon = 1;
             double iterations;
             double goalIterations = 20;
+
             @Override
             public boolean run(TelemetryPacket packet) {
-                if (Math.abs(goalDistance - distSensor.getDistance(DistanceUnit.INCH)) < epsilon) {
-                    iterations++;
+                if (distSensor != null) {
+                    if (Math.abs(goalDistance - distSensor.getDistance(DistanceUnit.INCH)) < epsilon) {
+                        iterations++;
 
-                    setMotorPower(0);
+                        setMotorPower(0);
 
-                    if (iterations < goalIterations)
-                        return true;
+                        if (iterations < goalIterations)
+                            return true;
 
-                    if (drive.isDevBot)
+                        if (drive.isDevBot || drive.is6220sDevBot)
+                            return false;
+
+                        dumperServo.setPosition(DUMPER_SERVO_DUMP_POSITION_AUTON);
+                        armMotor.setPower(0.7);
+
+                        if (armMotor.getCurrentPosition() < armGoalPos)
+                            return true;
+
+                        armMotor.setPower(0);
                         return false;
-
-                    dumperServo.setPosition(DUMPER_SERVO_DUMP_POSITION_AUTON);
-                    armMotor.setPower(0.7);
-
-                    if (armMotor.getCurrentPosition() < armGoalPos)
-                        return true;
-
-                    armMotor.setPower(0);
-                    return false;
+                    } else if (distSensor.getDistance(DistanceUnit.INCH) < goalDistance)
+                        setMotorPower(0.1);
+                    else
+                        setMotorPower(-0.1);
+                    return true;
                 }
-                else if (distSensor.getDistance(DistanceUnit.INCH) < goalDistance)
-                    setMotorPower(0.1);
-                else
-                    setMotorPower(-0.1);
-                return true;
+
+                return false;
             }
         };
     }
@@ -313,7 +318,9 @@ abstract public class BaseAutonomous extends BaseOpMode {
         return new Action() {
             @Override
             public boolean run(TelemetryPacket packet) {
-                dumperServo.setPosition(DUMPER_SERVO_TILT_POSITION);
+                if (dumperServo != null) {
+                    dumperServo.setPosition(DUMPER_SERVO_TILT_POSITION);
+                }
                 return false;
             }
         };
@@ -323,7 +330,9 @@ abstract public class BaseAutonomous extends BaseOpMode {
         return new Action() {
             @Override
             public boolean run(TelemetryPacket packet) {
-                gateServo.setPosition(GATE_SERVO_OPEN_POSITION);
+                if (gateServo != null) {
+                    gateServo.setPosition(GATE_SERVO_OPEN_POSITION);
+                }
                 return false;
             }
         };
@@ -552,7 +561,7 @@ class PropDistanceResults {
             private double initAngle; //The angle of the robot when the function is first called.
             private boolean inited = false; //If the function has inited.
 
-            private double xFormAngleDegrees(double theta){
+            private double xFormAngleDegrees(double theta) {
                 if (!isFar)
                     return 360 - theta;
                 else

@@ -27,7 +27,7 @@ public abstract class BaseOpMode extends LinearOpMode {
     static final public double ARM_MOTOR_MAX_POSITION = 4200;
     public Servo dumperServo;
     public static double DUMPER_SERVO_TILT_POSITION = 0.4;
-    public static double DUMPER_SERVO_RESET_POSITION = 0.549;
+    public static double DUMPER_SERVO_RESET_POSITION = 0.59;
     public static double DUMPER_SERVO_DUMP_POSITION = 0.05;
     public static double DUMPER_SERVO_DUMP_POSITION_AUTON = 0.1;
 
@@ -45,7 +45,7 @@ public abstract class BaseOpMode extends LinearOpMode {
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
         //Drive Motors, other motors, sensors, etc.
-        if(MecanumDrive.isDevBot) {
+        if (MecanumDrive.isDevBot) {
             red = initializeDigitalChannel("red", DigitalChannel.Mode.OUTPUT);
             green = initializeDigitalChannel("green", DigitalChannel.Mode.OUTPUT);
 
@@ -56,6 +56,8 @@ public abstract class BaseOpMode extends LinearOpMode {
 
             //sensors
             distSensor = hardwareMap.get(DistanceSensor.class, "distance");
+        } else if (MecanumDrive.is6220sDevBot) {
+            // Do nothing
         } else {
             //Mechanism Motors
             intakeMotor = initializeMotor("IntakeMotor", DcMotor.Direction.FORWARD);
