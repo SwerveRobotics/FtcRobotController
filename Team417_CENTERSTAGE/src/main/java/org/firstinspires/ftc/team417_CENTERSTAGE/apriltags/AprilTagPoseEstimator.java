@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.apriltags;
 
+import static org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive.is6220sDevBot;
 import static org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive.isDevBot;
 
 import android.util.Size;
@@ -152,7 +153,7 @@ public class AprilTagPoseEstimator {
         // Declaring variables
         double d, beta, gamma, relativeX, relativeY, absoluteX, absoluteY, absoluteTheta;
 
-        if (isDevBot) {
+        if (isDevBot || is6220sDevBot) {
             // d - absolute distance from April-tag to robot
             d = Math.hypot(detection.ftcPose.x + Constants.DEVBOT_CAMERA_TO_CENTER_X, detection.ftcPose.y + Constants.DEVBOT_CAMERA_TO_CENTER_Y);
 
