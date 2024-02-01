@@ -24,6 +24,9 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     public AprilTagPoseEstimator myATPoseEstimator;
 
+    public static double droneServoReleasedPos = 1;
+    public static double droneServoHoldingPos = 0.473;
+
     public void runTeleOp(boolean driveTo, boolean aprilTags, Pose2d pose, int armPosition) {
         initializeHardware();
 
@@ -112,8 +115,8 @@ public abstract class BaseTeleOp extends BaseOpMode {
         double strafeConstant = 1.1;
 
         if (sensitive) {
-            sensitivity = 0.5;
-            rotSensitivity = 0.8;
+            sensitivity = 0.425;
+            rotSensitivity = 0.68;
         } else {
             sensitivity = 1;
             rotSensitivity = 1;
@@ -152,8 +155,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
     private boolean testDroneLauncher = true;
     private boolean droneLauncherInited = false;
     private double droneLauncherInitTime;
-    public static double droneServoReleasedPos = 0.5;
-    public static double droneServoHoldingPos = 0.08;
 
     public static boolean droneLaunched = false;
 
