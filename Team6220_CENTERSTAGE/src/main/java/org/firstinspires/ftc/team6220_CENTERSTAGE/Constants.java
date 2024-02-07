@@ -48,7 +48,7 @@ public class Constants {
 
 
     public static final double[] DUMPER_POSITIONS = {
-            0, // extended
+            -0.3, // extended
             0.89 // retracted
     };
 
