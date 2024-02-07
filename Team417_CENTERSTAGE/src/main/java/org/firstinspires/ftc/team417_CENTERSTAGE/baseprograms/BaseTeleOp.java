@@ -1,10 +1,8 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -164,7 +162,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             }
             mecanumDrive(x, y, rot);
         } else if (USING_AUTO_DRIVE_TO)
-            autoDrive.driveTo(48, -36, Math.toRadians(180), driveToInit, packet);
+            autoDrive.linearDriveTo(48, -36, Math.toRadians(180), driveToInit, packet);
 
         dPadUpPressed = gamepad1.dpad_up;
     }
