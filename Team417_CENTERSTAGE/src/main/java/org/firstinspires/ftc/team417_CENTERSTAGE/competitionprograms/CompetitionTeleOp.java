@@ -10,6 +10,6 @@ public class CompetitionTeleOp extends BaseTeleOp {
     @Override
     public void runOpMode() {
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
-        runTeleOp(Config.useDriveTo, Config.useAprilTags, Config.pose);
+        runTeleOp(Config.useDriveTo, Config.useAprilTags, Config.pose, Config.armPosition);
     }
 }
