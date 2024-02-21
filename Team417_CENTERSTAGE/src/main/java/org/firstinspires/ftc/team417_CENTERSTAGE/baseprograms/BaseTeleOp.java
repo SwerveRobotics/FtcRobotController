@@ -44,7 +44,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
         }
 
         if (armMotor != null) {
-            arm = new ArmMechanism(gamepad2, armMotor, dumperServo);
+            arm = new ArmMechanism(gamepad2, armMotor, dumperServo, suspensionMotor);
             arm.currentArmLocation = armPosition;
             resetDumper();
             droneServo.setPosition(droneServoHoldingPos);
