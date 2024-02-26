@@ -64,7 +64,7 @@ public abstract class BaseOpMode extends LinearOpMode {
             gateServo = initializeServo("GateServo", Servo.Direction.FORWARD);
             droneServo = initializeServo("droneServo", Servo.Direction.FORWARD);
 
-            //sensors
+            //sensorsx  
             distSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
         }
     }

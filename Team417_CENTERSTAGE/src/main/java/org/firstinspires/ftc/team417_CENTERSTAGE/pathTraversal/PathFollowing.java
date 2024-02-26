@@ -1,9 +1,8 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal;
 
-import android.app.admin.SystemUpdatePolicy;
-
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
+
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
@@ -11,33 +10,23 @@ import java.util.ArrayList;
 
 public class PathFollowing {
     MecanumDrive drive;
-    //Tuned velocity constants of the robot.
+    AveLoopTime aveDeltaTime;
+
     private final double linearDriveAccel = MecanumDrive.PARAMS.maxProfileAccel;
     private final double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel;
     private final double maxLinearSpeed = MecanumDrive.PARAMS.maxWheelVel;
 
-    //epsilon constants
-    private final double linearVelocityEpsilon = 7.5;
-    private final double linearDistEpsilon = 1;
-    private final double pushSpeedEpsilon = 7.5;
+    private final double lineCurveEpsilon = 0.01;
 
-    //vars that have to carry their values between loop iterations.
-    private double lastRadialSpeed, lastTangentialSpeed;
-    private double lastTime;
     private int currentLine;
+    private double initTime;
+    private Vector2d initVelocity;
+    private ArrayList<DPoint> pointsOnPath = new ArrayList<>();
+    private DPoint currentPoint;
 
-    public PathFollowing(MecanumDrive drive) {
+    public PathFollowing(MecanumDrive drive, AveLoopTime aveDeltaTime) {
         this.drive = drive;
-        lastTime = 0;
-    }
-
-    //Takes an angle and returns a identical angle that is from negative pi to pi.
-    public double confineAngleToScope(double num) {
-        while (num > Math.PI)
-            num -= 2.0 * Math.PI;
-        while (num < -Math.PI)
-            num += 2.0 * Math.PI;
-        return num;
+        this.aveDeltaTime = aveDeltaTime;
     }
 
     //returns the speed of the radial portion of a vector.
@@ -58,34 +47,22 @@ public class PathFollowing {
         return Math.hypot(currentVector.x, currentVector.y) * Math.sin(differenceOfTheta);
     }
 
-    private Vector2d radialVectorCalculations(Vector2d distVector, double deltaTime, Vector2d currentVelocity, double distRemainingAfterLine) {
+    private Vector2d radialVelocityCalc(Vector2d distVector, double timeSinceInit, Vector2d initVelocity, double distRemaining) {
         Vector2d radialVelocity;
-        double distRemaining;
-        double differenceOfSpeeds;
         double radialSpeed;
 
-        //Distance to goal.
-        distRemaining = Math.hypot(distVector.x, distVector.y) + distRemainingAfterLine;
-
         //The magnitude of the radial portion of the robot's current velocity.
-        radialSpeed = findRadialSpeed(distVector, currentVelocity);
-
-        //Find the differance between the last speed and the actual speed to correct for the robot
-        //having not finished accelerating.
-        differenceOfSpeeds = lastRadialSpeed - radialSpeed;
-        if (Math.abs(differenceOfSpeeds) > pushSpeedEpsilon || lastRadialSpeed == 0)
-            differenceOfSpeeds = 0;
+        radialSpeed = findRadialSpeed(distVector, initVelocity);
 
         //If radial speed is going toward the goal or is stationary increase it, else decrease it
         if (radialSpeed >= 0)
-            radialSpeed = radialSpeed + (linearDriveAccel * deltaTime);
+            radialSpeed = linearDriveAccel * timeSinceInit + radialSpeed;
         else
-            radialSpeed = radialSpeed - (linearDriveDeccel * deltaTime);
+            radialSpeed = linearDriveDeccel * timeSinceInit + radialSpeed;
 
         //Cap the speed at it's max speed or the speed it needs to be decelerating
         radialSpeed = Math.min(radialSpeed, maxLinearSpeed);
-        radialSpeed = Math.min(radialSpeed, Math.sqrt(Math.abs(2.0 * linearDriveDeccel * distRemaining))) + differenceOfSpeeds;
-        lastRadialSpeed = radialSpeed;
+        radialSpeed = Math.min(radialSpeed, Math.sqrt(Math.abs(2.0 * linearDriveDeccel * distRemaining)));
 
         //set radial velocity's theta to be the same as dist vector's
         radialVelocity = distVector.div(distVector.norm());
@@ -93,28 +70,20 @@ public class PathFollowing {
         return radialVelocity;
     }
 
-    @SuppressWarnings("SuspiciousNameCombination")
-    private Vector2d tangentialVectorCalculations(Vector2d distVector, double deltaTime, Vector2d currentVelocity) {
+    private Vector2d tangentialVelocityCalc(Vector2d distVector, double timeSinceInit, Vector2d initVelocity) {
         Vector2d tangentialVelocity;
         double tangentialSpeed;
-        double differenceOfSpeeds;
 
         //Set tangentialSpeed to the tangential portion of the current velocity
-        tangentialSpeed = findTangentialSpeed(distVector, currentVelocity);
-
-        //Find the difference between the last tangentialSpeed and the current tangential speed for it can be corrected.
-        differenceOfSpeeds = lastTangentialSpeed - tangentialSpeed;
-        //If difference of speeds is greater then epsilon, the robot was probably pushed so don't correct.
-        if (Math.abs(differenceOfSpeeds) > pushSpeedEpsilon || lastTangentialSpeed == 0)
-            differenceOfSpeeds = 0;
+        tangentialSpeed = findTangentialSpeed(distVector, initVelocity);
 
         //If tangential speed is positive, decrease until zero, else increase it until zero.
         if (tangentialSpeed > 0) {
-            tangentialSpeed = tangentialSpeed + (linearDriveDeccel * deltaTime);
-            tangentialSpeed = Math.min(tangentialSpeed, 0.0) + differenceOfSpeeds;
+            tangentialSpeed = linearDriveDeccel * timeSinceInit + tangentialSpeed;
+            tangentialSpeed = Math.min(tangentialSpeed, 0.0);
         } else if (tangentialSpeed < 0) {
-            tangentialSpeed = tangentialSpeed - (linearDriveDeccel * deltaTime);
-            tangentialSpeed = Math.max(tangentialSpeed, 0.0) + differenceOfSpeeds;
+            tangentialSpeed = -linearDriveDeccel * timeSinceInit + tangentialSpeed;
+            tangentialSpeed = Math.max(tangentialSpeed, 0.0);
         }
 
         //rotate distance vector by 90 degrees.
@@ -127,29 +96,15 @@ public class PathFollowing {
         return tangentialVelocity;
     }
 
-    //Drive the robot in a straight line.
-    public boolean linearPathFollowing(DPoint goal, double deltaTime, double distRemainingAfterLine) {
-        PoseVelocity2d currentVelocity;
-        Vector2d tangentialVelocity;
-        Vector2d radialVelocity;
-        Vector2d distVector;
-        Vector2d finalLinearVelocity;
+    //Finds the total distance of a array of linear vectors. start = the first vector that is considered.
+    public double findDistance(ArrayList<DPoint> points, int start) {
+        double totalDist = 0;
 
-        distVector = new Vector2d(goal.x - drive.pose.position.x, goal.y - drive.pose.position.y);
+        for (int i = start; i < points.size(); i++) {
+            totalDist += Math.hypot(points.get(i).x - points.get(i + 1).x, points.get(i).y - points.get(i + 1).y);
+        }
 
-        currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
-
-        radialVelocity = radialVectorCalculations(distVector, deltaTime, currentVelocity.linearVel, distRemainingAfterLine);
-        tangentialVelocity = tangentialVectorCalculations(distVector, deltaTime, currentVelocity.linearVel);
-
-        finalLinearVelocity = radialVelocity.plus(tangentialVelocity);
-
-        if (Math.hypot(finalLinearVelocity.x, finalLinearVelocity.y) < linearVelocityEpsilon
-                && Math.hypot(distVector.x, distVector.y) < linearDistEpsilon)
-            return true;
-
-        drive.setDrivePowers(null, new PoseVelocity2d(finalLinearVelocity, 0));
-        return false;
+        return totalDist;
     }
 
     //returns the midpoints between and array of points as an array of points.
@@ -165,73 +120,81 @@ public class PathFollowing {
 
     //Turns an bezier curve into an array of smaller bezier curves that resemble linear vectors.
     //epsilon = the acceptable differance between a bezier curve and a linear vector in inches.
-    public ArrayList<BezierControl> flattenBezier(BezierControl controlPoints, double epsilon) {
-        ArrayList <BezierControl> result = new ArrayList<>();
-
+    public ArrayList<DPoint> flattenBezier(BezierControl controlPoints, ArrayList<DPoint> resultPoints, double epsilon) {
         DPoint[] p = controlPoints.toArray();
         DPoint[] l = findMidPoint(p);
         DPoint[] q = findMidPoint(l);
         DPoint c = findMidPoint(q)[0];
 
-        double error = Math.max(Math.hypot(p[1].x - p[2].x, p[1].y - p[2].y) - Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y),
-                Math.hypot(p[2].x - p[3].x, p[2].y - p[3].y) - Math.hypot(p[1].x - p[2].x, p[1].y - p[2].y));
+        double error = Math.max(Math.hypot(2 * p[1].x - p[2].x - p[0].x, 2 * p[1].y - p[2].y - p[0].y),
+                Math.hypot(2 * p[2].x - p[3].x - p[1].x, 2 * p[2].y - p[3].y - p[1].y));
 
-        if (Math.abs(error) < epsilon) {
-            result.add(new BezierControl(p[0], p[1], p[2], p[3]));
-            return result;
+        if (error < epsilon) {
+            resultPoints.add(p[3]);
         } else {
-            result.addAll(flattenBezier(new BezierControl(p[0], l[0], q[0], c), epsilon));
-            result.addAll(flattenBezier(new BezierControl(c, q[1], l[2], p[3]), epsilon));
-            return result;
-        }
-    }
-
-    //Finds the total distance of a array of linear vectors. start = the first vector that is considered.
-    public double findDistance(ArrayList<BezierControl> points, int start) {
-        double totalDist = 0;
-
-        for (int i = start; i < points.size(); i++) {
-            totalDist += Math.hypot(points.get(i).p0.x - points.get(i).p3.x, points.get(i).p0.y - points.get(i).p3.y);
+            resultPoints = flattenBezier(new BezierControl(p[0], l[0], q[0], c), resultPoints, epsilon);
+            resultPoints = flattenBezier(new BezierControl(c, q[1], l[2], p[3]), resultPoints, epsilon);
         }
 
-        return totalDist;
+        return resultPoints;
     }
 
-    //Moves the robot along a path described by a cubic bezier curve.
-    //controlPoints = the control points of the bezier curve.
+    private DPoint velToPoint(Vector2d velocity, DPoint currentPoint) {
+        return new DPoint(currentPoint.x + velocity.x * aveDeltaTime.get(),
+                currentPoint.y + velocity.y * aveDeltaTime.get());
+    }
+
+    double lastTime = 0;
+
     public boolean cubicPathFollowing(BezierControl controlPoints, boolean hasInit) {
-        DPoint nextPoint;
-        double epsilon = 0.01;
+        Vector2d currentDist;
+        Vector2d radialVelocity;
+        Vector2d tangentialVelocity;
+        Vector2d totalVelocity;
         double distRemaining;
-        double currentTime, deltaTime;
+        double timeSinceInit;
+        double currentTime;
 
-        //Approximate the bezier curve with straight lines.
-        ArrayList<BezierControl> linearPoints = flattenBezier(controlPoints, epsilon);
-
-        //reset values to zero and store init time.
         if (!hasInit) {
-            lastRadialSpeed = 0;
-            lastTangentialSpeed = 0;
+            initTime = BaseOpMode.TIME.seconds();
+            initVelocity = drive.pose.times(drive.poseVelocity).linearVel;
             currentLine = 0;
-            lastTime =  BaseOpMode.TIME.seconds();
+            lastTime = 0;
+            currentPoint = new DPoint(drive.pose.position.x, drive.pose.position.y);
+
+            pointsOnPath.add(controlPoints.p0);
+            pointsOnPath = flattenBezier(controlPoints, pointsOnPath, lineCurveEpsilon);
         }
 
-        currentTime = BaseOpMode.TIME.seconds();
-        deltaTime = currentTime - lastTime;
-
-        //If the robot has completed the last line in the list, return true to show that the movement is done.
-        if (currentLine >= linearPoints.size())
+        if (currentLine >= pointsOnPath.size())
             return true;
 
-        //Find the distance remaining after the current line is completed.
-        distRemaining = findDistance(linearPoints, currentLine + 1);
-        //Store the next point the robot is driving in a line to.
-        nextPoint = linearPoints.get(currentLine).p3;
-        //Call the code to drive in a line, and if the code has completed, change the current line to the next line.
-        if (linearPathFollowing(nextPoint, deltaTime, distRemaining))
+        timeSinceInit = initTime - BaseOpMode.TIME.seconds();
+
+        currentDist = new Vector2d(pointsOnPath.get(currentLine).x - drive.pose.position.x,
+                                   pointsOnPath.get(currentLine).y - drive.pose.position.y);
+
+        distRemaining = currentDist.norm() + findDistance(pointsOnPath, currentLine);
+
+        radialVelocity = radialVelocityCalc(currentDist, timeSinceInit, initVelocity, distRemaining);
+
+        if (radialVelocity.norm() > currentDist.norm()) {
             currentLine += 1;
+            return cubicPathFollowing(controlPoints, false);
+        }
+
+        tangentialVelocity = tangentialVelocityCalc(currentDist, timeSinceInit, initVelocity);
+        totalVelocity = radialVelocity.plus(tangentialVelocity);
+
+        drive.setDrivePowers(null, new PoseVelocity2d(totalVelocity, 0));
+
+        currentTime = BaseOpMode.TIME.seconds();
+
+        currentPoint = currentPoint.plus(new DPoint(currentPoint.x + totalVelocity.x * (currentTime - lastTime),
+                                                    currentPoint.y + totalVelocity.y * (currentTime - lastTime)));
 
         lastTime = currentTime;
+
         return false;
     }
 }

@@ -58,7 +58,7 @@ public class AprilTagDetectionConcept extends BaseTeleOp {
 
         if (opModeIsActive()) {
             while (opModeIsActive()) {
-                driveUsingControllers(true);
+                //driveUsingControllers(true);
                 telemetryAprilTag();
 
                 // Push telemetry to the Driver Station.

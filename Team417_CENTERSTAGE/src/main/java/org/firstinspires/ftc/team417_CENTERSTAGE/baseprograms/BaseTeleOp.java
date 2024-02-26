@@ -9,6 +9,9 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.ArmMechanism;
 import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.AutoDriveTo;
+import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.BezierControl;
+import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.DPoint;
+import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.PathFollowing;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 @Config
@@ -21,6 +24,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
     ElapsedTime time = new ElapsedTime();
     AutoDriveTo autoDrive;
+    PathFollowing curveDrive;
 
     @Override
     public void runOpMode() {
@@ -35,18 +39,30 @@ public abstract class BaseTeleOp extends BaseOpMode {
         if (USING_AUTO_DRIVE_TO)
             autoDrive = new AutoDriveTo(drive);
 
+        curveDrive = new PathFollowing(drive, aveDeltaTime);
+
         waitForStart();
 
         if (dumperWheelServo != null)
             dumperWheelServo.setPower(-1.0);
 
+        drive.updatePoseEstimate();
+
+        BezierControl controlPoints= new BezierControl(new DPoint(0, 0),
+                new DPoint(0, 24), new DPoint(24, 24), new DPoint(24, 0));
+        curveDrive.cubicPathFollowing(controlPoints, false);
+
         while (opModeIsActive()) {
+
+            aveDeltaTime.update(BaseOpMode.TIME.seconds());
+
+            curveDrive.cubicPathFollowing(controlPoints, true);
 
             TelemetryPacket packet = new TelemetryPacket();
 
 
             resetIMUIfNeeded();
-            driveUsingControllers(false, packet);
+            //driveUsingControllers(false, packet);
 
             drive.updatePoseEstimate();
 
