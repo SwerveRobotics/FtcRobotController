@@ -39,7 +39,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
         if (USING_AUTO_DRIVE_TO)
             autoDrive = new AutoDriveTo(drive);
 
-        curveDrive = new PathFollowing(drive, aveDeltaTime);
+        curveDrive = new PathFollowing(drive);
 
         waitForStart();
 
@@ -53,9 +53,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
         curveDrive.cubicPathFollowing(controlPoints, false);
 
         while (opModeIsActive()) {
-
-            aveDeltaTime.update(BaseOpMode.TIME.seconds());
-
             curveDrive.cubicPathFollowing(controlPoints, true);
 
             TelemetryPacket packet = new TelemetryPacket();

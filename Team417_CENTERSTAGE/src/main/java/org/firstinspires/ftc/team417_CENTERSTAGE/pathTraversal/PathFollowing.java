@@ -10,8 +10,6 @@ import java.util.ArrayList;
 
 public class PathFollowing {
     MecanumDrive drive;
-    AveLoopTime aveDeltaTime;
-
     private final double linearDriveAccel = MecanumDrive.PARAMS.maxProfileAccel;
     private final double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel;
     private final double maxLinearSpeed = MecanumDrive.PARAMS.maxWheelVel;
@@ -20,13 +18,13 @@ public class PathFollowing {
 
     private int currentLine;
     private double initTime;
+    private double lastTime = 0;
     private Vector2d initVelocity;
     private ArrayList<DPoint> pointsOnPath = new ArrayList<>();
     private DPoint currentPoint;
 
-    public PathFollowing(MecanumDrive drive, AveLoopTime aveDeltaTime) {
+    public PathFollowing(MecanumDrive drive) {
         this.drive = drive;
-        this.aveDeltaTime = aveDeltaTime;
     }
 
     //returns the speed of the radial portion of a vector.
@@ -138,13 +136,6 @@ public class PathFollowing {
 
         return resultPoints;
     }
-
-    private DPoint velToPoint(Vector2d velocity, DPoint currentPoint) {
-        return new DPoint(currentPoint.x + velocity.x * aveDeltaTime.get(),
-                currentPoint.y + velocity.y * aveDeltaTime.get());
-    }
-
-    double lastTime = 0;
 
     public boolean cubicPathFollowing(BezierControl controlPoints, boolean hasInit) {
         Vector2d currentDist;
