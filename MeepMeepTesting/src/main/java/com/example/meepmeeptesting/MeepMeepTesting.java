@@ -9,6 +9,7 @@ import com.noahbres.meepmeep.roadrunner.Constraints;
 import com.noahbres.meepmeep.roadrunner.DriveShim;
 import com.noahbres.meepmeep.roadrunner.DriveTrainType;
 import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
+
 /**
  * Wrapper class for MeepMeep testing. Modify the 'myBot' constructor settings to reflect your
  * own robot. You shouldn't need to modify any other code here.
@@ -16,6 +17,7 @@ import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 public class MeepMeepTesting {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
+        
         RoadRunnerBotEntity myBot = new RoadRunnerBotEntity(
                 meepMeep,
                 // Robot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width:
@@ -40,6 +42,7 @@ public class MeepMeepTesting {
                 .start();
     }
 }
+
 /**
  * Shim so that the AutonDriveFactory can refer to the drive using a MecanumDrive type both
  * here in MeepMeep and also in the competition code.
@@ -53,7 +56,9 @@ class MecanumDrive {
         return this.shim.actionBuilder(pose);
     }
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * This is a template for your autonomous code. It's called a "factory" because it creates objects
  * (Road Runner 'Action' objects in this case). Feel free to rename it to whatever you
@@ -68,6 +73,7 @@ class AutonDriveFactory {
     AutonDriveFactory(MecanumDrive drive) {
         this.drive = drive;
     }
+    
     /*
      * Call this routine from your robot's competition code to get the sequence to drive. You
      * can invoke it there by calling "Actions.runBlocking(driveAction);".
