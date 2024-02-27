@@ -17,7 +17,7 @@ import com.noahbres.meepmeep.roadrunner.entity.RoadRunnerBotEntity;
 public class MeepMeepTesting {
     public static void main(String[] args) {
         MeepMeep meepMeep = new MeepMeep(800);
-        
+
         RoadRunnerBotEntity myBot = new RoadRunnerBotEntity(
                 meepMeep,
                 // Robot constraints: maxVel, maxAccel, maxAngVel, maxAngAccel, track width:
@@ -73,7 +73,7 @@ class AutonDriveFactory {
     AutonDriveFactory(MecanumDrive drive) {
         this.drive = drive;
     }
-    
+
     /*
      * Call this routine from your robot's competition code to get the sequence to drive. You
      * can invoke it there by calling "Actions.runBlocking(driveAction);".
