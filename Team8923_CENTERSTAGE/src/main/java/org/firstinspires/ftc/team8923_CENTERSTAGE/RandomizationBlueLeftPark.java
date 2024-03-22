@@ -17,12 +17,12 @@ public class RandomizationBlueLeftPark extends BaseAutonomous {
                 pivot(-180);
                 driveInches(0, 26);
                 pivot(-90);
-                driveInches(0, 48);
+                driveInches(0, 48);;
                 break;
             case TWO:
                 driveInches(0, 32);
                 driveInches(0, -6);
-                runIntake(0.6, 1500);
+                runIntake(0.5, 1000);
                 driveInches(0, -19.5);
                 pivot(-90);
                 driveInches(0, 48);
@@ -31,11 +31,11 @@ public class RandomizationBlueLeftPark extends BaseAutonomous {
                 driveInches(0, 28);
                 pivot(90);
                 driveInches(0, -4);
-                runIntake(0.5, 1500);
+                runIntake(0.5, 1000);
                 driveInches(0, 4);
-                pivot(0);
+                pivot(180);
                 driveInches(0, -26);
-                pivot(-90);
+                pivot(270);
                 driveInches(0, 48);
                 break;
 

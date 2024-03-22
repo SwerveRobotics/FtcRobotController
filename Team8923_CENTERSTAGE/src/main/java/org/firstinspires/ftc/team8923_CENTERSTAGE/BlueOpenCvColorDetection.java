@@ -67,6 +67,7 @@ public class BlueOpenCvColorDetection {
 
     // coordinates of largest detected image
     Point targetPoint = new Point(0, 0);
+    double area = 0;
     boolean targetDetected;
 
     // Define a constructor that allows the OpMode to pass a reference to itself
@@ -177,6 +178,7 @@ public class BlueOpenCvColorDetection {
                 targetPoint.x = (int) boundingRect.width / 2.0 + boundingRect.x;
                 targetPoint.y = (int) boundingRect.height / 2.0 + boundingRect.y;
                 Imgproc.circle(outputMat, targetPoint, 10, ConstantsOpenCV.borderColor, Imgproc.LINE_4, -1);
+                area = boundingRect.width * boundingRect.height;
             }
 
             // See this image on the computer using scrcpy
@@ -199,11 +201,11 @@ public class BlueOpenCvColorDetection {
 
     public Position detectColor() {
         Position position = Position.TWO;
-        if (targetPoint.x < 230.3) {
+        if (targetPoint.x < 270.3) {
             position = Position.ONE;//left
-        } else if (((targetPoint.x > 230.3) && (targetPoint.x < 640))) {
+        } else if (((targetPoint.x > 270.3) && (targetPoint.x < 640))) {
             position = Position.TWO;//center
-        } else if (targetDetected == false) {
+        } else if (targetDetected == false|| area > 50) {
             position = Position.THREE;//right
         }
         return position;

@@ -3,7 +3,7 @@ package org.firstinspires.ftc.team8923_CENTERSTAGE;
 abstract public class BaseTeleOp extends BaseOpMode {
 
     // constants for output servo positions (gondola and arms)
-    public static double GONDOLA_DOWN_POSITION = 0.6;
+    public static double GONDOLA_DOWN_POSITION = 0.65;
     public static double GONDOLA_UP_POSITION = 0.8;
     public static double ARMS_DOWN_POSITION = 0.25;
     public static double ARMS_UP_POSITION = 0.95;

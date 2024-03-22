@@ -21,6 +21,20 @@ abstract public class BaseOpMode extends LinearOpMode {
     DcMotor motorBL;
     DcMotor motorBR;
 
+    static final double TICKS_PER_REVOLUTION = 537.6;
+    static final double GEAR_RATIO = 1.0;
+    static final double WHEEL_DIAMETER = 4.0;
+    static final double TICKS_PER_INCH = (TICKS_PER_REVOLUTION * GEAR_RATIO) / (WHEEL_DIAMETER * Math.PI);
+    static final double INCHES_PER_REVOLUTION = Math.PI * WHEEL_DIAMETER;
+
+    public IMU imu;
+    public double startAngle;
+    public static final double TURNING_KP = 0.008;
+    public static final int ROBOT_HEADING_TOLERANCE_DEGREES = 1;
+    public static final double MAXIMUM_TURN_POWER_AUTONOMOUS = 0.7;
+    public static final double MINIMUM_TURN_POWER = 0.05;
+
+    public double referenceAngle;
     CRServo servoSlideRight;
 
     CRServo servoSlideLeft;
@@ -34,15 +48,6 @@ abstract public class BaseOpMode extends LinearOpMode {
     Servo servoRotateGondola;
 
     Servo servoReleaseDrone;
-
-    // constants
-    static final double TICKS_PER_REVOLUTION = 537.6; // Neverest orbital 20, 7 pulse per revolution
-    static final double GEAR_RATIO = 1.0;
-    static final double WHEEL_DIAMETER = 4.0; // inches
-    static final double TICKS_PER_INCH =  (TICKS_PER_REVOLUTION * GEAR_RATIO) / (WHEEL_DIAMETER * Math.PI);
-    static final double INCHES_PER_REVOLUTION = Math.PI * WHEEL_DIAMETER;
-    static final double INCHES_PER_TICK = INCHES_PER_REVOLUTION / TICKS_PER_REVOLUTION;
-    static final double INTAKE_SPEED = 0.8;
 
     public void initHardware() {
         // drive motors
@@ -91,6 +96,15 @@ abstract public class BaseOpMode extends LinearOpMode {
         // initializes the gondola and arm servos (same positions as when they're lowered during tele-op)
         servoFlipGondola.setPosition(ARMS_INITIALIZED_ANGLE);
         servoRotateGondola.setPosition(GONDOLA_INITIALIZED_ANGLE);
+
+        imu = hardwareMap.get(IMU.class, "imu");
+        RevHubOrientationOnRobot.LogoFacingDirection logoDirection = RevHubOrientationOnRobot.LogoFacingDirection.LEFT;
+        RevHubOrientationOnRobot.UsbFacingDirection usbDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+        RevHubOrientationOnRobot orientationOnRobot = new RevHubOrientationOnRobot(logoDirection, usbDirection);
+
+        imu.initialize(new IMU.Parameters(orientationOnRobot));
+        startAngle = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
+        sleep(2000);
     }
 
     // mecanum drive method

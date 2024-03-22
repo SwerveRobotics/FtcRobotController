@@ -10,7 +10,8 @@ public class RedRightPark extends BaseAutonomous {
         initRedAuto();
         waitForStart();
         // go forward then strafe to backstage
-        driveInches(0, 2);
-        driveInches(61, 0);
+        driveInches(0, 4);
+        pivot(90);
+        driveInches(0, 48);
     }
 }

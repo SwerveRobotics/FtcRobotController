@@ -7,24 +7,25 @@ public class RandomizationRedRightPark extends BaseAutonomous {
     public void runOpMode() {
         initRedAuto();
         waitForStart();
+        driveInches(0, 5);
         switch (myRedColorDetection.detectColor()) {
             case ONE:
-                driveInches(0, 28);
+                driveInches(0, 23);
                 pivot(-90);
                 driveInches(0, -4);
                 runIntake(0.55, 1500);
                 driveInches(0, 4);
                 pivot(-180);
                 driveInches(0, 26);
-                pivot(90);
+                pivot(-270);
                 driveInches(0, 48);
                 break;
             case TWO:
-                driveInches(0, 32);
+                driveInches(0, 27);
                 driveInches(0, -6);
                 runIntake(0.6, 1500);
                 driveInches(0, -19.5);
-                pivot(90);
+                pivot(-90);
                 driveInches(0, 48);
                 break;
             case THREE:
@@ -35,7 +36,7 @@ public class RandomizationRedRightPark extends BaseAutonomous {
                 driveInches(0, 4);
                 pivot(0);
                 driveInches(0, -26);
-                pivot(90);
+                pivot(-90);
                 driveInches(0, 48);
                 break;
         }
