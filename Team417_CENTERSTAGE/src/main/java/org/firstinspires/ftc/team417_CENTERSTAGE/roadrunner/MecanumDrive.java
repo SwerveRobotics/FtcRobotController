@@ -50,7 +50,6 @@ import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagLatencyHelper;
-import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 import org.firstinspires.inspection.InspectionState;
 
 import java.util.Arrays;
@@ -172,7 +171,7 @@ public final class MecanumDrive {
     public Pose2d pose;
     public PoseVelocity2d poseVelocity;
 
-    private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
+    public final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
     public class DriveLocalizer implements Localizer {
         public final Encoder leftFront, leftBack, rightBack, rightFront;
@@ -496,6 +495,8 @@ public final class MecanumDrive {
             poseHistory.removeFirst();
         }
 
+        // Not letting ATLHelper influence the position yet
+        /*
         if (ATLHelper != null && BaseOpMode.isEpsilonEquals(leftFront.getPower(), 0) && BaseOpMode.isEpsilonEquals(rightFront.getPower(), 0) && BaseOpMode.isEpsilonEquals(leftFront.getPower(), 0) && BaseOpMode.isEpsilonEquals(leftFront.getPower(), 0)) {
             Pose2d tentativePose = ATLHelper.refinePose();
 
@@ -504,6 +505,7 @@ public final class MecanumDrive {
                 // pose = tentativePose;
             }
         }
+        */
 
         FlightRecorder.write("ESTIMATED_POSE", new PoseMessage(pose));
 
@@ -511,7 +513,7 @@ public final class MecanumDrive {
         return poseVelocity;
     }
 
-    private void drawPoseHistory(Canvas c) {
+    public void drawPoseHistory(Canvas c) {
         double[] xPoints = new double[poseHistory.size()];
         double[] yPoints = new double[poseHistory.size()];
 

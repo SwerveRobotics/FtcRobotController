@@ -100,8 +100,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
         }
     }
 
-    boolean leftBumperIsPressed = false;
-
     public boolean sensitive = false;
 
     public void driveUsingControllers() {

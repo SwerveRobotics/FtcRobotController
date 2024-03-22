@@ -1,10 +1,8 @@
-package org.firstinspires.ftc.team417_CENTERSTAGE.apriltags;
+package org.firstinspires.ftc.team417_CENTERSTAGE.apriltagsnew;
 
-import static org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive.is6220sDevBot;
 import static org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive.isDevBot;
 
-import android.util.Size;
-
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -15,6 +13,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDir
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.AprilTagInfo;
+import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.CameraInfo;
 import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.InfoWithDetection;
 import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.Pose;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -22,6 +21,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 
 @Config
 public class AprilTagPoseEstimator {
@@ -46,11 +46,14 @@ public class AprilTagPoseEstimator {
      */
     public VisionPortal visionPortal;
 
+    // Which camera we're using
+    public CameraInfo camera;
+
+    // List of poses
+    public final LinkedList<Pose2d> poseHistory = new LinkedList<>();
+
     // robotPoseEstimate is the pose estimate OF THE CURRENT CLASS
     Pose robotPoseEstimate = new Pose(0, 0, 0);
-
-    // To take info from MecanumDrive, process it, and send it back to MecanumDrive
-    public AprilTagLatencyHelper myAprilTagLatencyHelper;
 
     public AprilTagPoseEstimator(HardwareMap hardwareMap, Telemetry telemetry) {
         this.myHardwareMap = hardwareMap;
@@ -66,10 +69,10 @@ public class AprilTagPoseEstimator {
      * Initialize the AprilTag processor.
      */
     public void init() {
-        myAprilTagLatencyHelper = new AprilTagLatencyHelper();
+        camera = CameraInfoDump.camera("DevBotFastCamera");
 
         // Create the AprilTag processor.
-        aprilTag = new AprilTagProcessor.Builder()
+        AprilTagProcessor.Builder aprilTagBuilder = new AprilTagProcessor.Builder();
 
                 // The following default settings are available to un-comment and edit as needed.
                 //.setDrawAxes(false)
@@ -85,7 +88,11 @@ public class AprilTagPoseEstimator {
                 //.setLensIntrinsics(578.272, 578.272, 402.145, 221.506)
                 // ... these parameters are fx, fy, cx, cy.
 
-                .build();
+        if (camera.lensIntrinsics != null) {
+            aprilTagBuilder.setLensIntrinsics(camera.lensIntrinsics.fx, camera.lensIntrinsics.fy, camera.lensIntrinsics.cx, camera.lensIntrinsics.cy);
+        }
+
+        aprilTag = aprilTagBuilder.build();
 
         // Adjust Image Decimation to trade-off detection-range for detection-rate.
         // eg: Some typical detection data using a Logitech C920 WebCam
@@ -102,7 +109,7 @@ public class AprilTagPoseEstimator {
 
         // Set the camera (webcam vs. built-in RC phone camera).
         if (USE_WEBCAM) {
-            builder.setCamera(myHardwareMap.get(WebcamName.class, "webcamback"));
+            builder.setCamera(myHardwareMap.get(WebcamName.class, camera.robotName));
         } else {
             builder.setCamera(BuiltinCameraDirection.BACK);
         }
@@ -119,7 +126,7 @@ public class AprilTagPoseEstimator {
 
         // Choose a camera resolution. Not all cameras support all resolutions.
         // Used max resolution
-        builder.setCameraResolution(new Size(1920, 1080));
+        builder.setCameraResolution(camera.resolution);
 
         // Enable the RC preview (LiveView).  Set "false" to omit camera monitoring.
         //builder.enableLiveView(true);
@@ -147,31 +154,20 @@ public class AprilTagPoseEstimator {
     //     and the stored information of said april tag (position etc.)
     // Also telemeters relevant info
     // Note that this is relative to the center of the camera
-    public Pose calculatePoseEstimate(AprilTagDetection detection, AprilTagInfo aprilTagInfo) {
+    public Pose calculatePoseEstimate(AprilTagDetection detection, AprilTagInfo aprilTagInfo, CameraInfo cameraInfo) {
         // See November notebook 11/20/2023 for more info on the math used here
 
         // Declaring variables
         double d, beta, gamma, relativeX, relativeY, absoluteX, absoluteY, absoluteTheta;
 
-        if (isDevBot || is6220sDevBot) {
-            // d - absolute distance from April-tag to robot
-            d = Math.hypot(detection.ftcPose.x + Constants.DEVBOT_CAMERA_TO_CENTER_X, detection.ftcPose.y + Constants.DEVBOT_CAMERA_TO_CENTER_Y);
+        // d - absolute distance from April-tag to robot
+        d = Math.hypot(detection.ftcPose.x + cameraInfo.offset.x, detection.ftcPose.y + cameraInfo.offset.y);
 
-            // gamma - angle of center of camera direction to april tag direction
-            gamma = Math.atan2(detection.ftcPose.x + Constants.DEVBOT_CAMERA_TO_CENTER_X, detection.ftcPose.y + Constants.DEVBOT_CAMERA_TO_CENTER_Y);
+        // gamma - angle of center of camera direction to april tag direction
+        gamma = Math.atan2(detection.ftcPose.x + cameraInfo.offset.x, detection.ftcPose.y + cameraInfo.offset.y);
 
-            // beta - yaw of robot relative to the tag
-            beta = gamma + Math.toRadians(detection.ftcPose.yaw + Constants.DEVBOT_CAMERA_TO_CENTER_ROT); //(or gamma - detection.ftcPose.yaw + + Constants.DEVBOT_CAMERA_TO_CENTER_ROT) if that doesn't work)
-        } else {
-            // d - absolute distance from April-tag to robot
-            d = Math.hypot(detection.ftcPose.x + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_X, detection.ftcPose.y + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_Y);
-
-            // gamma - angle of center of camera direction to april tag direction
-            gamma = Math.atan2(detection.ftcPose.x + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_X, detection.ftcPose.y + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_Y);
-
-            // beta - yaw of robot relative to the tag
-            beta = gamma + Math.toRadians(detection.ftcPose.yaw + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_ROT); //(or gamma - detection.ftcPose.yaw + + Constants.COMPETITION_BOT_FRONT_CAMERA_TO_CENTER_ROT) if that doesn't work)
-        }
+        // beta - yaw of robot relative to the tag
+        beta = gamma + Math.toRadians(detection.ftcPose.yaw + cameraInfo.rotation); //(or gamma - detection.ftcPose.yaw + + cameraInfo.rotation) if that doesn't work)
 
         // relativeX - x of robot without compensating for yaw
         relativeX = d * Math.cos(beta) + aprilTagInfo.x;
@@ -199,9 +195,11 @@ public class AprilTagPoseEstimator {
             return null;
         }
 
-        // Remove iwds (InfoWithDetection objects) that are more than two tiles (48 inches) away
-        int iwdListSize = iwdList.size();
         InfoWithDetection currentIwd;
+        int iwdListSize = iwdList.size();
+        // Remove iwds (InfoWithDetection objects) that are more than two tiles (48 inches) away
+        // Not used because of new testing
+        /*
         for (int i = 0; i < iwdListSize; i++) {
             currentIwd = iwdList.get(i);
             if (Math.hypot(currentIwd.detection.ftcPose.x, currentIwd.detection.ftcPose.y) > Constants.MAX_DETECTION_DISTANCE) {
@@ -210,6 +208,7 @@ public class AprilTagPoseEstimator {
             }
             iwdListSize = iwdList.size();
         }
+        */
 
         // NOW if list is empty, return null
         if (iwdList.size() < 1) {
@@ -251,19 +250,37 @@ public class AprilTagPoseEstimator {
         return iwdList.get(leastDistanceIndex);
     }
 
+    // Draws the last 100 poses as circles
+    public void drawPoseHistory(Canvas c, double radius) {
+        double[] xPoints = new double[poseHistory.size()];
+        double[] yPoints = new double[poseHistory.size()];
+
+        int i = 0;
+        c.setStroke("#3F51B5");
+        for (Pose2d t : poseHistory) {
+            c.strokeCircle(t.position.x, t.position.y, radius);
+        }
+    }
+
+    public void drawPoseHistory(Canvas c) {
+        drawPoseHistory(c, 1);
+    }
+
     ArrayList<InfoWithDetection> knownAprilTagsDetected = new ArrayList<>();
 
     /**
      * Produce a pose estimate from current frames and update it
      */
     public void updatePoseEstimate() {
-        myAprilTagLatencyHelper.updateFPS(visionPortal.getFps());
+        // Use detections only if fresh
+        ArrayList<AprilTagDetection> currentDetections = aprilTag.getFreshDetections();
 
-        ArrayList<AprilTagDetection> currentDetections = aprilTag.getDetections();
+        if (currentDetections == null) return;
 
         // Iterates through detections and finds any the the robot "knows"
         // Then it replaces the pose estimate with pose estimate from that april tag
         knownAprilTagsDetected.clear();
+
         for (AprilTagDetection detection : currentDetections) {
             AprilTagInfo aprilTagInfo = AprilTagInfoDump.findTagWithId(detection.id);
             if (aprilTagInfo != null) {
@@ -274,14 +291,12 @@ public class AprilTagPoseEstimator {
         boolean detecting;
         InfoWithDetection best = chooseBestAprilTag(knownAprilTagsDetected);
         if (best != null) {
-            robotPoseEstimate = calculatePoseEstimate(best.detection, best.info);
+            robotPoseEstimate = calculatePoseEstimate(best.detection, best.info, camera);
             detecting = true;
         } else {
             robotPoseEstimate = null;
             detecting = false;
         }
-
-        myAprilTagLatencyHelper.updateMecanumDrive(estimatePose());
 
         // setState is reversed (true = off, false = on) so the extra ! in front is necessary
         // Cannot fix this, SDK problem
@@ -293,13 +308,11 @@ public class AprilTagPoseEstimator {
         if (telemetry != null && robotPoseEstimate != null) {
             telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)", robotPoseEstimate.x, robotPoseEstimate.y, Math.toDegrees(robotPoseEstimate.theta)));
         }
-    } // end method telemetryAprilTag()
 
-    public Pose2d estimatePose() {
-        if (robotPoseEstimate != null) {
-            return new Pose2d(robotPoseEstimate.x, robotPoseEstimate.y, robotPoseEstimate.theta);
-        } else {
-            return null;
+        // Add to pose history for displays
+        poseHistory.add(new Pose2d(robotPoseEstimate.x, robotPoseEstimate.y, robotPoseEstimate.theta));
+        while (poseHistory.size() > 100) {
+            poseHistory.removeFirst();
         }
-    }
+    } // end method telemetryAprilTag()
 }
