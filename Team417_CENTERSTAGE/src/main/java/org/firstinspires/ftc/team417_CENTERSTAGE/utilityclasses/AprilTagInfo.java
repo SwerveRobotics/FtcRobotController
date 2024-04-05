@@ -29,4 +29,9 @@ public class AprilTagInfo {
     public AprilTagInfo(int id, double sideLength, double x, double y, double z) {
         this(id, sideLength, x, y, z, 0, 0, 0);
     }
+
+    // Creates an april tag along the wall where the pixel stacks are
+    public AprilTagInfo(int id, double sideLength, double x, double y, double z, double yaw) {
+        this(id, sideLength, x, y, z, 0, 0, yaw);
+    }
 }

@@ -14,7 +14,6 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseTeleOp;
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagInfoDump;
 import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.AprilTagInfo;
-import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.Pose;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
@@ -43,7 +42,7 @@ public class AprilTagDetectionConcept extends BaseTeleOp {
     public VisionPortal visionPortal;
 
     // For this concept: supposed location of the robot
-    Pose robotPoseEstimate = new Pose(0, 0, 0);
+    Pose2d robotPoseEstimate = new Pose2d(0, 0, 0);
 
     @Override
     public void runOpMode() {
@@ -153,7 +152,7 @@ public class AprilTagDetectionConcept extends BaseTeleOp {
     //     and the stored information of said april tag (position etc.)
     // Also telemeters relevant info
     // Note that this is relative to the center of the camera
-    public Pose calculatePoseEstimate(AprilTagDetection detection, AprilTagInfo aprilTagInfo) {
+    public Pose2d calculatePoseEstimate(AprilTagDetection detection, AprilTagInfo aprilTagInfo) {
         double d, beta, gamma, relativeX, relativeY, absoluteX, absoluteY, absoluteTheta;
 
         d = Math.hypot(detection.ftcPose.x, detection.ftcPose.y);
@@ -180,7 +179,7 @@ public class AprilTagDetectionConcept extends BaseTeleOp {
         absoluteTheta = Math.toRadians(aprilTagInfo.yaw) - Math.toRadians(detection.ftcPose.yaw) + Math.PI;
         telemetry.addData("absoluteTheta", absoluteTheta);
 
-        Pose pose = new Pose(absoluteX, absoluteY, absoluteTheta);
+        Pose2d pose = new Pose2d(absoluteX, absoluteY, absoluteTheta);
 
         return pose;
     }
@@ -209,7 +208,7 @@ public class AprilTagDetectionConcept extends BaseTeleOp {
         }
 
         // Telemeters the current pose estimate
-        telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)", robotPoseEstimate.x, robotPoseEstimate.y, Math.toDegrees(robotPoseEstimate.theta)));
+        telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)", robotPoseEstimate.position.x, robotPoseEstimate.position.y, Math.toDegrees(robotPoseEstimate.heading.log())));
 
         telemetry.addData("\n# AprilTags Detected", currentDetections.size());
 
@@ -235,7 +234,9 @@ public class AprilTagDetectionConcept extends BaseTeleOp {
         TelemetryPacket p = new TelemetryPacket();
         Canvas c = p.fieldOverlay();
         c.setStroke("#3F51B5");
-        MecanumDrive.drawRobot(c, new Pose2d(robotPoseEstimate.x, robotPoseEstimate.y, robotPoseEstimate.theta));
+        MecanumDrive.drawRobot(c, new Pose2d(robotPoseEstimate.position.x,
+                robotPoseEstimate.position.y,
+                robotPoseEstimate.heading.log()));
         c.setStroke("#3F5100");
         MecanumDrive.drawRobot(c, new Pose2d(x, y, theta));
         FtcDashboard dashboard = FtcDashboard.getInstance();

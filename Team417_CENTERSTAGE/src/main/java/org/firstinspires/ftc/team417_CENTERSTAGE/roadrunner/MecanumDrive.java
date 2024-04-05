@@ -526,7 +526,7 @@ public final class MecanumDrive {
         }
 
         c.setStrokeWidth(1);
-        c.setStroke("#3F51B5");
+        c.setStroke("#0000ff");
         c.strokePolyline(xPoints, yPoints);
     }
 

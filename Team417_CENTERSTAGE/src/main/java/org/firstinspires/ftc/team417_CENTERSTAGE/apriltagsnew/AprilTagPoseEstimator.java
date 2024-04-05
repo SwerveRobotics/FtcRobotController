@@ -15,7 +15,7 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.AprilTagInfo;
 import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.CameraInfo;
 import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.InfoWithDetection;
-import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.Pose;
+import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.PoseWithID;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -50,10 +50,10 @@ public class AprilTagPoseEstimator {
     public CameraInfo camera;
 
     // List of poses
-    public final LinkedList<Pose2d> poseHistory = new LinkedList<>();
+    public final LinkedList<PoseWithID> poseHistory = new LinkedList<>();
 
     // robotPoseEstimate is the pose estimate OF THE CURRENT CLASS
-    Pose robotPoseEstimate = new Pose(0, 0, 0);
+    Pose2d robotPoseEstimate = new Pose2d(0, 0, 0);
 
     public AprilTagPoseEstimator(HardwareMap hardwareMap, Telemetry telemetry) {
         this.myHardwareMap = hardwareMap;
@@ -154,7 +154,7 @@ public class AprilTagPoseEstimator {
     //     and the stored information of said april tag (position etc.)
     // Also telemeters relevant info
     // Note that this is relative to the center of the camera
-    public Pose calculatePoseEstimate(AprilTagDetection detection, AprilTagInfo aprilTagInfo, CameraInfo cameraInfo) {
+    public Pose2d calculatePoseEstimate(AprilTagDetection detection, AprilTagInfo aprilTagInfo, CameraInfo cameraInfo) {
         // See November notebook 11/20/2023 for more info on the math used here
 
         // Declaring variables
@@ -184,7 +184,7 @@ public class AprilTagPoseEstimator {
         // absoluteTheta - yaw of robot
         absoluteTheta = Math.toRadians(aprilTagInfo.yaw) - Math.toRadians(detection.ftcPose.yaw) + Math.PI;
 
-        return new Pose(absoluteX, absoluteY, absoluteTheta);
+        return new Pose2d(absoluteX, absoluteY, absoluteTheta);
     }
 
     // Many camera frames contain two or more AprilTag detections.
@@ -255,10 +255,19 @@ public class AprilTagPoseEstimator {
         double[] xPoints = new double[poseHistory.size()];
         double[] yPoints = new double[poseHistory.size()];
 
-        int i = 0;
-        c.setStroke("#3F51B5");
-        for (Pose2d t : poseHistory) {
-            c.strokeCircle(t.position.x, t.position.y, radius);
+        c.setStroke("#00ff00");
+        for (PoseWithID t : poseHistory) {
+            switch (t.ID) {
+                case 10:
+                    c.strokeCircle(t.pose.position.x, t.pose.position.y, radius);
+                    break;
+                case 9:
+                    c.strokeRect(t.pose.position.x - 0.5, t.pose.position.y - 0.5, 1, 1);
+                    break;
+                default:
+                    c.strokeLine(t.pose.position.x - 0.5, t.pose.position.y - 0.5, t.pose.position.x + 0.5, t.pose.position.y + 0.5);
+                    break;
+            }
         }
     }
 
@@ -293,6 +302,10 @@ public class AprilTagPoseEstimator {
         if (best != null) {
             robotPoseEstimate = calculatePoseEstimate(best.detection, best.info, camera);
             detecting = true;
+            poseHistory.add(new PoseWithID(robotPoseEstimate, best.info.id));
+            while (poseHistory.size() > 100) {
+                poseHistory.removeFirst();
+            }
         } else {
             robotPoseEstimate = null;
             detecting = false;
@@ -306,13 +319,7 @@ public class AprilTagPoseEstimator {
 
         // Telemeters the current pose estimate
         if (telemetry != null && robotPoseEstimate != null) {
-            telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)", robotPoseEstimate.x, robotPoseEstimate.y, Math.toDegrees(robotPoseEstimate.theta)));
-        }
-
-        // Add to pose history for displays
-        poseHistory.add(new Pose2d(robotPoseEstimate.x, robotPoseEstimate.y, robotPoseEstimate.theta));
-        while (poseHistory.size() > 100) {
-            poseHistory.removeFirst();
+            telemetry.addLine(String.format("Robot XYθ %6.1f %6.1f %6.1f  (inch) (degrees)", robotPoseEstimate.position.x, robotPoseEstimate.position.y, Math.toDegrees(robotPoseEstimate.heading.log())));
         }
     } // end method telemetryAprilTag()
 }

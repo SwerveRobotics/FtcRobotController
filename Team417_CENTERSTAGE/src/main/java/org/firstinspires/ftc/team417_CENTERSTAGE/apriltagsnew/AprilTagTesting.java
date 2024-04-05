@@ -8,7 +8,6 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
-import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.Pose;
 
 /*
     This test class is for testing April Tags. It is basically a mecanum drive with April Tags.
@@ -33,7 +32,7 @@ public class AprilTagTesting extends BaseOpMode {
 
         waitForStart();
 
-        Pose ATPose;
+        Pose2d ATPose;
 
         while (opModeIsActive()) {
             driveUsingControllers();
@@ -44,21 +43,18 @@ public class AprilTagTesting extends BaseOpMode {
                     drive.pose.position.x, drive.pose.position.y,
                     Math.toDegrees(drive.pose.heading.log())));
 
+            myATPoseEstimator.updatePoseEstimate();
+
             // Code added to draw the pose
             TelemetryPacket p = new TelemetryPacket();
             Canvas c = p.fieldOverlay();
-            c.setStroke("#0000ff");
             drive.drawPoseHistory(c);
             MecanumDrive.drawRobot(c, drive.pose);
             myATPoseEstimator.drawPoseHistory(c);
             ATPose = myATPoseEstimator.robotPoseEstimate;
             if (ATPose != null) {
-                MecanumDrive.drawRobot(c, new Pose2d(ATPose.x, ATPose.y, ATPose.theta));
+                MecanumDrive.drawRobot(c, ATPose);
             }
-            c.strokeCircle(drive.pose.position.x, drive.pose.position.y, 1);
-
-            myATPoseEstimator.updatePoseEstimate();
-
             FtcDashboard dashboard = FtcDashboard.getInstance();
             dashboard.sendTelemetryPacket(p);
         }
