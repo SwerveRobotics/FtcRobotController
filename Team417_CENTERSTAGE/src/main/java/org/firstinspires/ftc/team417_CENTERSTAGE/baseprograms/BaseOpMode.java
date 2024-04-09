@@ -38,7 +38,7 @@ public abstract class BaseOpMode extends LinearOpMode {
     public static ElapsedTime TIME = new ElapsedTime();
 
     //Initializes motors, servos, and sensors
-    public void initializeHardware() {
+    public MecanumDrive initializeHardware() {
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
         //Drive Motors, other motors, sensors, etc.
@@ -67,6 +67,7 @@ public abstract class BaseOpMode extends LinearOpMode {
             //sensorsx
             distSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
         }
+        return drive;
     }
 
     // A digital channel is a device that can accept either a 1 or a 0 of input.

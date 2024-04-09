@@ -52,7 +52,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
             myColorDetection = new OpenCvColorDetection(this);
             myColorDetection.init();
         }
-        initializeHardware();
+        drive = initializeHardware();
 
         telemetry.addData("Init State", "Init Finished");
 

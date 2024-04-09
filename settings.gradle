@@ -9,3 +9,6 @@ include ':Team8923_PowerPlay'
 include ':TeamMentor'
 include ':MeepMeepTesting'
 include ':UiTesting'
+include ':WilyCore'
+include ':WilyWorks'
+
