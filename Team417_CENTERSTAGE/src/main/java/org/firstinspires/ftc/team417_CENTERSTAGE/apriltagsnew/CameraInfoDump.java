@@ -17,7 +17,7 @@ public class CameraInfoDump {
     public static CameraInfo[] cameraInfoArray = new CameraInfo[] {
             new CameraInfo("CompetitionRobotSlowCamera", "webcam", new Vector2d(3, 7), 0, new Size(1920, 1080), null, 640, Math.toRadians(70.4)),
             new CameraInfo("DevBotSlowCamera", "webcamfront", new Vector2d(0, 7.8125), 0, new Size(1920, 1080), null, 640, Math.toRadians(70.4)),
-            new CameraInfo("DevBotFastCamera", "webcamback", new Vector2d(0, 0) /*TODO: fix this!!!*/, 0, new Size(1280, 800), new LensIntrinsics(906.940247073, 906.940247073, 670.833056673, 355.34234068), 190, Math.toRadians(70.4))
+            new CameraInfo("DevBotFastCamera", "webcamback", new Vector2d(0, 0), 0, new Size(1280, 800), new LensIntrinsics(906.940247073, 906.940247073, 670.833056673, 355.34234068), 190, Math.toRadians(70.4))
     };
 
     public static CameraInfo camera(String realName) {

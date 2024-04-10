@@ -9,9 +9,9 @@ public class AprilTagInfo {
     public double x;
     public double y;
     public double z;
-    public double pitch;
-    public double roll;
-    public double yaw;
+    public double pitch; // Degrees
+    public double roll; // Degrees
+    public double yaw; // Degrees
 
     // Creates an april tag with all the info
     public AprilTagInfo(int id, double sideLength, double x, double y, double z, double pitch, double roll, double yaw) {

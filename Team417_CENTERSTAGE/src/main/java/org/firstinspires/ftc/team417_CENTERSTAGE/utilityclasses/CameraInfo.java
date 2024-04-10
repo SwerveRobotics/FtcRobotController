@@ -10,11 +10,11 @@ public class CameraInfo {
     public String realName; // What we colloquially call the robot
     public String robotName; // The name in config
     public Vector2d offset; // Inches
-    public double rotation; // Radians
+    public double rotation; // Degrees
     public Size resolution;
     public LensIntrinsics lensIntrinsics;
     public double latency; // Milliseconds
-    public double fov; // Radians
+    public double fov; // Degrees
 
     // Creates an april tag with all the info
     public CameraInfo(String realName, String robotName, Vector2d offset, double rotation, Size resolution, LensIntrinsics lensIntrinsics, double latency, double fov) {

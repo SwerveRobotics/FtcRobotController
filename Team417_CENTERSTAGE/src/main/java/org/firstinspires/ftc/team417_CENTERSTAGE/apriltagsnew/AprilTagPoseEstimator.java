@@ -160,29 +160,49 @@ public class AprilTagPoseEstimator {
         // Declaring variables
         double d, beta, gamma, relativeX, relativeY, absoluteX, absoluteY, absoluteTheta;
 
+        System.out.println("Start");
+
         // d - absolute distance from April-tag to robot
         d = Math.hypot(detection.ftcPose.x + cameraInfo.offset.x, detection.ftcPose.y + cameraInfo.offset.y);
+
+        System.out.println("d" + d);
 
         // gamma - angle of center of camera direction to april tag direction
         gamma = Math.atan2(detection.ftcPose.x + cameraInfo.offset.x, detection.ftcPose.y + cameraInfo.offset.y);
 
+        System.out.println("gamma" + gamma);
+
         // beta - yaw of robot relative to the tag
-        beta = gamma + Math.toRadians(detection.ftcPose.yaw + cameraInfo.rotation); //(or gamma - detection.ftcPose.yaw + + cameraInfo.rotation) if that doesn't work)
+        beta = gamma + Math.toRadians(detection.ftcPose.yaw + cameraInfo.rotation);
+
+        System.out.println("detection yaw" + detection.ftcPose.yaw);
+
+        System.out.println("beta" + beta);
 
         // relativeX - x of robot without compensating for yaw
         relativeX = d * Math.cos(beta) + aprilTagInfo.x;
 
+        System.out.println(relativeX);
+
         // relativeY - y of robot without compensating for yaw
         relativeY = -d * Math.sin(beta) + aprilTagInfo.y;
+
+        System.out.println(relativeY);
 
         // absoluteX - x of robot
         absoluteX = relativeX * Math.cos(Math.toRadians(aprilTagInfo.yaw)) - relativeY * Math.sin(Math.toRadians(aprilTagInfo.yaw));
 
+        System.out.println(absoluteX);
+
         // absoluteY - y of robot
-        absoluteY = relativeX * Math.sin(Math.toRadians(aprilTagInfo.yaw)) + relativeY * Math.cos(Math.toRadians(aprilTagInfo.yaw));
+        absoluteY = relativeY * Math.sin(Math.toRadians(aprilTagInfo.yaw)) + relativeY * Math.cos(Math.toRadians(aprilTagInfo.yaw));
+
+        System.out.println(absoluteY);
 
         // absoluteTheta - yaw of robot
         absoluteTheta = Math.toRadians(aprilTagInfo.yaw) - Math.toRadians(detection.ftcPose.yaw) + Math.PI;
+
+        System.out.println(absoluteTheta);
 
         return new Pose2d(absoluteX, absoluteY, absoluteTheta);
     }
