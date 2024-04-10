@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -425,6 +426,32 @@ class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
 }
 
 /**
+ * Wily Works DigitalChannel implementation.
+ */
+class WilyDigitalChannel extends WilyHardwareDevice implements DigitalChannel {
+
+    @Override
+    public Mode getMode() {
+        return null;
+    }
+
+    @Override
+    public void setMode(Mode mode) {
+
+    }
+
+    @Override
+    public boolean getState() {
+        return false;
+    }
+
+    @Override
+    public void setState(boolean state) {
+
+    }
+}
+
+/**
  * Wily Works hardware map.
  */
 public class WilyHardwareMap implements Iterable<HardwareDevice> {
@@ -435,6 +462,7 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
     public DeviceMapping<WebcamName>            webcamName            = new DeviceMapping<WebcamName>(WebcamName.class);
     public DeviceMapping<Servo>                 servo                 = new DeviceMapping<Servo>(Servo.class);
     public DeviceMapping<CRServo>               crservo               = new DeviceMapping<CRServo>(CRServo.class);
+    public DeviceMapping<DigitalChannel>        digitalChannel        = new DeviceMapping<>(DigitalChannel.class);
 
     protected Map<String, List<HardwareDevice>> allDevicesMap         = new HashMap<String, List<HardwareDevice>>();
     protected List<HardwareDevice>              allDevicesList        = new ArrayList<>();
@@ -506,6 +534,9 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
         } else if (WebcamName.class.isAssignableFrom(klass)) {
             device = new WilyWebcam();
             webcamName.put(deviceName, (WebcamName) device);
+        } else if (DigitalChannel.class.isAssignableFrom(klass)) {
+            device = new WilyDigitalChannel();
+            digitalChannel.put(deviceName, (DigitalChannel) device);
         } else {
             throw new IllegalArgumentException("Unexpected device type for HardwareMap");
         }

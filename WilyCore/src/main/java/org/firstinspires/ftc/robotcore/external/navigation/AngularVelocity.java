@@ -58,7 +58,7 @@ public class AngularVelocity
      * the angular unit in which angular rates are expressed. The time unit thereof
      * is always "per second".
      */
-    public org.firstinspires.ftc.robotcore.external.navigation.AngleUnit unit;
+    public AngleUnit unit;
 
     /**
      * the instantaneous body-referenced rotation rate about the x-axis in units
@@ -88,10 +88,10 @@ public class AngularVelocity
 
     public AngularVelocity()
     {
-        this(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES, 0, 0, 0, 0);
+        this(AngleUnit.DEGREES, 0, 0, 0, 0);
     }
 
-    public AngularVelocity(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit unit, float xRotationRate, float yRotationRate, float zRotationRate, long acquisitionTime)
+    public AngularVelocity(AngleUnit unit, float xRotationRate, float yRotationRate, float zRotationRate, long acquisitionTime)
     {
         this.unit = unit;
         this.xRotationRate = xRotationRate;
@@ -106,7 +106,7 @@ public class AngularVelocity
      * @param unit the units to use in the returned [@link AngularVelocity}
      * @return a new [@link AngularVelocity} with the same data but in the indicated units
      */
-    public AngularVelocity toAngleUnit(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit unit)
+    public AngularVelocity toAngleUnit(AngleUnit unit)
     {
         if (unit != this.unit)
         {

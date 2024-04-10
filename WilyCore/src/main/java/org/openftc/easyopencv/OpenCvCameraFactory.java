@@ -44,7 +44,11 @@ public abstract class OpenCvCameraFactory
 
             @Override
             public int[] splitLayoutForMultipleViewports(int containerId, int numViewports, ViewportSplitMethod viewportSplitMethod) {
-                return new int[0];
+                int[] ids = new int[numViewports];
+                for (int i = 0; i < numViewports; i++) {
+                    ids[i] = i;
+                }
+                return ids;
             }
         };
     }
