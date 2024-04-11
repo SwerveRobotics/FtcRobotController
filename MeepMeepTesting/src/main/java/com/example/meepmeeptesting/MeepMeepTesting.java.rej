@@ -1,0 +1,19 @@
+diff a/MeepMeepTesting/src/main/java/com/example/meepmeeptesting/MeepMeepTesting.java b/MeepMeepTesting/src/main/java/com/example/meepmeeptesting/MeepMeepTesting.java	(rejected hunks)
+@@ -31,15 +31,9 @@
+                 false);
+ 
+         MecanumDrive drive = new MecanumDrive(myBot.getDrive());
+-        boolean distanceTest = false;
+-        if (distanceTest) {
+-            PropDistanceFactory prop = new PropDistanceFactory(drive);
+-            myBot.runAction(prop.getMeepMeepAction());
++        AutonDriveFactory auton = new AutonDriveFactory(drive);
+ 
+-        } else {
+-            AutonDriveFactory auton = new AutonDriveFactory(drive);
+-            myBot.runAction(auton.getMeepMeepAction());
+-        }
++        myBot.runAction(auton.getMeepMeepAction());
+ 
+         meepMeep.setBackground(MeepMeep.Background.FIELD_CENTERSTAGE_JUICE_DARK)
+                 .setDarkMode(true)

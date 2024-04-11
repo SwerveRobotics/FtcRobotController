@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.ArmMechanism;
 import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.AutoDriveTo;
-import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.BezierControl;
+import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.Bezier;
 import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.DPoint;
 import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.PathFollowing;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
@@ -48,12 +48,12 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
         drive.updatePoseEstimate();
 
-        BezierControl controlPoints= new BezierControl(new DPoint(0, 0),
+        Bezier controlPoints= new Bezier(new DPoint(0, 0),
                 new DPoint(0, 24), new DPoint(24, 24), new DPoint(24, 0));
-        curveDrive.cubicPathFollowing(controlPoints, false);
+        curveDrive.cubicDriveTo(controlPoints, true);
 
         while (opModeIsActive()) {
-            curveDrive.cubicPathFollowing(controlPoints, true);
+            curveDrive.cubicDriveTo(controlPoints, false);
 
             TelemetryPacket packet = new TelemetryPacket();
 
