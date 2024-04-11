@@ -18,6 +18,7 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoController;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.SerialNumber;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.CameraCharacteristics;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -85,19 +86,26 @@ class WilyHardwareDevice implements HardwareDevice {
  * Wily Works simulated IMU implementation.
  */
 class WilyIMU extends WilyHardwareDevice implements IMU {
+    double startYaw;
     @Override
     public boolean initialize(Parameters parameters) {
-        return false;
+        resetYaw();
+        return true;
     }
 
     @Override
     public void resetYaw() {
-
+        startYaw = WilyWorks.getPose().heading.log();
     }
 
     @Override
     public YawPitchRollAngles getRobotYawPitchRollAngles() {
-        return new YawPitchRollAngles(AngleUnit.RADIANS, 0, 0, 0, 0);
+        return new YawPitchRollAngles(
+                AngleUnit.RADIANS,
+                WilyWorks.getPose().heading.log() - startYaw,
+                0,
+                0,
+                0);
     }
 
     @Override
@@ -112,7 +120,12 @@ class WilyIMU extends WilyHardwareDevice implements IMU {
 
     @Override
     public AngularVelocity getRobotAngularVelocity(AngleUnit angleUnit) {
-        return new AngularVelocity();
+        return new AngularVelocity(
+                angleUnit,
+                (float) WilyWorks.getPoseVelocity().angVel, // ### transformedAngularVelocityVector.get(0),
+                0, // ### transformedAngularVelocityVector.get(1),
+                0, // ### transformedAngularVelocityVector.get(2),
+                0); // ### rawAngularVelocity.acquisitionTime);
     }
 }
 
@@ -405,9 +418,7 @@ class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
     }
 
     @Override
-    public void setDirection(Direction direction) {
-
-    }
+    public void setDirection(Direction direction) { }
 
     @Override
     public Direction getDirection() {
@@ -415,9 +426,7 @@ class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
     }
 
     @Override
-    public void setPower(double power) {
-
-    }
+    public void setPower(double power) { }
 
     @Override
     public double getPower() {
@@ -431,24 +440,16 @@ class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
 class WilyDigitalChannel extends WilyHardwareDevice implements DigitalChannel {
 
     @Override
-    public Mode getMode() {
-        return null;
-    }
+    public Mode getMode() { return null; }
 
     @Override
-    public void setMode(Mode mode) {
-
-    }
+    public void setMode(Mode mode) {}
 
     @Override
-    public boolean getState() {
-        return false;
-    }
+    public boolean getState() { return false; }
 
     @Override
-    public void setState(boolean state) {
-
-    }
+    public void setState(boolean state) {}
 }
 
 /**

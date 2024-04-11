@@ -16,16 +16,91 @@ import java.lang.reflect.Method;
  * FTC programs use this class to configure and interface with the Wily Works simulator.
  */
 public class WilyWorks {
-
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Configuration
 
-    // Name of the opMode to automatically start, if any:
-    static public String autoOpMode;
+    /**
+     * Derive from this class and mark it with the @Wily annotation to configure the Wily Works
+     * simulator.
+     */
+    public static class Config {
+        // Set these to the actual dimensions of your robot:
+        public double robotWidth = 24.0;
+        public double robotHeight = 24.0;
 
-    // The robot's dimensions, in inches:
-    static public final int robotWidth = 24;
-    static public final int robotLength = 32;
+        // Maximum linear and rotational speeds in inches/s and radians/s, respectively:
+        public double maxLinearSpeed = 60;
+        public double maxAngularSpeed = Math.PI;
+
+        // Maximum linear acceleration and deceleration, in inches/s/s:
+        public double maxLinearAcceleration = 50;
+        public double maxLinearDeceleration = -30; // Should be negative
+
+        // Maximum angular acceleration and deceleration, in radians/s/s:
+        public double maxAngularAcceleration = Math.PI;
+
+        // If 'true', add error to all sensor measurements to simulate real life:
+        public boolean addError = true;
+
+        // Fill this out to describe cameras on the robot:
+        public Camera[] cameras = {
+            // new Camera("CameraExample", 3, 4, 0, Math.toRadians(120), 0.120)
+        };
+
+        public DistanceSensor[] distanceSensors = {
+            // new DistanceSensor("DistanceExample", 1, 2, Math.toRadians(90));
+        };
+
+        /**
+         * Structure used to describe April Tag cameras on the robot:
+         */
+        public static class Camera {
+            // Camera name as specified in the robot's configuration:
+            String name;
+
+            // Camera position in inches relative to the robot's center of rotation.
+            // Positive 'x' is towards the front of the robot, negative towards the back.
+            // Positive 'y' is towards the left of the robot, negative towards the right:
+            double x;
+            double y;
+
+            // Orientation of the camera relative to the front of the robot, in radians. If zero,
+            // the camera points straight forward; if Pi, the camera points straight backwards:
+            double orientation;
+
+            // Field of view of the camera, in radians. Can be zero which assigns a default:
+            double fieldOfView = 0;
+
+            // Latency of the April Tag processing for this camera, in seconds:
+            double latency = 0.200;
+
+            public Camera(String name, double x, double y, double orientation, double fieldOfView, double latency) {
+                this.name = name; this.x = x; this.y = y; this.orientation = orientation; this.fieldOfView = fieldOfView; this.latency = latency;
+            }
+        }
+
+        /**
+         * Structure used to describe distance sensors on the robot:
+         */
+        public static class DistanceSensor {
+            // Distance sensor name as specified in the robot's configuration:
+            String name;
+
+            // Sensor position in inches relative to the robot's center of rotation.
+            // Positive 'x' is towards the front of the robot, negative towards the back.
+            // Positive 'y' is towards the left of the robot, negative towards the right:
+            double x;
+            double y;
+
+            // Orientation of the sensor relative to the front of the robot, in radians. If zero,
+            // the sensor points straight forward; if Pi, the sensor points straight backwards:
+            double orientation;
+
+            public DistanceSensor(String name, double x, double y, double orientation) {
+                this.name = name; this.x = x; this.y = y; this.orientation = orientation;
+            }
+        }
+    }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Interaction
@@ -39,18 +114,11 @@ public class WilyWorks {
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // Implementation
 
-    // Initialize the link to WilyWorks without worrying about messy exceptions:
-    static Class initializeWilyLink() throws ClassNotFoundException, NoSuchMethodException, InvocationTargetException, IllegalAccessException {
-        Class klass = getSystemClassLoader().loadClass("com.wilyworks.simulator.WilyCore");
-        // @@@ klass.getMethod("initialize").invoke(null, autoOpMode, robotWidth, robotLength);
-        return klass;
-    }
-
     // Wrap WilyLink initialization with
     static Class getWilyCore() {
         try {
-            return initializeWilyLink();
-        } catch (ClassNotFoundException|NoSuchMethodException|InvocationTargetException|IllegalAccessException e) {
+            return getSystemClassLoader().loadClass("com.wilyworks.simulator.WilyCore");
+        } catch (ClassNotFoundException e) {
             return null;
         }
     }
@@ -93,6 +161,32 @@ public class WilyWorks {
             }
         }
         return false;
+    }
+
+    // Get the simulation's true pose:
+    static public Pose2d getPose() {
+        if (wilyCore != null) {
+            try {
+                Method getPose = wilyCore.getMethod("getPose");
+                return (Pose2d) getPose.invoke(null);
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
+    }
+
+    // Get the simulation's true pose:
+    static public PoseVelocity2d getPoseVelocity() {
+        if (wilyCore != null) {
+            try {
+                Method getPose = wilyCore.getMethod("getPoseVelocity");
+                return (PoseVelocity2d) getPose.invoke(null);
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return null;
     }
 
     // Set the drive powers:
