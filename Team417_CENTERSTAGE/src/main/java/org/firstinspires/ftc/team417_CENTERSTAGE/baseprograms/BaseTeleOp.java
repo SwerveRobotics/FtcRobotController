@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -30,6 +31,14 @@ public abstract class BaseTeleOp extends BaseOpMode {
     public void runOpMode() {
         initializeHardware();
 
+        TelemetryPacket packet = new TelemetryPacket();
+        Canvas canvas = packet.fieldOverlay();
+        canvas.setStroke("#3F5100");
+        FtcDashboard dashboard = FtcDashboard.getInstance();
+
+        MecanumDrive.drawRobot(canvas, drive.pose);
+        dashboard.sendTelemetryPacket(packet);
+
         if (armMotor != null) {
             arm = new ArmMechanism(gamepad2, armMotor, dumperServo, distSensor);
             resetDumper();
@@ -39,7 +48,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
         if (USING_AUTO_DRIVE_TO)
             autoDrive = new AutoDriveTo(drive);
 
-        curveDrive = new PathFollowing(drive);
+        curveDrive = new PathFollowing(drive, canvas);
 
         waitForStart();
 
@@ -52,14 +61,12 @@ public abstract class BaseTeleOp extends BaseOpMode {
                 new DPoint(0, 24), new DPoint(24, 24), new DPoint(24, 0));
         curveDrive.cubicDriveTo(controlPoints, true);
 
+
+
         while (opModeIsActive()) {
             curveDrive.cubicDriveTo(controlPoints, false);
 
-            TelemetryPacket packet = new TelemetryPacket();
-
-
             resetIMUIfNeeded();
-            //driveUsingControllers(false, packet);
 
             drive.updatePoseEstimate();
 
@@ -67,12 +74,8 @@ public abstract class BaseTeleOp extends BaseOpMode {
             telemetry.addData("y", drive.pose.position.y);
             telemetry.addData("heading", drive.pose.heading);
 
-            // Code added to draw the pose, use only when testing
-            if (TESTING) {
-                Canvas c = packet.fieldOverlay();
-                c.setStroke("#3F5100");
-                MecanumDrive.drawRobot(c, drive.pose);
-            }
+            MecanumDrive.drawRobot(canvas, drive.pose);
+            dashboard.sendTelemetryPacket(packet);
 
             if (armMotor != null && dumperServo != null && gateServo != null) {
                 outputUsingControllers();
@@ -81,9 +84,6 @@ public abstract class BaseTeleOp extends BaseOpMode {
                 telemetry.addData("DumperServo", dumperServo.getPosition());
                 telemetry.addData("GateServo", gateServo.getPosition());
             }
-
-            /*FtcDashboard dashboard = FtcDashboard.getInstance();
-            dashboard.sendTelemetryPacket(packet);*/
 
             telemetry.update();
         }
@@ -135,7 +135,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
     boolean usingStick = true;
     boolean dPadUpPressed;
 
-    public void driveUsingControllers(boolean curve, TelemetryPacket packet) {
+    public void driveUsingControllers(boolean curve) {
         sensitive = gamepad1.right_bumper;
 
         double sensitivity, rotSensitivity;
@@ -175,7 +175,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             }
             mecanumDrive(x, y, rot);
         } else if (USING_AUTO_DRIVE_TO)
-            autoDrive.linearDriveTo(48, -36, Math.toRadians(180), driveToInit, packet);
+            autoDrive.linearDriveTo(48, -36, Math.toRadians(180), driveToInit);
 
         dPadUpPressed = gamepad1.dpad_up;
     }

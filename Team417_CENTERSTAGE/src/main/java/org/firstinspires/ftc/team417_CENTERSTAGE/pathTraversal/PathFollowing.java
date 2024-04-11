@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal;
 
+import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 
@@ -19,10 +21,14 @@ public class PathFollowing {
     private Vector2d linearVel = new Vector2d(0, 0);
     private double initTime;
     private int pathIndex = 0;
+    private boolean linearFinished = false;
+    private boolean cubicFinished = false;
 
     MecanumDrive drive;
-    public PathFollowing(MecanumDrive drive) {
+    Canvas canvas;
+    public PathFollowing(MecanumDrive drive, Canvas canvas) {
         this.drive = drive;
+        this.canvas = canvas;
     }
 
     public Vector2d linearPathFollowing(Vector2d goalVector, double timeSinceInit) {
@@ -37,7 +43,7 @@ public class PathFollowing {
         speed = Math.min(speed, Math.sqrt(Math.abs(2.0 * driveDeccel * distRemaining)));
 
         if (speed <= LINEAR_PATH_VEL_EPSILON && distRemaining <= LINEAR_PATH_DIST_EPSILON)
-            return null;
+            linearFinished = true;
 
         normVector = goalVector.div(goalVector.norm());
         return normVector.times(speed);
@@ -55,7 +61,7 @@ public class PathFollowing {
         speed = Math.min(speed, Math.sqrt(Math.abs(2.0 * driveDeccel * (distRemaining + additionalDistRemaining))));
 
         if (distRemaining <= LINEAR_PATH_DIST_EPSILON) //broken please fix me.
-            return null;
+            linearFinished = true;
 
         normVector = goalVector.div(goalVector.norm());
         return normVector.times(speed);
@@ -72,23 +78,24 @@ public class PathFollowing {
     }
     public Vector2d cubicPathFollowing(Bezier path, double timeSinceInit) {
         Vector2d linearVel;
-        ArrayList<DPoint> linePath = path.lineApproximation(LINE_APROX_EPSILON);
         Vector2d nextVector;
 
-        linePath.add(0, new DPoint(drive.pose.position.x, drive.pose.position.y));
+        path.lineApproximation(LINE_APROX_EPSILON, new DPoint(drive.pose.position.x, drive.pose.position.y));
+        path.graph(canvas);
 
-        nextVector = new Vector2d(linePath.get(pathIndex).x - drive.pose.position.x,
-                                  linePath.get(pathIndex).y - drive.pose.position.y);
+        nextVector = new Vector2d(path.linearPoints.get(pathIndex).x - drive.pose.position.x,
+                                  path.linearPoints.get(pathIndex).y - drive.pose.position.y);
 
-        linearVel = linearPathFollowing(nextVector, timeSinceInit, calcTotalDist(linePath, pathIndex));
+        linearVel = linearPathFollowing(nextVector, timeSinceInit, calcTotalDist(path.linearPoints, pathIndex));
 
-        if (linearVel == null) {
+        if (linearFinished) {
             pathIndex++;
-            linearVel = linearPathFollowing(nextVector, timeSinceInit, calcTotalDist(linePath, pathIndex));
+            linearFinished = false;
+            return cubicPathFollowing(path,timeSinceInit);
         }
 
-        if (pathIndex >= linePath.size())
-            linearVel = null;
+        if (pathIndex >= path.linearPoints.size())
+            cubicFinished = true;
 
         return linearVel;
     }
@@ -101,14 +108,17 @@ public class PathFollowing {
             linearVel = new Vector2d(0, 0);
             initTime = currentTime;
             pathIndex = 0;
+            linearFinished = false;
+            cubicFinished = false;
         }
 
         timeSinceInit = currentTime - initTime;
 
-        if (linearVel == null)
+        linearVel = cubicPathFollowing(path, timeSinceInit);
+
+        if (cubicFinished)
             return true;
 
-        linearVel = cubicPathFollowing(path, timeSinceInit);
         drive.setDrivePowers(new PoseVelocity2d(linearVel, 0));
 
         return false;

@@ -170,16 +170,11 @@ public class AutoDriveTo {
         return rotationalSpeed;
     }
 
-    private void drawVectors(double x, double y, Canvas canvas) {
-        canvas.strokeLine(drive.pose.position.x, drive.pose.position.y,
-                      x + drive.pose.position.x, y + drive.pose.position.y);
-    }
-
     PoseVelocity2d currentVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
     private double initTime = 0, lastTime = 0;
     boolean finished = false;
 
-    public PoseVelocity2d motionProfileWithVector(Vector2d linearVector, double goalRotation, boolean hasInit, TelemetryPacket packet){
+    public PoseVelocity2d motionProfileWithVector(Vector2d linearVector, double goalRotation, boolean hasInit){
         Vector2d tangentialVelocity;
         Vector2d radialVelocity;
         double rotationalSpeed;
@@ -187,8 +182,6 @@ public class AutoDriveTo {
         final double velocityEpsilon = 7.5;
         final double distEpsilon = 1;
         double timeSinceInit, deltaTime;
-
-        Canvas canvas = packet.fieldOverlay();
 
         currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
 
@@ -206,12 +199,6 @@ public class AutoDriveTo {
         if (Math.hypot(finalLinearVelocity.x, finalLinearVelocity.y) < velocityEpsilon && Math.abs(linearVector.x) < distEpsilon && Math.abs(linearVector.y) < distEpsilon){
             radialVelocity = new Vector2d(0, 0);
             tangentialVelocity = new Vector2d(0, 0);
-            packet.put("currentX", drive.pose.position.x);
-            packet.put("currentY", drive.pose.position.y);
-            packet.put("currentTheta", Math.toDegrees(drive.pose.heading.log()));
-            packet.put("errorX", 48.0 - drive.pose.position.x);
-            packet.put("errorY", -36.0 - drive.pose.position.y);
-            packet.put("errorTheta", 180.0 - Math.toDegrees(drive.pose.heading.log()));
         } else {
             radialVelocity = radialVectorCalculations(linearVector, deltaTime);
             tangentialVelocity = tangentialVectorCalculations(linearVector, deltaTime);
@@ -220,20 +207,15 @@ public class AutoDriveTo {
 
         finalLinearVelocity = radialVelocity.plus(tangentialVelocity);
 
-        drawVectors(linearVector.x, linearVector.y, canvas);
-        /*drawVectors(radialVelocity.x, radialVelocity.y);
-        drawVectors(tangentialVelocity.x, tangentialVelocity.y);
-        drawVectors(finalLinearVelocity.x, finalLinearVelocity.y);*/
-
         lastTime = timeSinceInit;
 
         return new PoseVelocity2d(finalLinearVelocity, rotationalSpeed);
     }
 
-    public void linearDriveTo(double goalX, double goalY, double goalRotation, boolean hasDriveToInit, TelemetryPacket packet) {
+    public void linearDriveTo(double goalX, double goalY, double goalRotation, boolean hasDriveToInit) {
         PoseVelocity2d motionProfileVel = motionProfileWithVector(new Vector2d(goalX - drive.pose.position.x,
                                                                                goalY - drive.pose.position.y),
-                                                                  goalRotation, hasDriveToInit, packet);
+                                                                  goalRotation, hasDriveToInit);
         drive.setDrivePowers(null, motionProfileVel);
     }
 }
