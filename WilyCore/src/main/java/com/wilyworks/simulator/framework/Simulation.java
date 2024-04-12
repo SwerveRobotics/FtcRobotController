@@ -5,6 +5,7 @@ import static java.lang.System.nanoTime;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.wilyworks.common.WilyWorks;
 
 import java.awt.Dimension;
 
@@ -56,26 +57,16 @@ class Localizer {
  * Kinematic simulation for the robot's movement.
  */
 public class Simulation {
-    public static class Kinematics {
-        // path profile parameters (in inches)
-        public double maxWheelVel = 60;
-        public double minProfileAccel = -30;
-        public double maxProfileAccel = 50;
-
-        // turn profile parameters (in radians)
-        public double maxAngVel = Math.PI; // shared with path
-        public double maxAngAccel = Math.PI;
-    }
-
     public Pose2d pose = new Pose2d(-48, 0, Math.toRadians(90)); // Robot's true pose
     public PoseVelocity2d poseVelocity = new PoseVelocity2d(new Vector2d(0, 60), Math.toRadians(0)); // Robot's true pose velocity
     public Dimension robotSize = new Dimension(16, 18); // Size in inches of user's robot
 
     private Localizer localizer;
-    private Kinematics kinematics = new Kinematics(); // Kinematic parameters for the simulation
+    private WilyWorks.Config config; // Kinematic parameters for the simulation
     private PoseVelocity2d requestedVelocity; // Velocity requested by MecanumDrive
 
-    public Simulation() {
+    public Simulation(WilyWorks.Config config) {
+        this.config = config;
         localizer = new Localizer(this);
     }
 
@@ -96,13 +87,13 @@ public class Simulation {
         double deltaAngular = requestedAngular - currentAngular;
         if (deltaAngular >= 0) {
             // Increase the angular velocity:
-            currentAngular += kinematics.maxAngAccel * dt;
-            currentAngular = Math.min(currentAngular, kinematics.maxAngVel);
+            currentAngular += config.maxAngularAcceleration * dt;
+            currentAngular = Math.min(currentAngular, config.maxAngularSpeed);
             currentAngular = Math.min(currentAngular, requestedAngular);
         } else {
             // Decrease the angular velocity:
-            currentAngular -= kinematics.maxAngAccel * dt; // maxAngAccel is positive
-            currentAngular = Math.max(currentAngular, -kinematics.maxAngVel);
+            currentAngular -= config.maxAngularAcceleration * dt; // maxAngAccel is positive
+            currentAngular = Math.max(currentAngular, -config.maxAngularSpeed);
             currentAngular = Math.max(currentAngular, requestedAngular);
         }
 
@@ -124,17 +115,17 @@ public class Simulation {
         double theta = requestedAngle - currentAngle; // Angle from current to requested
 
         // Clamp to the maximum allowable velocities:
-        currentVelocity = Math.min(currentVelocity, kinematics.maxWheelVel);
-        requestedVelocity = Math.min(requestedVelocity, kinematics.maxWheelVel);
+        currentVelocity = Math.min(currentVelocity, config.maxLinearSpeed);
+        requestedVelocity = Math.min(requestedVelocity, config.maxLinearSpeed);
 
         // Perpendicular velocity is the current velocity component away from
         // the requested velocity. We reduce this by the deceleration:
         double perpVelocity = Math.sin(theta) * currentVelocity;
         if (perpVelocity >= 0) {
-            perpVelocity += kinematics.minProfileAccel * dt; // minProfileAccel is negative
+            perpVelocity += config.maxLinearDeceleration * dt; // minProfileAccel is negative
             perpVelocity = Math.max(perpVelocity, 0);
         } else {
-            perpVelocity -= kinematics.minProfileAccel * dt;
+            perpVelocity -= config.maxLinearDeceleration * dt;
             perpVelocity = Math.min(perpVelocity, 0);
         }
 
@@ -148,14 +139,14 @@ public class Simulation {
         // velocity so our maximum parallel velocity is remainder. Note that we're
         // guaranteed that won't try to do the square root of a negative:
         double maxParallelVelocity =
-                Math.sqrt(Math.pow(kinematics.maxWheelVel, 2) - Math.pow(perpVelocity, 2));
+                Math.sqrt(Math.pow(config.maxLinearSpeed, 2) - Math.pow(perpVelocity, 2));
 
         if (parallelDelta >= 0) { // Increase the parallel velocity
-            parallelVelocity += kinematics.maxProfileAccel * dt;
+            parallelVelocity += config.maxLinearAcceleration * dt;
             parallelVelocity = Math.min(parallelVelocity, maxParallelVelocity);
             parallelVelocity = Math.min(parallelVelocity, requestedVelocity);
         } else { // Decrease the parallel velocity:
-            parallelVelocity -= kinematics.maxProfileAccel * dt; // maxProfileAccel is positive
+            parallelVelocity -= config.maxLinearAcceleration * dt; // maxProfileAccel is positive
             parallelVelocity = Math.max(parallelVelocity, -maxParallelVelocity);
             parallelVelocity = Math.max(parallelVelocity, requestedVelocity);
         }
@@ -212,9 +203,9 @@ public class Simulation {
         PoseVelocity2d fieldVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
         if (stickVelocity != null) {
             fieldVelocity = new PoseVelocity2d(new Vector2d(
-                    stickVelocity.linearVel.x * kinematics.maxWheelVel,
-                    stickVelocity.linearVel.y * kinematics.maxWheelVel),
-                    stickVelocity.angVel * kinematics.maxAngVel);
+                    stickVelocity.linearVel.x * config.maxLinearSpeed,
+                    stickVelocity.linearVel.y * config.maxLinearSpeed),
+                    stickVelocity.angVel * config.maxAngularSpeed);
             fieldVelocity = pose.times(fieldVelocity); // Make it field-relative
         }
         if (assistVelocity != null) {

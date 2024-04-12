@@ -1,6 +1,7 @@
 package com.wilyworks.simulator.framework;
 
 import com.badlogic.gdx.controllers.Controller;
+import com.wilyworks.simulator.WilyCore;
 
 import org.libsdl.SDL;
 
@@ -14,55 +15,83 @@ import java.awt.event.KeyEvent;
  * Windows hook for key presses.
  */
 class KeyDispatcher implements KeyEventDispatcher {
-    private boolean altPressed;
-    private boolean ctrlPressed;
-    private boolean shiftPressed;
+    // Consecutive clicks must be this many seconds to activate double-click:
+    final double DOUBLE_CLICK_DURATION = 0.5;
+
+    private boolean altActivated; // True if Alt-mode was activating by double-tapping the Alt key
+    private double altPressTime; // Time when the Alt key was last pressed for a double-tap; 0 if none
+    private boolean ctrlPressed; // True if the Control key is currently being pressed
+    private boolean shiftPressed; // True if the Shift key is currently being pressed
 
     public boolean[] button = new boolean[SDL.SDL_CONTROLLER_BUTTON_MAX];
     public float[] axis = new float[SDL.SDL_CONTROLLER_AXIS_MAX];
-    public float axisValue;
+    public float axisMultiplier; // When an axis is activated, use this for its speed
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent keyEvent) {
         int code = keyEvent.getKeyCode();
         boolean pressed = (keyEvent.getID() != KeyEvent.KEY_RELEASED);
-        float multiplier = (pressed) ? 1.0f : 0.0f;
+        float axisValue = (pressed) ? 1.0f : 0.0f;
 
         switch (code) {
-            case KeyEvent.VK_ALT: altPressed = pressed; break;
+            case KeyEvent.VK_ALT:
+                if (pressed) {
+                    double time = WilyCore.time();
+                    if ((altPressTime == 0) || (time - altPressTime > DOUBLE_CLICK_DURATION)) {
+                        altPressTime = WilyCore.time();
+                    } else {
+                        // We detected an Alt double-click! Toggle the state:
+                        altActivated = !altActivated;
+                        altPressTime = 0;
+                    }
+                }
+                break;
+
             case KeyEvent.VK_CONTROL: ctrlPressed = pressed; break;
             case KeyEvent.VK_SHIFT: shiftPressed = pressed; break;
 
-            case KeyEvent.VK_A: axis[SDL.SDL_CONTROLLER_AXIS_LEFTX] = -multiplier; break;
-            case KeyEvent.VK_D: axis[SDL.SDL_CONTROLLER_AXIS_LEFTX] = multiplier; break;
-            case KeyEvent.VK_W: axis[SDL.SDL_CONTROLLER_AXIS_LEFTY] = -multiplier; break;
-            case KeyEvent.VK_S: axis[SDL.SDL_CONTROLLER_AXIS_LEFTY] = multiplier; break;
-            case KeyEvent.VK_COMMA: axis[SDL.SDL_CONTROLLER_AXIS_TRIGGERLEFT] = multiplier; break;
-            case KeyEvent.VK_PERIOD: axis[SDL.SDL_CONTROLLER_AXIS_TRIGGERRIGHT] = multiplier; break;
+            case KeyEvent.VK_A: axis[SDL.SDL_CONTROLLER_AXIS_LEFTX] = -axisValue; break;
+            case KeyEvent.VK_D: axis[SDL.SDL_CONTROLLER_AXIS_LEFTX] = axisValue; break;
+            case KeyEvent.VK_W: axis[SDL.SDL_CONTROLLER_AXIS_LEFTY] = -axisValue; break;
+            case KeyEvent.VK_S: axis[SDL.SDL_CONTROLLER_AXIS_LEFTY] = axisValue; break;
+            case KeyEvent.VK_COMMA: axis[SDL.SDL_CONTROLLER_AXIS_TRIGGERLEFT] = axisValue; break;
+            case KeyEvent.VK_PERIOD: axis[SDL.SDL_CONTROLLER_AXIS_TRIGGERRIGHT] = axisValue; break;
 
             case KeyEvent.VK_LEFT:
-                if (altPressed)
+                if (altActivated) {
                     button[SDL.SDL_CONTROLLER_BUTTON_DPAD_LEFT] = pressed;
-                else
-                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTX] = -multiplier;
+                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTX] = 0;
+                } else {
+                    button[SDL.SDL_CONTROLLER_BUTTON_DPAD_LEFT] = false;
+                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTX] = -axisValue;
+                }
                 break;
             case KeyEvent.VK_RIGHT:
-                if (altPressed)
+                if (altActivated) {
                     button[SDL.SDL_CONTROLLER_BUTTON_DPAD_RIGHT] = pressed;
-                else
-                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTX] = multiplier;
+                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTX] = 0;
+                } else {
+                    button[SDL.SDL_CONTROLLER_BUTTON_DPAD_RIGHT] = false;
+                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTX] = axisValue;
+                }
                 break;
             case KeyEvent.VK_UP:
-                if (altPressed)
+                if (altActivated) {
                     button[SDL.SDL_CONTROLLER_BUTTON_DPAD_UP] = pressed;
-                else
-                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTY] = -multiplier;
+                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTY] = 0;
+                } else {
+                    button[SDL.SDL_CONTROLLER_BUTTON_DPAD_UP] = false;
+                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTY] = -axisValue;
+                }
                 break;
             case KeyEvent.VK_DOWN:
-                if (altPressed)
+                if (altActivated) {
                     button[SDL.SDL_CONTROLLER_BUTTON_DPAD_DOWN] = pressed;
-                else
-                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTY] = multiplier;
+                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTY] = 0;
+                } else {
+                    button[SDL.SDL_CONTROLLER_BUTTON_DPAD_DOWN] = false;
+                    axis[SDL.SDL_CONTROLLER_AXIS_RIGHTY] = axisValue;
+                }
                 break;
 
             case KeyEvent.VK_E:
@@ -80,7 +109,7 @@ class KeyDispatcher implements KeyEventDispatcher {
         }
 
         // Speed is 20% of max when control is pressed, 100% when shift is pressed, 40% otherwise:
-        axisValue = (ctrlPressed) ? 0.20f : ((shiftPressed) ? 1.0f : 0.4f);
+        axisMultiplier = (ctrlPressed) ? 0.20f : ((shiftPressed) ? 1.0f : 0.4f);
         return true;
     }
 }
@@ -160,7 +189,7 @@ public class WilyGamepad {
     // Get axis state from either the controller or the keyboard, with the latter winning ties:
     float getAxis(int sdlAxis) {
         if (keyDispatcher.axis[sdlAxis] != 0)
-            return keyDispatcher.axis[sdlAxis] * keyDispatcher.axisValue;
+            return keyDispatcher.axis[sdlAxis] * keyDispatcher.axisMultiplier;
         else if (controller != null)
             return deadZone(controller.getAxis(sdlAxis));
         else

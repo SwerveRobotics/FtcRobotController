@@ -19,7 +19,7 @@ public class WilyTelemetry implements Telemetry {
     // Use this font for display on the PC. It's different from the sizing font because the
     // sizing font doesn't support the full unicode character set (like emojis):
     final int DISPLAY_FONT_SIZE = 16;
-    final Font DISPLAY_FONT = new Font(null, Font.PLAIN, DISPLAY_FONT_SIZE);
+    final Font PROPORTIONAL_DISPLAY_FONT = new Font(null, Font.PLAIN, DISPLAY_FONT_SIZE);
 
     // Try to emulate the same line width as the REV Driver Station in its horizontal
     // configuration. Because the DS uses a proportional font, and because we don't have
@@ -198,7 +198,7 @@ public class WilyTelemetry implements Telemetry {
     public boolean update() {
         Graphics g = canvas.getBufferStrategy().getDrawGraphics();
         g.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        g.setFont(DISPLAY_FONT);
+        g.setFont(PROPORTIONAL_DISPLAY_FONT);
 
         if (TEST) {
             System.out.println(stringWidth("123456789,123456789,123456789,123456789,12"));

@@ -13,6 +13,8 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.wilyworks.common.Wily;
+import com.wilyworks.common.WilyWorks;
 import com.wilyworks.simulator.framework.Simulation;
 import com.wilyworks.simulator.framework.WilyTelemetry;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -68,6 +70,17 @@ class OpModeChoice {
 
     public OpModeChoice(Class<?> klass, String fullName, String givenName, String className) {
         this.klass = klass; this.fullName = fullName; this.givenName = givenName; this.className = className;
+    }
+}
+
+/**
+ * Class for returning all relative found annotated classes:
+ */
+class Annotations {
+    Class<?> configKlass;
+    List<OpModeChoice> opModeChoices;
+    public Annotations(Class<?> configKlass, List<OpModeChoice> opModeChoices) {
+        this.configKlass = configKlass; this.opModeChoices = opModeChoices;
     }
 }
 
@@ -398,7 +411,7 @@ public class WilyCore {
     private static boolean simulationUpdated; // True if WilyCore.update() has been called since
     private static double lastUpdateTime = time(); // Time of last update() call, in seconds
 
-    static double time() {
+    public static double time() {
         return System.currentTimeMillis() / 1000.0;
     }
 
@@ -460,6 +473,14 @@ public class WilyCore {
         simulationUpdated = false;
     }
 
+    // Get the simulation's true pose and velocity:
+    static public Pose2d getPose() {
+        return simulation.pose;
+    }
+    static public PoseVelocity2d getPoseVelocity() {
+        return simulation.poseVelocity;
+    }
+
     // Guest call to set the drive powers:
     static public void setDrivePowers(
             PoseVelocity2d stickVelocity,
@@ -480,18 +501,26 @@ public class WilyCore {
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
-    // Enumerate all potential OpModes to be run:
-    static List<OpModeChoice> enumerateOpModeChoices() {
+    // Enumerate all useful annotated classes:
+    static Annotations getAnnotations() {
         // Use the Reflections library to enumerate all classes in this package that have the
         // @Autonomous and @TeleOp annotations:
         Reflections reflections = new Reflections("org.firstinspires.ftc");
         Set<Class<?>> allOps = new HashSet<>();
         allOps.addAll(reflections.getTypesAnnotatedWith(Autonomous.class));
         allOps.addAll(reflections.getTypesAnnotatedWith(TeleOp.class));
+        allOps.addAll(reflections.getTypesAnnotatedWith(Wily.class));
         ArrayList<OpModeChoice> choices = new ArrayList<>();
+        Class<?> config = null;
+        boolean multipleConfigs = false;
 
         // Build a list of the eligible opModes along with their friendly names:
         for (Class klass: allOps) {
+            if ((WilyWorks.Config.class.isAssignableFrom(klass))) {
+                multipleConfigs = (config != null);
+                config = klass;
+            }
+
             if ((OpMode.class.isAssignableFrom(klass)) &&
                     (!klass.isAnnotationPresent(Disabled.class))) {
 
@@ -500,7 +529,7 @@ public class WilyCore {
                 String className = klass.getName();
                 className = className.substring(className.lastIndexOf(".") + 1); // Skip the dot itself
                 String givenName = className;
-                String fullName = className;
+                String groupName = null;
 
                 // Override the name if an annotation exists:
                 TeleOp teleOpAnnotation = (TeleOp) klass.getAnnotation(TeleOp.class);
@@ -509,7 +538,7 @@ public class WilyCore {
                         givenName = teleOpAnnotation.name();
                     }
                     if (!teleOpAnnotation.group().equals("")) {
-                        fullName = teleOpAnnotation.group() + ": " + givenName;
+                        groupName = teleOpAnnotation.group();
                     }
                 }
                 Autonomous autonomousAnnotation = (Autonomous) klass.getAnnotation(Autonomous.class);
@@ -518,14 +547,34 @@ public class WilyCore {
                         givenName = autonomousAnnotation.name();
                     }
                     if (!autonomousAnnotation.group().equals("")) {
-                        fullName = autonomousAnnotation.group() + ": " + givenName;
+                        groupName = autonomousAnnotation.group();
                     }
                 }
+                String fullName = (groupName == null) ? givenName : groupName + ": " + givenName;
                 choices.add(new OpModeChoice(klass, fullName, givenName, className));
             }
         }
+        if (multipleConfigs) {
+            JOptionPane.showMessageDialog(
+                    null,
+                    "Only one class should be derived from WilyWorks.Config and annotated with '@Wily'.",
+                    "Too many Configs",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
         choices.sort(Comparator.comparing(x -> x.fullName));
-        return choices;
+        return new Annotations(config, choices);
+    }
+
+    // Allocate a configuration object. Use the specified class if provided, otherwise use a default.
+    static WilyWorks.Config getConfig(Class<?> configKlass) {
+        if (configKlass == null) {
+            try {
+                return (WilyWorks.Config) configKlass.newInstance();
+            } catch (InstantiationException|IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return new WilyWorks.Config();
     }
 
     // Call from the window manager to invoke the user's chosen "runOpMode" method:
@@ -588,9 +637,9 @@ public class WilyCore {
     {
         Thread.currentThread().setName("Wily core thread");
 
-        // Enumerate all of the opModes:
-        List<OpModeChoice> opModeChoices = enumerateOpModeChoices();
-        if (opModeChoices.size() == 0) {
+        // Enumerate all opModes and find a configuration class:
+        Annotations annotations = getAnnotations();
+        if (annotations.opModeChoices.size() == 0) {
             String message = "Couldn't find @TeleOp or @Autonomous classes anywhere. Is the SRC_ROOT\n"
                 + "environment variable set correctly in the WilyWorks configuration you created?";
             JOptionPane.showMessageDialog(null, message, "Exception",
@@ -599,11 +648,11 @@ public class WilyCore {
         }
 
         // Start the UI:
-        DashboardWindow dashboardWindow = new DashboardWindow(opModeChoices, args);
+        DashboardWindow dashboardWindow = new DashboardWindow(annotations.opModeChoices, args);
         dashboardWindow.setVisible(true);
 
         dashboardCanvas = dashboardWindow.dashboardCanvas;
-        simulation = new Simulation();
+        simulation = new Simulation(getConfig(annotations.configKlass));
         field = new Field(simulation);
         gamepad1 = new Gamepad();
         gamepad2 = new Gamepad(); // @@@ Need to hook into
