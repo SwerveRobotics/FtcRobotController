@@ -11,7 +11,6 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.AprilTagInfo;
 import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.CameraInfo;
 import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.InfoWithDetection;
@@ -74,19 +73,19 @@ public class AprilTagPoseEstimator {
         // Create the AprilTag processor.
         AprilTagProcessor.Builder aprilTagBuilder = new AprilTagProcessor.Builder();
 
-                // The following default settings are available to un-comment and edit as needed.
-                //.setDrawAxes(false)
-                //.setDrawCubeProjection(false)
-                //.setDrawTagOutline(true)
-                //.setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
-                //.setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
-                //.setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
+        // The following default settings are available to un-comment and edit as needed.
+        //.setDrawAxes(false)
+        //.setDrawCubeProjection(false)
+        //.setDrawTagOutline(true)
+        //.setTagFamily(AprilTagProcessor.TagFamily.TAG_36h11)
+        //.setTagLibrary(AprilTagGameDatabase.getCenterStageTagLibrary())
+        //.setOutputUnits(DistanceUnit.INCH, AngleUnit.DEGREES)
 
-                // == CAMERA CALIBRATION ==
-                // If you do not manually specify calibration parameters, the SDK will attempt
-                // to load a predefined calibration for your camera.
-                //.setLensIntrinsics(578.272, 578.272, 402.145, 221.506)
-                // ... these parameters are fx, fy, cx, cy.
+        // == CAMERA CALIBRATION ==
+        // If you do not manually specify calibration parameters, the SDK will attempt
+        // to load a predefined calibration for your camera.
+        //.setLensIntrinsics(578.272, 578.272, 402.145, 221.506)
+        // ... these parameters are fx, fy, cx, cy.
 
         if (camera.lensIntrinsics != null) {
             aprilTagBuilder.setLensIntrinsics(camera.lensIntrinsics.fx, camera.lensIntrinsics.fy, camera.lensIntrinsics.cx, camera.lensIntrinsics.cy);
@@ -211,69 +210,6 @@ public class AprilTagPoseEstimator {
         return new Pose2d(absoluteX, absoluteY, absoluteTheta);
     }
 
-    // Many camera frames contain two or more AprilTag detections.
-    // This method chooses the best detection to go off of for a pose estimate.
-    public InfoWithDetection chooseBestAprilTag(ArrayList<InfoWithDetection> iwdList) {
-        // If list is empty, return null
-        if (iwdList.size() < 1) {
-            return null;
-        }
-
-        InfoWithDetection currentIwd;
-        int iwdListSize = iwdList.size();
-        // Remove iwds (InfoWithDetection objects) that are more than two tiles (48 inches) away
-        // Not used because of new testing
-        /*
-        for (int i = 0; i < iwdListSize; i++) {
-            currentIwd = iwdList.get(i);
-            if (Math.hypot(currentIwd.detection.ftcPose.x, currentIwd.detection.ftcPose.y) > Constants.MAX_DETECTION_DISTANCE) {
-                iwdList.remove(i);
-                i--;
-            }
-            iwdListSize = iwdList.size();
-        }
-        */
-
-        // NOW if list is empty, return null
-        if (iwdList.size() < 1) {
-            return null;
-        }
-
-        // Find the largest size of April Tag
-        currentIwd = iwdList.get(0);
-        double largestSize = currentIwd.info.sideLength;
-        for (int i = 1; i < iwdList.size(); i++) {
-            currentIwd = iwdList.get(i);
-            if (currentIwd.info.sideLength > largestSize) {
-                largestSize = currentIwd.info.sideLength;
-            }
-        }
-
-        // Remove iwds that are not the largest
-        for (int i = 0; i < iwdListSize; i++) {
-            currentIwd = iwdList.get(i);
-            if (!BaseOpMode.isEpsilonEquals(currentIwd.info.sideLength, largestSize) && currentIwd.info.sideLength < largestSize) {
-                iwdList.remove(i);
-                i--;
-            }
-            iwdListSize = iwdList.size();
-        }
-
-        // Choose the april tag that has the least distance
-        currentIwd = iwdList.get(0);
-        double leastDistance = Math.hypot(currentIwd.detection.ftcPose.x, currentIwd.detection.ftcPose.y);
-        int leastDistanceIndex = 0;
-        for (int i = 1; i < iwdList.size(); i++) {
-            currentIwd = iwdList.get(i);
-            if (Math.hypot(currentIwd.detection.ftcPose.x, currentIwd.detection.ftcPose.y) < leastDistance) {
-                leastDistance = Math.hypot(currentIwd.detection.ftcPose.x, currentIwd.detection.ftcPose.y);
-                leastDistanceIndex = i;
-            }
-        }
-
-        return iwdList.get(leastDistanceIndex);
-    }
-
     // Draws the last 100 poses as circles
     public void drawPoseHistory(Canvas c, double radius) {
         c.setStroke("#00ff00");
@@ -294,6 +230,14 @@ public class AprilTagPoseEstimator {
 
     public void drawPoseHistory(Canvas c) {
         drawPoseHistory(c, 4);
+    }
+
+    /**
+     * Decides if (a) detection(s) is/are trustworthy and if to update robotPoseEstimate based on it/them
+     */
+
+    public Pose2d trustVerification(ArrayList<Pose2d> poseArray) {
+        return null; // TODO: FINISH
     }
 
     ArrayList<InfoWithDetection> knownAprilTagsDetected = new ArrayList<>();
@@ -319,11 +263,16 @@ public class AprilTagPoseEstimator {
         }
 
         boolean detecting;
-        InfoWithDetection best = chooseBestAprilTag(knownAprilTagsDetected);
-        if (best != null) {
-            robotPoseEstimate = calculatePoseEstimate(best.detection, best.info, camera);
+        Pose2d poseEstimate;
+        ArrayList<Pose2d> poseArray = new ArrayList<>();
+        if (knownAprilTagsDetected.size() > 0) {
+            for (InfoWithDetection iwd : knownAprilTagsDetected) {
+                poseEstimate = calculatePoseEstimate(iwd.detection, iwd.info, camera);
+                poseArray.add(poseEstimate);
+                poseHistory.add(new PoseWithID(poseEstimate, iwd.info.id));
+            }
+            robotPoseEstimate = trustVerification(poseArray);
             detecting = true;
-            poseHistory.add(new PoseWithID(robotPoseEstimate, best.info.id));
             while (poseHistory.size() > 100) {
                 poseHistory.removeFirst();
             }
