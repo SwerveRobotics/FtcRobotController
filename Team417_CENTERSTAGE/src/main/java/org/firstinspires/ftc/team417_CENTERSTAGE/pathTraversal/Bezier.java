@@ -1,14 +1,21 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal;
-
 import com.acmerobotics.dashboard.canvas.Canvas;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-
 import java.util.ArrayList;
 
 //The control points of bezier curves.
 public class Bezier {
     public DPoint[] controlPoints = new DPoint[4];
     public ArrayList<DPoint> linearPoints;
+
+    public Bezier(DPoint p0, DPoint p1, DPoint p2, DPoint p3, double epsilon) {
+        controlPoints[0] = p0;
+        controlPoints[1] = p1;
+        controlPoints[2] = p2;
+        controlPoints[3] = p3;
+
+        flatten(controlPoints, new ArrayList<>(), epsilon);
+        linearPoints.add(0, controlPoints[0]);
+    }
 
     public Bezier(DPoint p0, DPoint p1, DPoint p2, DPoint p3) {
         controlPoints[0] = p0;
@@ -56,13 +63,22 @@ public class Bezier {
                               linearPoints.get(i + 1).x, linearPoints.get(i + 1).y);
     }
 
-   public ArrayList<DPoint> lineApproximation(double epsilon) {
-        return flatten(controlPoints, new ArrayList<>(), epsilon);
-   }
+    public void graph(Canvas canvas, DPoint currentPos, int currentLine) {
+        canvas.strokeLine(currentPos.x, currentPos.y, linearPoints.get(currentLine).x, linearPoints.get(currentLine).y);
 
-    public ArrayList<DPoint> lineApproximation(double epsilon, DPoint currentPos) {
-        ArrayList<DPoint> lineAprox = flatten(controlPoints, new ArrayList<>(), epsilon);
-        lineAprox.add(0, currentPos);
-        return lineAprox;
+        for (int i = currentLine; i < linearPoints.size() - 2; i++)
+            canvas.strokeLine(linearPoints.get(i).x, linearPoints.get(i).y,
+                    linearPoints.get(i + 1).x, linearPoints.get(i + 1).y);
+    }
+
+    public double length(int startingPoint) {
+        double distSum = 0;
+
+        for (int i = startingPoint; i < linearPoints.size() - 1; i++) {
+            distSum += Math.hypot(linearPoints.get(i).x - linearPoints.get(i + 1).x,
+                                  linearPoints.get(i).y - linearPoints.get(i + 1).y);
+        }
+
+        return distSum;
     }
 }
