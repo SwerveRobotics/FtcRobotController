@@ -158,22 +158,26 @@ public class AprilTagPoseEstimator {
         // See November notebook 11/20/2023 for more info on the math used here
 
         // Declaring variables
-        double d, beta, gamma, relativeX, relativeY, absoluteX, absoluteY, absoluteTheta;
+        double adjustedCameraInfoX, adjustedCameraInfoY, d, beta, gamma, relativeX, relativeY, absoluteX, absoluteY, absoluteTheta;
 
         System.out.println("Start");
 
+        // adjustedCameraInfoX and adjustedCameraInfoY - camera offset after being adjusted for camera rotation
+        adjustedCameraInfoX = cameraInfo.offset.x * Math.cos(Math.toRadians(cameraInfo.rotation)) - cameraInfo.offset.y * Math.sin(Math.toRadians(cameraInfo.rotation));
+        adjustedCameraInfoY = cameraInfo.offset.x * Math.sin(Math.toRadians(cameraInfo.rotation)) + cameraInfo.offset.y * Math.cos(Math.toRadians(cameraInfo.rotation));
+
         // d - absolute distance from April-tag to robot
-        d = Math.hypot(detection.ftcPose.x + cameraInfo.offset.x, detection.ftcPose.y + cameraInfo.offset.y);
+        d = Math.hypot(detection.ftcPose.x + adjustedCameraInfoX, detection.ftcPose.y + adjustedCameraInfoY);
 
         System.out.println("d" + d);
 
         // gamma - angle of center of camera direction to april tag direction
-        gamma = Math.atan2(detection.ftcPose.x + cameraInfo.offset.x, detection.ftcPose.y + cameraInfo.offset.y);
+        gamma = Math.atan2(detection.ftcPose.x + adjustedCameraInfoX, detection.ftcPose.y + adjustedCameraInfoY);
 
         System.out.println("gamma" + gamma);
 
         // beta - yaw of robot relative to the tag
-        beta = gamma + Math.toRadians(detection.ftcPose.yaw + cameraInfo.rotation);
+        beta = gamma + Math.toRadians(detection.ftcPose.yaw);
 
         System.out.println("detection yaw" + detection.ftcPose.yaw);
 
@@ -190,17 +194,17 @@ public class AprilTagPoseEstimator {
         System.out.println(relativeY);
 
         // absoluteX - x of robot
-        absoluteX = relativeX * Math.cos(Math.toRadians(aprilTagInfo.yaw)) - relativeY * Math.sin(Math.toRadians(aprilTagInfo.yaw));
+        absoluteX = (relativeX - aprilTagInfo.x) * Math.cos(Math.toRadians(aprilTagInfo.yaw)) - (relativeY - aprilTagInfo.y) * Math.sin(Math.toRadians(aprilTagInfo.yaw)) + aprilTagInfo.x;
 
         System.out.println(absoluteX);
 
         // absoluteY - y of robot
-        absoluteY = relativeY * Math.sin(Math.toRadians(aprilTagInfo.yaw)) + relativeY * Math.cos(Math.toRadians(aprilTagInfo.yaw));
+        absoluteY = (relativeX - aprilTagInfo.x) * Math.sin(Math.toRadians(aprilTagInfo.yaw)) + (relativeY - aprilTagInfo.y) * Math.cos(Math.toRadians(aprilTagInfo.yaw)) + aprilTagInfo.y;
 
         System.out.println(absoluteY);
 
         // absoluteTheta - yaw of robot
-        absoluteTheta = Math.toRadians(aprilTagInfo.yaw) - Math.toRadians(detection.ftcPose.yaw) + Math.PI;
+        absoluteTheta = Math.toRadians(aprilTagInfo.yaw - detection.ftcPose.yaw + cameraInfo.rotation) + Math.PI;
 
         System.out.println(absoluteTheta);
 
@@ -272,27 +276,24 @@ public class AprilTagPoseEstimator {
 
     // Draws the last 100 poses as circles
     public void drawPoseHistory(Canvas c, double radius) {
-        double[] xPoints = new double[poseHistory.size()];
-        double[] yPoints = new double[poseHistory.size()];
-
         c.setStroke("#00ff00");
         for (PoseWithID t : poseHistory) {
             switch (t.ID) {
-                case 10:
+                case 3:
                     c.strokeCircle(t.pose.position.x, t.pose.position.y, radius);
                     break;
-                case 9:
-                    c.strokeRect(t.pose.position.x - 0.5, t.pose.position.y - 0.5, 1, 1);
+                case 2:
+                    c.strokeRect(t.pose.position.x - radius, t.pose.position.y - radius, radius, radius);
                     break;
                 default:
-                    c.strokeLine(t.pose.position.x - 0.5, t.pose.position.y - 0.5, t.pose.position.x + 0.5, t.pose.position.y + 0.5);
+                    c.strokeLine(t.pose.position.x - 0.5 * radius, t.pose.position.y - 0.5 * radius, t.pose.position.x + 0.5 * radius, t.pose.position.y + 0.5 * radius);
                     break;
             }
         }
     }
 
     public void drawPoseHistory(Canvas c) {
-        drawPoseHistory(c, 1);
+        drawPoseHistory(c, 4);
     }
 
     ArrayList<InfoWithDetection> knownAprilTagsDetected = new ArrayList<>();
