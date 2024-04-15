@@ -1,10 +1,30 @@
-package org.firstinspires.ftc.team417_CENTERSTAGE.opencv;
+package org.firstinspires.ftc.team417_CENTERSTAGE;
 
+import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 import org.opencv.core.Rect;
 import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 
 public class Constants {
+    //time since last loop in milliseconds
+    public static double DELTA_T;
+    public static double TIME;
+    private static double lastT;
+
+    //update delta time variable
+    public static void updateT() {
+        double time = BaseOpMode.TIME.milliseconds();
+        DELTA_T = time - lastT;
+        lastT = time;
+
+        //throttle DELTA_T to fake real time while debugging.
+        if (DELTA_T > 50) {
+            DELTA_T = 20;
+        }
+
+        TIME += DELTA_T;
+    }
+
     // Camera constants for OpenCV detection
     public static final int CAMERA_IMAGE_WIDTH = 640;
     public static final int CAMERA_IMAGE_HEIGHT = 480;
@@ -26,4 +46,7 @@ public class Constants {
 
     // Sets blur size for gaussian blur in color detection
     public static final Size BLUR_SIZE = new Size(5, 5);
+
+    //epsilons for path following
+    public static final double LINE_APROX_EPSILON = 0.01;
 }

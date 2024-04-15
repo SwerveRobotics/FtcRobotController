@@ -40,53 +40,48 @@ public abstract class BaseTeleOp extends BaseOpMode {
         MecanumDrive.drawRobot(canvas, drive.pose);
         dashboard.sendTelemetryPacket(packet);
 
-        if (armMotor != null) {
+        /*if (armMotor != null) {
             arm = new ArmMechanism(gamepad2, armMotor, dumperServo, distSensor);
             resetDumper();
             droneServo.setPosition(droneServoHoldingPos);
-        }
-
-        if (USING_AUTO_DRIVE_TO)
-            autoDrive = new AutoDriveTo(drive);
+        }*/
 
         curveDrive = new PathFollowing(drive, canvas, packet, telemetry);
 
         waitForStart();
 
-        if (dumperWheelServo != null)
-            dumperWheelServo.setPower(-1.0);
+        /*if (dumperWheelServo != null)
+            dumperWheelServo.setPower(-1.0);*/
 
         drive.updatePoseEstimate();
 
+        Bezier controlPoints= new Bezier(new DPoint(0, 0),
+                new DPoint(0, 0), new DPoint(24, 24), new DPoint(24, 24), LINE_APROX_EPSILON);
+        curveDrive.cubicDriveTo(controlPoints, true);
+
         while (opModeIsActive()) {
+            curveDrive.cubicDriveTo(controlPoints, false);
 
-            Bezier controlPoints= new Bezier(new DPoint(0, 0),
-                    new DPoint(0, 24), new DPoint(24, 24), new DPoint(24, 0), LINE_APROX_EPSILON);
-            curveDrive.cubicDriveTo(controlPoints, true);
+            //resetIMUIfNeeded();
 
-            while(!curveDrive.cubicDriveTo(controlPoints, false)) {
+            drive.updatePoseEstimate();
 
-                resetIMUIfNeeded();
+            telemetry.addData("x", drive.pose.position.x);
+            telemetry.addData("y", drive.pose.position.y);
+            telemetry.addData("heading", drive.pose.heading);
 
-                drive.updatePoseEstimate();
+            MecanumDrive.drawRobot(canvas, drive.pose);
+            dashboard.sendTelemetryPacket(packet);
 
-                telemetry.addData("x", drive.pose.position.x);
-                telemetry.addData("y", drive.pose.position.y);
-                telemetry.addData("heading", drive.pose.heading);
-
-                MecanumDrive.drawRobot(canvas, drive.pose);
-                dashboard.sendTelemetryPacket(packet);
-
-                if (armMotor != null && dumperServo != null && gateServo != null) {
-                    outputUsingControllers();
-                    intakeUsingControllers();
-                    telemetry.addData("ArmMotor", armMotor.getCurrentPosition());
-                    telemetry.addData("DumperServo", dumperServo.getPosition());
-                    telemetry.addData("GateServo", gateServo.getPosition());
-                }
-
-                telemetry.update();
+            /*if (armMotor != null && dumperServo != null && gateServo != null) {
+                outputUsingControllers();
+                intakeUsingControllers();
+                telemetry.addData("ArmMotor", armMotor.getCurrentPosition());
+                telemetry.addData("DumperServo", dumperServo.getPosition());
+                telemetry.addData("GateServo", gateServo.getPosition());
             }
+            */
+            telemetry.update();
         }
 
         // Close drive (release resources)

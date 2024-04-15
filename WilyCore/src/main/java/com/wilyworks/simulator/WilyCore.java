@@ -567,7 +567,7 @@ public class WilyCore {
 
     // Allocate a configuration object. Use the specified class if provided, otherwise use a default.
     static WilyWorks.Config getConfig(Class<?> configKlass) {
-        if (configKlass == null) {
+        if (configKlass != null) {
             try {
                 return (WilyWorks.Config) configKlass.newInstance();
             } catch (InstantiationException|IllegalAccessException e) {

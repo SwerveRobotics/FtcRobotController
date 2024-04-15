@@ -51,6 +51,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.team417_CENTERSTAGE.Constants;
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagLatencyCompensation;
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagPoseEstimator;
 import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.TwistWithTimestamp;
@@ -545,6 +546,9 @@ public final class MecanumDrive {
         FlightRecorder.write("ESTIMATED_POSE", new PoseMessage(pose));
 
         poseVelocity = twist.velocity().value();
+
+        Constants.updateT();
+
         return poseVelocity;
     }
 
