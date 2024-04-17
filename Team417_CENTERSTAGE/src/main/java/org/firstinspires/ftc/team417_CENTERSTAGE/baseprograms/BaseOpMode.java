@@ -2,6 +2,8 @@ package org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,6 +12,7 @@ import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
@@ -119,6 +122,9 @@ public abstract class BaseOpMode extends LinearOpMode {
         drive.rightFront.setPower(frontRightPower);
         drive.leftBack.setPower(backLeftPower);
         drive.rightBack.setPower(backRightPower);
+
+        // When simulating, let Wily Works know the input:
+        WilyWorks.setDrivePowers(new PoseVelocity2d(new Vector2d(y, x), -rot), null);
     }
 
     public void runIntakeMechanism(double speed) {
