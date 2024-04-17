@@ -2,6 +2,8 @@ package org.firstinspires.ftc.team417_CENTERSTAGE.apriltagsnew;
 
 import static org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive.isDevBot;
 
+import android.annotation.SuppressLint;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -58,10 +60,6 @@ public class AprilTagPoseEstimator {
         this.myHardwareMap = hardwareMap;
         this.telemetry = telemetry;
         init();
-    }
-
-    public AprilTagPoseEstimator(HardwareMap hardwareMap) {
-        this(hardwareMap, null);
     }
 
     /**
@@ -210,10 +208,16 @@ public class AprilTagPoseEstimator {
         return new Pose2d(absoluteX, absoluteY, absoluteTheta);
     }
 
-    // Draws the last 100 poses as circles
+    // Draws the last 100 poses as circles, squares, or lines with different colors
+    // Depends on the April Tag ID and the level of trust
     public void drawPoseHistory(Canvas c, double radius) {
-        c.setStroke("#00ff00");
+
         for (PoseWithID t : poseHistory) {
+            if (t.trust) {
+                c.setStroke("#00ff00");
+            } else {
+                c.setStroke("#ff0000");
+            }
             switch (t.ID) {
                 case 3:
                     c.strokeCircle(t.pose.position.x, t.pose.position.y, radius);
@@ -237,7 +241,25 @@ public class AprilTagPoseEstimator {
      */
 
     public Pose2d trustVerification(ArrayList<Pose2d> poseArray) {
-        return null; // TODO: FINISH
+        // Takes the average pose of the detected poses
+
+        double sumX = 0;double sumY = 0; double sumReal= 0; double sum Imag = 0;
+
+        for (pose : poseArray) {
+            sumX += 10;
+        }
+
+        // TODO: Remove the magic constants
+        // If any pose is more than 4 inches away or 5 degrees apart, distrust all poses
+        boolean distanceIsSmall = poseArray.stream()
+                .allMatch(pose ->
+                        Math.hypot(pose.position.x - averagePose.position.x,
+                                pose.position.y - averagePose.position.y) < 8);
+        boolean thetaDifferenceIsSmall = poseArray.stream()
+                .allMatch(pose ->
+                        Math.abs(pose.heading.log() - averagePose.heading.log()) < 5);
+        if (!(distanceIsSmall && thetaDifferenceIsSmall)) return null;
+        return averagePose;
     }
 
     ArrayList<InfoWithDetection> knownAprilTagsDetected = new ArrayList<>();
@@ -245,6 +267,7 @@ public class AprilTagPoseEstimator {
     /**
      * Produce a pose estimate from current frames and update it
      */
+    @SuppressLint("DefaultLocale")
     public void updatePoseEstimate() {
         // Use detections only if fresh
         ArrayList<AprilTagDetection> currentDetections = aprilTag.getFreshDetections();
@@ -269,9 +292,13 @@ public class AprilTagPoseEstimator {
             for (InfoWithDetection iwd : knownAprilTagsDetected) {
                 poseEstimate = calculatePoseEstimate(iwd.detection, iwd.info, camera);
                 poseArray.add(poseEstimate);
-                poseHistory.add(new PoseWithID(poseEstimate, iwd.info.id));
             }
             robotPoseEstimate = trustVerification(poseArray);
+            for (int i = 0; i < knownAprilTagsDetected.size(); i++) {
+                poseHistory.add(new PoseWithID(poseArray.get(i),
+                        knownAprilTagsDetected.get(i).info.id,
+                        robotPoseEstimate != null));
+            }
             detecting = true;
             while (poseHistory.size() > 100) {
                 poseHistory.removeFirst();
