@@ -47,6 +47,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagLatencyHelper;
@@ -65,7 +66,7 @@ public final class MecanumDrive {
         return inspection.deviceName;
     }
 
-    public static boolean isDevBot = getBotName().equals("DevBot");
+    public static boolean isDevBot = getBotName().equals("DevBot") || getBotName().equals("Simulator");
     public static boolean is6220sDevBot = getBotName().equals("6220-D-RC");
 
     public static class Params {
@@ -292,6 +293,10 @@ public final class MecanumDrive {
     }
 
     public void setDrivePowers(PoseVelocity2d powers) {
+        // If running under Wily Works, request the drive powers directly:
+        if (WilyWorks.setDrivePowers(powers, new PoseVelocity2d(new Vector2d(0, 0), 0)))
+            return; // ====>
+
         MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
                 PoseVelocity2dDual.constant(powers, 1));
 
@@ -355,6 +360,9 @@ public final class MecanumDrive {
                     PARAMS.axialVelGain, PARAMS.lateralVelGain, PARAMS.headingVelGain
             )
                     .compute(txWorldTarget, pose, robotVelRobot);
+
+            // Enlighten Wily Works as to where we should be:
+            WilyWorks.setPose(txWorldTarget.value(), txWorldTarget.velocity().value());
 
             MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
             double voltage = voltageSensor.getVoltage();
@@ -439,6 +447,9 @@ public final class MecanumDrive {
             )
                     .compute(txWorldTarget, pose, robotVelRobot);
 
+            // Enlighten Wily Works as to where we should be:
+            WilyWorks.setPose(txWorldTarget.value(), txWorldTarget.velocity().value());
+
             MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
             double voltage = voltageSensor.getVoltage();
             final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS, PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
@@ -481,7 +492,13 @@ public final class MecanumDrive {
     public PoseVelocity2d updatePoseEstimate() {
         // Twists are a change over a single sensor loop of the robot's position. It has
         //    an angle and a line component, which can be converted to an x, y, and z.
-        Twist2dDual<Time> twist = localizer.update();
+        //
+        // Try to first get the latest twist from the Wily Works simulator otherwise call
+        //    the Road Runner localizer like normal:
+        Twist2dDual<Time> twist = WilyWorks.localizerUpdate();
+        if (twist == null) {
+            twist = localizer.update();
+        }
 
         // Update the pose estimate if necessary based on the April Tag Helper
         if (ATLHelper != null) {
@@ -605,6 +622,10 @@ public final class MecanumDrive {
             stickVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
         if (assistVelocity == null)
             assistVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
+
+        // If running under Wily Works, request the drive powers directly:
+        if (WilyWorks.setDrivePowers(stickVelocity, assistVelocity))
+            return; // ====>
 
         // Compute the assist acceleration as the difference between the new assist velocity
         // and the old divided by delta-t:
