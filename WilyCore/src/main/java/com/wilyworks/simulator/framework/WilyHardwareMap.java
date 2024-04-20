@@ -19,6 +19,7 @@ import com.qualcomm.robotcore.hardware.ServoController;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.SerialNumber;
 import com.wilyworks.common.WilyWorks;
+import com.wilyworks.simulator.WilyCore;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.CameraCharacteristics;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -43,6 +44,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import kotlin.coroutines.Continuation;
@@ -53,17 +55,17 @@ import kotlin.coroutines.Continuation;
 class WilyHardwareDevice implements HardwareDevice {
     @Override
     public Manufacturer getManufacturer() {
-        return null;
+        return Manufacturer.Unknown;
     }
 
     @Override
     public String getDeviceName() {
-        return null;
+        return "";
     }
 
     @Override
     public String getConnectionInfo() {
-        return null;
+        return "";
     }
 
     @Override
@@ -137,6 +139,11 @@ class WilyVoltageSensor extends WilyHardwareDevice implements VoltageSensor {
     public double getVoltage() {
         return 13.0;
     }
+
+    @Override
+    public String getDeviceName() {
+        return "Voltage Sensor";
+    }
 }
 
 /**
@@ -151,6 +158,18 @@ class WilyDistanceSensor extends WilyHardwareDevice implements DistanceSensor {
  * Wily Works named webcam implementation.
  */
 class WilyWebcam extends WilyHardwareDevice implements WebcamName {
+    WilyWorks.Config.Camera wilyCamera;
+
+    WilyWebcam(String deviceName) {
+        for (WilyWorks.Config.Camera camera: WilyCore.config.cameras) {
+            if (camera.name.equals(deviceName)) {
+                wilyCamera = camera;
+            }
+        }
+        if (wilyCamera == null) {
+            System.out.printf("WilyWorks: Couldn't find configuration data for camera '%s'", deviceName);
+        }
+    }
 
     @Override
     public boolean isWebcam() {
@@ -187,7 +206,6 @@ class WilyWebcam extends WilyHardwareDevice implements WebcamName {
         return null;
     }
 
-    @NonNull
     @Override
     public SerialNumber getSerialNumber() {
         return null;
@@ -461,11 +479,11 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
     public DeviceMapping<DcMotor>               dcMotor               = new DeviceMapping<DcMotor>(DcMotor.class);
     public DeviceMapping<DistanceSensor>        distanceSensor        = new DeviceMapping<DistanceSensor>(DistanceSensor.class);
     public DeviceMapping<WebcamName>            webcamName            = new DeviceMapping<WebcamName>(WebcamName.class);
-    public DeviceMapping<Servo>                 servo                 = new DeviceMapping<Servo>(Servo.class);
-    public DeviceMapping<CRServo>               crservo               = new DeviceMapping<CRServo>(CRServo.class);
+    public DeviceMapping<Servo>                 servo                 = new DeviceMapping<>(Servo.class);
+    public DeviceMapping<CRServo>               crservo               = new DeviceMapping<>(CRServo.class);
     public DeviceMapping<DigitalChannel>        digitalChannel        = new DeviceMapping<>(DigitalChannel.class);
 
-    protected Map<String, List<HardwareDevice>> allDevicesMap         = new HashMap<String, List<HardwareDevice>>();
+    protected Map<String, List<HardwareDevice>> allDevicesMap         = new HashMap<>();
     protected List<HardwareDevice>              allDevicesList        = new ArrayList<>();
 
     public WilyHardwareMap() {
@@ -505,6 +523,11 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
 
     @Deprecated
     public HardwareDevice get(String deviceName) {
+        List<HardwareDevice> list = allDevicesMap.get(deviceName.trim());
+        if (list != null) {
+            return list.get(0);
+        }
+
         throw new IllegalArgumentException("Use the typed version of get(), e.g. get(DcMotorEx.class, \"leftMotor\")");
     }
 
@@ -533,7 +556,7 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
             device = new WilyDistanceSensor();
             distanceSensor.put(deviceName, (DistanceSensor) device);
         } else if (WebcamName.class.isAssignableFrom(klass)) {
-            device = new WilyWebcam();
+            device = new WilyWebcam(deviceName);
             webcamName.put(deviceName, (WebcamName) device);
         } else if (DigitalChannel.class.isAssignableFrom(klass)) {
             device = new WilyDigitalChannel();
@@ -556,12 +579,13 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
 
     public SortedSet<String> getAllNames(Class<? extends HardwareDevice> classOrInterface) {
         SortedSet<String> result = new TreeSet<>();
+        result.add("voltage_sensor");
         return result;
     }
 
     @Override
     public @NonNull Iterator<HardwareDevice> iterator() {
-        return new ArrayList<HardwareDevice>().iterator();
+        return new ArrayList<HardwareDevice>(allDevicesList).iterator();
     }
 
     // A DeviceMapping contains a sub-collection of the devices registered in a HardwareMap

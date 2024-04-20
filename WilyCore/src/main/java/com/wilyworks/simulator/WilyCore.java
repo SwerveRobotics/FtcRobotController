@@ -1,5 +1,6 @@
 package com.wilyworks.simulator;
 
+import static java.lang.System.nanoTime;
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 
@@ -15,13 +16,16 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.wilyworks.common.Wily;
 import com.wilyworks.common.WilyWorks;
+import com.wilyworks.simulator.framework.InputManager;
 import com.wilyworks.simulator.framework.Simulation;
 import com.wilyworks.simulator.framework.WilyTelemetry;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.wilyworks.simulator.helpers.Point;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.reflections.Reflections;
 
+import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
 import java.awt.Choice;
 import java.awt.Color;
@@ -32,18 +36,21 @@ import java.awt.GraphicsEnvironment;
 import java.awt.Image;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.Transparency;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.GeneralPath;
+import java.awt.geom.Line2D;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -150,37 +157,34 @@ class DashboardWindow extends JFrame {
         button.setMaximumSize(new Dimension(100, 50));
         JLabel label = new JLabel("");
 
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                switch (WilyCore.status.state) {
-                    case STOPPED:
-                        // Inform the main thread of the choice and save the preference:
-                        OpModeChoice opModeChoice = opModeChoices.get(dropDown.getSelectedIndex());
-                        WilyCore.status = new WilyCore.Status(WilyCore.State.INITIALIZED, opModeChoice.klass, button);
-                        dropDown.setMaximumSize(new Dimension(0, 0));
-                        dropDown.setVisible(false); // Needed for long opMode names, for whatever reason
-                        button.setText("Start");
+        button.addActionListener(actionEvent -> {
+            switch (WilyCore.status.state) {
+                case STOPPED:
+                    // Inform the main thread of the choice and save the preference:
+                    OpModeChoice opModeChoice = opModeChoices.get(dropDown.getSelectedIndex());
+                    WilyCore.status = new WilyCore.Status(WilyCore.State.INITIALIZED, opModeChoice.klass, button);
+                    dropDown.setMaximumSize(new Dimension(0, 0));
+                    dropDown.setVisible(false); // Needed for long opMode names, for whatever reason
+                    button.setText("Start");
 
-                        opModeName = opModeChoice.fullName;
-                        preferences.put("opmode", opModeName);
-                        label.setText(opModeName);
-                        break;
+                    opModeName = opModeChoice.fullName;
+                    preferences.put("opmode", opModeName);
+                    label.setText(opModeName);
+                    break;
 
-                    case INITIALIZED:
-                        WilyCore.status = new WilyCore.Status(WilyCore.State.STARTED, WilyCore.status.klass, button);
-                        button.setText("Stop");
-                        break;
+                case INITIALIZED:
+                    WilyCore.status = new WilyCore.Status(WilyCore.State.STARTED, WilyCore.status.klass, button);
+                    button.setText("Stop");
+                    break;
 
-                    case STARTED:
-                        WilyCore.opModeThread.interrupt();
-                        WilyCore.status = new WilyCore.Status(WilyCore.State.STOPPED, null, null);
-                        button.setText("Init");
-                        dropDown.setMaximumSize(new Dimension(400, 100));
-                        dropDown.setVisible(true);
-                        label.setText("");
-                        break;
-                }
+                case STARTED:
+                    WilyCore.opModeThread.interrupt();
+                    WilyCore.status = new WilyCore.Status(WilyCore.State.STOPPED, null, null);
+                    button.setText("Init");
+                    dropDown.setMaximumSize(new Dimension(400, 100));
+                    dropDown.setVisible(true);
+                    label.setText("");
+                    break;
             }
         });
 
@@ -258,21 +262,27 @@ class Field {
 
     Simulation simulation;
     Image backgroundImage;
+    Image compassImage;
     BufferedImage robotImage;
 
     Field(Simulation simulation) {
         this.simulation = simulation;
         ClassLoader classLoader = currentThread().getContextClassLoader();
 
-        InputStream stream = classLoader.getResourceAsStream("background/season-2023-centerstage/field-2023-juice-dark.png");
-        if (stream != null) {
-            try {
-                backgroundImage = ImageIO
-                        .read(stream)
-                        .getScaledInstance(FIELD_SURFACE_DIMENSION, FIELD_SURFACE_DIMENSION, Image.SCALE_SMOOTH);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
+        InputStream compassStream = classLoader.getResourceAsStream("background/misc/compass-rose-white-text.png");
+        InputStream fieldStream = classLoader.getResourceAsStream("background/season-2023-centerstage/field-2023-juice-dark.png");
+
+        try {
+            if (compassStream != null) {
+                compassImage = ImageIO.read(compassStream)
+                    .getScaledInstance(150, 150, Image.SCALE_SMOOTH);
             }
+            if (fieldStream != null) {
+                backgroundImage = ImageIO.read(fieldStream)
+                    .getScaledInstance(FIELD_SURFACE_DIMENSION, FIELD_SURFACE_DIMENSION, Image.SCALE_SMOOTH);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         initializeRobotImage();
     }
@@ -331,20 +341,19 @@ class Field {
 
     // Render just the robot:
     void renderRobot(Graphics2D g) {
+        Pose2d simulationPose = simulation.getPose(0);
         AffineTransform imageTransform = new AffineTransform();
-        imageTransform.translate(simulation.pose.position.x, simulation.pose.position.y);
+        imageTransform.translate(simulationPose.position.x, simulationPose.position.y);
         imageTransform.scale(1.0 / ROBOT_IMAGE_WIDTH,1.0 / ROBOT_IMAGE_HEIGHT);
-        imageTransform.rotate(simulation.pose.heading.log() + Math.toRadians(90));
-        imageTransform.scale(simulation.robotSize.width, simulation.robotSize.height);
+        imageTransform.rotate(simulationPose.heading.log() + Math.toRadians(90));
+        imageTransform.scale(WilyCore.config.robotWidth, WilyCore.config.robotLength);
         imageTransform.translate(-ROBOT_IMAGE_HEIGHT / 2.0, -ROBOT_IMAGE_HEIGHT / 2.0);
         g.drawImage(robotImage, imageTransform, null);
     }
 
-    // Render the field, the robot, and the field overlay:
-    void render(Graphics2D g) {
-        // Lay down the background image without needing a transform:
-        g.drawImage(backgroundImage, FIELD_VIEW.x + FIELD_INSET, FIELD_VIEW.y + FIELD_INSET, null);
-
+    // Set the transform to use inches and have the origin at the center of field. This
+    // returns the current transform to restore via Graphics2D.setTransform() once done:
+    AffineTransform setFieldTransform(Graphics2D g) {
         // Prime the viewport/transform and the clipping for field and overlay rendering:
         AffineTransform oldTransform = g.getTransform();
         g.setClip(FIELD_VIEW.x, FIELD_VIEW.y, FIELD_VIEW.width, FIELD_VIEW.height);
@@ -353,41 +362,54 @@ class Field {
                 0, -FIELD_SURFACE_DIMENSION / 144.0,
                 FIELD_SURFACE_DIMENSION / 2.0 + FIELD_INSET,
                 FIELD_SURFACE_DIMENSION / 2.0 + FIELD_INSET));
+        return oldTransform;
+    }
 
+    // Render the field, the robot, and the field overlay:
+    void render(Graphics2D g) {
+        // Lay down the background image without needing a transform:
+        g.drawImage(backgroundImage, FIELD_VIEW.x + FIELD_INSET, FIELD_VIEW.y + FIELD_INSET, null);
+
+        AffineTransform oldTransform = setFieldTransform(g);
         renderRobot(g);
         if (FtcDashboard.fieldOverlay != null)
             FtcDashboard.fieldOverlay.renderAndClear(g);
-
-        // Restore:
         g.setTransform(oldTransform);
     }
-}
 
-/**
- * This thread is tasked with regularly updating the Gamepad steate.
- */
-class GamepadThread extends Thread {
-    Gamepad gamepad1;
-    Gamepad gamepad2;
-
-    GamepadThread(Gamepad gamepad1, Gamepad gamepad2) {
-        this.gamepad1 = gamepad1;
-        this.gamepad2 = gamepad2;
-        // TODO: @@@ Need to add gamepad2 support
-        setName("Wily gamepad thread");
+    // Set the global alpha in the range [0.0, 1.0]:
+    void setAlpha(Graphics2D g, double alpha) {
+        g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) alpha));
     }
 
-    @Override
-    public void run() {
-        while (true) {
-            // Update the gamepad state every 10 milliseconds:
-            try {
-                sleep(10);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-            gamepad1.update();
+    // Render a field-of-view polygon:
+    void renderFieldOfView(Graphics2D g, Point origin, double orientation, double fov) {
+        double LENGTH = 48;
+        Point p1 = new Point(LENGTH, 0).rotate(orientation + fov / 2).add(origin);
+        Point p2 = new Point(LENGTH, 0).rotate(orientation - fov / 2).add(origin);
+
+        // Create a polygon:
+        GeneralPath path = new GeneralPath();
+        path.moveTo(origin.x, origin.y);
+        path.lineTo(p1.x, p1.y);
+        path.lineTo(p2.x, p2.y);
+
+        // Draw the polygon:
+        setAlpha(g, 0.3);
+        g.fill(path);
+        setAlpha(g, 1.0);
+    }
+
+    // For the start screen, render an overlay over the initial field image:
+    void renderStartScreenOverlay(Graphics2D g) {
+        g.drawImage(compassImage, 20, 20, null);
+
+        AffineTransform oldTransform = setFieldTransform(g);
+        for (WilyWorks.Config.Camera camera: WilyCore.config.cameras) {
+            g.setColor(new Color(0xffffff));
+            renderFieldOfView(g, new Point(camera.x, camera.y), camera.orientation, camera.fieldOfView);
         }
+        g.setTransform(oldTransform);
     }
 }
 
@@ -398,27 +420,35 @@ class GamepadThread extends Thread {
 public class WilyCore {
     private static final double DELTA_T = 0.100; // 100ms
 
+    public static WilyWorks.Config config;
     public static Gamepad gamepad1;
     public static Gamepad gamepad2;
+    public static InputManager inputManager;
     public static Telemetry telemetry;
     public static Simulation simulation;
     public static Field field;
     public static DashboardCanvas dashboardCanvas;
-    public static GamepadThread gamepadThread;
     public static OpModeThread opModeThread;
     public static Status status = new Status(State.STOPPED, null, null);
 
     private static boolean simulationUpdated; // True if WilyCore.update() has been called since
-    private static double lastUpdateTime = time(); // Time of last update() call, in seconds
+    private static double lastUpdateWallClockTime = nanoTime() * 1e-9; // Clock time since last update() call, in seconds
+    private static double lastRenderTime = 0; // Time of last render() call, in seconds
+    private static double elapsedTime = 0; // Elapsed time of simulation, in seconds
 
+    // Time, in seconds, that have elapsed in the simulation (which can be different from the
+    // real-time clock due to single-stepping):
     public static double time() {
-        return System.currentTimeMillis() / 1000.0;
+        return elapsedTime;
     }
+
+    // Wall-clock real elapsed time:
+    public static double wallClockTime() { return nanoTime() * 1e-9; }
 
     /**
      * Structure to communicate between the UI and the thread running the opMode.
      */
-    public enum State { STOPPED, INITIALIZED, STARTED };
+    public enum State { STOPPED, INITIALIZED, STARTED }
     public static class Status {
         public Class<?> klass;
         public State state;
@@ -428,13 +458,22 @@ public class WilyCore {
         }
     }
 
-    // Render the entire window:
-    static public void render() {
+    // Render the field during steady state:
+    static public void render() { render(false); }
+    static public void render(boolean startScreenOverlay) {
+        // Don't update the screen at more than 30 fps while waiting for the Start button to press:
+        if ((status.state == State.INITIALIZED) && (time() - lastRenderTime < 0.030))
+            return;
+        lastRenderTime = time();
+
         // All Graphics objects can be cast to Graphics2D:
         Graphics2D g = (Graphics2D) dashboardCanvas.getBufferStrategy().getDrawGraphics();
-
         g.clearRect(0, 0, dashboardCanvas.getWidth(), dashboardCanvas.getHeight());
+
         field.render(g);
+        if (startScreenOverlay)
+            field.renderStartScreenOverlay(g);
+
         g.dispose();
         dashboardCanvas.getBufferStrategy().show();
     }
@@ -444,38 +483,50 @@ public class WilyCore {
     // class.
 
     // The guest can specify the delta-t (which is handy when single stepping):
-    static public void update(double deltaT) {
-        // If delta-t is zero then use the real-time clock:
-        double time = time();
+    static public void updateSimulation(double deltaT) {
         if (deltaT <= 0) {
-            deltaT = time - lastUpdateTime;
+            deltaT = nanoTime() * 1e-9 - lastUpdateWallClockTime;
         }
-        lastUpdateTime = time;
+        elapsedTime += deltaT;
+        lastUpdateWallClockTime = nanoTime() * 1e-9;
 
         // Advance the simulation:
         simulation.advance(deltaT);
 
         // Render everything:
-        render();
+        render(false);
 
         simulationUpdated = true;
     }
 
-    // Guest call to set the pose and velocity:
-    static public void setPose(double x, double y, double heading,
-                               double xVelocity, double yVelocity, double headingVelocity) {
+    // Set the robot to a given pose and (optional) velocity in the simulation. The
+    // localizer will not register a move.
+    static public void setStartPose(double x, double y, double heading,
+             double xVelocity, double yVelocity, double headingVelocity) {
+        simulation.setStartPose(
+                new Pose2d(x, y, heading),
+                new PoseVelocity2d(new Vector2d(xVelocity, yVelocity), headingVelocity));
+    }
+
+    // MecanumDrive uses this while running a trajectory to update the simulator as to its
+    // current intermediate pose and velocity. This update will be reflected in the localizer
+    // results.
+    static public void runTo(double x, double y, double heading,
+             double xVelocity, double yVelocity, double headingVelocity) {
         // If the user didn't explicitly call the simulation update() API, do it now:
         if (!simulationUpdated)
-            update(0);
-        simulation.setPose(
+            updateSimulation(0);
+        simulation.runTo(
                 new Pose2d(x, y, heading),
                 new PoseVelocity2d(new Vector2d(xVelocity, yVelocity), headingVelocity));
         simulationUpdated = false;
     }
 
+
     // Get the simulation's true pose and velocity:
-    static public Pose2d getPose() {
-        return simulation.pose;
+    static public Pose2d getPose() { return getPose(0); }
+    static public Pose2d getPose(double secondsAgo) {
+        return simulation.getPose(secondsAgo);
     }
     static public PoseVelocity2d getPoseVelocity() {
         return simulation.poseVelocity;
@@ -488,7 +539,7 @@ public class WilyCore {
 
         // If the user didn't explicitly call the simulation update() API, do it now:
         if (!simulationUpdated)
-            update(0);
+            updateSimulation(0);
 
         simulation.setDrivePowers(stickVelocity, assistVelocity);
         simulationUpdated = false;
@@ -515,7 +566,7 @@ public class WilyCore {
         boolean multipleConfigs = false;
 
         // Build a list of the eligible opModes along with their friendly names:
-        for (Class klass: allOps) {
+        for (Class<?> klass: allOps) {
             if ((WilyWorks.Config.class.isAssignableFrom(klass))) {
                 multipleConfigs = (config != null);
                 config = klass;
@@ -532,7 +583,7 @@ public class WilyCore {
                 String groupName = null;
 
                 // Override the name if an annotation exists:
-                TeleOp teleOpAnnotation = (TeleOp) klass.getAnnotation(TeleOp.class);
+                TeleOp teleOpAnnotation = klass.getAnnotation(TeleOp.class);
                 if (teleOpAnnotation != null) {
                     if (!teleOpAnnotation.name().equals("")) {
                         givenName = teleOpAnnotation.name();
@@ -541,7 +592,7 @@ public class WilyCore {
                         groupName = teleOpAnnotation.group();
                     }
                 }
-                Autonomous autonomousAnnotation = (Autonomous) klass.getAnnotation(Autonomous.class);
+                Autonomous autonomousAnnotation = klass.getAnnotation(Autonomous.class);
                 if (autonomousAnnotation != null) {
                     if (!autonomousAnnotation.name().equals("")) {
                         givenName = autonomousAnnotation.name();
@@ -569,8 +620,13 @@ public class WilyCore {
     static WilyWorks.Config getConfig(Class<?> configKlass) {
         if (configKlass != null) {
             try {
-                return (WilyWorks.Config) configKlass.newInstance();
-            } catch (InstantiationException|IllegalAccessException e) {
+                // Make the constructor accessible so that the object doesn't have to be marked
+                // public:
+                // noinspection unchecked
+                Constructor<WilyWorks.Config> configConstructor = (Constructor<WilyWorks.Config>) configKlass.getDeclaredConstructor();
+                configConstructor.setAccessible(true);
+                return configConstructor.newInstance();
+            } catch (InstantiationException|IllegalAccessException|NoSuchMethodException|InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -581,6 +637,7 @@ public class WilyCore {
     static void runOpMode(Class<?> klass) {
         OpMode opMode;
         try {
+            //noinspection deprecation
             opMode = (OpMode) klass.newInstance();
         } catch (InstantiationException|IllegalAccessException e) {
             throw new RuntimeException(e);
@@ -606,7 +663,7 @@ public class WilyCore {
                 printWriter.flush();
                 String stackTrace = writer.toString().replace("\n", "\n    ");
                 String message = "Your program hit an unhandled exception:\n\n    " + stackTrace + "\n"
-                        + "You can also find this stacktrace in clickable form in the 'Debug/Console' or \n"
+                        + "You can also find this stack trace in clickable form in the 'Debug/Console' or \n"
                         + "'Run' tabs. Once there click on 'Create breakpoint' and re-run using the debug\n"
                         + "'bug' icon to stop the debugger at exactly the right spot.";
 
@@ -614,7 +671,7 @@ public class WilyCore {
                         JOptionPane.INFORMATION_MESSAGE);
             }
         } else {
-            // TODO: Implement non-LinearOpMode support
+            throw new RuntimeException("WilyWorks can't handle this opMode type.");
         }
     }
 
@@ -624,6 +681,7 @@ public class WilyCore {
         OpModeThread(Class<?> opModeClass) {
             this.opModeClass = opModeClass;
             setName("Wily OpMode thread");
+            start();
         }
         @Override
         public void run() {
@@ -651,31 +709,34 @@ public class WilyCore {
         DashboardWindow dashboardWindow = new DashboardWindow(annotations.opModeChoices, args);
         dashboardWindow.setVisible(true);
 
+        config = getConfig(annotations.configKlass);
         dashboardCanvas = dashboardWindow.dashboardCanvas;
-        simulation = new Simulation(getConfig(annotations.configKlass));
+        simulation = new Simulation(config);
         field = new Field(simulation);
-        gamepad1 = new Gamepad();
-        gamepad2 = new Gamepad(); // @@@ Need to hook into
         telemetry = new WilyTelemetry();
+        gamepad1 = new Gamepad();
+        gamepad2 = new Gamepad();
+        inputManager = new InputManager(gamepad1, gamepad2);
 
-        gamepadThread = new GamepadThread(gamepad1, gamepad2);
-        gamepadThread.start();
+        // Render the field once and then wait for input:
+        render(true);
 
-        // Endlessly call opModes:
+        // Endlessly call opModes
+        // noinspection InfiniteLoopStatement
         while (true) {
             // Wait for the DashboardWindow UI to tell us what opMode to run:
-            // TODO: Make this wait on an event.
             while (status.state == State.STOPPED) {
                 try {
+                    //noinspection BusyWait
                     sleep(30);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
             }
 
-            // Run the opMode on a dedicated thread so that it can be interrupted as necessary:
+            // The user has selected an opMode and pressed Init! Run the opMode on a dedicated
+            // thread so that it can be interrupted as necessary:
             opModeThread = new OpModeThread(status.klass);
-            opModeThread.start();
             try {
                 // Wait for the opMode thread to complete:
                 opModeThread.join();

@@ -1,13 +1,12 @@
 package com.wilyworks.simulator.framework;
 
-import static java.lang.System.nanoTime;
-
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.wilyworks.common.WilyWorks;
+import com.wilyworks.simulator.WilyCore;
 
-import java.awt.Dimension;
+import java.util.LinkedList;
 
 /**
  * Fake localizer for the simulation.
@@ -19,7 +18,7 @@ class Localizer {
 
     Localizer(Simulation simulation) {
         this.simulation = simulation;
-        this.previousPose = simulation.pose;
+        this.previousPose = simulation.getPose(0);
         this.previousVelocity = simulation.poseVelocity;
     }
 
@@ -31,21 +30,22 @@ class Localizer {
 
     // Return an 'twist' that represents all movement since the last call:
     double[] update() {
-        double deltaAng = simulation.pose.heading.log() - previousPose.heading.log();
+        Pose2d simulationPose = simulation.getPose(0);
+        double deltaAng = simulationPose.heading.log() - previousPose.heading.log();
         double deltaAngVel = simulation.poseVelocity.angVel - previousVelocity.angVel;
 
         // Transform from field-absolute position to robot-relative position:
-        double robotAngle = simulation.pose.heading.log();
+        double robotAngle = simulationPose.heading.log();
         Vector2d deltaLinear = transform(
-                simulation.pose.position.x - previousPose.position.x,
-                simulation.pose.position.y - previousPose.position.y,
+                simulationPose.position.x - previousPose.position.x,
+                simulationPose.position.y - previousPose.position.y,
                 -robotAngle);
         Vector2d deltaLinearVel = transform(
                 simulation.poseVelocity.linearVel.x - previousVelocity.linearVel.x,
                 simulation.poseVelocity.linearVel.y - previousVelocity.linearVel.y,
                 -robotAngle);
 
-        previousPose = simulation.pose;
+        previousPose = simulationPose;
         previousVelocity = simulation.poseVelocity;
 
         return new double[]{deltaLinear.x, deltaLinear.y, deltaAng,
@@ -54,25 +54,70 @@ class Localizer {
 }
 
 /**
+ * Structure for remembering poses.
+ */
+class PoseRecord {
+    double time;
+    Pose2d pose;
+
+    public PoseRecord(double time, Pose2d pose) {
+        this.time = time; this.pose = pose;
+    }
+}
+
+/**
  * Kinematic simulation for the robot's movement.
  */
 public class Simulation {
-    public Pose2d pose = new Pose2d(-48, 0, Math.toRadians(90)); // Robot's true pose
-    public PoseVelocity2d poseVelocity = new PoseVelocity2d(new Vector2d(0, 60), Math.toRadians(0)); // Robot's true pose velocity
-    public Dimension robotSize = new Dimension(16, 18); // Size in inches of user's robot
+    // Size of the pose history, in seconds:
+    final double POSE_HISTORY_SECONDS = 2.0;
 
-    private Localizer localizer;
+    // History of robot's true poses, field-relative. The newest is first:
+    public LinkedList<PoseRecord> poseHistory = new LinkedList<>();
+
+    // The robot's current true pose velocity, field-relative:
+    public PoseVelocity2d poseVelocity = new PoseVelocity2d(new Vector2d(0, 0), Math.toRadians(0));
+
+    private Localizer localizer; // Fake odometry localizer
     private WilyWorks.Config config; // Kinematic parameters for the simulation
     private PoseVelocity2d requestedVelocity; // Velocity requested by MecanumDrive
 
     public Simulation(WilyWorks.Config config) {
         this.config = config;
+        poseHistory.add(new PoseRecord(WilyCore.time(), new Pose2d(0, 0, Math.toRadians(0))));
         localizer = new Localizer(this);
     }
 
-    // Get the current time, in seconds:
-    static double time() {
-        return nanoTime() * 1e-9;
+    // Find the closest pose from the specified seconds ago. Zero retrieves the current pose.
+    public Pose2d getPose(double secondsAgo) {
+        if (secondsAgo == 0)
+            return poseHistory.get(0).pose;
+
+        double targetTime = WilyCore.time() - secondsAgo;
+        double closestTimeGap = Double.MAX_VALUE;
+        int closestIndex = 0;
+        int i = 0;
+        for (PoseRecord record: poseHistory) {
+            double timeGap = Math.abs(targetTime - record.time);
+            if (timeGap < closestTimeGap) {
+                closestTimeGap = timeGap;
+                closestIndex = i;
+            }
+            i++;
+        }
+        return poseHistory.get(closestIndex).pose;
+    }
+
+    // Record into the pose history:
+    void recordPose(double time, Pose2d pose) {
+        while (poseHistory.size() != 0) {
+            PoseRecord oldPose = poseHistory.getLast();
+            if (time - oldPose.time < POSE_HISTORY_SECONDS)
+                break; // ====>
+            poseHistory.removeLast();
+        }
+        poseHistory.addFirst(new PoseRecord(time, pose));
+
     }
 
     // Move the robot in the requested direction via kinematics:
@@ -155,6 +200,7 @@ public class Simulation {
         currentLinearY = Math.sin(requestedAngle) * parallelVelocity
                        + Math.sin(requestedAngle - Math.PI / 2) * perpVelocity;
 
+        Pose2d pose = getPose(0);
         double x = pose.position.x + dt * currentLinearX;
         double y = pose.position.y + dt * currentLinearY;
 
@@ -179,6 +225,7 @@ public class Simulation {
 
         // Update our official pose and velocity:
         pose = new Pose2d(x, y, pose.heading.log() + dt * currentAngular);
+        recordPose(WilyCore.time(), pose);
         poseVelocity = new PoseVelocity2d(new Vector2d(currentLinearX, currentLinearY), currentAngular);
     }
 
@@ -206,7 +253,7 @@ public class Simulation {
                     stickVelocity.linearVel.x * config.maxLinearSpeed,
                     stickVelocity.linearVel.y * config.maxLinearSpeed),
                     stickVelocity.angVel * config.maxAngularSpeed);
-            fieldVelocity = pose.times(fieldVelocity); // Make it field-relative
+            fieldVelocity = getPose(0).times(fieldVelocity); // Make it field-relative
         }
         if (assistVelocity != null) {
             fieldVelocity = new PoseVelocity2d(new Vector2d(
@@ -221,9 +268,15 @@ public class Simulation {
     public double[] localizerUpdate() { return localizer.update(); }
 
     // Entry point to set the pose and velocity, both in field coordinates:
-    public void setPose(Pose2d pose, PoseVelocity2d poseVelocity) {
-        this.pose = pose;
+    public void runTo(Pose2d pose, PoseVelocity2d poseVelocity) {
+        recordPose(WilyCore.time(), pose);
         this.poseVelocity = poseVelocity;
+    }
+
+    // Entry point to set the pose and velocity, both in field coordinates:
+    public void setStartPose(Pose2d pose, PoseVelocity2d poseVelocity) {
+        runTo(pose, poseVelocity);
+        // Recreate the localizer so that it doesn't register a move:
         this.localizer = new Localizer(this);
     }
 }

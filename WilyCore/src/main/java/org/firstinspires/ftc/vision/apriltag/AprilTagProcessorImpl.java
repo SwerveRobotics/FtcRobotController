@@ -33,38 +33,16 @@
 
 package org.firstinspires.ftc.vision.apriltag;
 
+import com.wilyworks.simulator.framework.WilyAprilTagProcessor;
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.util.ArrayList;
 
-public class AprilTagProcessorImpl extends AprilTagProcessor {
+public class AprilTagProcessorImpl extends WilyAprilTagProcessor {
 
     public AprilTagProcessorImpl(double fx, double fy, double cx, double cy, DistanceUnit outputUnitsLength, AngleUnit outputUnitsAngle, AprilTagLibrary tagLibrary, boolean drawAxes, boolean drawCube, boolean drawOutline, boolean drawTagID, TagFamily tagFamily, int threads) {
-    }
-
-    @Override
-    public void setDecimation(float decimation) {
-
-    }
-
-    @Override
-    public void setPoseSolver(PoseSolver poseSolver) {
-
-    }
-
-    @Override
-    public int getPerTagAvgPoseSolveTime() {
-        return 0;
-    }
-
-    @Override
-    public ArrayList<AprilTagDetection> getDetections() {
-        return new ArrayList<>(); // ### Empty detection list
-    }
-
-    @Override
-    public ArrayList<AprilTagDetection> getFreshDetections() {
-        return null;
+        super(fx, fy, cx, cy, outputUnitsLength, outputUnitsAngle, tagLibrary, drawAxes, drawCube, drawOutline, drawTagID, tagFamily, threads);
     }
 }

@@ -25,8 +25,8 @@ public class WilyWorks {
      */
     public static class Config {
         // Set these to the actual dimensions of your robot:
-        public double robotWidth = 24.0;
-        public double robotHeight = 24.0;
+        public double robotWidth = 18.0;
+        public double robotLength = 18.0;
 
         // Maximum linear and rotational speeds in inches/s and radians/s, respectively:
         public double maxLinearSpeed = 60;
@@ -38,9 +38,6 @@ public class WilyWorks {
 
         // Maximum angular acceleration and deceleration, in radians/s/s:
         public double maxAngularAcceleration = Math.PI;
-
-        // If 'true', add error to all sensor measurements to simulate real life:
-        public boolean addError = true;
 
         // Fill this out to describe cameras on the robot:
         public Camera[] cameras = {
@@ -54,25 +51,25 @@ public class WilyWorks {
         /**
          * Structure used to describe April Tag cameras on the robot:
          */
-        public static class Camera {
+        static public class Camera {
             // Camera name as specified in the robot's configuration:
-            String name;
+            public String name;
 
             // Camera position in inches relative to the robot's center of rotation.
             // Positive 'x' is towards the front of the robot, negative towards the back.
             // Positive 'y' is towards the left of the robot, negative towards the right:
-            double x;
-            double y;
+            public double x;
+            public double y;
 
             // Orientation of the camera relative to the front of the robot, in radians. If zero,
             // the camera points straight forward; if Pi, the camera points straight backwards:
-            double orientation;
+            public double orientation;
 
             // Field of view of the camera, in radians. Can be zero which assigns a default:
-            double fieldOfView = 0;
+            public double fieldOfView;
 
             // Latency of the April Tag processing for this camera, in seconds:
-            double latency = 0.200;
+            public double latency;
 
             public Camera(String name, double x, double y, double orientation, double fieldOfView, double latency) {
                 this.name = name; this.x = x; this.y = y; this.orientation = orientation; this.fieldOfView = fieldOfView; this.latency = latency;
@@ -82,19 +79,19 @@ public class WilyWorks {
         /**
          * Structure used to describe distance sensors on the robot:
          */
-        public static class DistanceSensor {
+        static public class DistanceSensor {
             // Distance sensor name as specified in the robot's configuration:
-            String name;
+            public String name;
 
             // Sensor position in inches relative to the robot's center of rotation.
             // Positive 'x' is towards the front of the robot, negative towards the back.
             // Positive 'y' is towards the left of the robot, negative towards the right:
-            double x;
-            double y;
+            public double x;
+            public double y;
 
             // Orientation of the sensor relative to the front of the robot, in radians. If zero,
             // the sensor points straight forward; if Pi, the sensor points straight backwards:
-            double orientation;
+            public double orientation;
 
             public DistanceSensor(String name, double x, double y, double orientation) {
                 this.name = name; this.x = x; this.y = y; this.orientation = orientation;
@@ -106,7 +103,7 @@ public class WilyWorks {
     // Interaction
 
     // WilyLink class for communicating with the Wily Works simulator:
-    static private Class wilyCore = getWilyCore();
+    static private Class<?> wilyCore = getWilyCore();
 
     // Check this boolean to determine whether you're running on the real robot or in a simulation:
     static public boolean isSimulating = (wilyCore != null);
@@ -115,7 +112,7 @@ public class WilyWorks {
     // Implementation
 
     // Wrap WilyLink initialization with
-    static Class getWilyCore() {
+    static Class<?> getWilyCore() {
         try {
             return getSystemClassLoader().loadClass("com.wilyworks.simulator.WilyCore");
         } catch (ClassNotFoundException e) {
@@ -143,13 +140,36 @@ public class WilyWorks {
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
-    // Road Runner control
+    // Control
 
-    // Set the robot to a given pose and (optional) velocity in the simulation:
-    static public boolean setPose(Pose2d pose, PoseVelocity2d velocity) {
+    // Set the robot to a given pose and (optional) velocity in the simulation. The
+    // localizer will not register a move.
+    @SuppressWarnings("UnusedReturnValue")
+    static public boolean setStartPose(Pose2d pose, PoseVelocity2d velocity) {
         if (wilyCore != null) {
             try {
-                Method setPose = wilyCore.getMethod("setPose",
+                Method setPose = wilyCore.getMethod("setStartPose",
+                        double.class, double.class, double.class,
+                        double.class, double.class, double.class);
+                setPose.invoke(null,
+                        pose.position.x, pose.position.y, pose.heading.log(),
+                        velocity.linearVel.x, velocity.linearVel.y, velocity.angVel);
+                return true; // ====>
+            } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return false;
+    }
+
+    // MecanumDrive uses this while running a trajectory to update the simulator as to its
+    // current intermediate pose and velocity. This update will be reflected in the localizer
+    // results.
+    @SuppressWarnings("UnusedReturnValue")
+    static public boolean runTo(Pose2d pose, PoseVelocity2d velocity) {
+        if (wilyCore != null) {
+            try {
+                Method setPose = wilyCore.getMethod("runTo",
                         double.class, double.class, double.class,
                         double.class, double.class, double.class);
                 setPose.invoke(null,
@@ -214,7 +234,7 @@ public class WilyWorks {
             try {
                 Method getLocalization = wilyCore.getMethod("getLocalization");
                 double[] localization = (double[]) getLocalization.invoke(null);
-                return new Twist2dDual<Time>(new Vector2dDual<Time>(
+                return new Twist2dDual<>(new Vector2dDual<>(
                         new DualNum<Time>(new double[] { localization[0], localization[3] }),
                         new DualNum<Time>(new double[] { localization[1], localization[4] })),
                         new DualNum<Time>(new double[] { localization[2], localization[5] }));
@@ -224,5 +244,17 @@ public class WilyWorks {
             }
         }
         return null;
+    }
+
+    // Ask the simulation to update by a specified amount of time:
+    static public void updateSimulation(double deltaTime) {
+        if (wilyCore != null) {
+            try {
+                Method setDrivePowers = wilyCore.getMethod("updateSimulation", Double.class);
+                setDrivePowers.invoke(null, deltaTime);
+            } catch (InvocationTargetException|IllegalAccessException|NoSuchMethodException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

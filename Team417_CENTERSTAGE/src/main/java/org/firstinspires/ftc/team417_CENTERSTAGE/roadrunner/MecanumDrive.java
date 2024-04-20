@@ -261,6 +261,8 @@ public final class MecanumDrive {
     public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
         assert hardwareMap != null;
 
+        WilyWorks.setStartPose(pose, new PoseVelocity2d(new Vector2d(0, 0), 0));
+
         // For the April Tag latency calculation 
         clock.reset();
 
@@ -403,7 +405,7 @@ public final class MecanumDrive {
                     .compute(txWorldTarget, pose, robotVelRobot);
 
             // Enlighten Wily Works as to where we should be:
-            WilyWorks.setPose(txWorldTarget.value(), txWorldTarget.velocity().value());
+            WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
 
             MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
             double voltage = voltageSensor.getVoltage();
@@ -489,7 +491,7 @@ public final class MecanumDrive {
                     .compute(txWorldTarget, pose, robotVelRobot);
 
             // Enlighten Wily Works as to where we should be:
-            WilyWorks.setPose(txWorldTarget.value(), txWorldTarget.velocity().value());
+            WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
 
             MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
             double voltage = voltageSensor.getVoltage();

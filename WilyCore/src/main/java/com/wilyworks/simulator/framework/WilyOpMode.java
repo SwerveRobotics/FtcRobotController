@@ -7,13 +7,6 @@ public abstract class WilyOpMode extends OpMode {
 
     abstract public void runOpMode() throws InterruptedException;
 
-    public void waitForStart() {
-        while (!isStarted())
-            sleep(30);
-    }
-
-    public final boolean opModeIsActive() { return WilyCore.status.state != WilyCore.State.STOPPED; }
-
     public final void sleep(long milliseconds) {
         try {
             Thread.sleep(milliseconds);
@@ -22,7 +15,24 @@ public abstract class WilyOpMode extends OpMode {
         }
     }
 
-    public final boolean isStopRequested() { return WilyCore.status.state == WilyCore.State.STOPPED; }
+    public void waitForStart() {
+        WilyCore.render();
+        while (!isStarted())
+            sleep(30);
+    }
 
-    public final boolean isStarted() { return WilyCore.status.state == WilyCore.State.STARTED; }
+    public final boolean opModeIsActive() {
+        if (WilyCore.status.state == WilyCore.State.INITIALIZED)
+            WilyCore.render();
+        return WilyCore.status.state != WilyCore.State.STOPPED;
+    }
+
+    public final boolean isStarted() {
+        WilyCore.render();
+        return WilyCore.status.state == WilyCore.State.STARTED;
+    }
+    public final boolean isStopRequested() {
+        return WilyCore.status.state == WilyCore.State.STOPPED;
+    }
+
 }

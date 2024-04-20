@@ -35,79 +35,15 @@ package org.firstinspires.ftc.vision;
 
 import android.util.Size;
 
+import com.wilyworks.simulator.framework.WilyVisionPortal;
+
 import org.firstinspires.ftc.robotcore.external.hardware.camera.CameraName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.controls.CameraControl;
 
-public class VisionPortalImpl extends VisionPortal
+public class VisionPortalImpl extends WilyVisionPortal
 {
-    public VisionPortalImpl(CameraName camera, int cameraMonitorViewId, boolean autoPauseCameraMonitor, Size cameraResolution, StreamFormat webcamStreamFormat, VisionProcessor[] processors)
-    {
-
-    }
-
-    @Override
-    public void setProcessorEnabled(VisionProcessor processor, boolean enabled) {
-
-    }
-
-    @Override
-    public boolean getProcessorEnabled(VisionProcessor processor) {
-        return false;
-    }
-
-    @Override
-    public CameraState getCameraState() {
-        return null;
-    }
-
-    @Override
-    public void saveNextFrameRaw(String filename) {
-
-    }
-
-    @Override
-    public void stopStreaming() {
-
-    }
-
-    @Override
-    public void resumeStreaming() {
-
-    }
-
-    @Override
-    public void stopLiveView() {
-
-    }
-
-    @Override
-    public void resumeLiveView() {
-
-    }
-
-    @Override
-    public float getFps() {
-        return 0;
-    }
-
-    @Override
-    public <T extends CameraControl> T getCameraControl(Class<T> controlType) {
-        return null;
-    }
-
-    @Override
-    public void setActiveCamera(WebcamName webcamName) {
-
-    }
-
-    @Override
-    public WebcamName getActiveCamera() {
-        return null;
-    }
-
-    @Override
-    public void close() {
-
+    public VisionPortalImpl(CameraName camera, int cameraMonitorViewId, boolean autoPauseCameraMonitor, Size cameraResolution, StreamFormat webcamStreamFormat, VisionProcessor[] processors) {
+        super(camera, cameraMonitorViewId, autoPauseCameraMonitor, cameraResolution, webcamStreamFormat, processors);
     }
 }
