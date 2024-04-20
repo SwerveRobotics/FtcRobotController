@@ -250,8 +250,8 @@ public class WilyWorks {
     static public void updateSimulation(double deltaTime) {
         if (wilyCore != null) {
             try {
-                Method setDrivePowers = wilyCore.getMethod("updateSimulation", Double.class);
-                setDrivePowers.invoke(null, deltaTime);
+                Method updateSimulation = wilyCore.getMethod("updateSimulation", double.class);
+                updateSimulation.invoke(null, deltaTime);
             } catch (InvocationTargetException|IllegalAccessException|NoSuchMethodException e) {
                 throw new RuntimeException(e);
             }
