@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.Constants;
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
@@ -50,8 +51,8 @@ public class PathUnitTest extends BaseOpMode{
 
             MecanumDrive.drawRobot(canvas, drive.pose);
             dashboard.sendTelemetryPacket(packet);
-            telemetry.update()
-            ;
+            telemetry.update();
+            WilyWorks.updateSimulation(Constants.DELTA_T);
         }
 
         // Close drive (release resources)

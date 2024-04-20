@@ -25,8 +25,8 @@ public class Constants {
         lastT = time;
 
         //throttle DELTA_T, to fake real time, while debugging.
-        if (DELTA_T > 1.0 / 1000.0) {
-            DELTA_T = 1.0 / 1000.0;
+        if (DELTA_T > 50.0 / 1000.0) {
+            DELTA_T = 20.0 / 1000.0;
         }
         LOOP_TIME = filter.slidingWindow(loopTimeWindow, DELTA_T);
 
