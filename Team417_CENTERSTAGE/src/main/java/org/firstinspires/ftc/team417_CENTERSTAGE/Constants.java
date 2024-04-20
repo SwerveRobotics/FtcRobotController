@@ -6,21 +6,29 @@ import org.opencv.core.Scalar;
 import org.opencv.core.Size;
 
 public class Constants {
-    //time since last loop in milliseconds
+    //time since last loop in seconds
     public static double DELTA_T;
     public static double TIME;
+    public static double LOOP_TIME;
     private static double lastT;
+    private static final int loopTimeWindow = 50;
+    private static Filters filter;
+
+    public static void init() {
+        filter = new Filters();
+    }
 
     //update delta time variable
     public static void updateT() {
-        double time = BaseOpMode.TIME.milliseconds();
+        double time = BaseOpMode.TIME.seconds();
         DELTA_T = time - lastT;
         lastT = time;
 
-        //throttle DELTA_T to fake real time while debugging.
-        if (DELTA_T > 50) {
-            DELTA_T = 20;
+        //throttle DELTA_T, to fake real time, while debugging.
+        if (DELTA_T > 1.0 / 1000.0) {
+            DELTA_T = 1.0 / 1000.0;
         }
+        LOOP_TIME = filter.slidingWindow(loopTimeWindow, DELTA_T);
 
         TIME += DELTA_T;
     }

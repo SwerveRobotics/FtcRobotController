@@ -13,7 +13,7 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 @Config
 @TeleOp(name = "PathUnitTest")
 public class PathUnitTest extends BaseOpMode{
-    PathFollowing curveDrive;
+    PathFollowing2 curveDrive;
 
     @Override
     public void runOpMode() {
@@ -27,7 +27,7 @@ public class PathUnitTest extends BaseOpMode{
         MecanumDrive.drawRobot(canvas, drive.pose);
         dashboard.sendTelemetryPacket(packet);
 
-        curveDrive = new PathFollowing(drive, canvas, packet, telemetry);
+        curveDrive = new PathFollowing2(drive, canvas, telemetry);
 
         drive.updatePoseEstimate();
 
@@ -50,7 +50,8 @@ public class PathUnitTest extends BaseOpMode{
 
             MecanumDrive.drawRobot(canvas, drive.pose);
             dashboard.sendTelemetryPacket(packet);
-            telemetry.update();
+            telemetry.update()
+            ;
         }
 
         // Close drive (release resources)

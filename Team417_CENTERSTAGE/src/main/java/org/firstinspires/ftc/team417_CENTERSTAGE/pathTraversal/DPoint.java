@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal;
 
+import com.acmerobotics.roadrunner.Vector2d;
+
 //points as doubles
 public class DPoint {
     public double x;
@@ -10,19 +12,18 @@ public class DPoint {
         this.y = y;
     }
 
-    public DPoint plus(DPoint p1, DPoint p2) {
-        return new DPoint(p1.x + p2.x, p1.y + p2.y);
+    public Vector2d toVector(DPoint point2) {
+        return new Vector2d(x - point2.x, y - point2.y);
+    }
+    public Vector2d toVector(double x2, double y2) {
+        return toVector(new DPoint(x2, y2));
     }
 
-    public DPoint plus(DPoint p1) {
-        return new DPoint(x + p1.x, y + p1.y);
+    public DPoint plus(double num) {
+        return new DPoint(x + num, y + num);
     }
 
-    public DPoint times(DPoint p, double num) {
-        return new DPoint(p.x * num, p.y * num);
-    }
-
-    public DPoint times(double num) {
-        return new DPoint(x * num, y * num);
+    public DPoint plus(Vector2d num) {
+        return new DPoint(x + num.x, y + num.y);
     }
 }

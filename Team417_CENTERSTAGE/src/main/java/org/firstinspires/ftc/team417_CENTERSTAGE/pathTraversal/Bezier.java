@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal;
 import com.acmerobotics.dashboard.canvas.Canvas;
+import com.acmerobotics.roadrunner.Vector2d;
+
 import java.util.ArrayList;
 
 //The control points of bezier curves.
@@ -80,5 +82,10 @@ public class Bezier {
         }
 
         return distSum;
+    }
+
+    public double length(int startingPoint, DPoint currentPos) {
+        Vector2d currentVect = currentPos.toVector(linearPoints.get(startingPoint));
+        return length(startingPoint) + currentVect.norm();
     }
 }

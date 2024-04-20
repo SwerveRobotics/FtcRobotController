@@ -40,23 +40,19 @@ public class PathFollowing {
         double speed;
 
         goalVector = new Vector2d(goalPos.x - drive.pose.position.x, goalPos.y - drive.pose.position.y);
-        distRemaining = Math.hypot(goalPos.x - initialPos.x, goalPos.y - initialPos.y) -
-                        Math.hypot(drive.pose.position.x - initialPos.x, drive.pose.position.y - initialPos.y);
-
-
-        telemetry.addData("goalPos.x", goalPos.x);
-        telemetry.addData("goalPos.y", goalPos.y);
-        telemetry.addData("initialPos.x", initialPos.x);
-        telemetry.addData("initialPos.y", initialPos.y);
-        telemetry.addData("distRemaining", distRemaining);
-        telemetry.addData("thing 1", Math.hypot(goalPos.x - initialPos.x, goalPos.y - initialPos.y));
-        telemetry.addData("thing 2", Math.hypot(drive.pose.position.x - initialPos.x, drive.pose.position.y - initialPos.y));
+        distRemaining = goalVector.norm();
 
         speed = timeSinceInit * driveAccel;
         speed = Math.min(maxSpeed, speed);
         speed = Math.min(speed, Math.sqrt(Math.abs(2.0 * driveDeccel * (Math.abs(distRemaining) + additionalDistRemaining))));
 
-        if (distRemaining < 0) {
+        telemetry.addData("goalPos.x", goalPos.x);
+        telemetry.addData("distRemaining", distRemaining);
+        telemetry.addData("loop time", Constants.LOOP_TIME);
+        telemetry.addData("DeltaT", Constants.DELTA_T);
+        telemetry.addData("Travel", speed * Constants.LOOP_TIME / 1000);
+
+        if (distRemaining < speed * Constants.LOOP_TIME / 1000) {
             linearFinished = true;
             return new Vector2d(0, 0);
         }
@@ -75,7 +71,6 @@ public class PathFollowing {
             return new Vector2d(0, 0);
         }
 
-        //path.linearPoints.set(0, new DPoint(drive.pose.position.x, drive.pose.position.y));
         path.graph(canvas, currentPos, pathIndex);
 
         linearVel = linearPathFollowing(path.linearPoints.get(pathIndex), path.linearPoints.get(pathIndex - 1),
@@ -84,6 +79,7 @@ public class PathFollowing {
         if (linearFinished) {
             pathIndex++;
             linearFinished = false;
+            cubicPathFollowing(path, timeSinceInit);
         }
 
         return linearVel;
@@ -92,6 +88,7 @@ public class PathFollowing {
     public boolean cubicDriveTo(Bezier path, boolean init) {
         double timeSinceInit;
         double currentTime = Constants.TIME;
+
         if (init) {
             linearVel = new Vector2d(0, 0);
             initTime = currentTime;
@@ -102,12 +99,12 @@ public class PathFollowing {
 
         timeSinceInit = currentTime - initTime;
 
-        linearVel = cubicPathFollowing(path, timeSinceInit);
-
         if (cubicFinished) {
             telemetry.addData("DONE!", 1);
-            return true;
+            //return true;
         }
+
+        linearVel = cubicPathFollowing(path, timeSinceInit);
 
         drive.setDrivePowers(new PoseVelocity2d(linearVel, 0));
 

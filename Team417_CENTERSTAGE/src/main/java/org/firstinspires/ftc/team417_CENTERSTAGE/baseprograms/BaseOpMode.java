@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.team417_CENTERSTAGE.Constants;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 @Config
@@ -40,6 +41,8 @@ public abstract class BaseOpMode extends LinearOpMode {
     //Initializes motors, servos, and sensors
     public MecanumDrive initializeHardware() {
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+
+        Constants.init();
 
         //Drive Motors, other motors, sensors, etc.
         if(MecanumDrive.isDevBot) {
