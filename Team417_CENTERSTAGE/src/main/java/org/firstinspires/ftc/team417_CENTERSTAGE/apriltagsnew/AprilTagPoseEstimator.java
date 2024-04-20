@@ -9,7 +9,9 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.wilyworks.common.WilyWorks;
 
+import org.firstinspires.ftc.robotcore.external.Function;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -23,6 +25,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.Random;
 
 @Config
 public class AprilTagPoseEstimator {
@@ -148,7 +151,7 @@ public class AprilTagPoseEstimator {
     }   // end method initAprilTag()
 
     // Calculates the pose estimate based on a detection of an april tag
-    //     and the stored information of said april tag (position etc.)
+    //      and the stored information of said april tag (position etc.)
     // Also telemeters relevant info
     // Note that this is relative to the center of the camera
     public Pose2d calculatePoseEstimate(AprilTagDetection detection, AprilTagInfo aprilTagInfo, CameraInfo cameraInfo) {
@@ -157,8 +160,6 @@ public class AprilTagPoseEstimator {
         // Declaring variables
         double adjustedCameraInfoX, adjustedCameraInfoY, d, beta, gamma, relativeX, relativeY, absoluteX, absoluteY, absoluteTheta;
 
-        System.out.println("Start");
-
         // adjustedCameraInfoX and adjustedCameraInfoY - camera offset after being adjusted for camera rotation
         adjustedCameraInfoX = cameraInfo.offset.x * Math.cos(Math.toRadians(cameraInfo.rotation)) - cameraInfo.offset.y * Math.sin(Math.toRadians(cameraInfo.rotation));
         adjustedCameraInfoY = cameraInfo.offset.x * Math.sin(Math.toRadians(cameraInfo.rotation)) + cameraInfo.offset.y * Math.cos(Math.toRadians(cameraInfo.rotation));
@@ -166,46 +167,48 @@ public class AprilTagPoseEstimator {
         // d - absolute distance from April-tag to robot
         d = Math.hypot(detection.ftcPose.x + adjustedCameraInfoX, detection.ftcPose.y + adjustedCameraInfoY);
 
-        System.out.println("d" + d);
-
         // gamma - angle of center of camera direction to april tag direction
         gamma = Math.atan2(detection.ftcPose.x + adjustedCameraInfoX, detection.ftcPose.y + adjustedCameraInfoY);
-
-        System.out.println("gamma" + gamma);
 
         // beta - yaw of robot relative to the tag
         beta = gamma + Math.toRadians(detection.ftcPose.yaw);
 
-        System.out.println("detection yaw" + detection.ftcPose.yaw);
-
-        System.out.println("beta" + beta);
-
         // relativeX - x of robot without compensating for yaw
         relativeX = d * Math.cos(beta) + aprilTagInfo.x;
-
-        System.out.println(relativeX);
 
         // relativeY - y of robot without compensating for yaw
         relativeY = -d * Math.sin(beta) + aprilTagInfo.y;
 
-        System.out.println(relativeY);
-
         // absoluteX - x of robot
         absoluteX = (relativeX - aprilTagInfo.x) * Math.cos(Math.toRadians(aprilTagInfo.yaw)) - (relativeY - aprilTagInfo.y) * Math.sin(Math.toRadians(aprilTagInfo.yaw)) + aprilTagInfo.x;
-
-        System.out.println(absoluteX);
 
         // absoluteY - y of robot
         absoluteY = (relativeX - aprilTagInfo.x) * Math.sin(Math.toRadians(aprilTagInfo.yaw)) + (relativeY - aprilTagInfo.y) * Math.cos(Math.toRadians(aprilTagInfo.yaw)) + aprilTagInfo.y;
 
-        System.out.println(absoluteY);
-
         // absoluteTheta - yaw of robot
         absoluteTheta = Math.toRadians(aprilTagInfo.yaw - detection.ftcPose.yaw + cameraInfo.rotation) + Math.PI;
 
-        System.out.println(absoluteTheta);
+        Pose2d finalPose = new Pose2d(absoluteX, absoluteY, absoluteTheta);
 
-        return new Pose2d(absoluteX, absoluteY, absoluteTheta);
+        // Introduce error if WilyWorks is used
+        if (WilyWorks.isSimulating) finalPose = introduceError(finalPose, detection);
+
+        System.out.println(finalPose);
+
+        return finalPose;
+    }
+
+    // Generates error for Wily simulation
+    // Note that error is random depending on distance and rotation, so is not characteristic of
+    //      April Tags
+    public Pose2d introduceError(Pose2d pose, AprilTagDetection detection, double distanceMultiplier, double angleMultiplier, double distanceWeight, double angleWeight) {
+        Random random = new Random();
+        Function<Double, Double> error = (multiplier) -> (2 * random.nextDouble() - 1) * multiplier * (Math.hypot(detection.ftcPose.x, detection.ftcPose.y) * distanceWeight + Math.abs(detection.ftcPose.yaw) * angleWeight);
+        return new Pose2d(pose.position.x + error.apply(distanceMultiplier), pose.position.y + error.apply(distanceMultiplier), pose.heading.log() + error.apply(angleMultiplier));
+    }
+
+    public Pose2d introduceError(Pose2d pose, AprilTagDetection detection) {
+        return introduceError(pose, detection, 20, Math.PI / 6, 0.005, 0.0002);
     }
 
     // Draws the last 100 poses as circles, squares, or lines with different colors
@@ -223,11 +226,10 @@ public class AprilTagPoseEstimator {
                     c.strokeCircle(t.pose.position.x, t.pose.position.y, radius);
                     break;
                 case 2:
-                    c.strokeRect(t.pose.position.x - radius, t.pose.position.y - radius, radius, radius);
+                    c.strokeRect(t.pose.position.x - radius, t.pose.position.y - radius, 2 * radius, 2 * radius);
                     break;
                 default:
                     c.strokeLine(t.pose.position.x - 0.5 * radius, t.pose.position.y - 0.5 * radius, t.pose.position.x + 0.5 * radius, t.pose.position.y + 0.5 * radius);
-                    break;
             }
         }
     }
@@ -243,22 +245,31 @@ public class AprilTagPoseEstimator {
     public Pose2d trustVerification(ArrayList<Pose2d> poseArray) {
         // Takes the average pose of the detected poses
 
-        double sumX = 0;double sumY = 0; double sumReal= 0; double sum Imag = 0;
+        double sumX = 0;
+        double sumY = 0;
+        double sumReal = 0;
+        double sumImag = 0;
 
-        for (pose : poseArray) {
-            sumX += 10;
+        for (Pose2d pose : poseArray) {
+            sumX += pose.position.x;
+            sumY += pose.position.y;
+            sumReal += pose.heading.real;
+            sumImag += pose.heading.imag;
         }
 
-        // TODO: Remove the magic constants
+        int arraySize = poseArray.size();
+        Pose2d averagePose = new Pose2d(sumX / arraySize, sumY / arraySize, Math.atan2(sumImag / arraySize, sumReal / arraySize));
+
         // If any pose is more than 4 inches away or 5 degrees apart, distrust all poses
         boolean distanceIsSmall = poseArray.stream()
                 .allMatch(pose ->
                         Math.hypot(pose.position.x - averagePose.position.x,
-                                pose.position.y - averagePose.position.y) < 8);
+                                pose.position.y - averagePose.position.y) < 5);
         boolean thetaDifferenceIsSmall = poseArray.stream()
                 .allMatch(pose ->
                         Math.abs(pose.heading.log() - averagePose.heading.log()) < 5);
         if (!(distanceIsSmall && thetaDifferenceIsSmall)) return null;
+
         return averagePose;
     }
 

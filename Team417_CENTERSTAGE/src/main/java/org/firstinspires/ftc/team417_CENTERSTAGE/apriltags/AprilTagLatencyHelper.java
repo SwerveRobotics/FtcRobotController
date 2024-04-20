@@ -84,9 +84,6 @@ public class AprilTagLatencyHelper {
     public void updateMecanumDrive(Pose2d poseEstimate) {
         robotPoseEstimate = poseEstimate;
 
-        System.out.println("Twists" + twistList);
-        System.out.println("Poses" + poseList);
-
         if (robotPoseEstimate != null) {
             wasNullLastLoop = false;
             newResult = true;

@@ -53,6 +53,7 @@ public class AprilTagTesting extends BaseOpMode {
             myATPoseEstimator.drawPoseHistory(c);
             ATPose = myATPoseEstimator.robotPoseEstimate;
             if (ATPose != null) {
+                c.setStroke("#ffff00");
                 MecanumDrive.drawRobot(c, ATPose);
             }
             FtcDashboard dashboard = FtcDashboard.getInstance();
