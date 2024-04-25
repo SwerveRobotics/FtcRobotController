@@ -39,9 +39,9 @@ public final class ThreeDeadWheelLocalizer implements Localizer {
         // This is magically making things work! Before this block of code, the encoders seemed to
         //     be not resetting after every OpMode, causing errors. We are working on finding the
         //     root cause of this, but so far this seems to fix it.
-        // (Note: without the last line the BLMotor does not run as part of the mecanum drive.
+        // (Note: without the last line the BLMotor does not run as part of the mecanum drive.)
         hardwareMap.get(DcMotor.class, "par0").setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        hardwareMap.get(DcMotor.class, "par1").setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        hardwareMap.get(DcMotor.class, "SuspensionMotor").setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         DcMotor perpMotor = hardwareMap.get(DcMotor.class, "BLMotor");
         perpMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         perpMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
