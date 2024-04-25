@@ -122,7 +122,7 @@ abstract public class BaseAutonomous extends BaseOpMode {
                 AutonDriveFactory.SpikeMarks.LEFT, dropPixel(0.5, 0.3),
                 driveToDistanceAndMoveArm(8, 2700), moveDumperAction(0), startMoveBackward(), endMoveBackward(), moveGateAction(0));
         AutonDriveFactory.PoseAndAction centerPoseAndAction = auton.getDriveAction(red, !close,
-                AutonDriveFactory.SpikeMarks.CENTER, dropPixel(0.5, 0.5),
+                AutonDriveFactory.SpikeMarks.CENTER, dropPixel(0.5, 0.8),
                 driveToDistanceAndMoveArm(9, 2700), moveDumperAction(0), startMoveBackward(), endMoveBackward(), moveGateAction(0));
         AutonDriveFactory.PoseAndAction rightPoseAndAction = auton.getDriveAction(red, !close,
                 AutonDriveFactory.SpikeMarks.RIGHT, dropPixel(0.5, 0.3),
@@ -454,6 +454,10 @@ class AutonDriveFactory {
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
         spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
                 .stopAndAdd(intake);
+                //.splineTo(xForm(new Vector2d(-34, -60)), xForm(Math.toRadians(90)))
+                //.splineTo(xForm(new Vector2d(-34, -60)), xForm(Math.toRadians(90)))
+                //.splineTo(xForm(new Vector2d(0, -36)), xForm(Math.toRadians(90)));
+
                 // TODO: Add if done with spike mark
                 /*
                 .setTangent(xForm(Math.toRadians(-90)))
