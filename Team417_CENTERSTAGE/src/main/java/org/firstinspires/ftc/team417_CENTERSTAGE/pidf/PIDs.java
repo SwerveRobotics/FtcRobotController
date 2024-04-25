@@ -44,9 +44,10 @@ public class PIDs {
         vel = vel.div(speed);
 
         if (speed - lastSpeed > accel * Constants.DELTA_T)
-            speed += accel * Constants.DELTA_T;
-        lastSpeed = speed;
+            speed = lastSpeed + accel * Constants.DELTA_T;
 
-        return vel.times(speed);
+        vel = vel.times(speed);
+        lastSpeed = speed;
+        return vel;
     }
 }

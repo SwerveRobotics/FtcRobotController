@@ -14,6 +14,7 @@ public class PathFollowing2 {
     private final double driveDeccel = MecanumDrive.PARAMS.minProfileAccel;
     private final double maxSpeed = MecanumDrive.PARAMS.maxWheelVel;
     private final double powerPCTToIn = 19.653556 * Math.PI;
+    private final double DIST_EPSILON = 0.1;
     private double usedMovement;
     private int pathIndex;
     private double initTime;
@@ -21,12 +22,14 @@ public class PathFollowing2 {
     private final MecanumDrive drive;
     private final Canvas canvas;
     private final Telemetry telemetry;
+    private PIDs PID;
 
     public PathFollowing2(MecanumDrive drive, Canvas canvas, Telemetry telemetry) {
         this.drive = drive;
         this.canvas = canvas;
         this.telemetry = telemetry;
         pos = new DPoint(0, 0);
+        PID = new PIDs(0, 0, 0);
     }
 
     public DPoint linearPathFollowing(Vector2d goalVector, DPoint goalPos, double timeSinceInit, double additionalDistRemaining) {
@@ -80,34 +83,38 @@ public class PathFollowing2 {
         return pos;
     }
 
+    DPoint lastPos = new DPoint(0, 0);
+
     public boolean cubicDriveTo(Bezier path, boolean init) {
-        PIDs PID = new PIDs(1, 0, 0);
-        DPoint goalPos;
         DPoint currentPos = new DPoint(drive.pose.position.x, drive.pose.position.y);
         Vector2d vel;
         double timeSinceInit;
         double currentTime = Constants.TIME;
 
         if (init) {
+            PID = new PIDs(2.5, 0, 0);
             usedMovement = 0;
             initTime = currentTime;
             pathIndex = 1;
-            pos = currentPos;
+            pos = path.linearPoints.get(0);
+            lastPos = pos;
         }
 
         timeSinceInit = currentTime - initTime;
 
-        goalPos = cubicPathFollowing(path, timeSinceInit);
+        cubicPathFollowing(path, timeSinceInit);
+        vel = pos.toVector(currentPos);
 
-        if (goalPos == null) {
-            telemetry.addData("DONE!", 1);
-            drive.setDrivePowers(new PoseVelocity2d(new Vector2d(0, 0), 0));
+        if (vel.norm() < DIST_EPSILON) {
+            drive.setDrivePowers(null, new PoseVelocity2d(new Vector2d(0, 0), 0));
             return true;
         }
 
-        vel = PID.calculate(goalPos.toVector(currentPos));
-        drive.setDrivePowers(new PoseVelocity2d(PID.skew(vel, driveAccel), 0));
-        //drive.setDrivePowers(new PoseVelocity2d(goalPos.toVector(currentPos),0));
+        vel = PID.calculate(vel);
+        //drive.setDrivePowers(new PoseVelocity2d(PID.skew(vel, driveAccel), 0));
+        drive.setDrivePowers(null, new PoseVelocity2d(vel, 0));
+
+        lastPos = pos;
 
         return false;
     }

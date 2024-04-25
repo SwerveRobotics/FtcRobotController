@@ -39,6 +39,7 @@ public class PathUnitTest extends BaseOpMode{
         waitForStart();
 
         while (opModeIsActive()) {
+            //WilyWorks.updateSimulation(Constants.DELTA_T);
             curveDrive.cubicDriveTo(controlPoints, false);
 
             //resetIMUIfNeeded();
@@ -49,10 +50,13 @@ public class PathUnitTest extends BaseOpMode{
             telemetry.addData("y", drive.pose.position.y);
             telemetry.addData("heading", drive.pose.heading);
 
+            packet.put("x", drive.pose.position.x);
+            packet.put("y", drive.pose.position.y);
+            packet.put("heading", drive.pose.heading);
+
             MecanumDrive.drawRobot(canvas, drive.pose);
             dashboard.sendTelemetryPacket(packet);
             telemetry.update();
-            WilyWorks.updateSimulation(Constants.DELTA_T);
         }
 
         // Close drive (release resources)
