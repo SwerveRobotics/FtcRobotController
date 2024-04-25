@@ -434,7 +434,9 @@ class AutonDriveFactory {
         TrajectoryActionBuilder spikeLeft = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         spikeLeft = spikeLeft.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-33.5, -34)), xForm((Math.toRadians(180))))
-                .stopAndAdd(intake)
+                .stopAndAdd(intake);
+                // TODO: Add if done with spike mark
+                /*
                 .splineToConstantHeading(xForm(new Vector2d(-30, -34)), xForm(Math.toRadians(180)))
                 .splineTo(xForm(new Vector2d(-34, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
@@ -447,10 +449,13 @@ class AutonDriveFactory {
                 .afterTime(0.1, moveGateAction)
                 .afterTime(0.2, startMoveBackward)
                 .afterTime(0.70, endMoveBackward);
+                */
 
         TrajectoryActionBuilder spikeCenter = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, (Math.toRadians(90)))));
         spikeCenter = spikeCenter.splineTo(xForm(new Vector2d(-34, -37)), xForm(Math.toRadians(90)))
-                .stopAndAdd(intake)
+                .stopAndAdd(intake);
+                // TODO: Add if done with spike mark
+                /*
                 .setTangent(xForm(Math.toRadians(-90)))
                 .splineTo(xForm(new Vector2d(-34, -39)), xForm(Math.toRadians(-90)))
                 .setTangent(xForm(Math.toRadians(180)))
@@ -466,11 +471,14 @@ class AutonDriveFactory {
                 .afterTime(0.1, moveGateAction)
                 .afterTime(0.2, startMoveBackward)
                 .afterTime(0.70, endMoveBackward);
+                */
 
         TrajectoryActionBuilder spikeRight = this.drive.actionBuilder(xForm(new Pose2d(-34, -64, Math.toRadians(90))));
         spikeRight = spikeRight.splineTo(xForm(new Vector2d(-35, -37)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-34.5, -37)), xForm(Math.toRadians(0)))
-                .stopAndAdd(intake)
+                .stopAndAdd(intake);
+                // TODO: Add if done with spike mark
+                /*
                 .splineToConstantHeading(xForm(new Vector2d(-40, -34)), xForm(Math.toRadians(0)))
                 .splineTo(xForm(new Vector2d(-36, -30)), xForm(Math.toRadians(90)))
                 .splineTo(xForm(new Vector2d(-30, -10)), xForm(Math.toRadians(0)))
@@ -483,6 +491,7 @@ class AutonDriveFactory {
                 .afterTime(0.1, moveGateAction)
                 .afterTime(0.2, startMoveBackward)
                 .afterTime(0.70, endMoveBackward);
+                */
 
         if (location == xForm(SpikeMarks.LEFT)) {
             return new PoseAndAction(spikeLeft.build(), xForm(new Pose2d(-34, -64, Math.toRadians(90))));
