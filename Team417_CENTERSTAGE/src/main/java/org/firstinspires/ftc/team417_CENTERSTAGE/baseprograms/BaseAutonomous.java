@@ -23,6 +23,7 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.opencv.OpenCvColorDetection;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 import java.util.ArrayList;
+import java.util.stream.Stream;
 
 @Config
 abstract public class BaseAutonomous extends BaseOpMode {
@@ -223,9 +224,26 @@ abstract public class BaseAutonomous extends BaseOpMode {
 
         drive.runParallel(new updateToDashboard(poseAndAction.action));
 
-        while (opModeIsActive()) {
+        ElapsedTime timeStill = new ElapsedTime();
+        timeStill.reset();
+        while (opModeIsActive() && timeStill.seconds() < 5) {
             drive.doActionsWork();
+            if (Stream.of(drive.rightFront, drive.leftBack, drive.rightBack, drive.leftFront).allMatch(motor -> isEpsilonEquals(motor.getPower(), 0))) {
+                timeStill.reset();
+            }
         }
+
+        while (drive.pose.position.x < 48 && opModeIsActive()) {
+            drive.rightBack.setPower(0.2);
+            drive.rightFront.setPower(-0.2);
+            drive.leftBack.setPower(-0.2);
+            drive.rightFront.setPower(0.2);
+        }
+
+        drive.rightBack.setPower(0);
+        drive.rightFront.setPower(0);
+        drive.leftBack.setPower(0);
+        drive.rightFront.setPower(0);
 
         telemetry.addLine("Running closing procedure: ");
         telemetry.update();
