@@ -21,8 +21,9 @@ public abstract class BaseOpMode extends LinearOpMode {
     public DigitalChannel red;
     public DigitalChannel green;
 
-    public DcMotor intakeMotor ;
-    public DcMotor armMotor ;
+    public DcMotor intakeMotor;
+    public DcMotor armMotor;
+    public DcMotor SuspensionMotor;
     static final public double ARM_MOTOR_MIN_POSITION = 0;
     static final public double ARM_MOTOR_MAX_POSITION = 4200;
     public Servo dumperServo;
@@ -62,6 +63,7 @@ public abstract class BaseOpMode extends LinearOpMode {
             //Mechanism Motors
             intakeMotor = initializeMotor("IntakeMotor", DcMotor.Direction.FORWARD);
             armMotor = initializeMotor("ArmMotor", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);//DcMotor.RunMode.RUN_TO_POSITION);
+            SuspensionMotor = initializeMotor("SuspensionMotor", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
             //Mechanism Servos
             dumperServo = initializeServo("DumperServo", Servo.Direction.FORWARD);

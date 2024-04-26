@@ -16,7 +16,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
     // Set to false for competitions to remove lags
     public static final boolean TESTING = true;
 
-    private ArmMechanism arm;
+    //private ArmMechanism arm;
 
     ElapsedTime time = new ElapsedTime();
 
@@ -44,8 +44,8 @@ public abstract class BaseTeleOp extends BaseOpMode {
         }
 
         if (armMotor != null) {
-            arm = new ArmMechanism(gamepad2, armMotor, dumperServo);
-            arm.currentArmLocation = armPosition;
+            //arm = new ArmMechanism(gamepad2, armMotor, SuspensionMotor, dumperServo);
+            //arm.currentArmLocation = armPosition;
             resetDumper();
             droneServo.setPosition(droneServoHoldingPos);
         }
@@ -147,8 +147,10 @@ public abstract class BaseTeleOp extends BaseOpMode {
         controlDumperUsingControllers();
         controlDumperWheelUsingControllers();
         controlGateUsingControllers();
-        if (arm != null)
-            arm.armControl();
+        armMotor.setPower(-gamepad2.left_stick_y);
+        SuspensionMotor.setPower(-gamepad2.left_stick_y);
+        //if (arm != null)
+        //    arm.armControl();
         controlDroneLauncher();
     }
 

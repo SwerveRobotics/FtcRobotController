@@ -42,11 +42,13 @@ public class ArmMechanism {
 
     //PID last runtime, last error, total error every run iteration.
     private double lastPidTime, lastPidError, cumulativeError;
+    private DcMotor suspensionMotor;
 
-    public ArmMechanism(Gamepad gamepad2, DcMotor armMotor, Servo dumperServo) {
+    public ArmMechanism(Gamepad gamepad2, DcMotor armMotor, DcMotor SuspensionMotor, Servo dumperServo) {
         //passes necessary API objects in the class.
         this.gamepad2 = gamepad2;
         this.armMotor = armMotor;
+        this.suspensionMotor = SuspensionMotor;
         this.dumperServo = dumperServo;
 
         //Init variables so they don't hold their value from last time the code was run
@@ -140,6 +142,7 @@ public class ArmMechanism {
         dashboard.sendTelemetryPacket(packet);
 //Give the PID the location the arm should be at and location the arm is at.
         armMotor.setPower(armPID(currentArmLocation, armMotor.getCurrentPosition(), armKp, armKi, armKd));
+        suspensionMotor.setPower(armPID(currentArmLocation, suspensionMotor.getCurrentPosition(), armKp, armKi, armKd));
 
         //The time the loop was competed
         lastArmProfileTime = currentTime;
@@ -207,18 +210,25 @@ public class ArmMechanism {
         //If using stick control update the speed of arm based on the stick tilt
         if (usingStick) {
             armMotor.setPower(lStickTilt * rStickSensitivity);
+            suspensionMotor.setPower(lStickTilt * rStickSensitivity);
 
             //If stick is inside dead zone set motor power to zero
-            if (lStickTilt < rStickDeadZone && lStickTilt > -rStickDeadZone)
+            if (lStickTilt < rStickDeadZone && lStickTilt > -rStickDeadZone) {
                 armMotor.setPower(0);
+                armMotor.setPower(0);
+            }
         } else {
             //if the arm is within 50 encoder ticks of it's goal, stop it from moving.
             if (armMotor.getCurrentPosition() < armGoalLocation + armPosEpsilon && armMotor.getCurrentPosition() > armGoalLocation - armPosEpsilon) {
                 armMotor.setPower(0);
-            } else if (armMotor.getCurrentPosition() > armGoalLocation) //If the arm is past it's goal, move backward.
+                suspensionMotor.setPower(0);
+            } else if (armMotor.getCurrentPosition() > armGoalLocation) {//If the arm is past it's goal, move backward.
                 armMotor.setPower(-armMoveToPositionVelocity);
-            else if (armMotor.getCurrentPosition() < armGoalLocation) //If the arm is before it's goal, move forward.
+                suspensionMotor.setPower(-armMoveToPositionVelocity);
+            } else if (armMotor.getCurrentPosition() < armGoalLocation) {//If the arm is before it's goal, move forward.
                 armMotor.setPower(armMoveToPositionVelocity);
+                suspensionMotor.setPower(armMoveToPositionVelocity);
+            }
         }
 
         if (armMotor.getCurrentPosition() < startUpwardTiltPos)
