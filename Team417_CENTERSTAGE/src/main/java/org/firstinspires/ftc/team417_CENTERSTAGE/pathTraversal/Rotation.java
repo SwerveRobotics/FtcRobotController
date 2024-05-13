@@ -7,38 +7,51 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 public class Rotation {
 
-    /*final double maxAccel = MecanumDrive.PARAMS.maxProfileAccel;
+    final double maxAccel = MecanumDrive.PARAMS.maxProfileAccel;
     final double maxDeccel = MecanumDrive.PARAMS.maxProfileAccel;
     final double maxSpeed = MecanumDrive.PARAMS.maxWheelVel;
+    private final double powerPCTToRadians = 19.653556 * Math.PI / 9.0; //divide by dist to center of rotation.
+    private double usedMovement;
     final MecanumDrive drive;
+
+    private double orientation = 0;
 
     public Rotation(MecanumDrive drive) {
         this.drive = drive;
     }
 
-    private double confine;
+    private double confine(double num) {
+        while(num > Math.PI)
+            num -= Math.PI * 2;
+        while(num < -Math.PI)
+            num += Math.PI * 2;
 
-    public DPoint rotationalVel(double goalOrientation, double timeSinceInit) {
+        return num;
+    }
+
+    public double rotationalVel(double goalOrientation, double timeSinceInit) {
         Vector2d normVector;
         double speed;
         double travel;
         double distRemaining = goalOrientation - drive.pose.heading.toDouble();
 
+        distRemaining = confine(distRemaining);
+
         speed = maxAccel * timeSinceInit;
         speed = Math.min(speed, maxSpeed);
-        speed = Math.min(speed, Math.sqrt(Math.abs(2.0 * maxDeccel * distRemaining)));
+        speed = Math.min(speed, Math.sqrt(Math.abs(2.0 * maxDeccel * Math.abs(distRemaining))));
 
-        //travel = speed / 100.0 * powerPCTToIn * Constants.LOOP_TIME - usedMovement;
+        travel = speed / 100.0 * powerPCTToRadians * Constants.LOOP_TIME - usedMovement;
 
         if (travel > distRemaining) {
             usedMovement = distRemaining;
-            return null;
+            return 1000;
         }
 
-        normVector = goalVector.div(goalVector.norm());
-        pos = pos.plus(normVector.times(travel));
+        speed = speed * distRemaining / Math.abs(distRemaining);
+        orientation += speed;
 
         usedMovement = 0;
-        return pos;
-    }*/
+        return orientation;
+    }
 }

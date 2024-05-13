@@ -12,6 +12,7 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.ArmMechanism;
 import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.AutoDriveTo;
 import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.Bezier;
 import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.DPoint;
+import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.PathFollowing;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 @Config
@@ -45,7 +46,7 @@ public abstract class BaseTeleOp extends BaseOpMode {
             droneServo.setPosition(droneServoHoldingPos);
         }*/
 
-        curveDrive = new PathFollowing(drive, canvas, packet, telemetry);
+        curveDrive = new PathFollowing(drive, canvas, telemetry);
 
         waitForStart();
 
