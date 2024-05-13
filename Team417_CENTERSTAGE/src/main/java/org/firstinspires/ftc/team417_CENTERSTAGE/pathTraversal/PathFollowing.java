@@ -10,7 +10,7 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.Constants;
 import org.firstinspires.ftc.team417_CENTERSTAGE.pidf.PIDs;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
-public class PathFollowing2 {
+public class PathFollowing {
     private final double driveAccel = MecanumDrive.PARAMS.maxProfileAccel;
     private final double driveDeccel = MecanumDrive.PARAMS.minProfileAccel;
     private final double maxSpeed = MecanumDrive.PARAMS.maxWheelVel;
@@ -25,7 +25,7 @@ public class PathFollowing2 {
     private final Telemetry telemetry;
     private PIDs PID;
 
-    public PathFollowing2(MecanumDrive drive, Canvas canvas, Telemetry telemetry) {
+    public PathFollowing(MecanumDrive drive, Canvas canvas, Telemetry telemetry) {
         this.drive = drive;
         this.canvas = canvas;
         this.telemetry = telemetry;

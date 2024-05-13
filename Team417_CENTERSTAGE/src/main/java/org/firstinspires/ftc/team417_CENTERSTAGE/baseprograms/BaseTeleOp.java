@@ -12,7 +12,6 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.ArmMechanism;
 import org.firstinspires.ftc.team417_CENTERSTAGE.mechanisms.AutoDriveTo;
 import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.Bezier;
 import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.DPoint;
-import org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal.PathFollowing;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 @Config

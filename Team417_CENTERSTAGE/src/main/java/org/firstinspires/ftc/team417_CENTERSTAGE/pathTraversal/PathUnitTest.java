@@ -5,7 +5,6 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.Constants;
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
@@ -14,7 +13,7 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 @Config
 @TeleOp(name = "PathUnitTest")
 public class PathUnitTest extends BaseOpMode{
-    PathFollowing2 curveDrive;
+    PathFollowing curveDrive;
 
     @Override
     public void runOpMode() {
@@ -28,7 +27,7 @@ public class PathUnitTest extends BaseOpMode{
         MecanumDrive.drawRobot(canvas, drive.pose);
         dashboard.sendTelemetryPacket(packet);
 
-        curveDrive = new PathFollowing2(drive, canvas, telemetry);
+        curveDrive = new PathFollowing(drive, canvas, telemetry);
 
         drive.updatePoseEstimate();
 
