@@ -1,112 +1,129 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.team417_CENTERSTAGE.Constants;
-import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
+import org.firstinspires.ftc.team417_CENTERSTAGE.pidf.PIDs;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
-public class PathFollowing {
-
+public class PathFollowing2 {
     private final double driveAccel = MecanumDrive.PARAMS.maxProfileAccel;
     private final double driveDeccel = MecanumDrive.PARAMS.minProfileAccel;
-    //private final double maxSpeed = MecanumDrive.PARAMS.maxWheelVel;
-    private final double maxSpeed = 0.4;
-    private Vector2d linearVel = new Vector2d(0, 0);
+    private final double maxSpeed = MecanumDrive.PARAMS.maxWheelVel;
+    private final double powerPCTToIn = 19.653556 * Math.PI;
+    private final double DIST_EPSILON = 0.1;
+    private double usedMovement;
+    private int pathIndex;
     private double initTime;
-    private int pathIndex = 1;
-    private boolean linearFinished = false;
-    private boolean cubicFinished = false;
+    private DPoint pos;
+    private final MecanumDrive drive;
+    private final Canvas canvas;
+    private final Telemetry telemetry;
+    private PIDs PID;
 
-    MecanumDrive drive;
-    Canvas canvas;
-    TelemetryPacket packet;
-    Telemetry telemetry;
-    public PathFollowing(MecanumDrive drive, Canvas canvas, TelemetryPacket packet, Telemetry telemetry) {
+    public PathFollowing2(MecanumDrive drive, Canvas canvas, Telemetry telemetry) {
         this.drive = drive;
         this.canvas = canvas;
-        this.packet = packet;
         this.telemetry = telemetry;
+        pos = new DPoint(0, 0);
+        PID = new PIDs(0, 0, 0);
     }
 
-    public Vector2d linearPathFollowing(DPoint goalPos, DPoint initialPos, double timeSinceInit, double additionalDistRemaining) {
-        Vector2d goalVector;
+    public DPoint linearPathFollowing(Vector2d goalVector, DPoint goalPos, double timeSinceInit, double additionalDistRemaining) {
         Vector2d normVector;
-        double distRemaining;
         double speed;
+        double travel;
+        double distRemaining = goalPos.toVector(pos).norm();
 
-        goalVector = new Vector2d(goalPos.x - drive.pose.position.x, goalPos.y - drive.pose.position.y);
-        distRemaining = goalVector.norm();
+        speed = driveAccel * timeSinceInit;
+        speed = Math.min(speed, maxSpeed);
+        speed = Math.min(speed, Math.sqrt(Math.abs(2.0 * driveDeccel * (additionalDistRemaining + distRemaining))));
 
-        speed = timeSinceInit * driveAccel;
-        speed = Math.min(maxSpeed, speed);
-        speed = Math.min(speed, Math.sqrt(Math.abs(2.0 * driveDeccel * (Math.abs(distRemaining) + additionalDistRemaining))));
+        telemetry.addData("speed", speed);
 
-        telemetry.addData("goalPos.x", goalPos.x);
-        telemetry.addData("distRemaining", distRemaining);
-        telemetry.addData("loop time", Constants.LOOP_TIME);
-        telemetry.addData("DeltaT", Constants.DELTA_T);
-        telemetry.addData("Travel", speed * Constants.LOOP_TIME / 1000);
+        travel = speed / 100.0 * powerPCTToIn * Constants.LOOP_TIME - usedMovement;
 
-        if (distRemaining < speed * Constants.LOOP_TIME / 1000) {
-            linearFinished = true;
-            return new Vector2d(0, 0);
+        if (travel > distRemaining) {
+            usedMovement = distRemaining;
+            return null;
         }
 
         normVector = goalVector.div(goalVector.norm());
-        return normVector.times(speed);
-    }
-    public Vector2d cubicPathFollowing(Bezier path, double timeSinceInit) {
-        Vector2d linearVel;
-        DPoint currentPos = new DPoint(drive.pose.position.x, drive.pose.position.y);
+        pos = pos.plus(normVector.times(travel));
 
-        telemetry.addData("pathIndex", pathIndex);
+        usedMovement = 0;
+        return pos;
+    }
+
+    public DPoint cubicPathFollowing(Bezier path, double timeSinceInit) {
+        Vector2d currentLine;
+
+        telemetry.addData("PathIndex", pathIndex);
+        telemetry.addData("path.linearPoints.size()", path.linearPoints.size());
+        telemetry.addData("pos.x", pos.x);
+        telemetry.addData("pos.y", pos.y);
 
         if (pathIndex >= path.linearPoints.size()) {
-            cubicFinished = true;
-            return new Vector2d(0, 0);
+            return null;
         }
 
-        path.graph(canvas, currentPos, pathIndex);
+        path.graph(canvas, pos, pathIndex);
 
-        linearVel = linearPathFollowing(path.linearPoints.get(pathIndex), path.linearPoints.get(pathIndex - 1),
-                                        timeSinceInit, path.length(pathIndex));
+        currentLine = path.linearPoints.get(pathIndex).toVector(path.linearPoints.get(pathIndex - 1));
 
-        if (linearFinished) {
+        if (linearPathFollowing(currentLine, path.linearPoints.get(pathIndex), timeSinceInit, path.length(pathIndex)) == null) {
+            pos = path.linearPoints.get(pathIndex);
             pathIndex++;
-            linearFinished = false;
-            cubicPathFollowing(path, timeSinceInit);
+            return cubicPathFollowing(path, timeSinceInit);
         }
 
-        return linearVel;
+        return pos;
     }
 
+    DPoint lastPos = new DPoint(0, 0);
+
     public boolean cubicDriveTo(Bezier path, boolean init) {
+        DPoint currentPos;
+        Vector2d vel;
         double timeSinceInit;
         double currentTime = Constants.TIME;
 
         if (init) {
-            linearVel = new Vector2d(0, 0);
+            PID = new PIDs(1, 0, 0);
+            usedMovement = 0;
             initTime = currentTime;
             pathIndex = 1;
-            linearFinished = false;
-            cubicFinished = false;
+            pos = path.linearPoints.get(0);
+            lastPos = pos;
         }
 
         timeSinceInit = currentTime - initTime;
+        currentPos = new DPoint(drive.pose.position.x, drive.pose.position.y);
+        cubicPathFollowing(path, timeSinceInit);
 
-        if (cubicFinished) {
-            telemetry.addData("DONE!", 1);
-            //return true;
+        vel = pos.toVector(currentPos);
+
+        if (vel.norm() < DIST_EPSILON) {
+            drive.setDrivePowers(null, new PoseVelocity2d(new Vector2d(0, 0), 0));
+            return true;
         }
 
-        linearVel = cubicPathFollowing(path, timeSinceInit);
+        canvas.setStroke("#0000FF");
+        canvas.strokeLine(currentPos.x, currentPos.y, currentPos.x + vel.x, currentPos.y + vel.y);
+        canvas.setFill("#0000FF");
+        canvas.fillCircle(pos.x, pos.y, 1);
 
-        drive.setDrivePowers(new PoseVelocity2d(linearVel, 0));
+        //vel = PID.calculate(vel);
+        //drive.setDrivePowers(new PoseVelocity2d(PID.skew(vel, driveAccel), 0));
+        vel = pos.toVector(currentPos);
+        drive.setDrivePowers(null, new PoseVelocity2d(vel, 0));
+        WilyWorks.updateSimulation(Constants.DELTA_T);
+
+        lastPos = pos;
 
         return false;
     }
