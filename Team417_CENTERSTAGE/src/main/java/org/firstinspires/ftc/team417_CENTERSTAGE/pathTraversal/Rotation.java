@@ -7,7 +7,7 @@ import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 public class Rotation {
 
-    final double maxAccel = MecanumDrive.PARAMS.maxProfileAccel;
+    /*final double maxAccel = MecanumDrive.PARAMS.maxProfileAccel;
     final double maxDeccel = MecanumDrive.PARAMS.maxProfileAccel;
     final double maxSpeed = MecanumDrive.PARAMS.maxWheelVel;
     final MecanumDrive drive;
@@ -16,7 +16,7 @@ public class Rotation {
         this.drive = drive;
     }
 
-    private double confine
+    private double confine;
 
     public DPoint rotationalVel(double goalOrientation, double timeSinceInit) {
         Vector2d normVector;
@@ -28,7 +28,7 @@ public class Rotation {
         speed = Math.min(speed, maxSpeed);
         speed = Math.min(speed, Math.sqrt(Math.abs(2.0 * maxDeccel * distRemaining)));
 
-        travel = speed / 100.0 * powerPCTToIn * Constants.LOOP_TIME - usedMovement;
+        //travel = speed / 100.0 * powerPCTToIn * Constants.LOOP_TIME - usedMovement;
 
         if (travel > distRemaining) {
             usedMovement = distRemaining;
@@ -40,5 +40,5 @@ public class Rotation {
 
         usedMovement = 0;
         return pos;
-    }
+    }*/
 }

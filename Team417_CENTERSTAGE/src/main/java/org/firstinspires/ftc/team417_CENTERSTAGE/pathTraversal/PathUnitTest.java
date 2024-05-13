@@ -33,14 +33,14 @@ public class PathUnitTest extends BaseOpMode{
         drive.updatePoseEstimate();
 
         Bezier controlPoints= new Bezier(new DPoint(0, 0),
-                new DPoint(0, 24), new DPoint(24, 24), new DPoint(24, 0), Constants.LINE_APROX_EPSILON);
+                new DPoint(0, 24), new DPoint(36, 24), new DPoint(48, 0), Constants.LINE_APROX_EPSILON);
         curveDrive.cubicDriveTo(controlPoints, true);
 
         waitForStart();
 
         while (opModeIsActive()) {
-            //WilyWorks.updateSimulation(Constants.DELTA_T);
             curveDrive.cubicDriveTo(controlPoints, false);
+
 
             //resetIMUIfNeeded();
 

@@ -3,6 +3,7 @@ package org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.team417_CENTERSTAGE.Constants;
@@ -86,13 +87,13 @@ public class PathFollowing2 {
     DPoint lastPos = new DPoint(0, 0);
 
     public boolean cubicDriveTo(Bezier path, boolean init) {
-        DPoint currentPos = new DPoint(drive.pose.position.x, drive.pose.position.y);
+        DPoint currentPos;
         Vector2d vel;
         double timeSinceInit;
         double currentTime = Constants.TIME;
 
         if (init) {
-            PID = new PIDs(2.5, 0, 0);
+            PID = new PIDs(1, 0, 0);
             usedMovement = 0;
             initTime = currentTime;
             pathIndex = 1;
@@ -101,8 +102,9 @@ public class PathFollowing2 {
         }
 
         timeSinceInit = currentTime - initTime;
-
+        currentPos = new DPoint(drive.pose.position.x, drive.pose.position.y);
         cubicPathFollowing(path, timeSinceInit);
+
         vel = pos.toVector(currentPos);
 
         if (vel.norm() < DIST_EPSILON) {
@@ -110,9 +112,16 @@ public class PathFollowing2 {
             return true;
         }
 
-        vel = PID.calculate(vel);
+        canvas.setStroke("#0000FF");
+        canvas.strokeLine(currentPos.x, currentPos.y, currentPos.x + vel.x, currentPos.y + vel.y);
+        canvas.setFill("#0000FF");
+        canvas.fillCircle(pos.x, pos.y, 1);
+
+        //vel = PID.calculate(vel);
         //drive.setDrivePowers(new PoseVelocity2d(PID.skew(vel, driveAccel), 0));
+        vel = pos.toVector(currentPos);
         drive.setDrivePowers(null, new PoseVelocity2d(vel, 0));
+        WilyWorks.updateSimulation(Constants.DELTA_T);
 
         lastPos = pos;
 
