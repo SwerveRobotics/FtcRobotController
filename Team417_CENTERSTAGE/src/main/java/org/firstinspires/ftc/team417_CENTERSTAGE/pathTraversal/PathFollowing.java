@@ -120,8 +120,15 @@ public class PathFollowing {
         //vel = PID.calculate(vel);
         //drive.setDrivePowers(new PoseVelocity2d(PID.skew(vel, driveAccel), 0));
         vel = pos.toVector(currentPos);
+        vel = vel.times(1000.0 * Constants.LOOP_TIME);
         drive.setDrivePowers(null, new PoseVelocity2d(vel, 0));
         WilyWorks.updateSimulation(Constants.DELTA_T);
+        try {
+            //Thread.sleep((int) Constants.DELTA_T * 1000);
+            Thread.sleep(200);
+        } catch (InterruptedException e) {
+
+        }
 
         lastPos = pos;
 

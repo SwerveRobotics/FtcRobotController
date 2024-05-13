@@ -3,6 +3,7 @@ package org.firstinspires.ftc.team417_CENTERSTAGE.pathTraversal;
 import com.acmerobotics.roadrunner.Vector2d;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.Constants;
+import org.firstinspires.ftc.team417_CENTERSTAGE.pidf.PIDs;
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 public class Rotation {
@@ -29,7 +30,7 @@ public class Rotation {
         return num;
     }
 
-    public double rotationalVel(double goalOrientation, double timeSinceInit) {
+    public double orientation(double goalOrientation, double timeSinceInit) {
         Vector2d normVector;
         double speed;
         double travel;
@@ -54,4 +55,15 @@ public class Rotation {
         usedMovement = 0;
         return orientation;
     }
+
+    /*public double rotationalVel(double goalOrientation, double timeSinceInit) {
+        double orientation = orientation(goalOrientation, timeSinceInit);
+        double travel = confine(orientation - drive.pose.heading.toDouble());
+
+        PIDs PID = new PIDs(1, 0, 0);
+
+        tavel = PID.calculate(vel);
+
+        return confine();
+    }*/
 }
