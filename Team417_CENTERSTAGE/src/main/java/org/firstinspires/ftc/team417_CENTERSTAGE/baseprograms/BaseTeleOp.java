@@ -57,10 +57,10 @@ public abstract class BaseTeleOp extends BaseOpMode {
 
         Bezier controlPoints= new Bezier(new DPoint(0, 0),
                 new DPoint(0, 0), new DPoint(24, 24), new DPoint(24, 24), LINE_APROX_EPSILON);
-        curveDrive.cubicDriveTo(controlPoints, true);
+        curveDrive.cubicDriveTo(controlPoints);
 
         while (opModeIsActive()) {
-            curveDrive.cubicDriveTo(controlPoints, false);
+            curveDrive.cubicDriveTo(controlPoints);
 
             //resetIMUIfNeeded();
 

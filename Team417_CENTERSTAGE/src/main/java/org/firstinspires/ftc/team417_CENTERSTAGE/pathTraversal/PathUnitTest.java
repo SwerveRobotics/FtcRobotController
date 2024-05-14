@@ -4,7 +4,9 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.Constants;
 import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
@@ -33,12 +35,26 @@ public class PathUnitTest extends BaseOpMode{
 
         Bezier controlPoints= new Bezier(new DPoint(0, 0),
                 new DPoint(0, 24), new DPoint(24, 24), new DPoint(24, 0), Constants.LINE_APROX_EPSILON);
-        curveDrive.cubicDriveTo(controlPoints, true);
 
         waitForStart();
 
+        curveDrive.init(new DPoint(0, 0));
+
         while (opModeIsActive()) {
-            curveDrive.cubicDriveTo(controlPoints, false);
+            //curveDrive.cubicDriveTo(controlPoints, false);
+
+
+            //curveDrive.linearDriveTo(new DPoint(24, 0));
+            curveDrive.cubicDriveTo(controlPoints);
+            WilyWorks.updateSimulation(Constants.DELTA_T);
+            try {
+                //Thread.sleep((int) Constants.DELTA_T * 1000);
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+
+            }
+
+
 
 
             //resetIMUIfNeeded();

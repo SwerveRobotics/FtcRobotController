@@ -33,7 +33,17 @@ public class PathFollowing {
         PID = new PIDs(0, 0, 0);
     }
 
-    public DPoint linearPathFollowing(Vector2d goalVector, DPoint goalPos, double timeSinceInit, double additionalDistRemaining) {
+    public void init(DPoint startingPoint) {
+        PID = new PIDs(1, 0, 0);
+        usedMovement = 0;
+        initTime = Constants.TIME;
+        pathIndex = 1;
+        pos = startingPoint;
+    }
+
+    Vector2d v = new Vector2d(0, 0);
+
+    public DPoint linearPathFollowing(Vector2d goalVector, DPoint goalPos, double additionalDistRemaining) {
         Vector2d normVector;
         double speed;
         double travel;
@@ -48,7 +58,7 @@ public class PathFollowing {
         travel = speed / 100.0 * powerPCTToIn * Constants.LOOP_TIME - usedMovement;
 
         if (travel > distRemaining) {
-            usedMovement = distRemaining;
+            usedMovement += distRemaining;
             return null;
         }
 
@@ -59,7 +69,30 @@ public class PathFollowing {
         return pos;
     }
 
-    public DPoint cubicPathFollowing(Bezier path, double timeSinceInit) {
+    public boolean linearDriveTo(DPoint goal) {
+        DPoint currentPos;
+        Vector2d vel;
+
+        currentPos = new DPoint(drive.pose.position.x, drive.pose.position.y);
+        linearPathFollowing(goal.toVector(pos), goal, 0);
+
+        vel = pos.toVector(currentPos);
+
+        if (vel.norm() < DIST_EPSILON) {
+            drive.setDrivePowers(null, new PoseVelocity2d(new Vector2d(0, 0), 0));
+            return true;
+        }
+
+        //vel = PID.calculate(vel);
+        //drive.setDrivePowers(new PoseVelocity2d(PID.skew(vel, driveAccel), 0));
+        vel = pos.toVector(currentPos);
+        vel = vel.times(1000.0 * Constants.LOOP_TIME);
+        drive.setDrivePowers(null, new PoseVelocity2d(vel, 0));
+
+        return false;
+    }
+
+    public DPoint cubicPathFollowing(Bezier path) {
         Vector2d currentLine;
 
         telemetry.addData("PathIndex", pathIndex);
@@ -75,35 +108,21 @@ public class PathFollowing {
 
         currentLine = path.linearPoints.get(pathIndex).toVector(path.linearPoints.get(pathIndex - 1));
 
-        if (linearPathFollowing(currentLine, path.linearPoints.get(pathIndex), timeSinceInit, path.length(pathIndex)) == null) {
+        if (linearPathFollowing(currentLine, path.linearPoints.get(pathIndex), path.length(pathIndex)) == null) {
             pos = path.linearPoints.get(pathIndex);
             pathIndex++;
-            return cubicPathFollowing(path, timeSinceInit);
+            return cubicPathFollowing(path);
         }
 
         return pos;
     }
 
-    DPoint lastPos = new DPoint(0, 0);
-
-    public boolean cubicDriveTo(Bezier path, boolean init) {
+    public boolean cubicDriveTo(Bezier path) {
         DPoint currentPos;
         Vector2d vel;
-        double timeSinceInit;
-        double currentTime = Constants.TIME;
 
-        if (init) {
-            PID = new PIDs(1, 0, 0);
-            usedMovement = 0;
-            initTime = currentTime;
-            pathIndex = 1;
-            pos = path.linearPoints.get(0);
-            lastPos = pos;
-        }
-
-        timeSinceInit = currentTime - initTime;
         currentPos = new DPoint(drive.pose.position.x, drive.pose.position.y);
-        cubicPathFollowing(path, timeSinceInit);
+        cubicPathFollowing(path);
 
         vel = pos.toVector(currentPos);
 
@@ -114,23 +133,12 @@ public class PathFollowing {
 
         canvas.setStroke("#0000FF");
         canvas.strokeLine(currentPos.x, currentPos.y, currentPos.x + vel.x, currentPos.y + vel.y);
-        canvas.setFill("#0000FF");
-        canvas.fillCircle(pos.x, pos.y, 1);
 
         //vel = PID.calculate(vel);
         //drive.setDrivePowers(new PoseVelocity2d(PID.skew(vel, driveAccel), 0));
         vel = pos.toVector(currentPos);
         vel = vel.times(1000.0 * Constants.LOOP_TIME);
         drive.setDrivePowers(null, new PoseVelocity2d(vel, 0));
-        WilyWorks.updateSimulation(Constants.DELTA_T);
-        try {
-            //Thread.sleep((int) Constants.DELTA_T * 1000);
-            Thread.sleep(200);
-        } catch (InterruptedException e) {
-
-        }
-
-        lastPos = pos;
 
         return false;
     }
