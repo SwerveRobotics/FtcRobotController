@@ -48,14 +48,15 @@ public class PathFollowing {
         double speed;
         double travel;
         double distRemaining = goalPos.toVector(pos).norm();
+        double timeSinceInit = (Constants.TIME - initTime);
 
         speed = driveAccel * timeSinceInit;
-        speed = Math.min(speed, maxSpeed);
-        speed = Math.min(speed, Math.sqrt(Math.abs(2.0 * driveDeccel * (additionalDistRemaining + distRemaining))));
+        travel = speed * Constants.LOOP_TIME + 0.5 * driveAccel * Math.pow(Constants.LOOP_TIME, 2) - usedMovement;
 
-        telemetry.addData("speed", speed);
+        travel = Math.min(travel, maxSpeed * Constants.LOOP_TIME - usedMovement);
 
-        travel = speed / 100.0 * powerPCTToIn * Constants.LOOP_TIME - usedMovement;
+        speed = Math.sqrt(Math.abs(2.0 * driveDeccel * (additionalDistRemaining + distRemaining)));
+        travel = Math.min(travel, speed * Constants.LOOP_TIME + 0.5 * driveDeccel * Math.pow(Constants.LOOP_TIME, 2) - usedMovement);
 
         if (travel > distRemaining) {
             usedMovement += distRemaining;
@@ -64,6 +65,12 @@ public class PathFollowing {
 
         normVector = goalVector.div(goalVector.norm());
         pos = pos.plus(normVector.times(travel));
+
+        telemetry.addData("pos.x", pos.x);
+        telemetry.addData("pos.y", pos.y);
+        canvas.setFill("#0000FF");
+        canvas.fillCircle(pos.x, pos.y, 1);
+        canvas.strokeLine(pos.x, pos.y, pos.x + normVector.times(distRemaining).x, pos.y + normVector.times(distRemaining).y);
 
         usedMovement = 0;
         return pos;
@@ -137,7 +144,8 @@ public class PathFollowing {
         //vel = PID.calculate(vel);
         //drive.setDrivePowers(new PoseVelocity2d(PID.skew(vel, driveAccel), 0));
         vel = pos.toVector(currentPos);
-        vel = vel.times(1000.0 * Constants.LOOP_TIME);
+        vel = new Vector2d(24, 0);
+        vel = vel.div(Constants.LOOP_TIME);
         drive.setDrivePowers(null, new PoseVelocity2d(vel, 0));
 
         return false;
