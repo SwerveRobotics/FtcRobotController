@@ -144,7 +144,6 @@ public class PathFollowing {
         //vel = PID.calculate(vel);
         //drive.setDrivePowers(new PoseVelocity2d(PID.skew(vel, driveAccel), 0));
         vel = pos.toVector(currentPos);
-        vel = new Vector2d(24, 0);
         vel = vel.div(Constants.LOOP_TIME);
         drive.setDrivePowers(null, new PoseVelocity2d(vel, 0));
 

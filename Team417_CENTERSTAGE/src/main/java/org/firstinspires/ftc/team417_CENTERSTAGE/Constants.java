@@ -29,7 +29,7 @@ public class Constants {
             DELTA_T = 20.0 / 1000.0;
         }
 
-        DELTA_T = 500 / 1000.0;
+        DELTA_T = 200 / 1000.0;
 
         LOOP_TIME = filter.slidingWindow(loopTimeWindow, DELTA_T);
 
