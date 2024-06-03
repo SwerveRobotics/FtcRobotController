@@ -28,5 +28,6 @@ public class UiTest {
  * and from your actual robot code.
  */
 class Config {
-    
+    public void menu(Telemetry telemetry, Gamepad gamepad) {
+    };
 }
