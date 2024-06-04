@@ -7,9 +7,6 @@ package com.example.uitesting;
 import com.example.uitesting.ui.Gamepad;
 import com.example.uitesting.ui.Telemetry;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-
 /**
  * This class is a bit of glue to run your menu program. Don't change this!
  */
@@ -28,6 +25,8 @@ public class UiTest {
  * and from your actual robot code.
  */
 class Config {
-    public void menu(Telemetry telemetry, Gamepad gamepad) {
-    };
+    public void menu (Telemetry telemetry, Gamepad gamepad) {
+        telemetry.addLine("Hello world!");
+        telemetry.update();
+    }
 }
