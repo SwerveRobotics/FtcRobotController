@@ -35,6 +35,7 @@ public class Telemetry extends OutputStream {
         lineList.add(String.format("%s: %s", caption, value.toString()));
     }
 
+    // Writes to System.out
     @Override
     public void write(int i) throws IOException {
         int size = lineList.size();
@@ -57,16 +58,26 @@ public class Telemetry extends OutputStream {
         }
     }
 
-    public void update() {
+    // Update the screen based on System.out
+    public void update(boolean cursor) {
         ArrayList<String> displayedLineList = new ArrayList<>(lineList.subList(line, lineList.size()));
+        if (Robotics.gamepad.inputting && cursor) {
+            int size = displayedLineList.size();
+            if (size == 0) {
+                displayedLineList.add("");
+                size++;
+            }
+            String lastLine = displayedLineList.get(size - 1);
+            displayedLineList.set(size - 1, lastLine + "_");
+        }
         int FONT_SIZE = 14;
         canvas = windowFrame.getCanvas();
         Graphics g = canvas.getBufferStrategy().getDrawGraphics();
         g.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        g.setFont(new Font("Monospace", Font.PLAIN, FONT_SIZE));
+        g.setFont(new Font("Courier New", Font.PLAIN, FONT_SIZE));
 
         int x = 0;
-        int y = 0;
+        int y = 14;
         for (String line : displayedLineList) {
             g.drawString(line, x, y);
             y += FONT_SIZE;

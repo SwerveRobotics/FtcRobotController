@@ -1,20 +1,27 @@
 package com.example.simpleconsole;
 
-import java.awt.GraphicsEnvironment;
+import com.example.simpleconsole.ui.Scanner;
 
 public class Main {
+    // This is the main coding space for new members!
     public static void main(String[] args) {
-        System.out.println("To Know the available font family names");
-        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-
-        System.out.println("Getting the font family names");
-
-        // Array of all the fonts available in AWT
-        String fonts[] = ge.getAvailableFontFamilyNames();
-
-        // Getting the font family names
-        for (String i : fonts) {
-            System.out.println(i + " ");
+        System.out.println("Hi!");
+        System.out.println();
+        System.out.println("Here are the numbers from one to ten: ");
+        for (int i = 1; i < 11; i++) {
+            System.out.println(i);
         }
+        for (int i = 1; i < 11; i++) {
+            System.out.print(i + " ");
+        }
+        Scanner scanner = new Scanner(System.in);
+
+        System.out.println();
+        System.out.print("Do you like it: ");
+        String response = scanner.nextLine();
+
+        scanner.close();
+
+        System.out.println(String.format("You said, \"%s\"", response));
     }
 }

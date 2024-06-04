@@ -16,7 +16,8 @@ class KeyDispatcher implements KeyEventDispatcher {
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent keyEvent) {
-        char code = keyEvent.getKeyChar();
+        char character = keyEvent.getKeyChar();
+        int code = keyEvent.getKeyCode();
         boolean isPressed = (keyEvent.getID() == KeyEvent.KEY_PRESSED);
 
         switch (code) {
@@ -50,7 +51,7 @@ class KeyDispatcher implements KeyEventDispatcher {
         }
 
         if (isPressed) {
-            gamepad.addChar(code);
+            gamepad.addChar(character);
         }
 
         return true;
@@ -61,8 +62,9 @@ class KeyDispatcher implements KeyEventDispatcher {
  * This class implements a lightweight emulation of FTC Gamepad that can run on the PC.
  */
 public class Gamepad {
-    volatile String buffer = "";
+    volatile String buffer;
     volatile String inputLine;
+    volatile boolean inputting;
 
     volatile public boolean dpad_down;
     volatile public boolean dpad_up;
@@ -76,8 +78,11 @@ public class Gamepad {
 
     public Gamepad() {
         KeyboardFocusManager.getCurrentKeyboardFocusManager().addKeyEventDispatcher(new KeyDispatcher(this));
+        inputting = false;
+        buffer = "";
     }
 
+    // Adds a character to the input buffer
     public synchronized void addChar(int keyChar) {
         switch (keyChar) {
             case 65535:
