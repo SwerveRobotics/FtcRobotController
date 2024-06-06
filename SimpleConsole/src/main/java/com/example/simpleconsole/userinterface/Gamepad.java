@@ -1,4 +1,4 @@
-package com.example.simpleconsole.ui;
+package com.example.simpleconsole.userinterface;
 
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;

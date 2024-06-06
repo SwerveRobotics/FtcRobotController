@@ -1,6 +1,6 @@
-package com.example.simpleconsole.ui;
+package com.example.simpleconsole.userinterface;
 
-import static com.example.simpleconsole.ui.Robotics.gamepad;
+import static com.example.simpleconsole.userinterface.Robotics.gamepad;
 
 import java.awt.Canvas;
 import java.awt.Font;
@@ -60,9 +60,13 @@ public class Telemetry extends OutputStream {
 
     // Update the screen based on System.out
     public void update(boolean cursor) {
-        ArrayList<String> displayedLineList = new ArrayList<>(lineList.subList(line, lineList.size()));
+        int originalSize = lineList.size();
+        ArrayList<String> displayedLineList = new ArrayList<>();
+        for (int i = line; i < originalSize; i++) {
+            displayedLineList.add(lineList.get(i));
+        }
         if (Robotics.gamepad.inputting && cursor) {
-            int size = displayedLineList.size();
+            int size = originalSize - line;
             if (size == 0) {
                 displayedLineList.add("");
                 size++;

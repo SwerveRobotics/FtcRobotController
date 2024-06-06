@@ -2,7 +2,7 @@
  * This file is a handy place to test your robot's menu logic without needing a robot to
  * test on.
  */
-package com.example.simpleconsole.ui;
+package com.example.simpleconsole.userinterface;
 
 import com.example.simpleconsole.Main;
 

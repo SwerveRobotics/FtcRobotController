@@ -1,4 +1,4 @@
-package com.example.simpleconsole.ui
+package com.example.simpleconsole.userinterface
 
 import com.example.uitesting.ui.MainCanvas
 import java.awt.event.WindowAdapter
