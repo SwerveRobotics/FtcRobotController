@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="SimpleConsole" type="Application" factoryName="Application">
     <option name="MAIN_CLASS_NAME" value="com.example.simpleconsole.examples.session1.HelloWorld" />
-    <module name="6220.SimpleConsole.main" />
+    <module name="FtcRobotController.SimpleConsole.main" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
