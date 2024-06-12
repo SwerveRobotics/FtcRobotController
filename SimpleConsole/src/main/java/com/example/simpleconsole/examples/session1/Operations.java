@@ -38,6 +38,9 @@ public class Operations {
         xDouble = Double.parseDouble(xString);
         yDouble = Double.parseDouble(yString);
 
+        xInt = Integer.parseInt(xString);
+        yInt = Integer.parseInt(yString);
+
         // Here we turn the doubles into integers. Some precision is lost (anything after the
         //     decimal point).
         xInt = (int) xDouble;
@@ -68,8 +71,12 @@ public class Operations {
         // Prints a blank line
         System.out.println();
 
+        int result;
+
+        result = xInt + yInt;
+
         // Notice the difference specifically in integer division. For example, try x = 4 and y = 3.
-        System.out.println("Integer addition: " + (xInt + yInt));
+        System.out.println("Integer addition: " + result);
         System.out.println("Integer subtraction: " + (xInt - yInt));
         System.out.println("Integer multiplication: " + (xInt * yInt));
         System.out.println("Integer division: " + (xInt / yInt));
