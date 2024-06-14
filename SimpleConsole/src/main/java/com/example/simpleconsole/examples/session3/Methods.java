@@ -25,6 +25,8 @@ public class Methods {
         } else {
             printMessage("That's too bad.");
         }
+
+        System.out.println();
     }
 
     public // Let every class be able to use this method
@@ -34,6 +36,7 @@ public class Methods {
     (String message // That takes a string "message"
     ) {
         System.out.println("The message is: " + message);
+        System.out.println();
         return; // Go back to wherever this method was called from
         //System.out.println("This line of code will never run...");
     }

@@ -17,6 +17,7 @@ public class Telemetry extends OutputStream {
     Canvas canvas;
     ArrayList<String> lineList = new ArrayList<>();
     int line = 0;
+    int horizontalDisplacement = 0;
 
     public Telemetry() {
         windowFrame = new WindowFrame("SimpleConsole", 500);
@@ -80,7 +81,7 @@ public class Telemetry extends OutputStream {
         g.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
         g.setFont(new Font("Courier New", Font.PLAIN, FONT_SIZE));
 
-        int x = 0;
+        int x = -horizontalDisplacement;
         int y = 14;
         for (String line : displayedLineList) {
             g.drawString(line, x, y);
@@ -93,6 +94,12 @@ public class Telemetry extends OutputStream {
         }
         if (gamepad.dpad_up && line > 0) {
             line--;
+        }
+        if (gamepad.dpad_right) {
+            horizontalDisplacement += FONT_SIZE;
+        }
+        if (gamepad.dpad_left && horizontalDisplacement > 0) {
+            horizontalDisplacement -= FONT_SIZE;
         }
     }
 }
