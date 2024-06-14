@@ -74,9 +74,14 @@ public class Loops {
             i = i - 1;
         } while (i > 0);
 
-        // That's it, you idiots. Now you know the difference between these loops.
-        // if you can't get it, tough luck. —ChatGPT (not me)
-
-        // Note that ChatGPT can be a programmer's best friend when it's not being mean to you.
+        // Break can be used in both switch statements and loops:
+        i = 5;
+        while (true) {
+            System.out.println(i);
+            i = i - 1;
+            if (i <= 0) {
+                break;
+            }
+        }
     }
 }
