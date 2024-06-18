@@ -41,6 +41,28 @@ class Fruit {
     }
 }
 
+// A class can also extend another class by being a child class of it.
+// The child class has all the methods and attributes of the parent class except from the constructor.
+class SeededFruit extends Fruit {
+    // The child class can have its own attributes as well.
+    public int seedNumber;
+
+    // A constructor must also be declared in the child class.
+    public SeededFruit(String name, int nutritionValue, int seedNumber) {
+        // super(Object arg1, Object arg2...) is basically the constructor of the parent class.
+        // It must be the first statement in the constructor of the child class.
+        super(name, nutritionValue);
+        System.out.println("(The fruit also happens to have " + seedNumber + " seeds!)");
+        this.seedNumber = seedNumber;
+    }
+
+    // A constructor can also have its own methods.
+    public int countSeeds() {
+        System.out.println("Counting seeds of an " + name + "!");
+        return seedNumber;
+    }
+}
+
 // Demonstration of how to use different classes in the same file
 public class ObjectsAndClasses {
     public static void main(String[] args) {
@@ -143,5 +165,32 @@ public class ObjectsAndClasses {
 
         System.out.println("Red apple nutrition value: " + redApple.nutritionValue);
         System.out.println("Is red apple juiced? " + redApple.juiced);
+
+        System.out.println();
+        System.out.println();
+
+        // More specifically, an apple is not just a fruit, but a seeded fruit:
+        SeededFruit yellowApple = new SeededFruit("apple", 10, 6);
+        
+        System.out.println();
+        
+        // We can reference any of the attributes or methods of the parent class...
+        yellowApple.juice(9);
+        
+        System.out.println();
+
+        System.out.println("Yellow apple nutrition value: " + yellowApple.nutritionValue);
+        System.out.println("Is yellow apple juiced? " + yellowApple.juiced);
+
+        System.out.println();
+
+        // ...and also of the child class.
+        System.out.println("The yellow apple has " + yellowApple.countSeeds() + " seeds.");
+
+        System.out.println();
+
+        // Programming doesn't need to make sense. However, it should.
+        System.out.println("Strange how an apple has seeds even after it's juiced, huh!");
+
     }
 }
