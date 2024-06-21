@@ -56,7 +56,7 @@ public class Methods {
         for (int i = 0; i < y; i++) {
             result = result * x;
         }
-        return result; // Go back to wherever this method was called from and send the value of total
+        return result; // Go to wherever this method was called from and send the value of result
     }
 
     // It's usually best to declare a method as public in FTC!
