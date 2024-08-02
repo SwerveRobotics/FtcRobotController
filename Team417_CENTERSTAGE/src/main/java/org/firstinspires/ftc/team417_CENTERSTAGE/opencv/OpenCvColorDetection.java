@@ -52,13 +52,13 @@ public class OpenCvColorDetection {
     /* Declare OpMode members. */
     public LinearOpMode myOpMode;   // gain access to methods in the calling OpMode.
 
-    public enum detectColorType {
+    public enum DetectColorType {
         BLUE,
         RED,
         UNSET,
     }
 
-    public detectColorType myColor = detectColorType.UNSET;
+    public DetectColorType myColor = DetectColorType.UNSET;
 
     // coordinates of largest detected image
     Point targetPoint = new Point(0, 0);
@@ -71,7 +71,7 @@ public class OpenCvColorDetection {
     }
 
     // set detection color
-    public void setDetectColor(detectColorType color) {
+    public void setDetectColor(DetectColorType color) {
         myColor = color;
     }
 
@@ -173,6 +173,8 @@ public class OpenCvColorDetection {
             // copy original image to output image for drawing overlay on
             roiMat.copyTo(outputMat);
 
+            double width = inputMat.size().width;
+
             // if no contours are detected, do nothing
             int maxAreaContourIndex;
             targetPoint.x = -1;
@@ -201,11 +203,9 @@ public class OpenCvColorDetection {
                 double boundHeightX = boundingRect.x + boundingRect.width;
                 double boundHeightY = boundingRect.y + boundingRect.height;
                 Imgproc.rectangle(outputMat, new Point(boundingRect.x, boundingRect.y), new Point(boundHeightX, boundHeightY), Constants.borderColor, 3, Imgproc.LINE_8, 0);
-                targetPoint.x = (int) boundingRect.width / 2.0 + boundingRect.x;
-                targetPoint.y = (int) boundingRect.height / 2.0 + boundingRect.y;
+                targetPoint.x = boundingRect.width / 2.0 + boundingRect.x;
+                targetPoint.y = boundingRect.height / 2.0 + boundingRect.y;
                 Imgproc.circle(outputMat, targetPoint, 10, Constants.borderColor, Imgproc.LINE_4, -1);
-
-                double width = inputMat.size().width;
 
                 // Update sideDetected so that robot can detect position with detectPosition()
                 // Takes the left fourth of the screen for left spike mark, right fourth for right, and

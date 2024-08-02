@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.apriltags;
 
+import static org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive.is6220sDevBot;
 import static org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive.isDevBot;
 
 import android.util.Size;
@@ -24,8 +25,6 @@ import java.util.ArrayList;
 
 @Config
 public class AprilTagPoseEstimator {
-    public static double CAMERA_LATENCY = 640; // latency between april tag shown and detection in ms
-
     public static final boolean USE_WEBCAM = true;  // true for webcam, false for phone camera
 
     public HardwareMap myHardwareMap;   // gain access to camera in hardwareMap
@@ -47,8 +46,11 @@ public class AprilTagPoseEstimator {
      */
     public VisionPortal visionPortal;
 
-    // For this concept: supposed location of the robot
+    // robotPoseEstimate is the pose estimate OF THE CURRENT CLASS
     Pose robotPoseEstimate = new Pose(0, 0, 0);
+
+    // To take info from MecanumDrive, process it, and send it back to MecanumDrive
+    public AprilTagLatencyHelper myAprilTagLatencyHelper;
 
     public AprilTagPoseEstimator(HardwareMap hardwareMap, Telemetry telemetry) {
         this.myHardwareMap = hardwareMap;
@@ -57,13 +59,15 @@ public class AprilTagPoseEstimator {
     }
 
     public AprilTagPoseEstimator(HardwareMap hardwareMap) {
-        new AprilTagPoseEstimator(hardwareMap, null);
+        this(hardwareMap, null);
     }
 
     /**
      * Initialize the AprilTag processor.
      */
     public void init() {
+        myAprilTagLatencyHelper = new AprilTagLatencyHelper();
+
         // Create the AprilTag processor.
         aprilTag = new AprilTagProcessor.Builder()
 
@@ -110,7 +114,7 @@ public class AprilTagPoseEstimator {
         }
 
         if (statusLight != null) {
-            statusLight.setState(true);
+            statusLight.setState(false);
         }
 
         // Choose a camera resolution. Not all cameras support all resolutions.
@@ -149,7 +153,7 @@ public class AprilTagPoseEstimator {
         // Declaring variables
         double d, beta, gamma, relativeX, relativeY, absoluteX, absoluteY, absoluteTheta;
 
-        if (isDevBot) {
+        if (isDevBot || is6220sDevBot) {
             // d - absolute distance from April-tag to robot
             d = Math.hypot(detection.ftcPose.x + Constants.DEVBOT_CAMERA_TO_CENTER_X, detection.ftcPose.y + Constants.DEVBOT_CAMERA_TO_CENTER_Y);
 
@@ -253,6 +257,8 @@ public class AprilTagPoseEstimator {
      * Produce a pose estimate from current frames and update it
      */
     public void updatePoseEstimate() {
+        myAprilTagLatencyHelper.updateFPS(visionPortal.getFps());
+
         ArrayList<AprilTagDetection> currentDetections = aprilTag.getDetections();
 
         // Iterates through detections and finds any the the robot "knows"
@@ -275,7 +281,10 @@ public class AprilTagPoseEstimator {
             detecting = false;
         }
 
-        // Turn the status light on when it detects an april tag (yes, setState(boolean) is backwards)
+        myAprilTagLatencyHelper.updateMecanumDrive(estimatePose());
+
+        // setState is reversed (true = off, false = on) so the extra ! in front is necessary
+        // Cannot fix this, SDK problem
         if (statusLight != null) {
             statusLight.setState(!detecting);
         }

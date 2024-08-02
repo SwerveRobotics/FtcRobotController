@@ -3,39 +3,50 @@ package org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner.MecanumDrive;
 
 @Config
 public abstract class BaseOpMode extends LinearOpMode {
-    MecanumDrive drive;
+    public MecanumDrive drive;
 
     //Declares LEDs on DevBot
     public DigitalChannel red;
     public DigitalChannel green;
 
-    public DcMotor intakeMotor ;
-    public DcMotor armMotor ;
+    public DcMotor intakeMotor;
+    public DcMotor armMotor;
+    public DcMotor SuspensionMotor;
     static final public double ARM_MOTOR_MIN_POSITION = 0;
     static final public double ARM_MOTOR_MAX_POSITION = 4200;
     public Servo dumperServo;
-    public static final double DUMPER_SERVO_TILT_POSITION = 0.4;
-    public static final double DUMPER_SERVO_RESET_POSITION = 0.527;
-    public static final double DUMPER_SERVO_DUMP_POSITION = 0.2;
+    public static double DUMPER_SERVO_TILT_POSITION = 0.4;
+    public static double DUMPER_SERVO_RESET_POSITION = 0.59;
+    public static double DUMPER_SERVO_DUMP_POSITION = 0.05;
+    public static double DUMPER_SERVO_DUMP_POSITION_AUTON = 0.1;
+
+    public CRServo dumperWheelServo;
+
     public Servo gateServo;
-    public final double GATE_SERVO_OPEN_POSITION = 0;
-    public final double GATE_SERVO_CLOSE_POSITION = 0.55;
+    public static double GATE_SERVO_OPEN_POSITION = 0;
+    public static double GATE_SERVO_CLOSE_POSITION = 0.55;
+    public Servo droneServo;
+    public DistanceSensor distSensor;
+    public static ElapsedTime TIME = new ElapsedTime();
 
     //Initializes motors, servos, and sensors
     public void initializeHardware() {
         drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
 
         //Drive Motors, other motors, sensors, etc.
-        if(MecanumDrive.isDevBot) {
+        if (MecanumDrive.isDevBot) {
             red = initializeDigitalChannel("red", DigitalChannel.Mode.OUTPUT);
             green = initializeDigitalChannel("green", DigitalChannel.Mode.OUTPUT);
 
@@ -43,14 +54,25 @@ public abstract class BaseOpMode extends LinearOpMode {
             //    DigitalChannel object for LEDs makes this counterintuitive, on = false, off = true
             red.setState(true);
             green.setState(true);
+
+            //sensors
+            distSensor = hardwareMap.get(DistanceSensor.class, "distance");
+        } else if (MecanumDrive.is6220sDevBot) {
+            // Do nothing
         } else {
             //Mechanism Motors
             intakeMotor = initializeMotor("IntakeMotor", DcMotor.Direction.FORWARD);
             armMotor = initializeMotor("ArmMotor", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);//DcMotor.RunMode.RUN_TO_POSITION);
+            SuspensionMotor = initializeMotor("SuspensionMotor", DcMotor.Direction.FORWARD, DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
             //Mechanism Servos
             dumperServo = initializeServo("DumperServo", Servo.Direction.FORWARD);
+            dumperWheelServo = hardwareMap.get(CRServo.class, "DumperWheelServo");
             gateServo = initializeServo("GateServo", Servo.Direction.FORWARD);
+            droneServo = initializeServo("droneServo", Servo.Direction.FORWARD);
+
+            //sensors
+            distSensor = hardwareMap.get(DistanceSensor.class, "DistanceSensor");
         }
     }
 

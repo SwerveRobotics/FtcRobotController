@@ -10,6 +10,7 @@ import com.acmerobotics.roadrunner.ftc.FlightRecorder;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -17,9 +18,9 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 @Config
 public final class ThreeDeadWheelLocalizer implements Localizer {
     public static class Params {
-        public double par0YTicks = -11926.693419931953; // y position of the first parallel encoder (in tick units)
-        public double par1YTicks = 11520.469981279093; // y position of the second parallel encoder (in tick units)
-        public double perpXTicks = -10858.238797442646; // x position of the perpendicular encoder (in tick units)
+        public double par0YTicks = -11999.476077142655; // y position of the first parallel encoder (in tick units)
+        public double par1YTicks = 11428.382043858528; // y position of the second parallel encoder (in tick units)
+        public double perpXTicks = -10600.418745133395; // x position of the perpendicular encoder (in tick units)
     }
 
     public static Params PARAMS = new Params();
@@ -31,16 +32,26 @@ public final class ThreeDeadWheelLocalizer implements Localizer {
     private int lastPar0Pos, lastPar1Pos, lastPerpPos;
 
     public ThreeDeadWheelLocalizer(HardwareMap hardwareMap, double inPerTick) {
-        par0 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "par1")));
-        par1 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "par0")));
-        perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "BLMotor")));
+        par0 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "SuspensionMotor"))); // Right encoder
+        par1 = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "par0"))); // Left encoder
+        perp = new OverflowEncoder(new RawEncoder(hardwareMap.get(DcMotorEx.class, "BLMotor"))); // Back encoder
+
+        // This is magically making things work! Before this block of code, the encoders seemed to
+        //     be not resetting after every OpMode, causing errors. We are working on finding the
+        //     root cause of this, but so far this seems to fix it.
+        // (Note: without the last line the BLMotor does not run as part of the mecanum drive.)
+        hardwareMap.get(DcMotor.class, "par0").setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        hardwareMap.get(DcMotor.class, "SuspensionMotor").setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        DcMotor perpMotor = hardwareMap.get(DcMotor.class, "BLMotor");
+        perpMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        perpMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         lastPar0Pos = par0.getPositionAndVelocity().position;
         lastPar1Pos = par1.getPositionAndVelocity().position;
         lastPerpPos = perp.getPositionAndVelocity().position;
 
         par1.setDirection(DcMotorSimple.Direction.REVERSE);
-        par0.setDirection(DcMotorSimple.Direction.REVERSE);
+        //par0.setDirection(DcMotorSimple.Direction.REVERSE);
         //perp.setDirection(DcMotorSimple.Direction.REVERSE);
 
         this.inPerTick = inPerTick;

@@ -42,11 +42,13 @@ public class ArmMechanism {
 
     //PID last runtime, last error, total error every run iteration.
     private double lastPidTime, lastPidError, cumulativeError;
+    private DcMotor suspensionMotor;
 
-    public ArmMechanism(Gamepad gamepad2, DcMotor armMotor, Servo dumperServo) {
+    public ArmMechanism(Gamepad gamepad2, DcMotor armMotor, DcMotor SuspensionMotor, Servo dumperServo) {
         //passes necessary API objects in the class.
         this.gamepad2 = gamepad2;
         this.armMotor = armMotor;
+        this.suspensionMotor = SuspensionMotor;
         this.dumperServo = dumperServo;
 
         //Init variables so they don't hold their value from last time the code was run
@@ -140,6 +142,7 @@ public class ArmMechanism {
         dashboard.sendTelemetryPacket(packet);
 //Give the PID the location the arm should be at and location the arm is at.
         armMotor.setPower(armPID(currentArmLocation, armMotor.getCurrentPosition(), armKp, armKi, armKd));
+        suspensionMotor.setPower(armPID(currentArmLocation, suspensionMotor.getCurrentPosition(), armKp, armKi, armKd));
 
         //The time the loop was competed
         lastArmProfileTime = currentTime;
@@ -178,13 +181,14 @@ public class ArmMechanism {
     }
 
     public void armControl() {
-        double rStickSensitivity = 1, rStickSensitivityInsideRobot = rStickSensitivity / 3, rStickSensitivityOutsideRobot = rStickSensitivity; //How much moving the right stick will effect arm speed outside and inside the robot.
+        double rStickSensitivity, rStickSensitivityInsideRobot = 0.3, rStickSensitivityOutsideRobot = 1; //How much moving the right stick will effect arm speed outside and inside the robot.
         double[] ArmPositions = new double[] {BaseOpMode.ARM_MOTOR_MIN_POSITION, BaseOpMode.ARM_MOTOR_MAX_POSITION / 2.0,
                 BaseOpMode.ARM_MOTOR_MAX_POSITION * (3.0/4.0), BaseOpMode.ARM_MOTOR_MAX_POSITION}; //array of arm positions the dpad can move to.
         double armCurrentLocation = armMotor.getCurrentPosition(); //The current distance the arm is from its init location
-        double rStickTilt = -gamepad2.right_stick_y; //The amount the right stick has been moved
+        double lStickTilt = -gamepad2.left_stick_y; //The amount the right stick has been moved
         final double rStickDeadZone = 0.1, armPosEpsilon = 25; //rStickDeadZone: the amount of space that is considered zero, armPosEpsilon: the amount of error between the current location and the goal location that is acceptable.
-        final double startUpwardTiltPos = 75, startUpwardResetPos = 1500, endUpwardResetPos = 2000, startDownwardTiltPos = 1500, endDownwardTiltPos = 250; //Locations the dumper should tilt so the arm does not hit the robot.
+        final double startUpwardTiltPos = 75, startUpwardResetPos = 1500, endUpwardResetPos = 2000,
+                     startDownwardTiltPos = 1500, endDownwardTiltPos = 300; //Locations the dumper should tilt so the arm does not hit the robot.
         final double armMoveToPositionVelocity = 0.5; //The speed the arm moves while in move to position mode
 
         if (gamepad2.left_stick_y < -rStickDeadZone || gamepad2.left_stick_y > rStickDeadZone) { //If the arm is outside the dead zone switch to using stick control
@@ -205,25 +209,32 @@ public class ArmMechanism {
 
         //If using stick control update the speed of arm based on the stick tilt
         if (usingStick) {
-            armMotor.setPower(rStickTilt * rStickSensitivity);
+            armMotor.setPower(lStickTilt * rStickSensitivity);
+            suspensionMotor.setPower(lStickTilt * rStickSensitivity);
 
             //If stick is inside dead zone set motor power to zero
-            if (rStickTilt < rStickDeadZone && rStickTilt > -rStickDeadZone)
+            if (lStickTilt < rStickDeadZone && lStickTilt > -rStickDeadZone) {
                 armMotor.setPower(0);
+                armMotor.setPower(0);
+            }
         } else {
             //if the arm is within 50 encoder ticks of it's goal, stop it from moving.
             if (armMotor.getCurrentPosition() < armGoalLocation + armPosEpsilon && armMotor.getCurrentPosition() > armGoalLocation - armPosEpsilon) {
                 armMotor.setPower(0);
-            } else if (armMotor.getCurrentPosition() > armGoalLocation) //If the arm is past it's goal, move backward.
+                suspensionMotor.setPower(0);
+            } else if (armMotor.getCurrentPosition() > armGoalLocation) {//If the arm is past it's goal, move backward.
                 armMotor.setPower(-armMoveToPositionVelocity);
-            else if (armMotor.getCurrentPosition() < armGoalLocation) //If the arm is before it's goal, move forward.
+                suspensionMotor.setPower(-armMoveToPositionVelocity);
+            } else if (armMotor.getCurrentPosition() < armGoalLocation) {//If the arm is before it's goal, move forward.
                 armMotor.setPower(armMoveToPositionVelocity);
+                suspensionMotor.setPower(armMoveToPositionVelocity);
+            }
         }
 
-        if ((armMotor.getCurrentPosition() > startUpwardTiltPos && armMotor.getCurrentPosition() < startUpwardResetPos) && armMotor.getPower() > 0)
-            dumperServo.setPosition(DUMPER_SERVO_TILT_POSITION);
-        else if (armMotor.getCurrentPosition() < endUpwardResetPos && armMotor.getPower() > 0)
+        if (armMotor.getCurrentPosition() < startUpwardTiltPos)
             dumperServo.setPosition(DUMPER_SERVO_RESET_POSITION);
+        if (armMotor.getCurrentPosition() < startUpwardResetPos && armMotor.getPower() > 0)
+            dumperServo.setPosition(DUMPER_SERVO_TILT_POSITION);
 
         if (armMotor.getCurrentPosition() < endDownwardTiltPos && armMotor.getPower() < 0)
             dumperServo.setPosition(DUMPER_SERVO_RESET_POSITION);

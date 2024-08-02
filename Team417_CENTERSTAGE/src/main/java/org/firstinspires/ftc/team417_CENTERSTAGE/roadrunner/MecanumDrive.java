@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team417_CENTERSTAGE.roadrunner;
 
+import static java.lang.System.nanoTime;
+
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -22,6 +24,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.PoseVelocity2dDual;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.Rotation2d;
+import com.acmerobotics.roadrunner.Rotation2dDual;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.TimeTrajectory;
 import com.acmerobotics.roadrunner.TimeTurn;
@@ -29,6 +32,7 @@ import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.TurnConstraints;
 import com.acmerobotics.roadrunner.Twist2dDual;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.Vector2dDual;
 import com.acmerobotics.roadrunner.VelConstraint;
 import com.acmerobotics.roadrunner.ftc.Encoder;
 import com.acmerobotics.roadrunner.ftc.FlightRecorder;
@@ -43,43 +47,27 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
-import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagLatencyCompensation;
-import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagPoseEstimator;
-import org.firstinspires.ftc.team417_CENTERSTAGE.utilityclasses.TwistWithTimestamp;
+import org.firstinspires.ftc.team417_CENTERSTAGE.apriltags.AprilTagLatencyHelper;
+import org.firstinspires.ftc.team417_CENTERSTAGE.baseprograms.BaseOpMode;
 import org.firstinspires.inspection.InspectionState;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
 @Config
 public final class MecanumDrive {
-    // For the April Tag latency calculation 
-    public ElapsedTime clock = new ElapsedTime();
-
-    // To keep a record of twists to be used by April Tag latency compensation 
-    public ArrayList<TwistWithTimestamp> twistList;
-
-    // To detect April Tags to correct drift 
-    public AprilTagPoseEstimator myAprilTagPoseEstimator;
-
-    // To detect the motion of the motors 
-    public DcMotorEx[] motors;
-
-    // Whether or not to use April Tags 
-    public final static boolean USE_APRIL_TAGS = false;
-
     public static String getBotName() {
         InspectionState inspection=new InspectionState();
         inspection.initializeLocal();
         Log.d("roadrunner", String.format("Device name:" + inspection.deviceName));
         return inspection.deviceName;
     }
+
     public static boolean isDevBot = getBotName().equals("DevBot");
+    public static boolean is6220sDevBot = getBotName().equals("6220-D-RC");
 
     public static class Params {
         public double inPerTick;
@@ -106,7 +94,7 @@ public final class MecanumDrive {
         public double headingVelGain;
 
         Params() {
-            if (isDevBot) {
+            if (isDevBot || is6220sDevBot) {
                 // drive model parameters
 
                 //(Push robot for 4 tiles) 96.0 inches / FTCDashboard value 4254.0.
@@ -129,9 +117,9 @@ public final class MecanumDrive {
                 headingGain = 8.0; // shared with turn
             } else {
                 // drive model parameters
-                inPerTick = 0.00057006;
-                lateralInPerTick = 0.00043717549671991654;
-                trackWidthTicks = 23590.63804655905;
+                inPerTick = 0.00054914881933003844041735310269083;
+                lateralInPerTick = 0.00043210354172444843;
+                trackWidthTicks = 23335.14533610638;
 
                 // feedforward parameters (in tick units)
                 kS = 0.7728626336483462;
@@ -139,18 +127,18 @@ public final class MecanumDrive {
                 kA = 0.0000009;
 
                 // path controller gains
-                axialGain = 0.0;
-                lateralGain = 0.0;
-                headingGain = 0.0; // shared with turn
+                axialGain = 10.5;
+                lateralGain = 7.5;
+                headingGain = 2.0; // shared with turn
             }
 
             // path profile parameters (in inches)
-            maxWheelVel = 50;
+            maxWheelVel = 10; // Should be 50
             minProfileAccel = -30;
             maxProfileAccel = 50;
 
             // turn profile parameters (in radians)
-            maxAngVel = Math.PI; // shared with path
+            maxAngVel = Math.PI / 5.0; // shared with path // Should be Pi
             maxAngAccel = Math.PI;
 
             axialVelGain = 0.0;
@@ -182,6 +170,7 @@ public final class MecanumDrive {
 
     public final Localizer localizer;
     public Pose2d pose;
+    public PoseVelocity2d poseVelocity;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -252,14 +241,6 @@ public final class MecanumDrive {
     }
 
     public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
-        // For the April Tag latency calculation 
-        clock.reset();
-
-        if (USE_APRIL_TAGS) {
-            // To detect April Tags to correct drift 
-            myAprilTagPoseEstimator = new AprilTagPoseEstimator(hardwareMap);
-        }
-
         this.pose = pose;
 
         LynxFirmware.throwIfModulesAreOutdated(hardwareMap);
@@ -268,7 +249,7 @@ public final class MecanumDrive {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        if (isDevBot) {
+        if (isDevBot || is6220sDevBot) {
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
             leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
             rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
@@ -302,26 +283,13 @@ public final class MecanumDrive {
 
         voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
-        if (isDevBot) {
+        if (isDevBot || is6220sDevBot) {
             localizer = new DriveLocalizer();
         } else {
             localizer = new ThreeDeadWheelLocalizer(hardwareMap, PARAMS.inPerTick);
         }
 
-        // To detect the motion of the motors 
-        motors = new DcMotorEx[]{rightBack, rightFront, leftBack, leftFront};
-
-        // To keep a record of twists to be used by April Tag latency compensation 
-        twistList = new ArrayList<>();
-
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
-    }
-
-    // Closes and releases resources 
-    public void close() {
-        if (myAprilTagPoseEstimator != null) {
-            myAprilTagPoseEstimator.visionPortal.close();
-        }
     }
 
     public void setDrivePowers(PoseVelocity2d powers) {
@@ -504,23 +472,43 @@ public final class MecanumDrive {
         }
     }
 
+    // An AprilTagLatencyHelper instance in order to add twists to it
+    AprilTagLatencyHelper ATLHelper;
+
+    public void setATLHelper(AprilTagLatencyHelper ATLHelper) {
+        this.ATLHelper = ATLHelper;
+    }
+
     public PoseVelocity2d updatePoseEstimate() {
         // Twists are a change over a single sensor loop of the robot's position. It has
         //    an angle and a line component, which can be converted to an x, y, and z.
         Twist2dDual<Time> twist = localizer.update();
 
-        AprilTagLatencyCompensation.compensateForLatency(this, twist);
+        // Update the pose estimate if necessary based on the April Tag Helper
+        if (ATLHelper != null) {
+            ATLHelper.addTwist(twist);
+        }
 
-        //This was the original location of: "pose = pose.plus(twist.value());"
+        pose = pose.plus(twist.value());
 
         poseHistory.add(pose);
         while (poseHistory.size() > 100) {
             poseHistory.removeFirst();
         }
 
+        if (ATLHelper != null && BaseOpMode.isEpsilonEquals(leftFront.getPower(), 0) && BaseOpMode.isEpsilonEquals(rightFront.getPower(), 0) && BaseOpMode.isEpsilonEquals(leftFront.getPower(), 0) && BaseOpMode.isEpsilonEquals(leftFront.getPower(), 0)) {
+            Pose2d tentativePose = ATLHelper.refinePose();
+
+            if (tentativePose != null) {
+                pose = new Pose2d(tentativePose.position.x, tentativePose.position.y, tentativePose.heading.log());
+                // pose = tentativePose;
+            }
+        }
+
         FlightRecorder.write("ESTIMATED_POSE", new PoseMessage(pose));
 
-        return twist.velocity().value();
+        poseVelocity = twist.velocity().value();
+        return poseVelocity;
     }
 
     private void drawPoseHistory(Canvas c) {
@@ -570,9 +558,12 @@ public final class MecanumDrive {
         actionList.add(action);
     }
 
+    // Because apparently Action.run can't have a null TelemetryPacket
+    TelemetryPacket placeholderTelemetryPacket = new TelemetryPacket();
+
     // On every iteration of your robot loop, call 'doActionsWork'. Specify the packet
     // if you're drawing on the graph for FTC Dashboard:
-    public boolean doActionsWork() { return doActionsWork(null); }
+    public boolean doActionsWork() { return doActionsWork(placeholderTelemetryPacket); }
     public boolean doActionsWork(TelemetryPacket packet) {
         LinkedList<Action> deletionList = new LinkedList<>();
         for (Action action: actionList) {
@@ -583,5 +574,104 @@ public final class MecanumDrive {
         }
         actionList.removeAll(deletionList);
         return actionList.size() != 0;
+    }
+    // Used by setDrivePowers to calculate acceleration:
+    PoseVelocity2d previousAssistVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
+    double previousAssistSeconds = 0; // Previous call's nanoTime() in seconds
+
+    /**
+     * Power the motors according to the specified velocities. 'stickVelocity' is for controller
+     * input and 'assistVelocity' is for computed driver assistance. The former is specified in
+     * voltage values normalized from -1 to 1 (just like the regular DcMotor::SetPower() API)
+     * whereas the latter is in inches/s or radians/s. Both types of velocities can be specified
+     * at the same time in which case the velocities are added together (to allow assist and stick
+     * control to blend together, for example).
+     *
+     * It's also possible to map the controller input to inches/s and radians/s instead of the
+     * normalized -1 to 1 voltage range. You can reference MecanumDrive.PARAMS.maxWheelVel and
+     * .maxAngVel to determine the range to specify. Note however that the robot can actually
+     * go faster than Road Runner's PARAMS values so you would be unnecessarily slowing your
+     * robot down.
+     */
+    public void setDrivePowers(
+            // Manual power, normalized voltage from -1 to 1, robot-relative coordinates, can be null:
+            PoseVelocity2d stickVelocity,
+            // Computed power, inches/s and radians/s, field-relative coordinates, can be null:
+            PoseVelocity2d assistVelocity)
+    {
+        if (stickVelocity == null)
+            stickVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
+        if (assistVelocity == null)
+            assistVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
+
+        // Compute the assist acceleration as the difference between the new assist velocity
+        // and the old divided by delta-t:
+        double currentSeconds = nanoTime() * 1e-9;
+        PoseVelocity2d assistAcceleration = new PoseVelocity2d(new Vector2d(0, 0), 0);
+        if (previousAssistSeconds != 0) {
+            double deltaT = currentSeconds - previousAssistSeconds;
+            assistAcceleration = new PoseVelocity2d(new Vector2d(
+                    (assistVelocity.linearVel.x - previousAssistVelocity.linearVel.x) / deltaT,
+                    (assistVelocity.linearVel.y - previousAssistVelocity.linearVel.y) / deltaT),
+                    (assistVelocity.angVel - previousAssistVelocity.angVel) / deltaT);
+        }
+        previousAssistSeconds = currentSeconds;
+
+        // Remember the current velocity for next time:
+        previousAssistVelocity = new PoseVelocity2d(new Vector2d(
+                assistVelocity.linearVel.x,assistVelocity.linearVel.y), assistVelocity.angVel);
+
+        // Compute the wheel powers for the stick contribution:
+        MecanumKinematics.WheelVelocities<Time> manualVels = new MecanumKinematics(1).inverse(
+                PoseVelocity2dDual.constant(stickVelocity, 1));
+
+        double leftFrontPower = manualVels.leftFront.get(0);
+        double leftBackPower = manualVels.leftBack.get(0);
+        double rightBackPower = manualVels.rightBack.get(0);
+        double rightFrontPower = manualVels.rightFront.get(0);
+
+        // Compute the wheel powers for the assist:
+        double[] x = { pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x };
+        double[] y = { pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y };
+        double[] angular = { pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel };
+
+        Pose2dDual<Time> computedDualPose = new Pose2dDual<>(
+                new Vector2dDual<>(new DualNum<>(x), new DualNum<>(y)),
+                Rotation2dDual.exp(new DualNum<>(angular)));
+
+        // Compute the feedforward for the assist while disabling the PID portion of the PIDF:
+        PoseVelocity2dDual<Time> command = new HolonomicController(0, 0, 0)
+                .compute(computedDualPose, pose, poseVelocity);
+
+        MecanumKinematics.WheelVelocities<Time> assistVels = kinematics.inverse(command);
+
+        double voltage = voltageSensor.getVoltage();
+        final MotorFeedforward feedforward = new MotorFeedforward(
+                PARAMS.kS, PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
+
+        // Check for zero velocities and accelerations to avoid adding 'kS'. Arguably these
+        // should be epsilon compares but equality is fine for checking when the assist is
+        // disabled:
+        if ((assistVels.leftFront.get(0) != 0) || (assistVels.leftFront.get(1) != 0))
+            leftFrontPower += feedforward.compute(assistVels.leftFront) / voltage;
+
+        if ((assistVels.leftBack.get(0) != 0) || (assistVels.leftBack.get(1) != 0))
+            leftBackPower += feedforward.compute(assistVels.leftBack) / voltage;
+
+        if ((assistVels.rightBack.get(0) != 0) || (assistVels.rightBack.get(1) != 0))
+            rightBackPower += feedforward.compute(assistVels.rightBack) / voltage;
+
+        if ((assistVels.rightFront.get(0) != 0) || (assistVels.rightFront.get(1) != 0))
+            rightFrontPower += feedforward.compute(assistVels.rightFront) / voltage;
+
+        // Normalize if any powers are more than 1:
+        double maxPower = Math.max(Math.max(Math.max(Math.max(
+                1, leftFrontPower), leftBackPower), rightBackPower), rightFrontPower);
+
+        // Set the power to the motors:
+        leftFront.setPower(leftFrontPower / maxPower);
+        leftBack.setPower(leftBackPower / maxPower);
+        rightBack.setPower(rightBackPower / maxPower);
+        rightFront.setPower(rightFrontPower / maxPower);
     }
 }
