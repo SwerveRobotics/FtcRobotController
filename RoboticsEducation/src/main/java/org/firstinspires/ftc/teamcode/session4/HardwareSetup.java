@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.session4;
 
 // Import necessary classes from the com.qualcomm.robotcore library:
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -10,11 +11,9 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 // The name should be descriptive, because it will appear on the driver hub.
 // Declare that this class is a TeleOp class (i.e. a remote control OpMode) called "Hardware Setup":
 @TeleOp(name = "Hardware Setup")
-
 // We are creating a child class of LinearOpMode.
 // This allows our code to run in sequence, or linearly.
 // Demonstration of how to set up the hardware code for FTC
-// TODO: (Note to self: delete this comment block if it interferes with @TeleOp decorator)
 public class HardwareSetup extends LinearOpMode {
     // Initialize attributes for all the drive motors:
     public DcMotor bl, br, fl, fr;
