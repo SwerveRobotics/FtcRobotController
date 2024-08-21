@@ -71,15 +71,8 @@ import java.util.List;
 
 @Config
 public final class HolonomicDrive {
-    private final boolean USE_MECANUM_KINEMATICS = true;
-
-    private Kinematics getKinematics() {
-        if (USE_MECANUM_KINEMATICS) {
-            return new Kinematics.Mecanum(mecanumKinematics);
-        } else {
-            return new Kinematics.X(xKinematics);
-        }
-    }
+    // For X-Drive, use the constant KinematicType.X
+    private final KinematicType KINEMATIC_TYPE = KinematicType.MECANUM;
 
     public static class Params {
         Params() {
@@ -165,26 +158,29 @@ public final class HolonomicDrive {
     }
 
     public static String getBotName() {
-        InspectionState inspection=new InspectionState();
+        InspectionState inspection = new InspectionState();
         inspection.initializeLocal();
         Log.d("roadrunner", String.format("Device name:" + inspection.deviceName));
         return inspection.deviceName;
     }
+
     public static boolean isDevBot = getBotName().equals("DevBot");
 
     public static Params PARAMS = new Params();
 
-    public final MecanumKinematics mecanumKinematics = new MecanumKinematics(
-            PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
-
-    public final XKinematics xkinematics = new XKinematics(
-            PARAMS.inPerTick * PARAMS.trackWidthTicks);
+    public final Kinematics kinematics = new Kinematics(
+            new MecanumKinematics(
+                    PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick),
+            new XKinematics(
+                    PARAMS.inPerTick * PARAMS.trackWidthTicks),
+            KINEMATIC_TYPE
+    );
 
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
             PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
     public final VelConstraint defaultVelConstraint =
             new MinVelConstraint(Arrays.asList(
-                    mecanumKinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
+                    kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
                     new AngularVelConstraint(PARAMS.maxAngVel)
             ));
     public final AccelConstraint defaultAccelConstraint =
@@ -260,24 +256,57 @@ public final class HolonomicDrive {
             }
 
             double headingDelta = heading.minus(lastHeading);
-            Twist2dDual<Time> twist = mecanumKinematics.forward(new MecanumKinematics.WheelIncrements<>(
-                    new DualNum<Time>(new double[]{
-                            (leftFrontPosVel.position - lastLeftFrontPos),
-                            leftFrontPosVel.velocity,
-                    }).times(PARAMS.inPerTick),
-                    new DualNum<Time>(new double[]{
-                            (leftBackPosVel.position - lastLeftBackPos),
-                            leftBackPosVel.velocity,
-                    }).times(PARAMS.inPerTick),
-                    new DualNum<Time>(new double[]{
-                            (rightBackPosVel.position - lastRightBackPos),
-                            rightBackPosVel.velocity,
-                    }).times(PARAMS.inPerTick),
-                    new DualNum<Time>(new double[]{
-                            (rightFrontPosVel.position - lastRightFrontPos),
-                            rightFrontPosVel.velocity,
-                    }).times(PARAMS.inPerTick)
-            ));
+            Twist2dDual<Time> twist;
+            switch (KINEMATIC_TYPE) {
+                case MECANUM:
+                    twist = kinematics.getMecanumKinematics().forward(new MecanumKinematics.WheelIncrements<>(
+                            new DualNum<Time>(new double[]{
+                                    (leftFrontPosVel.position - lastLeftFrontPos),
+                                    leftFrontPosVel.velocity,
+                            }).times(PARAMS.inPerTick),
+                            new DualNum<Time>(new double[]{
+                                    (leftBackPosVel.position - lastLeftBackPos),
+                                    leftBackPosVel.velocity,
+                            }).times(PARAMS.inPerTick),
+                            new DualNum<Time>(new double[]{
+                                    (rightBackPosVel.position - lastRightBackPos),
+                                    rightBackPosVel.velocity,
+                            }).times(PARAMS.inPerTick),
+                            new DualNum<Time>(new double[]{
+                                    (rightFrontPosVel.position - lastRightFrontPos),
+                                    rightFrontPosVel.velocity,
+                            }).times(PARAMS.inPerTick)
+                    ));
+                    break;
+                case X:
+                    twist = kinematics.getXKinematics().forward(new XKinematics.WheelIncrements<>(
+                            new DualNum<Time>(new double[]{
+                                    (leftFrontPosVel.position - lastLeftFrontPos),
+                                    leftFrontPosVel.velocity,
+                            }).times(PARAMS.inPerTick),
+                            new DualNum<Time>(new double[]{
+                                    (leftBackPosVel.position - lastLeftBackPos),
+                                    leftBackPosVel.velocity,
+                            }).times(PARAMS.inPerTick),
+                            new DualNum<Time>(new double[]{
+                                    (rightBackPosVel.position - lastRightBackPos),
+                                    rightBackPosVel.velocity,
+                            }).times(PARAMS.inPerTick),
+                            new DualNum<Time>(new double[]{
+                                    (rightFrontPosVel.position - lastRightFrontPos),
+                                    rightFrontPosVel.velocity,
+                            }).times(PARAMS.inPerTick)
+                    ));
+                    break;
+                default:
+                    twist = new Twist2dDual<>(
+                            new Vector2dDual<>(
+                                    new DualNum<>(new double[0]),
+                                    new DualNum<>(new double[0])),
+                            new DualNum<>(new double[0])
+                    );
+                    System.out.println(KINEMATIC_TYPE + " is not implemented");
+            }
 
             lastLeftFrontPos = leftFrontPosVel.position;
             lastLeftBackPos = leftBackPosVel.position;
@@ -442,18 +471,37 @@ public final class HolonomicDrive {
         if (WilyWorks.setDrivePowers(powers, new PoseVelocity2d(new Vector2d(0, 0), 0)))
             return; // ====>
 
-        MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
-                PoseVelocity2dDual.constant(powers, 1));
+        double maxPowerMag;
+        switch (KINEMATIC_TYPE) {
+            case MECANUM:
+                MecanumKinematics.WheelVelocities<Time> mecanumWheelVels = new MecanumKinematics(1).inverse(
+                        PoseVelocity2dDual.constant(powers, 1));
 
-        double maxPowerMag = 1;
-        for (DualNum<Time> power : wheelVels.all()) {
-            maxPowerMag = max(maxPowerMag, power.value());
+                maxPowerMag = 1;
+                for (DualNum<Time> power : mecanumWheelVels.all()) {
+                    maxPowerMag = max(maxPowerMag, power.value());
+                }
+
+                leftFront.setPower(mecanumWheelVels.leftFront.get(0) / maxPowerMag);
+                leftBack.setPower(mecanumWheelVels.leftBack.get(0) / maxPowerMag);
+                rightBack.setPower(mecanumWheelVels.rightBack.get(0) / maxPowerMag);
+                rightFront.setPower(mecanumWheelVels.rightFront.get(0) / maxPowerMag);
+                break;
+            case X:
+                XKinematics.WheelVelocities<Time> xWheelVels = new XKinematics(1).inverse(
+                        PoseVelocity2dDual.constant(powers, 1));
+
+                maxPowerMag = 1;
+                for (DualNum<Time> power : xWheelVels.all()) {
+                    maxPowerMag = max(maxPowerMag, power.value());
+                }
+
+                leftFront.setPower(xWheelVels.leftFront.get(0) / maxPowerMag);
+                leftBack.setPower(xWheelVels.leftBack.get(0) / maxPowerMag);
+                rightBack.setPower(xWheelVels.rightBack.get(0) / maxPowerMag);
+                rightFront.setPower(xWheelVels.rightFront.get(0) / maxPowerMag);
+                break;
         }
-
-        leftFront.setPower(wheelVels.leftFront.get(0) / maxPowerMag);
-        leftBack.setPower(wheelVels.leftBack.get(0) / maxPowerMag);
-        rightBack.setPower(wheelVels.rightBack.get(0) / maxPowerMag);
-        rightFront.setPower(wheelVels.rightFront.get(0) / maxPowerMag);
     }
 
     // Used by setDrivePowers to calculate acceleration:
@@ -473,6 +521,7 @@ public final class HolonomicDrive {
      * .maxAngVel to determine the range to specify. Note however that the robot can actually
      * go faster than Road Runner's PARAMS values so you would be unnecessarily slowing your
      * robot down.
+     *
      * @noinspection unused
      */
     public void setDrivePowers(
@@ -485,8 +534,7 @@ public final class HolonomicDrive {
             PoseVelocity2d stickVelocity,
             // Desired computed power velocity, inches/s and radians/s, field-relative coordinates,
             // can be null:
-            PoseVelocity2d assistVelocity)
-    {
+            PoseVelocity2d assistVelocity) {
         if (stickVelocity == null)
             stickVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
         if (assistVelocity == null)
@@ -512,59 +560,123 @@ public final class HolonomicDrive {
 
         // Remember the current velocity for next time:
         previousAssistVelocity = new PoseVelocity2d(new Vector2d(
-                assistVelocity.linearVel.x,assistVelocity.linearVel.y), assistVelocity.angVel);
+                assistVelocity.linearVel.x, assistVelocity.linearVel.y), assistVelocity.angVel);
 
-        // Compute the wheel powers for the stick contribution:
-        MecanumKinematics.WheelVelocities<Time> manualVels = new MecanumKinematics(1).inverse(
-                PoseVelocity2dDual.constant(stickVelocity, 1));
+        double maxPower;
+        double leftFrontPower, leftBackPower, rightBackPower, rightFrontPower;
+        double[] x, y, angular;
+        Pose2dDual<Time> computedDualPose;
+        PoseVelocity2dDual<Time> command;
+        double voltage;
 
-        double leftFrontPower = manualVels.leftFront.get(0);
-        double leftBackPower = manualVels.leftBack.get(0);
-        double rightBackPower = manualVels.rightBack.get(0);
-        double rightFrontPower = manualVels.rightFront.get(0);
+        switch (KINEMATIC_TYPE) {
+            case MECANUM:
+                // Compute the wheel powers for the stick contribution:
+                MecanumKinematics.WheelVelocities<Time> mecanumManualVels = new MecanumKinematics(1).inverse(
+                        PoseVelocity2dDual.constant(stickVelocity, 1));
 
-        // Compute the wheel powers for the assist:
-        double[] x = { pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x };
-        double[] y = { pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y };
-        double[] angular = { pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel };
+                leftFrontPower = mecanumManualVels.leftFront.get(0);
+                leftBackPower = mecanumManualVels.leftBack.get(0);
+                rightBackPower = mecanumManualVels.rightBack.get(0);
+                rightFrontPower = mecanumManualVels.rightFront.get(0);
 
-        Pose2dDual<Time> computedDualPose = new Pose2dDual<>(
-                new Vector2dDual<>(new DualNum<>(x), new DualNum<>(y)),
-                Rotation2dDual.exp(new DualNum<>(angular)));
+                // Compute the wheel powers for the assist:
+                x = new double[]{pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x};
+                y = new double[]{pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y};
+                angular = new double[]{pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel};
 
-        // Compute the feedforward for the assist while disabling the PID portion of the PIDF:
-        PoseVelocity2dDual<Time> command = new HolonomicController(0, 0, 0)
-                .compute(computedDualPose, pose, poseVelocity);
+                computedDualPose = new Pose2dDual<>(
+                        new Vector2dDual<>(new DualNum<>(x), new DualNum<>(y)),
+                        Rotation2dDual.exp(new DualNum<>(angular)));
 
-        MecanumKinematics.WheelVelocities<Time> assistVels = mecanumKinematics.inverse(command);
+                // Compute the feedforward for the assist while disabling the PID portion of the PIDF:
+                command = new HolonomicController(0, 0, 0)
+                        .compute(computedDualPose, pose, poseVelocity);
 
-        double voltage = voltageSensor.getVoltage();
-        final MotorFeedforward feedforward = new MotorFeedforward(
-                PARAMS.kS, PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
+                MecanumKinematics.WheelVelocities<Time> mecanumAssistVels = kinematics.getMecanumKinematics().inverse(command);
 
-        // Check for zero velocities and accelerations to avoid adding 'kS'. Arguably these
-        // should be epsilon compares but equality is fine for checking when the assist is
-        // disabled:
-        if ((assistVels.leftFront.get(0) != 0) || (assistVels.leftFront.get(1) != 0))
-            leftFrontPower += feedforward.compute(assistVels.leftFront) / voltage;
+                voltage = voltageSensor.getVoltage();
+                final MotorFeedforward mecanumFeedforward = new MotorFeedforward(
+                        PARAMS.kS, PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
 
-        if ((assistVels.leftBack.get(0) != 0) || (assistVels.leftBack.get(1) != 0))
-            leftBackPower += feedforward.compute(assistVels.leftBack) / voltage;
+                // Check for zero velocities and accelerations to avoid adding 'kS'. Arguably these
+                // should be epsilon compares but equality is fine for checking when the assist is
+                // disabled:
+                if ((mecanumAssistVels.leftFront.get(0) != 0) || (mecanumAssistVels.leftFront.get(1) != 0))
+                    leftFrontPower += mecanumFeedforward.compute(mecanumAssistVels.leftFront) / voltage;
 
-        if ((assistVels.rightBack.get(0) != 0) || (assistVels.rightBack.get(1) != 0))
-            rightBackPower += feedforward.compute(assistVels.rightBack) / voltage;
+                if ((mecanumAssistVels.leftBack.get(0) != 0) || (mecanumAssistVels.leftBack.get(1) != 0))
+                    leftBackPower += mecanumFeedforward.compute(mecanumAssistVels.leftBack) / voltage;
 
-        if ((assistVels.rightFront.get(0) != 0) || (assistVels.rightFront.get(1) != 0))
-            rightFrontPower += feedforward.compute(assistVels.rightFront) / voltage;
+                if ((mecanumAssistVels.rightBack.get(0) != 0) || (mecanumAssistVels.rightBack.get(1) != 0))
+                    rightBackPower += mecanumFeedforward.compute(mecanumAssistVels.rightBack) / voltage;
 
-        // Normalize if any powers are more than 1:
-        double maxPower = max(max(max(max(1, leftFrontPower), leftBackPower), rightBackPower), rightFrontPower);
+                if ((mecanumAssistVels.rightFront.get(0) != 0) || (mecanumAssistVels.rightFront.get(1) != 0))
+                    rightFrontPower += mecanumFeedforward.compute(mecanumAssistVels.rightFront) / voltage;
 
-        // Set the power to the motors:
-        leftFront.setPower(leftFrontPower / maxPower);
-        leftBack.setPower(leftBackPower / maxPower);
-        rightBack.setPower(rightBackPower / maxPower);
-        rightFront.setPower(rightFrontPower / maxPower);
+                // Normalize if any powers are more than 1:
+                maxPower = max(max(max(max(1, leftFrontPower), leftBackPower), rightBackPower), rightFrontPower);
+
+                // Set the power to the motors:
+                leftFront.setPower(leftFrontPower / maxPower);
+                leftBack.setPower(leftBackPower / maxPower);
+                rightBack.setPower(rightBackPower / maxPower);
+                rightFront.setPower(rightFrontPower / maxPower);
+                break;
+            case X:
+                // Compute the wheel powers for the stick contribution:
+                XKinematics.WheelVelocities<Time> xManualVels = new XKinematics(1).inverse(
+                        PoseVelocity2dDual.constant(stickVelocity, 1));
+
+                leftFrontPower = xManualVels.leftFront.get(0);
+                leftBackPower = xManualVels.leftBack.get(0);
+                rightBackPower = xManualVels.rightBack.get(0);
+                rightFrontPower = xManualVels.rightFront.get(0);
+
+                // Compute the wheel powers for the assist:
+                x = new double[]{pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x};
+                y = new double[]{pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y};
+                angular = new double[]{pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel};
+
+                computedDualPose = new Pose2dDual<>(
+                        new Vector2dDual<>(new DualNum<>(x), new DualNum<>(y)),
+                        Rotation2dDual.exp(new DualNum<>(angular)));
+
+                // Compute the feedforward for the assist while disabling the PID portion of the PIDF:
+                command = new HolonomicController(0, 0, 0)
+                        .compute(computedDualPose, pose, poseVelocity);
+
+                XKinematics.WheelVelocities<Time> xAssistVels = kinematics.getXKinematics().inverse(command);
+
+                voltage = voltageSensor.getVoltage();
+                final MotorFeedforward xFeedforward = new MotorFeedforward(
+                        PARAMS.kS, PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
+
+                // Check for zero velocities and accelerations to avoid adding 'kS'. Arguably these
+                // should be epsilon compares but equality is fine for checking when the assist is
+                // disabled:
+                if ((xAssistVels.leftFront.get(0) != 0) || (xAssistVels.leftFront.get(1) != 0))
+                    leftFrontPower += xFeedforward.compute(xAssistVels.leftFront) / voltage;
+
+                if ((xAssistVels.leftBack.get(0) != 0) || (xAssistVels.leftBack.get(1) != 0))
+                    leftBackPower += xFeedforward.compute(xAssistVels.leftBack) / voltage;
+
+                if ((xAssistVels.rightBack.get(0) != 0) || (xAssistVels.rightBack.get(1) != 0))
+                    rightBackPower += xFeedforward.compute(xAssistVels.rightBack) / voltage;
+
+                if ((xAssistVels.rightFront.get(0) != 0) || (xAssistVels.rightFront.get(1) != 0))
+                    rightFrontPower += xFeedforward.compute(xAssistVels.rightFront) / voltage;
+
+                // Normalize if any powers are more than 1:
+                maxPower = max(max(max(max(1, leftFrontPower), leftBackPower), rightBackPower), rightFrontPower);
+
+                // Set the power to the motors:
+                leftFront.setPower(leftFrontPower / maxPower);
+                leftBack.setPower(leftBackPower / maxPower);
+                rightBack.setPower(rightBackPower / maxPower);
+                rightFront.setPower(rightFrontPower / maxPower);
+                break;
+        }
     }
 
     public final class FollowTrajectoryAction implements Action {
@@ -622,18 +734,40 @@ public final class HolonomicDrive {
             // Enlighten Wily Works as to where we should be:
             WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
 
-            MecanumKinematics.WheelVelocities<Time> wheelVels = mecanumKinematics.inverse(command);
-            double voltage = voltageSensor.getVoltage();
+            double voltage;
+            double leftFrontPower, leftBackPower, rightBackPower, rightFrontPower;
+            leftFrontPower = leftBackPower = rightBackPower = rightFrontPower = 0;
 
-            final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS,
-                    PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
-            double leftFrontPower = feedforward.compute(wheelVels.leftFront) / voltage;
-            double leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
-            double rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;
-            double rightFrontPower = feedforward.compute(wheelVels.rightFront) / voltage;
-            mecanumCommandWriter.write(new HolonomicCommandMessage(
-                    voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
-            ));
+            switch (KINEMATIC_TYPE) {
+                case MECANUM:
+                    MecanumKinematics.WheelVelocities<Time> mecanumWheelVels = kinematics.getMecanumKinematics().inverse(command);
+                    voltage = voltageSensor.getVoltage();
+
+                    final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS,
+                            PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
+                    leftFrontPower = feedforward.compute(mecanumWheelVels.leftFront) / voltage;
+                    leftBackPower = feedforward.compute(mecanumWheelVels.leftBack) / voltage;
+                    rightBackPower = feedforward.compute(mecanumWheelVels.rightBack) / voltage;
+                    rightFrontPower = feedforward.compute(mecanumWheelVels.rightFront) / voltage;
+                    mecanumCommandWriter.write(new HolonomicCommandMessage(
+                            voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
+                    ));
+                    break;
+                case X:
+                    XKinematics.WheelVelocities<Time> xWheelVels = kinematics.getXKinematics().inverse(command);
+                    voltage = voltageSensor.getVoltage();
+
+                    final MotorFeedforward xFeedforward = new MotorFeedforward(PARAMS.kS,
+                            PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
+                    leftFrontPower = xFeedforward.compute(xWheelVels.leftFront) / voltage;
+                    leftBackPower = xFeedforward.compute(xWheelVels.leftBack) / voltage;
+                    rightBackPower = xFeedforward.compute(xWheelVels.rightBack) / voltage;
+                    rightFrontPower = xFeedforward.compute(xWheelVels.rightFront) / voltage;
+                    mecanumCommandWriter.write(new HolonomicCommandMessage(
+                            voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
+                    ));
+                    break;
+            }
 
             leftFront.setPower(leftFrontPower);
             leftBack.setPower(leftBackPower);
@@ -717,23 +851,46 @@ public final class HolonomicDrive {
             // Enlighten Wily Works as to where we should be:
             WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
 
-            MecanumKinematics.WheelVelocities<Time> wheelVels = mecanumKinematics.inverse(command);
-            double voltage = voltageSensor.getVoltage();
-            final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS,
-                    PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
-            double leftFrontPower = feedforward.compute(wheelVels.leftFront) / voltage;
-            double leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
-            double rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;
-            double rightFrontPower = feedforward.compute(wheelVels.rightFront) / voltage;
-            mecanumCommandWriter.write(new HolonomicCommandMessage(
-                    voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
-            ));
+            double voltage;
+            double leftFrontPower, leftBackPower, rightBackPower, rightFrontPower;
+            switch (KINEMATIC_TYPE) {
+                case MECANUM:
+                    MecanumKinematics.WheelVelocities<Time> mecanumWheelVels = kinematics.getMecanumKinematics().inverse(command);
+                    voltage = voltageSensor.getVoltage();
+                    final MotorFeedforward mecanumFeedforward = new MotorFeedforward(PARAMS.kS,
+                            PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
+                    leftFrontPower = mecanumFeedforward.compute(mecanumWheelVels.leftFront) / voltage;
+                    leftBackPower = mecanumFeedforward.compute(mecanumWheelVels.leftBack) / voltage;
+                    rightBackPower = mecanumFeedforward.compute(mecanumWheelVels.rightBack) / voltage;
+                    rightFrontPower = mecanumFeedforward.compute(mecanumWheelVels.rightFront) / voltage;
+                    mecanumCommandWriter.write(new HolonomicCommandMessage(
+                            voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
+                    ));
 
-            leftFront.setPower(feedforward.compute(wheelVels.leftFront) / voltage);
-            leftBack.setPower(feedforward.compute(wheelVels.leftBack) / voltage);
-            rightBack.setPower(feedforward.compute(wheelVels.rightBack) / voltage);
-            rightFront.setPower(feedforward.compute(wheelVels.rightFront) / voltage);
+                    leftFront.setPower(mecanumFeedforward.compute(mecanumWheelVels.leftFront) / voltage);
+                    leftBack.setPower(mecanumFeedforward.compute(mecanumWheelVels.leftBack) / voltage);
+                    rightBack.setPower(mecanumFeedforward.compute(mecanumWheelVels.rightBack) / voltage);
+                    rightFront.setPower(mecanumFeedforward.compute(mecanumWheelVels.rightFront) / voltage);
+                    break;
+                case X:
+                    XKinematics.WheelVelocities<Time> xWheelVels = kinematics.getXKinematics().inverse(command);
+                    voltage = voltageSensor.getVoltage();
+                    final MotorFeedforward xFeedforward = new MotorFeedforward(PARAMS.kS,
+                            PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
+                    leftFrontPower = xFeedforward.compute(xWheelVels.leftFront) / voltage;
+                    leftBackPower = xFeedforward.compute(xWheelVels.leftBack) / voltage;
+                    rightBackPower = xFeedforward.compute(xWheelVels.rightBack) / voltage;
+                    rightFrontPower = xFeedforward.compute(xWheelVels.rightFront) / voltage;
+                    mecanumCommandWriter.write(new HolonomicCommandMessage(
+                            voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
+                    ));
 
+                    leftFront.setPower(xFeedforward.compute(xWheelVels.leftFront) / voltage);
+                    leftBack.setPower(xFeedforward.compute(xWheelVels.leftBack) / voltage);
+                    rightBack.setPower(xFeedforward.compute(xWheelVels.rightBack) / voltage);
+                    rightFront.setPower(xFeedforward.compute(xWheelVels.rightFront) / voltage);
+                    break;
+            }
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);
 
@@ -743,6 +900,7 @@ public final class HolonomicDrive {
             c.setStroke("#3F51B5");
             Drawing.drawRobot(c, pose);
 
+            //suppress SpellCheckingInspection
             c.setStroke("#7C4DFFFF");
             c.fillCircle(turn.beginPose.position.x, turn.beginPose.position.y, 2);
 
@@ -823,19 +981,23 @@ public final class HolonomicDrive {
     // List of currently running Actions:
     LinkedList<Action> actionList = new LinkedList<>();
 
-    /** @noinspection unused*/ // Invoke an Action to run in parallel during TeleOp:
+    /**
+     * @noinspection unused
+     */ // Invoke an Action to run in parallel during TeleOp:
     public void runParallel(Action action) {
         actionList.add(action);
     }
 
-    /** @noinspection unused*/
+    /**
+     * @noinspection unused
+     */
     // On every iteration of your robot loop, call 'doActionsWork'. Specify the packet
     // if you're drawing on the graph for FTC Dashboard:
     public boolean doActionsWork(Pose2d pose, PoseVelocity2d poseVelocity, TelemetryPacket packet) {
         this.pose = pose;
         this.poseVelocity = poseVelocity;
         LinkedList<Action> deletionList = new LinkedList<>();
-        for (Action action: actionList) {
+        for (Action action : actionList) {
             // Once the Action returns false, the action is done:
             if (!action.run(packet))
                 // We can't delete an item from a list while we're iterating on that list:
@@ -845,7 +1007,9 @@ public final class HolonomicDrive {
         return !actionList.isEmpty();
     }
 
-    /** @noinspection unused*/
+    /**
+     * @noinspection unused
+     */
     // Abort all currently running actions:
     public void abortActions() {
         actionList.clear();
