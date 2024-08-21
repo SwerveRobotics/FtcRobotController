@@ -60,8 +60,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.team417.roadrunner.messages.DriveCommandMessage;
-import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
-import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsMessage;
+import org.firstinspires.ftc.team417.roadrunner.messages.HolonomicCommandMessage;
+import org.firstinspires.ftc.team417.roadrunner.messages.HolonomicLocalizerInputsMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
 import org.firstinspires.inspection.InspectionState;
 
@@ -70,7 +70,17 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class MecanumDrive {
+public final class HolonomicDrive {
+    private final boolean USE_MECANUM_KINEMATICS = true;
+
+    private Kinematics getKinematics() {
+        if (USE_MECANUM_KINEMATICS) {
+            return new Kinematics.Mecanum(mecanumKinematics);
+        } else {
+            return new Kinematics.X(xKinematics);
+        }
+    }
+
     public static class Params {
         Params() {
             // path profile parameters (in inches)
@@ -164,14 +174,17 @@ public final class MecanumDrive {
 
     public static Params PARAMS = new Params();
 
-    public final MecanumKinematics kinematics = new MecanumKinematics(
+    public final MecanumKinematics mecanumKinematics = new MecanumKinematics(
             PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
+
+    public final XKinematics xkinematics = new XKinematics(
+            PARAMS.inPerTick * PARAMS.trackWidthTicks);
 
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
             PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
     public final VelConstraint defaultVelConstraint =
             new MinVelConstraint(Arrays.asList(
-                    kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
+                    mecanumKinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
                     new AngularVelConstraint(PARAMS.maxAngVel)
             ));
     public final AccelConstraint defaultAccelConstraint =
@@ -205,10 +218,10 @@ public final class MecanumDrive {
         private boolean initialized;
 
         public DriveLocalizer() {
-            leftFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftFront));
-            leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
-            rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
-            rightFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightFront));
+            leftFront = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftFront));
+            leftBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftBack));
+            rightBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.rightBack));
+            rightFront = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.rightFront));
 
             imu = lazyImu.get();
 
@@ -225,7 +238,7 @@ public final class MecanumDrive {
 
             YawPitchRollAngles angles = imu.getRobotYawPitchRollAngles();
 
-            FlightRecorder.write("MECANUM_LOCALIZER_INPUTS", new MecanumLocalizerInputsMessage(
+            FlightRecorder.write("HOLONOMIC_LOCALIZER_INPUTS", new HolonomicLocalizerInputsMessage(
                     leftFrontPosVel, leftBackPosVel, rightBackPosVel, rightFrontPosVel, angles));
 
             Rotation2d heading = Rotation2d.exp(angles.getYaw(AngleUnit.RADIANS));
@@ -247,7 +260,7 @@ public final class MecanumDrive {
             }
 
             double headingDelta = heading.minus(lastHeading);
-            Twist2dDual<Time> twist = kinematics.forward(new MecanumKinematics.WheelIncrements<>(
+            Twist2dDual<Time> twist = mecanumKinematics.forward(new MecanumKinematics.WheelIncrements<>(
                     new DualNum<Time>(new double[]{
                             (leftFrontPosVel.position - lastLeftFrontPos),
                             leftFrontPosVel.velocity,
@@ -280,7 +293,7 @@ public final class MecanumDrive {
         }
     }
 
-    public MecanumDrive(HardwareMap hardwareMap, Pose2d pose) {
+    public HolonomicDrive(HardwareMap hardwareMap, Pose2d pose) {
         this.pose = pose;
 
         WilyWorks.setStartPose(pose, new PoseVelocity2d(new Vector2d(0, 0), 0));
@@ -523,7 +536,7 @@ public final class MecanumDrive {
         PoseVelocity2dDual<Time> command = new HolonomicController(0, 0, 0)
                 .compute(computedDualPose, pose, poseVelocity);
 
-        MecanumKinematics.WheelVelocities<Time> assistVels = kinematics.inverse(command);
+        MecanumKinematics.WheelVelocities<Time> assistVels = mecanumKinematics.inverse(command);
 
         double voltage = voltageSensor.getVoltage();
         final MotorFeedforward feedforward = new MotorFeedforward(
@@ -609,7 +622,7 @@ public final class MecanumDrive {
             // Enlighten Wily Works as to where we should be:
             WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
 
-            MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
+            MecanumKinematics.WheelVelocities<Time> wheelVels = mecanumKinematics.inverse(command);
             double voltage = voltageSensor.getVoltage();
 
             final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS,
@@ -618,7 +631,7 @@ public final class MecanumDrive {
             double leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
             double rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;
             double rightFrontPower = feedforward.compute(wheelVels.rightFront) / voltage;
-            mecanumCommandWriter.write(new MecanumCommandMessage(
+            mecanumCommandWriter.write(new HolonomicCommandMessage(
                     voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
             ));
 
@@ -704,7 +717,7 @@ public final class MecanumDrive {
             // Enlighten Wily Works as to where we should be:
             WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
 
-            MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
+            MecanumKinematics.WheelVelocities<Time> wheelVels = mecanumKinematics.inverse(command);
             double voltage = voltageSensor.getVoltage();
             final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS,
                     PARAMS.kV / PARAMS.inPerTick, PARAMS.kA / PARAMS.inPerTick);
@@ -712,7 +725,7 @@ public final class MecanumDrive {
             double leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
             double rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;
             double rightFrontPower = feedforward.compute(wheelVels.rightFront) / voltage;
-            mecanumCommandWriter.write(new MecanumCommandMessage(
+            mecanumCommandWriter.write(new HolonomicCommandMessage(
                     voltage, leftFrontPower, leftBackPower, rightBackPower, rightFrontPower
             ));
 

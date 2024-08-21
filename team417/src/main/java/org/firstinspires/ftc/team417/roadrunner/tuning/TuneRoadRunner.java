@@ -33,7 +33,7 @@ import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
-import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team417.roadrunner.HolonomicDrive;
 import org.firstinspires.ftc.team417.roadrunner.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.team417.roadrunner.TwoDeadWheelLocalizer;
 
@@ -279,14 +279,14 @@ class Settings {
     SparkFunOTOS.Pose2D opticalOffset = null;
 
     // Get the settings from the current MecanumDrive object:
-    public Settings(MecanumDrive drive) {
-        robotName = MecanumDrive.getBotName();
+    public Settings(HolonomicDrive drive) {
+        robotName = HolonomicDrive.getBotName();
         if (drive.opticalTracker != null) {
             type = TuneRoadRunner.Type.OPTICAL;
             opticalAngularScalar = drive.opticalTracker.getAngularScalar();
             opticalLinearScalar = drive.opticalTracker.getLinearScalar();
             opticalOffset = drive.opticalTracker.getOffset();
-        } else if (drive.localizer instanceof MecanumDrive.DriveLocalizer) {
+        } else if (drive.localizer instanceof HolonomicDrive.DriveLocalizer) {
             type = TuneRoadRunner.Type.ALL_WHEEL;
         } else if (drive.localizer instanceof ThreeDeadWheelLocalizer) {
             type = TuneRoadRunner.Type.THREE_DEAD;
@@ -339,7 +339,7 @@ public class TuneRoadRunner extends LinearOpMode {
 
     // Member fields referenced by every test:
     Ui ui;
-    MecanumDrive drive;
+    HolonomicDrive drive;
     Settings settings;
 
     // Constants:
@@ -469,8 +469,8 @@ public class TuneRoadRunner extends LinearOpMode {
                 + "\n\nPress A to start, B when complete")) {
 
             TickTracker tracker = new TickTracker(drive.lazyImu.get(), TickTracker.Mode.FORWARD);
-            if (drive.localizer instanceof MecanumDrive.DriveLocalizer) {
-                MecanumDrive.DriveLocalizer loc = (MecanumDrive.DriveLocalizer) drive.localizer;
+            if (drive.localizer instanceof HolonomicDrive.DriveLocalizer) {
+                HolonomicDrive.DriveLocalizer loc = (HolonomicDrive.DriveLocalizer) drive.localizer;
                 tracker.register(loc.leftFront, "leftFront", TickTracker.Correlation.FORWARD);
                 tracker.register(loc.leftBack, "leftBack", TickTracker.Correlation.FORWARD);
                 tracker.register(loc.rightBack, "rightBack", TickTracker.Correlation.FORWARD);
@@ -502,8 +502,8 @@ public class TuneRoadRunner extends LinearOpMode {
                     + "\n\nPress A to start, B when complete")) {
 
                 TickTracker tracker = new TickTracker(drive.lazyImu.get(), TickTracker.Mode.LATERAL);
-                if (drive.localizer instanceof MecanumDrive.DriveLocalizer) {
-                    MecanumDrive.DriveLocalizer loc = (MecanumDrive.DriveLocalizer) drive.localizer;
+                if (drive.localizer instanceof HolonomicDrive.DriveLocalizer) {
+                    HolonomicDrive.DriveLocalizer loc = (HolonomicDrive.DriveLocalizer) drive.localizer;
                     tracker.register(loc.leftFront, "leftFront", TickTracker.Correlation.NEGATIVE);
                     tracker.register(loc.leftBack, "leftBack", TickTracker.Correlation.POSITIVE);
                     tracker.register(loc.rightBack, "rightBack", TickTracker.Correlation.NEGATIVE);
@@ -536,8 +536,8 @@ public class TuneRoadRunner extends LinearOpMode {
                     + "\n\nPress A to start, B when complete")) {
 
                 TickTracker tracker = new TickTracker(drive.lazyImu.get(), TickTracker.Mode.ROTATE);
-                if (drive.localizer instanceof MecanumDrive.DriveLocalizer) {
-                    MecanumDrive.DriveLocalizer loc = (MecanumDrive.DriveLocalizer) drive.localizer;
+                if (drive.localizer instanceof HolonomicDrive.DriveLocalizer) {
+                    HolonomicDrive.DriveLocalizer loc = (HolonomicDrive.DriveLocalizer) drive.localizer;
                     tracker.register(loc.leftFront, "leftFront", TickTracker.Correlation.REVERSE);
                     tracker.register(loc.leftBack, "leftBack", TickTracker.Correlation.REVERSE);
                     tracker.register(loc.rightBack, "rightBack", TickTracker.Correlation.FORWARD);
@@ -648,7 +648,7 @@ public class TuneRoadRunner extends LinearOpMode {
 
     // Ramp the motors up or down to or from the target spin speed. Return the amount of
     // rotation
-    void rampMotorsSpin(MecanumDrive drive, boolean up) {
+    void rampMotorsSpin(HolonomicDrive drive, boolean up) {
         final double RAMP_TIME = 0.5; // Seconds
         final double SPIN_SPEED = 0.2;
 
@@ -717,13 +717,13 @@ public class TuneRoadRunner extends LinearOpMode {
     double accumulatedSparkFunRotation = 0;
 
     // Start tracking total amount of rotation:
-    void initiateSparkFunRotation(MecanumDrive drive) {
+    void initiateSparkFunRotation(HolonomicDrive drive) {
         assert(drive.opticalTracker != null);
         previousSparkFunHeading = drive.opticalTracker.getPosition().h;
     }
 
     // Call this regularly to update the tracked amount of rotation:
-    SparkFunOTOS.Pose2D updateSparkFunRotation(MecanumDrive drive) {
+    SparkFunOTOS.Pose2D updateSparkFunRotation(HolonomicDrive drive) {
         assert(drive.opticalTracker != null);
         SparkFunOTOS.Pose2D position = drive.opticalTracker.getPosition();
         accumulatedSparkFunRotation += normalizeAngle(position.h - previousSparkFunHeading);
@@ -732,7 +732,7 @@ public class TuneRoadRunner extends LinearOpMode {
     }
 
     // Get the resulting total rotation amount:
-    double getSparkFunRotation(MecanumDrive drive) {
+    double getSparkFunRotation(HolonomicDrive drive) {
         assert(drive.opticalTracker != null);
         updateSparkFunRotation(drive);
         return accumulatedSparkFunRotation;
@@ -916,8 +916,8 @@ public class TuneRoadRunner extends LinearOpMode {
                 + "\n\nPress A to start, B to cancel")) {
 
             TickTracker tracker = new TickTracker(drive.lazyImu.get(), TickTracker.Mode.FORWARD);
-            if (drive.localizer instanceof MecanumDrive.DriveLocalizer) {
-                MecanumDrive.DriveLocalizer loc = (MecanumDrive.DriveLocalizer) drive.localizer;
+            if (drive.localizer instanceof HolonomicDrive.DriveLocalizer) {
+                HolonomicDrive.DriveLocalizer loc = (HolonomicDrive.DriveLocalizer) drive.localizer;
                 tracker.register(loc.leftFront, "leftFront", TickTracker.Correlation.FORWARD);
                 tracker.register(loc.leftBack, "leftBack", TickTracker.Correlation.FORWARD);
                 tracker.register(loc.rightBack, "rightBack", TickTracker.Correlation.FORWARD);
@@ -1091,8 +1091,8 @@ public class TuneRoadRunner extends LinearOpMode {
         // Taken from TuningOpModes::register:
         List<Encoder> leftEncs = new ArrayList<>(), rightEncs = new ArrayList<>();
         List<Encoder> parEncs = new ArrayList<>(), perpEncs = new ArrayList<>();
-        if (drive.localizer instanceof MecanumDrive.DriveLocalizer) {
-            MecanumDrive.DriveLocalizer dl = (MecanumDrive.DriveLocalizer) drive.localizer;
+        if (drive.localizer instanceof HolonomicDrive.DriveLocalizer) {
+            HolonomicDrive.DriveLocalizer dl = (HolonomicDrive.DriveLocalizer) drive.localizer;
             leftEncs.add(dl.leftFront);
             leftEncs.add(dl.leftBack);
             rightEncs.add(dl.rightFront);
@@ -1118,9 +1118,9 @@ public class TuneRoadRunner extends LinearOpMode {
         // Everything below here is taken from ManualFeedforwardTuner::runOpMode():
         TimeProfile profile = new TimeProfile(constantProfile(
                 DISTANCE, 0.0,
-                MecanumDrive.PARAMS.maxWheelVel,
-                MecanumDrive.PARAMS.minProfileAccel,
-                MecanumDrive.PARAMS.maxProfileAccel).baseProfile);
+                HolonomicDrive.PARAMS.maxWheelVel,
+                HolonomicDrive.PARAMS.minProfileAccel,
+                HolonomicDrive.PARAMS.maxProfileAccel).baseProfile);
 
         boolean movingForwards = true;
         double startTs = System.nanoTime() / 1e9;
@@ -1130,7 +1130,7 @@ public class TuneRoadRunner extends LinearOpMode {
 
             for (int i = 0; i < forwardEncsWrapped.size(); i++) {
                 int v = forwardEncsWrapped.get(i).getPositionAndVelocity().velocity;
-                packet.put(String.format("v%d", i), MecanumDrive.PARAMS.inPerTick * v);
+                packet.put(String.format("v%d", i), HolonomicDrive.PARAMS.inPerTick * v);
             }
 
             double ts = System.nanoTime() / 1e9;
@@ -1146,9 +1146,9 @@ public class TuneRoadRunner extends LinearOpMode {
             }
             packet.put("vref", v.get(0));
 
-            MotorFeedforward feedForward = new MotorFeedforward(MecanumDrive.PARAMS.kS,
-                    MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
-                    MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick);
+            MotorFeedforward feedForward = new MotorFeedforward(HolonomicDrive.PARAMS.kS,
+                    HolonomicDrive.PARAMS.kV / HolonomicDrive.PARAMS.inPerTick,
+                    HolonomicDrive.PARAMS.kA / HolonomicDrive.PARAMS.inPerTick);
 
             double power = feedForward.compute(v) / drive.voltageSensor.getVoltage();
             drive.setDrivePowers(new PoseVelocity2d(new Vector2d(power, 0.0), 0.0));
@@ -1259,7 +1259,7 @@ public class TuneRoadRunner extends LinearOpMode {
 
         // Initialize member fields:
         ui = new Ui();
-        drive = new MecanumDrive(hardwareMap, defaultPose);
+        drive = new HolonomicDrive(hardwareMap, defaultPose);
         settings = new Settings(drive);
         String comparison = settings.compareToSaved();
         if (comparison != null) {

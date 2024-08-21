@@ -5,7 +5,7 @@ import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 
-public final class MecanumLocalizerInputsMessage {
+public final class HolonomicLocalizerInputsMessage {
     public long timestamp;
     public PositionVelocityPair leftFront;
     public PositionVelocityPair leftBack;
@@ -15,7 +15,7 @@ public final class MecanumLocalizerInputsMessage {
     public double pitch;
     public double roll;
 
-    public MecanumLocalizerInputsMessage(PositionVelocityPair leftFront, PositionVelocityPair leftBack, PositionVelocityPair rightBack, PositionVelocityPair rightFront, YawPitchRollAngles angles) {
+    public HolonomicLocalizerInputsMessage(PositionVelocityPair leftFront, PositionVelocityPair leftBack, PositionVelocityPair rightBack, PositionVelocityPair rightFront, YawPitchRollAngles angles) {
         this.timestamp = System.nanoTime();
         this.leftFront = leftFront;
         this.leftBack = leftBack;

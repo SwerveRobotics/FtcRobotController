@@ -9,7 +9,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
-import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team417.roadrunner.HolonomicDrive;
 
 /**
  * This class exposes the competition version of TeleOp. As a general rule, add code to the
@@ -22,7 +22,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     public void runOpMode() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        MecanumDrive drive = new MecanumDrive(hardwareMap, new Pose2d(0, 0, 0));
+        HolonomicDrive drive = new HolonomicDrive(hardwareMap, new Pose2d(0, 0, 0));
 
         waitForStart();
 

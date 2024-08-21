@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.team417.roadrunner.messages;
 
-public final class MecanumCommandMessage {
+public final class HolonomicCommandMessage {
     public long timestamp;
     public double voltage;
     public double leftFrontPower;
@@ -8,7 +8,7 @@ public final class MecanumCommandMessage {
     public double rightBackPower;
     public double rightFrontPower;
 
-    public MecanumCommandMessage(double voltage, double leftFrontPower, double leftBackPower, double rightBackPower, double rightFrontPower) {
+    public HolonomicCommandMessage(double voltage, double leftFrontPower, double leftBackPower, double rightBackPower, double rightFrontPower) {
         this.timestamp = System.nanoTime();
         this.voltage = voltage;
         this.leftFrontPower = leftFrontPower;
