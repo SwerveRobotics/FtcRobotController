@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.HolonomicDrive;
+import org.firstinspires.ftc.team417.roadrunner.KinematicType;
 import org.firstinspires.ftc.team417.roadrunner.TankDrive;
 
 public class LocalizationTest extends LinearOpMode {
@@ -18,7 +19,7 @@ public class LocalizationTest extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         if (TuningOpModes.DRIVE_CLASS.equals(HolonomicDrive.class)) {
-            HolonomicDrive drive = new HolonomicDrive(hardwareMap, new Pose2d(0, 0, 0));
+            HolonomicDrive drive = new HolonomicDrive(hardwareMap, new Pose2d(0, 0, 0), KinematicType.MECANUM);
 
             waitForStart();
 

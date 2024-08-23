@@ -5,6 +5,7 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.team417.roadrunner.HolonomicDrive;
+import org.firstinspires.ftc.team417.roadrunner.KinematicType;
 import org.firstinspires.ftc.team417.roadrunner.TankDrive;
 import org.firstinspires.ftc.team417.roadrunner.ThreeDeadWheelLocalizer;
 import org.firstinspires.ftc.team417.roadrunner.TwoDeadWheelLocalizer;
@@ -15,7 +16,7 @@ public final class ManualFeedbackTuner extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         if (TuningOpModes.DRIVE_CLASS.equals(HolonomicDrive.class)) {
-            HolonomicDrive drive = new HolonomicDrive(hardwareMap, new Pose2d(0, 0, 0));
+            HolonomicDrive drive = new HolonomicDrive(hardwareMap, new Pose2d(0, 0, 0), KinematicType.MECANUM);
             
             if (drive.localizer instanceof TwoDeadWheelLocalizer) {
                 if (TwoDeadWheelLocalizer.PARAMS.perpXTicks == 0 && TwoDeadWheelLocalizer.PARAMS.parYTicks == 0) {
