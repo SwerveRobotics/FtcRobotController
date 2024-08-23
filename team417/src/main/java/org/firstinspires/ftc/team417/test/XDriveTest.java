@@ -1,10 +1,10 @@
-package org.firstinspires.ftc.team417;
+package org.firstinspires.ftc.team417.test;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
-@TeleOp(name = "XDriveTest")
+@TeleOp(name = "XDriveTest", group="Test")
 public class XDriveTest extends LinearOpMode {
     public DcMotor bl, br, fl, fr;
 

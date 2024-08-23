@@ -435,6 +435,7 @@ public final class TankDrive {
             c.setStroke("#3F51B5");
             Drawing.drawRobot(c, pose);
 
+            //noinspection SpellCheckingInspection
             c.setStroke("#7C4DFFFF");
             c.fillCircle(turn.beginPose.position.x, turn.beginPose.position.y, 2);
 
