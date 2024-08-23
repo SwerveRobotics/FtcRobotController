@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.team417.roadrunner.HolonomicDrive;
+import org.firstinspires.ftc.team417.roadrunner.KinematicType;
 
 /**
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
@@ -16,7 +17,7 @@ public class CompetitionAuto extends BaseOpMode {
     @Override
     public void runOpMode() {
         Pose2d beginPose = new Pose2d(0, 0, 0);
-        HolonomicDrive drive = new HolonomicDrive(hardwareMap, beginPose);
+        HolonomicDrive drive = new HolonomicDrive(hardwareMap, beginPose, KinematicType.MECANUM);
 
         waitForStart();
 

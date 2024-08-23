@@ -72,7 +72,7 @@ import java.util.List;
 @Config
 public final class HolonomicDrive {
     // For X-Drive, use the constant KinematicType.X
-    private final KinematicType KINEMATIC_TYPE = KinematicType.MECANUM;
+    private KinematicType kinematicType;
 
     public static class Params {
         Params() {
@@ -173,7 +173,7 @@ public final class HolonomicDrive {
                     PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick),
             new XKinematics(
                     PARAMS.inPerTick * PARAMS.trackWidthTicks),
-            KINEMATIC_TYPE
+            kinematicType
     );
 
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
@@ -257,7 +257,7 @@ public final class HolonomicDrive {
 
             double headingDelta = heading.minus(lastHeading);
             Twist2dDual<Time> twist;
-            switch (KINEMATIC_TYPE) {
+            switch (kinematicType) {
                 case MECANUM:
                     twist = kinematics.getMecanumKinematics().forward(new MecanumKinematics.WheelIncrements<>(
                             new DualNum<Time>(new double[]{
@@ -305,7 +305,7 @@ public final class HolonomicDrive {
                                     new DualNum<>(new double[0])),
                             new DualNum<>(new double[0])
                     );
-                    System.out.println(KINEMATIC_TYPE + " is not implemented");
+                    System.out.println(kinematicType + " is not implemented");
             }
 
             lastLeftFrontPos = leftFrontPosVel.position;
@@ -322,8 +322,10 @@ public final class HolonomicDrive {
         }
     }
 
-    public HolonomicDrive(HardwareMap hardwareMap, Pose2d pose) {
+    public HolonomicDrive(HardwareMap hardwareMap, Pose2d pose, KinematicType kinematicType) {
         this.pose = pose;
+
+        this.kinematicType = kinematicType;
 
         WilyWorks.setStartPose(pose, new PoseVelocity2d(new Vector2d(0, 0), 0));
 
@@ -472,7 +474,7 @@ public final class HolonomicDrive {
             return; // ====>
 
         double maxPowerMag;
-        switch (KINEMATIC_TYPE) {
+        switch (kinematicType) {
             case MECANUM:
                 MecanumKinematics.WheelVelocities<Time> mecanumWheelVels = new MecanumKinematics(1).inverse(
                         PoseVelocity2dDual.constant(powers, 1));
@@ -569,7 +571,7 @@ public final class HolonomicDrive {
         PoseVelocity2dDual<Time> command;
         double voltage;
 
-        switch (KINEMATIC_TYPE) {
+        switch (kinematicType) {
             case MECANUM:
                 // Compute the wheel powers for the stick contribution:
                 MecanumKinematics.WheelVelocities<Time> mecanumManualVels = new MecanumKinematics(1).inverse(
@@ -738,7 +740,7 @@ public final class HolonomicDrive {
             double leftFrontPower, leftBackPower, rightBackPower, rightFrontPower;
             leftFrontPower = leftBackPower = rightBackPower = rightFrontPower = 0;
 
-            switch (KINEMATIC_TYPE) {
+            switch (kinematicType) {
                 case MECANUM:
                     MecanumKinematics.WheelVelocities<Time> mecanumWheelVels = kinematics.getMecanumKinematics().inverse(command);
                     voltage = voltageSensor.getVoltage();
@@ -853,7 +855,7 @@ public final class HolonomicDrive {
 
             double voltage;
             double leftFrontPower, leftBackPower, rightBackPower, rightFrontPower;
-            switch (KINEMATIC_TYPE) {
+            switch (kinematicType) {
                 case MECANUM:
                     MecanumKinematics.WheelVelocities<Time> mecanumWheelVels = kinematics.getMecanumKinematics().inverse(command);
                     voltage = voltageSensor.getVoltage();
