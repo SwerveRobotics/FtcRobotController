@@ -9,6 +9,8 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 public class MecanumDrive extends LinearOpMode {
     public DcMotor bl, br, fl, fr;
 
+    public final double MECANUM_CRIVE_CONSTANT = 1.1;
+
     @Override
     public void runOpMode() {
         bl = initializeMotor("BLMotor", DcMotor.Direction.FORWARD);
@@ -24,7 +26,7 @@ public class MecanumDrive extends LinearOpMode {
 
         // opModeIsActive is true after the start button is pressed and
         //     until the stop button is pressed.
-        while (!opModeIsActive()) {
+        while (opModeIsActive()) {
             // Make the robot move according to the input from the gamepad:
             driveRobot();
 
@@ -70,7 +72,7 @@ public class MecanumDrive extends LinearOpMode {
     public void driveRobot() {
         // The input here needs to be multiplied by 1.1 because the mecanum drive
         //     covers less distance when strafing.
-        double x = gamepad1.left_stick_x * 1.1;
+        double x = gamepad1.left_stick_x * MECANUM_CRIVE_CONSTANT;
 
         // The input from the joysticks are y-inverted, so the negative is needed to compensate.
         double y = -gamepad1.left_stick_y;
