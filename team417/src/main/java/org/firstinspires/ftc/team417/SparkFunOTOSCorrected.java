@@ -19,7 +19,6 @@ public class SparkFunOTOSCorrected extends SparkFunOTOS {
 
     // Modified version of poseToRegs to fix pose setting issue
     // see https://discord.com/channels/225450307654647808/1246977443030368349/1271702497659977760
-    @Override
     protected void poseToRegs(byte[] rawData, Pose2D pose, double xyToRaw, double hToRaw) {
         // Convert pose units to raw data
         short rawX = (short) (_distanceUnit.toMeters(pose.x) * xyToRaw);
