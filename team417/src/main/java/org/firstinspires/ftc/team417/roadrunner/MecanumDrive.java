@@ -17,7 +17,6 @@ import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.HolonomicController;
-import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.MotorFeedforward;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -75,6 +74,9 @@ import java.util.List;
 
 @Config
 public final class MecanumDrive {
+
+    private final KinematicType kinematicType = KinematicType.MECANUM;
+
     public static class Params {
         Params() {
             maxWheelVel = 50;
@@ -96,11 +98,11 @@ public final class MecanumDrive {
                 kV = 0;
                 kA = 0;
 
-                axialGain      = 0;
-                axialVelGain   = 0;
-                lateralGain    = 0;
+                axialGain = 0;
+                axialVelGain = 0;
+                lateralGain = 0;
                 lateralVelGain = 0;
-                headingGain    = 0;
+                headingGain = 0;
                 headingVelGain = 0;
 
                 otos.offset.x = 0;
@@ -121,11 +123,11 @@ public final class MecanumDrive {
                 kV = 0;
                 kA = 0;
 
-                axialGain      = 0.0;
-                axialVelGain   = 0.0;
-                lateralGain    = 0.0;
+                axialGain = 0.0;
+                axialVelGain = 0.0;
+                lateralGain = 0.0;
                 lateralVelGain = 0.0;
-                headingGain    = 0.0;
+                headingGain = 0.0;
                 headingVelGain = 0.0;
             }
         }
@@ -168,17 +170,18 @@ public final class MecanumDrive {
     }
 
     public static String getBotName() {
-        InspectionState inspection=new InspectionState();
+        InspectionState inspection = new InspectionState();
         inspection.initializeLocal();
         Log.d("roadrunner", String.format("Device name:" + inspection.deviceName));
         return inspection.deviceName;
     }
+
     public static boolean isDevBot = getBotName().equals("DevBot");
 
     public static Params PARAMS = new Params();
 
-    public MecanumKinematics kinematics = new MecanumKinematics(
-            PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
+    public HolonomicKinematics kinematics = new HolonomicKinematics(
+            kinematicType, PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
 
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
             PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
@@ -262,7 +265,7 @@ public final class MecanumDrive {
             }
 
             double headingDelta = heading.minus(lastHeading);
-            Twist2dDual<Time> twist = kinematics.forward(new MecanumKinematics.WheelIncrements<>(
+            Twist2dDual<Time> twist = kinematics.forward(new HolonomicKinematics.WheelIncrements<>(
                     new DualNum<Time>(new double[]{
                             (leftFrontPosVel.position - lastLeftFrontPos),
                             leftFrontPosVel.velocity,
@@ -444,7 +447,7 @@ public final class MecanumDrive {
         if (WilyWorks.setDrivePowers(powers, new PoseVelocity2d(new Vector2d(0, 0), 0)))
             return; // ====>
 
-        MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
+        HolonomicKinematics.WheelVelocities<Time> wheelVels = new HolonomicKinematics(kinematicType, 1).inverse(
                 PoseVelocity2dDual.constant(powers, 1));
 
         double maxPowerMag = 1;
@@ -475,6 +478,7 @@ public final class MecanumDrive {
      * .maxAngVel to determine the range to specify. Note however that the robot can actually
      * go faster than Road Runner's PARAMS values so you would be unnecessarily slowing your
      * robot down.
+     *
      * @noinspection unused
      */
     public void setDrivePowers(
@@ -487,8 +491,7 @@ public final class MecanumDrive {
             PoseVelocity2d stickVelocity,
             // Desired computed power velocity, inches/s and radians/s, field-relative coordinates,
             // can be null:
-            PoseVelocity2d assistVelocity)
-    {
+            PoseVelocity2d assistVelocity) {
         if (stickVelocity == null)
             stickVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
         if (assistVelocity == null)
@@ -514,10 +517,10 @@ public final class MecanumDrive {
 
         // Remember the current velocity for next time:
         previousAssistVelocity = new PoseVelocity2d(new Vector2d(
-                assistVelocity.linearVel.x,assistVelocity.linearVel.y), assistVelocity.angVel);
+                assistVelocity.linearVel.x, assistVelocity.linearVel.y), assistVelocity.angVel);
 
         // Compute the wheel powers for the stick contribution:
-        MecanumKinematics.WheelVelocities<Time> manualVels = new MecanumKinematics(1).inverse(
+        HolonomicKinematics.WheelVelocities<Time> manualVels = new HolonomicKinematics(kinematicType, 1).inverse(
                 PoseVelocity2dDual.constant(stickVelocity, 1));
 
         double leftFrontPower = manualVels.leftFront.get(0);
@@ -526,9 +529,9 @@ public final class MecanumDrive {
         double rightFrontPower = manualVels.rightFront.get(0);
 
         // Compute the wheel powers for the assist:
-        double[] x = { pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x };
-        double[] y = { pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y };
-        double[] angular = { pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel };
+        double[] x = {pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x};
+        double[] y = {pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y};
+        double[] angular = {pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel};
 
         Pose2dDual<Time> computedDualPose = new Pose2dDual<>(
                 new Vector2dDual<>(new DualNum<>(x), new DualNum<>(y)),
@@ -538,7 +541,7 @@ public final class MecanumDrive {
         PoseVelocity2dDual<Time> command = new HolonomicController(0, 0, 0)
                 .compute(computedDualPose, pose, poseVelocity);
 
-        MecanumKinematics.WheelVelocities<Time> assistVels = kinematics.inverse(command);
+        HolonomicKinematics.WheelVelocities<Time> assistVels = kinematics.inverse(command);
 
         double voltage = getVoltage();
         final MotorFeedforward feedforward = new MotorFeedforward(
@@ -628,7 +631,7 @@ public final class MecanumDrive {
             // Remember the target pose:
             targetPose = txWorldTarget.value();
 
-            MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
+            HolonomicKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
 
             double voltage = getVoltage();
 
@@ -730,7 +733,7 @@ public final class MecanumDrive {
             // Remember the target pose:
             targetPose = txWorldTarget.value();
 
-            MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
+            HolonomicKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
 
             updateLoopTimeStatistic(p);
             double voltage = getVoltage();
@@ -774,12 +777,14 @@ public final class MecanumDrive {
 
     // Update the loop time, in milliseconds, and show it on FTC Dashboard:
     double lastLoopTime; // Seconds
+
     void updateLoopTimeStatistic(TelemetryPacket p) {
         double currentTime = nanoTime() * 1e-9; // Seconds
         double loopTime = currentTime - lastLoopTime;
         lastLoopTime = currentTime;
         p.put("Loop time", loopTime * 1000.0); // Milliseconds
     }
+
     void resetLoopTimeStatistic() {
         lastLoopTime = nanoTime() * 1e-9;
     }
@@ -809,8 +814,8 @@ public final class MecanumDrive {
             double rotation = -position.h;
             poseVelocity = new PoseVelocity2d(
                     new Vector2d(Math.cos(rotation) * velocity.x - Math.sin(rotation) * velocity.y,
-                                 Math.sin(rotation) * velocity.x + Math.cos(rotation) * velocity.y),
-                        velocity.h);
+                            Math.sin(rotation) * velocity.x + Math.cos(rotation) * velocity.y),
+                    velocity.h);
 
             pose = new Pose2d(position.x, position.y, position.h);
         } else {
@@ -869,12 +874,15 @@ public final class MecanumDrive {
 
     // Recreate the kinematics object using the current settings:
     public void recreateKinematics() {
-        kinematics = new MecanumKinematics(
+        kinematics = new HolonomicKinematics(
+                kinematicType,
                 PARAMS.inPerTick * PARAMS.trackWidthTicks,
                 PARAMS.inPerTick / PARAMS.lateralInPerTick);
     }
 
-    /** @noinspection unused*/ // Rotate a vector by a prescribed angle:
+    /**
+     * @noinspection unused
+     */ // Rotate a vector by a prescribed angle:
     static public Vector2d rotateVector(Vector2d vector, double theta) {
         return new Vector2d(
                 Math.cos(theta) * vector.x - Math.sin(theta) * vector.y,
@@ -897,6 +905,7 @@ public final class MecanumDrive {
     // Get the current voltage, amortized for performance:
     double previousVoltageSeconds = 0;
     double previousVoltageRead = 0;
+
     public double getVoltage() {
         final double UPDATE_INTERVAL = 0.1; // Minimum duration between hardware reads, in seconds
         double currentSeconds = nanoTime() * 1e-9;
@@ -910,7 +919,9 @@ public final class MecanumDrive {
     // List of currently running Actions:
     LinkedList<Action> actionList = new LinkedList<>();
 
-    /** @noinspection unused*/ // Invoke an Action to run in parallel during TeleOp:
+    /**
+     * @noinspection unused
+     */ // Invoke an Action to run in parallel during TeleOp:
     public void runParallel(Action action) {
         actionList.add(action);
     }
@@ -920,7 +931,7 @@ public final class MecanumDrive {
     // FTC Dashboard:
     public boolean doActionsWork(TelemetryPacket packet) {
         LinkedList<Action> deletionList = new LinkedList<>();
-        for (Action action: actionList) {
+        for (Action action : actionList) {
             // Let the Action do any field rendering (such as to draw the path it intends to
             // traverse):
             action.preview(packet.fieldOverlay());
@@ -934,7 +945,9 @@ public final class MecanumDrive {
         return !actionList.isEmpty();
     }
 
-    /** @noinspection unused*/
+    /**
+     * @noinspection unused
+     */
     // Abort all currently running actions:
     public void abortActions() {
         actionList.clear();
