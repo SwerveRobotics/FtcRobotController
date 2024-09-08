@@ -27,6 +27,9 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
+            telemetry.addLine("Running 417's TeleOp!");
+            telemetry.update();
+
             drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
                             -gamepad1.left_stick_y,
@@ -37,10 +40,13 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             drive.updatePoseEstimate();
 
-            telemetry.addLine("Running 417's TeleOp!");
-            telemetry.update();
-
+            // 'packet' is the object used to send data to FTC Dashboard:
             TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+
+            // Do the work now for all active Road Runner actions, if any:
+            drive.doActionsWork(packet);
+
+            // Draw the robot and field:
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
             MecanumDrive.sendTelemetryPacket(packet);
