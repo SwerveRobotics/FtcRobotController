@@ -3,8 +3,26 @@ pluginManagement {
         id 'org.jetbrains.kotlin.jvm' version '2.0.10'
     }
 }
+
 include ':FtcRobotController'
-include ':Team417'
-include ':Team6220'
+
+File propertiesFile = file('my.properties')
+if (propertiesFile.exists()) {
+    Properties properties = new Properties()
+    properties.load(propertiesFile.newDataInputStream())
+    def team = properties.getProperty('team').toLowerCase()
+    if ((team != 'team417') && (team != 'team6220') && (team != 'team8923')) {
+        println("ERROR: The team property in my.properties is set to '" + team + "', " +
+                "it needs to be Team417, Team6220 or Team8923")
+    } else {
+        println(team + " rules!\n")
+        include team
+    }
+} else {
+    println("Hi there Swerve student, please don't forget to create your 'my.properties' file!\n")
+    include ':Team417'
+    include ':Team6220'
+}
+
 include ':WilyWorks'
 include ':WilyCore'
