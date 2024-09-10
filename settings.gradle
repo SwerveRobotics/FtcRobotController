@@ -6,20 +6,26 @@ pluginManagement {
 
 include ':FtcRobotController'
 
+def team = null
 File propertiesFile = file('my.properties')
 if (propertiesFile.exists()) {
     Properties properties = new Properties()
     properties.load(propertiesFile.newDataInputStream())
-    def team = properties.getProperty('team').toLowerCase()
-    if ((team != 'team417') && (team != 'team6220') && (team != 'team8923')) {
-        println("ERROR: The team property in my.properties is set to '" + team + "', " +
-                "it needs to be Team417, Team6220 or Team8923")
-    } else {
-        println(team + " rules!\n")
-        include team
+    team = properties.getProperty('team')
+    if (team != null) {
+        team = team[0].toUpperCase() + team[1..-1].toLowerCase() // Make first character upper-case
+        if ((team != 'Team417') && (team != 'Team6220') && (team != 'Team8923')) {
+            println("ERROR: The team property in 'my.properties' is set to '" + team + "', " +
+                    "it needs to be Team417, Team6220 or Team8923")
+        }
     }
+}
+
+if (team != null) {
+    println(team + " rules!\n")
+    include team
 } else {
-    println("Hi there Swerve student, please don't forget to create your 'my.properties' file!\n")
+    println("Hi there Swerve person, please create the 'my.properties' file and add your team!\n")
     include ':Team417'
     include ':Team6220'
 }

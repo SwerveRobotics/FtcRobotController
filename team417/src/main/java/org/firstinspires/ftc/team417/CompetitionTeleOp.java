@@ -22,14 +22,17 @@ public class CompetitionTeleOp extends BaseOpMode {
     public void runOpMode() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, new Pose2d(0, 0, 0));
+        Pose2d beginPose = new Pose2d(0, 0, 0);
+        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
+        // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
 
         while (opModeIsActive()) {
-            telemetry.addLine("Running 417's TeleOp!");
+            telemetry.addLine("Running TeleOp!");
             telemetry.update();
 
+            // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
                             -gamepad1.left_stick_y,
@@ -38,6 +41,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                     -gamepad1.right_stick_x
             ));
 
+            // Update the current pose:
             drive.updatePoseEstimate();
 
             // 'packet' is the object used to send data to FTC Dashboard:
