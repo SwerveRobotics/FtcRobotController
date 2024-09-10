@@ -42,16 +42,24 @@ public class SparkFunOTOSExtended extends SparkFunOTOS {
     }
 
     /**
-     * Gets the position, and velocity measured by the OTOS in a single burst read
+     * This is a more optimized version of the stock 'getPosVelAcc' that is .3ms faster when
+     * acceleration isn't needed.
      * @param pos Position measured by the OTOS
      * @param vel Velocity measured by the OTOS
+     * @param acc Acceleration measured by the OTOS (can be null)
      */
-    public void getPosVel(Pose2D pos, Pose2D vel) {
-        // Read all pose registers
-        byte[] rawData = deviceClient.read(REG_POS_XL, 12);
+    @Override
+    public void getPosVelAcc(Pose2D pos, Pose2D vel, Pose2D acc) {
+        if (acc != null)
+            super.getPosVelAcc(pos, vel, acc);
+        else {
+            // Read all pose registers
+            byte[] rawData = deviceClient.read(REG_POS_XL, 12);
 
-        // Convert raw data to pose units
-        pos.set(regsToPose(Arrays.copyOfRange(rawData, 0, 6), INT16_TO_METER, INT16_TO_RAD));
-        vel.set(regsToPose(Arrays.copyOfRange(rawData, 6, 12), INT16_TO_MPS, INT16_TO_RPS));
+            // Convert raw data to pose units
+            pos.set(regsToPose(Arrays.copyOfRange(rawData, 0, 6), INT16_TO_METER, INT16_TO_RAD));
+            vel.set(regsToPose(Arrays.copyOfRange(rawData, 6, 12), INT16_TO_MPS, INT16_TO_RPS));
+        }
     }
+
 }

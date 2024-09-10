@@ -62,7 +62,6 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.team417.SparkFunOTOSExtended;
 import org.firstinspires.ftc.team417.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsMessage;
@@ -200,7 +199,7 @@ public final class MecanumDrive {
     public Localizer localizer;
     public Pose2d pose; // Actual pose
     public Pose2d targetPose; // Target pose
-    public SparkFunOTOSExtended opticalTracker = null; // Can be null which means no optical tracking sensor
+    public SparkFunOTOS opticalTracker = null; // Can be null which means no optical tracking sensor
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -328,7 +327,7 @@ public final class MecanumDrive {
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         if (isDevBot) {
-            opticalTracker = hardwareMap.get(SparkFunOTOSExtended.class, "optical");
+            opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
             initializeOpticalTracker();
 
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
@@ -793,10 +792,10 @@ public final class MecanumDrive {
             // if we'll actually need it - i.e., if using non-zero velocity gains:
             SparkFunOTOS.Pose2D position = new SparkFunOTOS.Pose2D(0, 0, 0);
             SparkFunOTOS.Pose2D velocity = new SparkFunOTOS.Pose2D(0, 0, 0);
+            SparkFunOTOS.Pose2D acceleration = new SparkFunOTOS.Pose2D(0, 0, 0);
 
-            // Note that this single call is faster than separate calls to getPosition()
-            // and getVelocity():
-            opticalTracker.getPosVel(position, velocity);
+            // This single call is faster than separate calls to getPosition() and getVelocity():
+            opticalTracker.getPosVelAcc(position, velocity, acceleration);
 
             // Road Runner requires the pose to be field-relative while the velocity has to be
             // robot-relative, but the optical tracking sensor reports everything as field-
@@ -948,7 +947,7 @@ public final class MecanumDrive {
         // Then draw the grid on top and finally set the transform to rotate all subsequent
         // rendering.
         Canvas canvas = packet.fieldOverlay();
-        canvas.drawImage("/dash/centerstage.webp", 0, 0, 144, 144, Math.toRadians(90), 0, 144, true);
+        canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144, Math.toRadians(90), 0, 144, true);
         canvas.drawGrid(0, 0, 144, 144, 7, 7);
         canvas.setRotation(Math.toRadians(-90));
 

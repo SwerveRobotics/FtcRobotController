@@ -7,6 +7,7 @@
 // @@@ Add velocity test to extras
 // @@@ Add fast button to push tuner
 // @@@ Add dependency graph when a change is made
+// @@@ Don't show position while driving until calibrated
 //
 // Long-term:
 // @@@ Add LED support
@@ -499,7 +500,7 @@ class Gui {
  * @noinspection UnnecessaryUnicodeEscape, AccessStaticViaInstance, ClassEscapesDefinedScope
  */
 @SuppressLint("DefaultLocale")
-@TeleOp
+@TeleOp(name="Looney Tune", group="Tuning")
 public class LooneyTune extends LinearOpMode {
     static final String A = "\ud83c\udd50"; // Symbol for the gamepad A button
     static final String B = "\ud83c\udd51"; // Symbol for the gamepad B button
@@ -1216,6 +1217,9 @@ public class LooneyTune extends LinearOpMode {
                 // We're also done if we've gone far enough:
                 Pose2D position = drive.opticalTracker.getPosition();
                 double distance = Math.hypot(position.x, position.y);
+
+out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, distance); // @@@
+
                 if (distance > DISTANCE) {
                     success = true;
                     break;
@@ -1421,11 +1425,19 @@ public class LooneyTune extends LinearOpMode {
 
         // Register the variables with non-zero results now so that they can be registered for
         // graphing in FTC Dashboard even before the first test is run:
-        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
-        packet.put("\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af", "\u23af");
-        packet.put("vRef", 0.001);
-        packet.put("vActual", 0.001);
-        MecanumDrive.sendTelemetryPacket(packet);
+        TelemetryPacket packet;
+        double registerTime = time();
+        while (time() - registerTime < 0.1) {
+            packet = MecanumDrive.getTelemetryPacket();
+            StringBuilder divider = new StringBuilder();
+            for (int i = 0; i < 80; i++) {
+                divider.append("\u23af");
+            }
+            packet.put(divider.toString(), "\u00b7");
+            packet.put("vRef", 0.001);
+            packet.put("vActual", 0.001);
+            MecanumDrive.sendTelemetryPacket(packet);
+        }
 
         if (dialogs.drivePrompt("The robot will drive forwards then backwards for " + testDistance(DISTANCE) + ". "
                 + "Tune 'kV' and 'kA' using FTC Dashboard. Follow "
@@ -1602,7 +1614,7 @@ public class LooneyTune extends LinearOpMode {
 
         // Update the variable according to the latest gamepad input.
         void update() {
-            telemetryAdd(String.format("Here's the current value for <b>%s</b>. ", fieldName)
+            telemetryAdd(String.format("Here's the current value for <b>%s</b> as set by previous tests. ", fieldName)
                 + "Press Dpad up/down to change its value, right/left to move the cursor.\n");
 
             if (gui.left()) {

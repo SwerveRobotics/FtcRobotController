@@ -267,8 +267,10 @@ class Field {
         this.simulation = simulation;
         ClassLoader classLoader = currentThread().getContextClassLoader();
 
-        InputStream compassStream = classLoader.getResourceAsStream("background/misc/compass-rose-white-text.png");
-        InputStream fieldStream = classLoader.getResourceAsStream("background/season-2023-centerstage/field-2023-juice-dark.png");
+        InputStream compassStream = classLoader.getResourceAsStream(
+                "background/misc/compass-rose-white-text.png");
+        InputStream fieldStream = classLoader.getResourceAsStream(
+                "background/season-2024-intothedeep/field-2024-juice-dark.png");
 
         try {
             if (compassStream != null) {
