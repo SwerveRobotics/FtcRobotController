@@ -39,9 +39,9 @@ public class CompetitionAuto extends BaseOpMode {
         trajectoryAction.preview(previewCanvas);
 
         // Show the preview on FTC Dashboard now.
-        TelemetryPacket packet = new TelemetryPacket();
+        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
         packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
-        FtcDashboard.getInstance().sendTelemetryPacket(packet);
+        MecanumDrive.sendTelemetryPacket(packet);
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
@@ -52,13 +52,13 @@ public class CompetitionAuto extends BaseOpMode {
             telemetry.update();
 
             // 'packet' is the object used to send data to FTC Dashboard:
-            packet = new TelemetryPacket();
+            packet = MecanumDrive.getTelemetryPacket();
 
             // Draw the preview and then run the next step of the trajectory on top:
             packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
             more = trajectoryAction.run(packet);
 
-            FtcDashboard.getInstance().sendTelemetryPacket(packet);
+            MecanumDrive.sendTelemetryPacket(packet);
         }
     }
 }

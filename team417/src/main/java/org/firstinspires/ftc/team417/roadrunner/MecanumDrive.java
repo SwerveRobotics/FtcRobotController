@@ -949,7 +949,13 @@ public final class MecanumDrive {
         Canvas canvas = packet.fieldOverlay();
         canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144, Math.toRadians(90), 0, 144, true);
         canvas.drawGrid(0, 0, 144, 144, 7, 7);
+
         canvas.setRotation(Math.toRadians(-90));
+        // Fade field and grid to white by drawing transparent white over it:
+        canvas.setAlpha(0.8);
+        canvas.setFill("#ffffff");
+        canvas.fillRect(-72, -72, 144, 144);
+        canvas.setAlpha(1.0);
 
         return packet;
     }

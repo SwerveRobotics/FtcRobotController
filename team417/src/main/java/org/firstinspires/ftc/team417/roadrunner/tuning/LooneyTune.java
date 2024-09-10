@@ -1326,24 +1326,38 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
     void driveTest() {
         useDrive(true); // Do use MecanumDrive/TankDrive
 
+        drive.setPose(zeroPose);
+
+        Pose2d homePose = null;
         while (opModeIsActive() && !gui.cancel()) {
             if (gui.xButton())
                 wheelDebugger();
             if (gui.yButton())
-                drive.setPose(zeroPose);
+                homePose = drive.pose;
 
             updateGamepadDriving();
             drive.updatePoseEstimate();
 
             TelemetryPacket p = MecanumDrive.getTelemetryPacket();
             Pose2d pose = drive.pose;
-            dialogs.message("Use the controller to drive the robot around.\n\n"
-                    + String.format("&ensp;Pose: (%.2f\", %.2f\", %.2f\u00b0)\n", pose.position.x, pose.position.y, pose.heading.toDouble())
-                    + "\nPress "+X+" to debug motor wheels, "+Y+" to reset the pose, "+B+" to exit.");
+            String message = "Use the controller to drive the robot around.\n\n"
+                    + String.format("&ensp;Pose: (%.2f\", %.2f\", %.2f\u00b0)\n",
+                        pose.position.x,
+                        pose.position.y,
+                        Math.toDegrees(pose.heading.toDouble()));
+
+            if (homePose != null) {
+                message += String.format("&ensp;Home \u0394: (%.2f\", %.2f\", %.2f\u00b0)\n", // Delta, degrees
+                        pose.position.x - homePose.position.x,
+                        pose.position.y - homePose.position.y,
+                        Math.toDegrees(pose.heading.toDouble() - homePose.heading.toDouble()));
+            }
+
+            dialogs.message(message + "\nPress "+X+" to debug motor wheels, "+Y+" to set the home pose, "+B+" to exit.");
 
             Canvas c = p.fieldOverlay();
             c.setStroke("#3F51B5");
-            Drawing.drawRobot(c, drive.pose);
+            Drawing.drawRobot(c, pose);
             MecanumDrive.sendTelemetryPacket(p);
 
         }
