@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.CustomVariableConsumer;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.wilyworks.simulator.WilyCore;
 
 import org.firstinspires.ftc.robotcore.external.Func;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -15,9 +16,16 @@ import java.util.TreeMap;
  * Wily Works implementation of the FTC Dashboard.
  */
 public class WilyDashboard {
+    // Key, value pairs of data that ha  been 'put':
     static public TreeMap<String, String> data = new TreeMap<>();
+
+    // Simple log lines:
     static public ArrayList<String> log = new ArrayList<>();
+
+    // The last set field Canvas. We use this to repaint:
     static public Canvas fieldOverlay;
+
+    // Create an instance so that this class can be called as a global:
     static FtcDashboard instance = new FtcDashboard();
     private Telemetry telemetry = new TelemetryAdapter();
 
@@ -25,13 +33,12 @@ public class WilyDashboard {
 
     public Telemetry getTelemetry() { return telemetry; }
 
-    // Append the telemetry to our accumulated list. Everything will get rendered later when
-    // WilyCore.update() is called.
     public void sendTelemetryPacket(TelemetryPacket telemetryPacket) {
         // https://www.baeldung.com/java-merge-maps
-        telemetryPacket.data.forEach((key, value) -> this.data.put(key, value));
-        log = telemetryPacket.log;
+        // telemetryPacket.data.forEach((key, value) -> this.data.put(key, value));
+
         fieldOverlay = telemetryPacket.fieldOverlay();
+        WilyCore.render();
     }
 
     public void withConfigRoot(CustomVariableConsumer function) {
@@ -154,11 +161,8 @@ public class WilyDashboard {
 
         @Override
         public boolean update() {
-            sendTelemetryPacket(currentPacket);
-
-            currentPacket = new TelemetryPacket();
+            // @@@ Send the log!
             log = new LogAdapter(currentPacket);
-
             return true;
         }
 

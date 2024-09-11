@@ -58,7 +58,10 @@ public class CompetitionAuto extends BaseOpMode {
             packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
             more = trajectoryAction.run(packet);
 
-            MecanumDrive.sendTelemetryPacket(packet);
+            // Only send the packet if there's more to do in order to keep the very last
+            // drawing up on the field once the robot is done:
+            if (more)
+                MecanumDrive.sendTelemetryPacket(packet);
         }
     }
 }

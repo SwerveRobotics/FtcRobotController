@@ -882,6 +882,9 @@ public final class MecanumDrive {
         this.pose = pose;
         this.targetPose = pose;
 
+        // Clear the history as it's no longer relevant:
+        poseHistory.clear();
+
         // Set the pose on the optical tracking sensor:
         if (opticalTracker != null) {
             opticalTracker.setPosition(new SparkFunOTOS.Pose2D(
