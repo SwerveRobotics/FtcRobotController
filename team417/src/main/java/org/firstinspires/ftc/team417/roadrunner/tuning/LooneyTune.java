@@ -189,11 +189,11 @@ class TuneParameters {
         this.comparison = "";
 
         compare("inPerTick", "%.5f", oldSettings.params.inPerTick, params.inPerTick);
-        compare("lateralInPerTick", "%.5f", oldSettings.params.lateralInPerTick, params.lateralInPerTick);
+        compare("lateralInPerTick", "%.3f", oldSettings.params.lateralInPerTick, params.lateralInPerTick);
         compare("trackWidthTicks", "%.2f", oldSettings.params.trackWidthTicks, params.trackWidthTicks);
-        compare("kS", "%.5f", oldSettings.params.kS, params.kS);
-        compare("kV", "%.6f", oldSettings.params.kV, params.kV);
-        compare("kA", "%.5f", oldSettings.params.kA, params.kA);
+        compare("kS", "%.3f", oldSettings.params.kS, params.kS);
+        compare("kV", "%.3f", oldSettings.params.kV, params.kV);
+        compare("kA", "%.4f", oldSettings.params.kA, params.kA);
         compare("axialGain", "%.2f", oldSettings.params.axialGain, params.axialGain);
         compare("axialVelGain", "%.2f", oldSettings.params.axialVelGain, params.axialVelGain);
         compare("lateralGain", "%.2f", oldSettings.params.lateralGain, params.lateralGain);
@@ -1450,12 +1450,13 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
 
         int inputIndex = 0;
         NumericInput[] numericInputs = {
-            new NumericInput(drive.PARAMS, "kV", -2, 6, 0.000001, 20),
-            new NumericInput(drive.PARAMS, "kA", -3, 5, 0, 1),
+            new NumericInput(drive.PARAMS, "kV", -2, 3, 0.000001, 20),
+            new NumericInput(drive.PARAMS, "kA", -3, 4, 0, 1),
         };
 
         // Register the variables with non-zero results now so that they can be registered for
         // graphing in FTC Dashboard even before the first test is run:
+        // @@@ Remove this when graphing
         TelemetryPacket packet;
         double registerTime = time();
         while (time() - registerTime < 0.1) {
@@ -1477,31 +1478,39 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
 
             // Trigger a reset the first time into the loop:
             double startTime = 0;
-            double maxVelocityFactor = 1.0;
+            double maxVelocityFactor = 0.8;
             TimeProfile profile = null;
             boolean movingForwards = false;
-            int queuedXButtons = 0;
+            int queuedAButtons = 0;
 
             while (opModeIsActive()) {
                 // Process the gamepad numeric input:
-                numericInputs[inputIndex].update();
+                String update = "<big><big>" + numericInputs[inputIndex].update() + "</big></big>";
+                String inactive = numericInputs[inputIndex ^ 1].get();
 
+                telemetryAdd("Tune the feed forward constants:\n");
+                if (inputIndex == 0) {
+                    telemetryAdd(String.format("&emsp;kV: %s&emsp;kA: %s\n", update, inactive));
+                } else {
+                    telemetryAdd(String.format("&emsp;kV: %s&emsp;kA: %s\n", inactive, update));
+                }
                 if (inputIndex == 0) {
                     telemetryAdd("Graph <b>vActual</b> and <b>vRef</b> using FTC Dashboard. "
                             + "Adjust kV to make the horizontal lines as close as possible in height. "
-                            + "Remember, <i>kV = vRef / vActual</i>.\n\n"
-                            + "If there are no horizontal lines, decrease the maximum velocity using the left trigger.\n");
+                            + "Remember, <i>kV = vRef / vActual</i>.\n");
                 } else {
                     telemetryAdd("Graph <b>vActual</b> and <b>vRef</b> using FTC Dashboard. "
                             + "Adjust <b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap.\n");
                 }
 
-                if (gui.xButton())
-                    queuedXButtons++; // Let the x-button be queued up even while running
+                if (gui.accept())
+                    queuedAButtons++; // Let the a-button be queued up even while running
+                if (gui.yButton())
+                    inputIndex ^= 1; // Toggle the index
 
                 // If there's a profile, that means we're actively moving:
                 if (profile != null) {
-                    telemetryAdd("Press " + B + " to cancel");
+                    telemetryAdd("Press "+B+" to cancel");
                     telemetryUpdate();
 
                     Pose2D velocityPose = drive.opticalTracker.getVelocity();
@@ -1537,47 +1546,41 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                     if (gui.cancel()) {
                         // Cancel the current cycle but remain in this test:
                         stopMotors();
-                        queuedXButtons = 0;
+                        queuedAButtons = 0;
                         profile = null;
                     }
                 } else {
-                    telemetryAdd(String.format("Max velocity set to <b>%.0f%%</b>. Change using triggers.\n",
-                            maxVelocityFactor * 100.0));
+                    telemetryAdd("Use the triggers to change velocity to lengthen or shorten the horizontal lines. "
+                            +  String.format("Max velocity is <b>%.0f%%</b>.\n", maxVelocityFactor * 100.0));
 
-                    telemetryAdd("Press "+X+" to run, "+A+" when done, "+B+" to cancel, "
-                            +Y+" to switch gain variables");
+                    telemetryAdd("Dpad up/down to change the value, left/right to move "
+                            + "the cursor, "+Y+" to switch input, triggers to change max velocity, "
+                            + A+" to run on the robot, "+X+" to exit.");
                     telemetryUpdate();
 
                     updateGamepadDriving();
 
-                    if (gui.accept()) {
-                        // Make sure that the user does both kV and kA:
-                        if (inputIndex == 0)
-                            inputIndex = 1;
-                        else {
-                            if (dialogs.staticPrompt("Happy with your results?\n\nPress "+A+" to accept, "+B+" to cancel")) {
-
-                                // Reset the state that we zeroed to run the test:
-                                testParameters.params.lateralGain = currentParameters.params.lateralGain;
-                                testParameters.params.lateralVelGain = currentParameters.params.lateralVelGain;
-                                acceptParameters(testParameters);
-                            }
+                    if (gui.xButton()) {
+                        Prompt prompt = dialogs.savePrompt("Do you want to save your results?\n\n"
+                                + "Press "+A+" to save, "+B+" to cancel, "+X+" to exit without saving.");
+                        if (prompt == Prompt.SAVE) {
+                            // Restore the state that we zeroed to run the test:
+                            testParameters.params.lateralGain = currentParameters.params.lateralGain;
+                            testParameters.params.lateralVelGain = currentParameters.params.lateralVelGain;
+                            acceptParameters(testParameters);
                             break; // ====>
+                        } else if (prompt == Prompt.EXIT) {
+                            if (dialogs.staticPrompt("Are you sure you want to exit without saving?\n\n"
+                                    + "Press "+A+" to exit without saving, "+B+" to cancel."))
+                                break; // ====>
                         }
-                    }
-                    if (gui.cancel()) {
-                        if (dialogs.staticPrompt("Are you sure you want to discard your current input?\n\n"
-                                + "Press "+A+" to discard, "+B+" to cancel."))
-                            break; // ====>
                     }
                     if (gui.leftTrigger())
                         maxVelocityFactor = Math.max(maxVelocityFactor - 0.1, 0.2);
                     if (gui.rightTrigger())
                         maxVelocityFactor = Math.min(maxVelocityFactor + 0.1, 1.0);
-                    if (gui.yButton())
-                        inputIndex ^= 1;
-                    if (queuedXButtons > 0) {
-                        queuedXButtons--;
+                    if (queuedAButtons > 0) {
+                        queuedAButtons--;
                         stopMotors(); // Stop the user's driving
                         movingForwards = true;
                         startTime = time();
@@ -1599,6 +1602,7 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
         // We're done, undo any temporary state we set:
         MecanumDrive.PARAMS = currentParameters.params;
         stopMotors();
+        FtcDashboard.getInstance().clearTelemetry();
     }
 
     /**
@@ -1807,8 +1811,8 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                     }
                 } else {
                     telemetryAdd("Last error: " + errorString + ".\n");
-                    telemetryAdd("Press Dpad up/down to change the value, left/right to move "
-                        + "the cursor, "+A+" to try it on the robot, "+X+" to exit, "+Y+" to switch input.");
+                    telemetryAdd("Dpad up/down to change the value, left/right to move "
+                        + "the cursor, "+Y+"to switch input, "+A+" to run on the robot, "+X+" to exit.");
                     telemetryUpdate();
 
                     updateGamepadDriving();
