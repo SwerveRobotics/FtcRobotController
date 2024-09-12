@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.team6220;
+package org.firstinspires.ftc.teamMentor;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
@@ -8,8 +8,8 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.team6220.roadrunner.Drawing;
-import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamMentor.roadrunner.Drawing;
+import org.firstinspires.ftc.teamMentor.roadrunner.MecanumDrive;
 
 /**
  * This class exposes the competition version of TeleOp. As a general rule, add code to the

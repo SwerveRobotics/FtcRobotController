@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.team6220;
+package org.firstinspires.ftc.teamMentor;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -10,7 +10,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 
-import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.teamMentor.roadrunner.MecanumDrive;
 
 /**
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
