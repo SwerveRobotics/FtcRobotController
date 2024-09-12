@@ -85,6 +85,8 @@ public final class MecanumDrive {
             maxAngAccel = Math.PI;
 
             if (isDevBot) {
+                // Your DevBot Looney Tune configuration goes here!
+
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
@@ -110,6 +112,8 @@ public final class MecanumDrive {
                 otos.angularScalar = 0;
 
             } else {
+                // Your competition robot Looney Tune configuration goes here!
+
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
@@ -127,6 +131,12 @@ public final class MecanumDrive {
                 lateralVelGain = 0.0;
                 headingGain    = 0.0;
                 headingVelGain = 0.0;
+
+                otos.offset.x = 0;
+                otos.offset.y = 0;
+                otos.offset.h = Math.toRadians(0);
+                otos.linearScalar = 0;
+                otos.angularScalar = 0;
             }
         }
 
@@ -341,14 +351,12 @@ public final class MecanumDrive {
             // TODO: Create the optical tracking object:
             //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
 
-            leftFront = hardwareMap.get(DcMotorEx.class, "???");
-            leftBack = hardwareMap.get(DcMotorEx.class, "???");
-            rightBack = hardwareMap.get(DcMotorEx.class, "???");
-            rightFront = hardwareMap.get(DcMotorEx.class, "???");
+            leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+            leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+            rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+            rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
             // TODO: reverse motor directions if needed
-            //   leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-
             leftFront.setDirection(DcMotorEx.Direction.REVERSE);
             leftBack.setDirection(DcMotorEx.Direction.REVERSE);
         }
