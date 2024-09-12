@@ -566,6 +566,8 @@ public class LooneyTune extends LinearOpMode {
         }
     }
 
+    enum Prompt { SAVE, EXIT, CANCEL }
+
     /**
      * Class that encapsulates the dialogs framework.
      */
@@ -605,6 +607,21 @@ public class LooneyTune extends LinearOpMode {
                     return true;
             }
             return false;
+        }
+
+        // Show a prompt asking to save. If accept (A) is pressed, return Prompt.SAVE. If
+        // cancel (B) is pressed, return Prompt.CANCEL. If exit (X) is pressed, return Prompt.EXIT.
+        Prompt savePrompt(String message) {
+            while (opModeIsActive()) {
+                message(message);
+                if (gui.accept())
+                    return Prompt.SAVE;
+                if (gui.xButton())
+                    return Prompt.EXIT;
+                if (gui.cancel())
+                    return Prompt.CANCEL;
+            }
+            return Prompt.EXIT;
         }
     }
 
@@ -700,7 +717,7 @@ public class LooneyTune extends LinearOpMode {
         drive.opticalTracker.setOffset(new Pose2D(oldOffset.x, oldOffset.y, 0));
         drive.opticalTracker.setLinearScalar(1.0);
 
-        if (dialogs.drivePrompt("In this test, you'll push the robot forward in a straight line "
+        if (dialogs.drivePrompt("Tune OTOS's linearScalar and orientation by pushing the robot forward in a straight line "
                 + "along a field wall for exactly "+testDistance(DISTANCE)+". To start, align the robot by hand "
                 + "at its starting point along a wall. "
                 + "\n\nPress "+A+" when in position, "+B+" to cancel.")) {
@@ -773,7 +790,7 @@ public class LooneyTune extends LinearOpMode {
             }
         }
 
-        // Set the hardware to the new (or old) settings:
+        // Set the hardware to the new (or original) settings:
         setOtosHardware();
     }
 
@@ -1627,10 +1644,7 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
         }
 
         // Update the variable according to the latest gamepad input.
-        void update() {
-            telemetryAdd(String.format("Here's the current value for <b>%s</b> as set by previous tests. ", fieldName)
-                + "Press Dpad up/down to change its value, right/left to move the cursor.\n");
-
+        String update() {
             if (gui.left()) {
                 digit = Math.min(digit + 1, 2);
             }
@@ -1679,7 +1693,12 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                 middle = "<u>" + middle + "</u>";
             }
 
-            telemetryAdd(String.format("<big><big>&emsp;%s%s%s</big></big>\n", prefix, middle, suffix));
+            return prefix + middle + suffix;
+        }
+
+        // Get the current value without updating:
+        String get() {
+            return String.format(showFormat, value);
         }
     }
 
@@ -1693,36 +1712,35 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
 
         TuneParameters testParameters = currentParameters.createClone();
         MecanumDrive.PARAMS = testParameters.params;
-        String prompt, gainName, velGainName;
+        String description, gainName, velGainName;
 
         TrajectoryActionBuilder trajectory = drive.actionBuilder(zeroPose);
         if (type == PidTunerType.AXIAL) {
-            prompt = "The robot will drive forwards and then backwards " + testDistance(DISTANCE) + ". ";
+            description = "Tune the axial gains. The robot will drive forwards and then backwards " + testDistance(DISTANCE) + ". ";
             trajectory = trajectory.lineToX(DISTANCE).lineToX(0);
             gainName = "axialGain";
             velGainName = "axialVelGain";
 
         } else if (type == PidTunerType.LATERAL) {
-            prompt = "The robot will strafe left and then right " + testDistance(DISTANCE) + ". ";
+            description = "Tune the lateral gains. The robot will strafe left and then right " + testDistance(DISTANCE) + ". ";
             trajectory = trajectory.strafeTo(new Vector2d(0, DISTANCE)).strafeTo(new Vector2d(0, 0));
             gainName = "lateralGain";
             velGainName = "lateralVelGain";
 
         } else {
-            prompt = "The robot will rotate in place 180° clockwise and then counterclockwise. ";
+            description = "Tune the heading gains. The robot will rotate in place 180\u00b0 clockwise and then counterclockwise. "; // Degree symbol
             trajectory = trajectory.turn(Math.PI).turn(-Math.PI);
             gainName = "headingGain";
             velGainName = "headingVelGain";
         }
-        if (dialogs.drivePrompt(prompt + "Tune the values to minimize error and make the target "
-                + "and actual trajectories shown in FTC Dashboard align.\n\n"
-                + "Press "+A+" to start, "+B+" to cancel")) {
+        if (dialogs.drivePrompt(description + "\n\nPress "+A+" to start, "+B+" to cancel")) {
+
             int inputIndex = 0;
+            int queuedAButtons = 0;
             NumericInput[] numericInputs = {
-                new NumericInput(drive.PARAMS, gainName, -1, 3, 0, 20),
-                new NumericInput(drive.PARAMS, velGainName, -1, 3, 0, 20),
+                new NumericInput(drive.PARAMS, gainName, -1, 2, 0, 20),
+                new NumericInput(drive.PARAMS, velGainName, -1, 2, 0, 20),
             };
-            int queuedXButtons = 0;
 
             while (opModeIsActive()) {
                 // Drive:
@@ -1730,7 +1748,26 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                 boolean more = drive.doActionsWork(packet);
 
                 // Process the gamepad numeric input:
-                numericInputs[inputIndex].update();
+                String update = "<big><big>" + numericInputs[inputIndex].update() + "</big></big>";
+                String inactive = numericInputs[inputIndex ^ 1].get();
+
+                // Update the display:
+                telemetryAdd("Tune the lateral gains:\n");
+                if (inputIndex == 0) {
+                    telemetryAdd(String.format("&emsp;%s: %s&emsp;%s: %s\n",
+                            numericInputs[0].fieldName, update,
+                            numericInputs[1].fieldName, inactive));
+                } else {
+                    telemetryAdd(String.format("&emsp;%s: %s&emsp;%s: %s\n",
+                            numericInputs[0].fieldName, inactive,
+                            numericInputs[1].fieldName, update));
+                }
+
+                telemetryAdd("As the gains increase, the circles should align and the measured "
+                        + String.format("error should decrease. First, increase <b>%s</b> until the robot starts ", gainName)
+                        + String.format("to shake. Then switch to <b>%s</b> and increase it until the ", velGainName)
+                        + "shaking is minimized. Don't increase it so much that it causes even more shaking. "
+                        + String.format("Then switch back to <b>%s</b> and see if you can increase it even more.\n", gainName));
 
                 // Compute the relevant error:
                 double error;
@@ -1747,16 +1784,12 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                     errorString = String.format("%.2f\u00b0", error);
                 }
 
-                String tuningHint = (inputIndex == 0)
-                    ? "Tune to minimize measured error and get circles to align. "
-                    : "Tune to minimize oscillations. ";
-
-                telemetryAdd(tuningHint + "Press "+X+" to test this value.\n");
-
                 packet.put("Error", error); // Make the error graphable
 
-                if (gui.xButton())
-                    queuedXButtons++; // Let the x-button be queued up even while running
+                if (gui.accept())
+                    queuedAButtons++; // Let the x-button be queued up even while running
+                if (gui.yButton())
+                    inputIndex ^= 1; // Toggle the index
 
                 if (more) {
                     telemetryAdd("Current error: " + errorString + ".\n");
@@ -1770,33 +1803,32 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                     if (gui.cancel()) {
                         // Cancel the current cycle but remain in this test:
                         drive.abortActions();
-                        queuedXButtons = 0;
+                        queuedAButtons = 0;
                     }
                 } else {
                     telemetryAdd("Last error: " + errorString + ".\n");
-                    telemetryAdd("Press "+X+" to run, "+A+" when done, "+B
-                            +" to cancel, "+Y+" to switch gain variables");
+                    telemetryAdd("Press Dpad up/down to change the value, left/right to move "
+                        + "the cursor, "+A+" to try it on the robot, "+X+" to exit, "+Y+" to switch input.");
                     telemetryUpdate();
 
                     updateGamepadDriving();
 
-                    if (gui.accept()) {
-                        if (dialogs.staticPrompt("Happy with your results?\n\nPress "+A+" to accept, "+B+" to cancel")) {
+                    if (gui.xButton()) {
+                        Prompt prompt = dialogs.savePrompt("Do you want to save your results?\n\n"
+                                + "Press "+A+" to save, "+B+" to cancel, "+X+" to exit without saving.");
+                        if (prompt == Prompt.SAVE) {
                             acceptParameters(testParameters);
                             break; // ====>
+                        } else if (prompt == Prompt.EXIT) {
+                            if (dialogs.staticPrompt("Are you sure you want to exit without saving?\n\n"
+                                    + "Press "+A+" to exit without saving, "+B+" to cancel."))
+                                break; // ====>
                         }
                     }
-                    if (gui.cancel()) {
-                        if (dialogs.staticPrompt("Are you sure you want to discard your current input?\n\n"
-                                + "Press "+A+" to discard, "+B+" to cancel."))
-                            break; // ====>
-                    }
-                    if (gui.yButton())
-                        inputIndex ^= 1; // Toggle the index
 
-                    // If there is no more actions, let the X button start a new one.
-                    if (queuedXButtons > 0) {
-                        queuedXButtons--;
+                    // If there is no more actions, let the A button start a new one.
+                    if (queuedAButtons > 0) {
+                        queuedAButtons--;
                         stopMotors(); // Stop the user's driving
                         drive.setPose(zeroPose);
                         if (type == PidTunerType.HEADING) {
