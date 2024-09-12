@@ -967,4 +967,9 @@ public final class MecanumDrive {
     public static void sendTelemetryPacket(TelemetryPacket packet) {
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
+
+    // Remove any variables that had been 'put' to the TelemetryPacket from the Dashboard view:
+    public static void clearDashboardTelemetry() {
+        FtcDashboard.getInstance().clearTelemetry();
+    }
 }

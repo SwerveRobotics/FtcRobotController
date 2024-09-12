@@ -59,6 +59,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
 import java.util.function.BooleanSupplier;
@@ -963,7 +964,7 @@ public class LooneyTune extends LinearOpMode {
             canvas.strokeCircle(circle.x, circle.y, circle.radius);
         }
 
-        FtcDashboard.getInstance().sendTelemetryPacket(packet);
+        MecanumDrive.sendTelemetryPacket(packet);
     }
 
     // This is the robot spin test for calibrating the optical sensor angular scale and offset:
@@ -1236,8 +1237,6 @@ public class LooneyTune extends LinearOpMode {
                 Pose2D position = drive.opticalTracker.getPosition();
                 double distance = Math.hypot(position.x, position.y);
 
-out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, distance); // @@@
-
                 if (distance > DISTANCE) {
                     success = true;
                     break;
@@ -1261,22 +1260,20 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                     TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
                     Canvas canvas = packet.fieldOverlay();
 
-                    // Set a solid white background:
+                    // Set a solid white background and an offset:
                     canvas.setFill("#ffffff");
                     canvas.fillRect(-72, -72, 144, 144);
-
-                    // Set the transform:
                     canvas.setTranslation(-72, 72);
-                    //                canvas.setScale(144.0 / maxVelocity, 144.0 / MAX_VOLTAGE_FACTOR);
 
-                    // The canvas coordinates go from -72 to 72 so scale appropriately:
-                    double xScale = 140 / maxVelocity;
-                    double yScale = 140 / maxPower;
+                    // The canvas coordinates go from -72 to 72 so scale appropriately. We don't
+                    // use canvas.setScale() because that scales up the stroke widths and so makes
+                    // the lines too fat.
+                    double xScale = 144 / maxVelocity;
+                    double yScale = 144 / maxPower;
 
                     double[] xPoints = new double[points.size()];
                     double[] yPoints = new double[points.size()];
                     for (int i = 0; i < points.size(); i++) {
-                        // Velocity along the x axis, voltage along the y axis:
                         xPoints[i] = points.get(i).x * xScale;
                         yPoints[i] = points.get(i).y * yScale;
                     }
@@ -1284,23 +1281,25 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                     canvas.setStroke("#00ff00");
                     canvas.strokePolyline(xPoints, yPoints);
 
+                    // Compute and draw the best-fit line:
                     BestFitLine bestFitLine = fitLine(points);
-
-                    // Draw the best-fit line:
                     canvas.setStrokeWidth(1);
                     canvas.setStroke("#ff0000");
                     canvas.strokeLine(0, bestFitLine.intercept * yScale,
                             200 * xScale, (bestFitLine.intercept + 200 * bestFitLine.slope) * yScale);
 
-                    FtcDashboard.getInstance().sendTelemetryPacket(packet);
+                    MecanumDrive.sendTelemetryPacket(packet);
 
                     TuneParameters newParameters = currentParameters.createClone();
                     newParameters.params.kS = bestFitLine.intercept;
                     newParameters.params.kV = bestFitLine.slope * currentParameters.params.inPerTick;
 
-                    if (dialogs.staticPrompt("Check out the graph on FTC Dashboard!\n\n"
-                            + String.format("&ensp;New kS: %.03f, old kS: %.03f\n", newParameters.params.kS, currentParameters.params.kS)
-                            + String.format("&ensp;New kV: %.06f, old kV: %.06f\n", newParameters.params.kV, currentParameters.params.kV)
+                    if (dialogs.staticPrompt("Check out the graph on FTC Dashboard! The x axis is "
+                            + String.format("velocity going up to %.1f\"/s. The y axis is ", maxVelocity)
+                            + String.format("voltage going up to %.1fV.\n\n", maxPower)
+                            + "Results:\n"
+                            + String.format("&ensp;kS: %.03f (was %.03f)\n", newParameters.params.kS, currentParameters.params.kS)
+                            + String.format("&ensp;kV: %.04f (was %.04f)\n", newParameters.params.kV, currentParameters.params.kV)
                             + "\nIf these look good, press " + A + " to accept, " + B + " to cancel.")) {
 
                         acceptParameters(newParameters);
@@ -1453,23 +1452,6 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
         NumericInput vInput = new NumericInput(drive.PARAMS, "kV", -2, 3, 0.000001, 20);
         NumericInput aInput = new NumericInput(drive.PARAMS, "kA", -3, 4, 0, 1);
 
-        // Register the variables with non-zero results now so that they can be registered for
-        // graphing in FTC Dashboard even before the first test is run:
-        // @@@ Remove this when graphing
-        TelemetryPacket packet;
-        double registerTime = time();
-        while (time() - registerTime < 0.1) {
-            packet = MecanumDrive.getTelemetryPacket();
-            StringBuilder divider = new StringBuilder();
-            for (int i = 0; i < 80; i++) {
-                divider.append("\u23af");
-            }
-            packet.put(divider.toString(), "\u00b7");
-            packet.put("vRef", 0.001);
-            packet.put("vActual", 0.001);
-            MecanumDrive.sendTelemetryPacket(packet);
-        }
-
         if (dialogs.drivePrompt("The robot will drive forwards then backwards for " + testDistance(DISTANCE) + ". "
                 + "Tune 'kV' and 'kA' using FTC Dashboard. Follow "
                 + "<u><a href='https://learnroadrunner.com/feedforward-tuning.html#tuning'>LearnRoadRunner's guide</a></u>.\n\n"
@@ -1481,18 +1463,37 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
             TimeProfile profile = null;
             boolean movingForwards = false;
             int queuedAButtons = 0;
+            double maxVelocity = 0;
+
+            // Allocate a repository for all of our velocity samples:
+            class Sample {
+                final double time; // Seconds
+                final double target; // Target velocity, inches/s
+                final double actual; // Actual velocity, inches/s
+
+                public Sample(double time, double target, double actual) {
+                    this.time = time; this.target = target; this.actual = actual;
+                }
+            }
+
+            final String TARGET_COLOR = "#4CAF50"; // Green
+            final String ACTUAL_COLOR = "#3F51B5"; // Blue
+            final double GRAPH_THROTTLE = 0.1; // Only update the graph every 0.1 seconds
+            final double GRAPH_DURATION = 6.0; // Show the last 6 seconds of samples
+            double lastGraphTime = 0;
+            LinkedList<Sample> samples = new LinkedList<>();
 
             while (opModeIsActive()) {
                 // Process the gamepad numeric input:
                 telemetryAdd("Tune the feed forward constants:\n");
                 if (inputIndex == 0) {
                     telemetryAdd(String.format("&emsp;kV: <big><big>%s</big></big>&emsp;kA: %s\n", vInput.update(), aInput.get()));
-                    telemetryAdd("Graph <b>vActual</b> and <b>vRef</b> using FTC Dashboard. "
-                            + "Adjust kV to make the horizontal lines as close as possible in height. "
-                            + "Remember, <i>kV = vRef / vActual</i>.\n");
+                    telemetryAdd("Look at the graph in FTC Dashboard. "
+                            + "Adjust <b>kV</b> to make the horizontal lines as close as possible in height. "
+                            + "<b>vTarget</b> is green, <b>vActual</b> is blue, <i>kV = vTarget / vActual</i>.\n");
                 } else {
                     telemetryAdd(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n", vInput.get(), aInput.update()));
-                    telemetryAdd("Graph <b>vActual</b> and <b>vRef</b> using FTC Dashboard. "
+                    telemetryAdd("Look at the graph in FTC Dashboard. "
                             + "Adjust <b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap.\n");
                 }
 
@@ -1506,29 +1507,70 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                     telemetryAdd("Press "+B+" to cancel");
                     telemetryUpdate();
 
-                    Pose2D velocityPose = drive.opticalTracker.getVelocity();
-                    double velocity = Math.signum(velocityPose.x) * Math.hypot(velocityPose.x, velocityPose.y);
-                    packet = MecanumDrive.getTelemetryPacket();
-                    packet.put("vActual", velocity);
-
-                    double t = time() - startTime;
-                    if (t > profile.duration) {
+                    double time = time();
+                    double elapsedTime = time - startTime;
+                    if (elapsedTime > profile.duration) {
                         if (movingForwards) {
                             movingForwards = false;
-                            startTime = time();
+                            startTime = time;
                         } else {
                             profile = null;
                             continue; // ====>
                         }
                     }
 
-                    DualNum<Time> v = profile.get(t).drop(1);
+                    DualNum<Time> v = profile.get(elapsedTime).drop(1);
                     if (!movingForwards) {
                         v = v.unaryMinus();
                     }
-                    packet.put("vRef", v.get(0));
-                    MecanumDrive.sendTelemetryPacket(packet);
 
+                    Pose2D velocityPose = drive.opticalTracker.getVelocity();
+                    double targetVelocity = v.get(0);
+                    double actualVelocity = Math.signum(velocityPose.x) * Math.hypot(velocityPose.x, velocityPose.y);
+                    maxVelocity = Math.max(maxVelocity, Math.max(Math.abs(targetVelocity), Math.abs(actualVelocity)));
+
+                    // Log the new sample and delete any expired samples:
+                    samples.addLast(new Sample(time, v.get(0), actualVelocity));
+                    while ((!samples.isEmpty()) && (time - samples.get(0).time > GRAPH_DURATION)) {
+                        samples.removeFirst();
+                    }
+
+                    // Throttle the Dashboard updates so that it doesn't get overwhelmed as it
+                    // has very bad rate control:
+                    if (time - lastGraphTime > GRAPH_THROTTLE) {
+                        lastGraphTime = time;
+
+                        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+                        Canvas canvas = packet.fieldOverlay();
+                        canvas.setFill("#ffffff");
+                        canvas.fillRect(-72, -72, 144, 144);
+                        canvas.setTranslation(0, 72);
+                        double xScale = 144 / GRAPH_DURATION;
+                        double yScale = (maxVelocity == 0) ? 1 : 72 / maxVelocity;
+
+                        int count = samples.size();
+                        double[] xPoints = new double[count];
+                        double[] yTargets = new double[count];
+                        double[] yActuals = new double[count];
+                        for (int i = 0; i < count; i++) {
+                            Sample sample = samples.get(i);
+                            xPoints[i] = (sample.time - (time - GRAPH_DURATION)) * xScale;
+                            yTargets[i] = sample.target * yScale;
+                            yActuals[i] = sample.actual * yScale;
+                        }
+                        canvas.setStroke(TARGET_COLOR);
+                        canvas.strokePolyline(xPoints, yTargets);
+                        canvas.setStroke(ACTUAL_COLOR);
+                        canvas.strokePolyline(xPoints, yActuals);
+
+                        // Make the results available to FTC Dashboard so that they can be graphed
+                        // there as well:
+                        packet.put("vActual", actualVelocity);
+                        packet.put("vTarget", v.get(0));
+                        MecanumDrive.sendTelemetryPacket(packet);
+                    }
+
+                    // Set the motors to the appropriate values:
                     MotorFeedforward feedForward = new MotorFeedforward(MecanumDrive.PARAMS.kS,
                             MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
                             MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick);
@@ -1581,6 +1623,7 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                                 MecanumDrive.PARAMS.maxWheelVel * maxVelocityFactor,
                                 MecanumDrive.PARAMS.minProfileAccel,
                                 MecanumDrive.PARAMS.maxProfileAccel).baseProfile);
+                        samples = new LinkedList<>();
 
                         // Reset the start position on every cycle. This ensures that getVelocity().x
                         // is the appropriate velocity to read, and it resets after we reposition
@@ -1594,7 +1637,7 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
         // We're done, undo any temporary state we set:
         MecanumDrive.PARAMS = currentParameters.params;
         stopMotors();
-        FtcDashboard.getInstance().clearTelemetry();
+        MecanumDrive.clearDashboardTelemetry();
     }
 
     /**
