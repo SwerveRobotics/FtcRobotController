@@ -611,9 +611,10 @@ public class LooneyTune extends LinearOpMode {
 
         // Show a prompt asking to save. If accept (A) is pressed, return Prompt.SAVE. If
         // cancel (B) is pressed, return Prompt.CANCEL. If exit (X) is pressed, return Prompt.EXIT.
-        Prompt savePrompt(String message) {
+        Prompt savePrompt() {
             while (opModeIsActive()) {
-                message(message);
+                message("Do you want to save your results?\n\n"
+                        + "Press "+A+" to save, "+B+" to cancel, "+X+" to exit without saving.");
                 if (gui.accept())
                     return Prompt.SAVE;
                 if (gui.xButton())
@@ -1448,11 +1449,9 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
         testParameters.params.lateralVelGain = 0;
         MecanumDrive.PARAMS = testParameters.params;
 
-        int inputIndex = 0;
-        NumericInput[] numericInputs = {
-            new NumericInput(drive.PARAMS, "kV", -2, 3, 0.000001, 20),
-            new NumericInput(drive.PARAMS, "kA", -3, 4, 0, 1),
-        };
+        int inputIndex = 0; // 0 means we're inputting kV, 1 means kA
+        NumericInput vInput = new NumericInput(drive.PARAMS, "kV", -2, 3, 0.000001, 20);
+        NumericInput aInput = new NumericInput(drive.PARAMS, "kA", -3, 4, 0, 1);
 
         // Register the variables with non-zero results now so that they can be registered for
         // graphing in FTC Dashboard even before the first test is run:
@@ -1485,20 +1484,14 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
 
             while (opModeIsActive()) {
                 // Process the gamepad numeric input:
-                String update = "<big><big>" + numericInputs[inputIndex].update() + "</big></big>";
-                String inactive = numericInputs[inputIndex ^ 1].get();
-
                 telemetryAdd("Tune the feed forward constants:\n");
                 if (inputIndex == 0) {
-                    telemetryAdd(String.format("&emsp;kV: %s&emsp;kA: %s\n", update, inactive));
-                } else {
-                    telemetryAdd(String.format("&emsp;kV: %s&emsp;kA: %s\n", inactive, update));
-                }
-                if (inputIndex == 0) {
+                    telemetryAdd(String.format("&emsp;kV: <big><big>%s</big></big>&emsp;kA: %s\n", vInput.update(), aInput.get()));
                     telemetryAdd("Graph <b>vActual</b> and <b>vRef</b> using FTC Dashboard. "
                             + "Adjust kV to make the horizontal lines as close as possible in height. "
                             + "Remember, <i>kV = vRef / vActual</i>.\n");
                 } else {
+                    telemetryAdd(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n", vInput.get(), aInput.update()));
                     telemetryAdd("Graph <b>vActual</b> and <b>vRef</b> using FTC Dashboard. "
                             + "Adjust <b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap.\n");
                 }
@@ -1561,8 +1554,7 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                     updateGamepadDriving();
 
                     if (gui.xButton()) {
-                        Prompt prompt = dialogs.savePrompt("Do you want to save your results?\n\n"
-                                + "Press "+A+" to save, "+B+" to cancel, "+X+" to exit without saving.");
+                        Prompt prompt = dialogs.savePrompt();
                         if (prompt == Prompt.SAVE) {
                             // Restore the state that we zeroed to run the test:
                             testParameters.params.lateralGain = currentParameters.params.lateralGain;
@@ -1741,37 +1733,29 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
 
             int inputIndex = 0;
             int queuedAButtons = 0;
-            NumericInput[] numericInputs = {
-                new NumericInput(drive.PARAMS, gainName, -1, 2, 0, 20),
-                new NumericInput(drive.PARAMS, velGainName, -1, 2, 0, 20),
-            };
+            NumericInput gainInput = new NumericInput(drive.PARAMS, gainName, -1, 2, 0, 20);
+            NumericInput velGainInput = new NumericInput(drive.PARAMS, velGainName, -1, 2, 0, 20);
 
             while (opModeIsActive()) {
                 // Drive:
                 TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
                 boolean more = drive.doActionsWork(packet);
 
-                // Process the gamepad numeric input:
-                String update = "<big><big>" + numericInputs[inputIndex].update() + "</big></big>";
-                String inactive = numericInputs[inputIndex ^ 1].get();
-
                 // Update the display:
-                telemetryAdd("Tune the lateral gains:\n");
+                telemetryAdd("Tune the gains:\n");
                 if (inputIndex == 0) {
-                    telemetryAdd(String.format("&emsp;%s: %s&emsp;%s: %s\n",
-                            numericInputs[0].fieldName, update,
-                            numericInputs[1].fieldName, inactive));
+                    telemetryAdd(String.format("&emsp;%s: <big><big>%s</big></big>&emsp;%s: %s\n",
+                            gainName, gainInput.update(), velGainName, velGainInput.get()));
                 } else {
-                    telemetryAdd(String.format("&emsp;%s: %s&emsp;%s: %s\n",
-                            numericInputs[0].fieldName, inactive,
-                            numericInputs[1].fieldName, update));
+                    telemetryAdd(String.format("&emsp;%s: %s&emsp;%s: <big><big>%s</big></big>\n",
+                            gainName, gainInput.get(), velGainName, velGainInput.update()));
                 }
 
                 telemetryAdd("As the gains increase, the circles should align and the measured "
                         + String.format("error should decrease. First, increase <b>%s</b> until the robot starts ", gainName)
-                        + String.format("to shake. Then switch to <b>%s</b> and increase it until the ", velGainName)
-                        + "shaking is minimized. Don't increase it so much that it causes even more shaking. "
-                        + String.format("Then switch back to <b>%s</b> and see if you can increase it even more.\n", gainName));
+                        + String.format("to shake. Then switch to <b>%s</b> and increase it to minimize ", velGainName)
+                        + "shaking but don't overdo it. "
+                        + String.format("Then switch back to <b>%s</b> and try to increase it even more.\n", gainName));
 
                 // Compute the relevant error:
                 double error;
@@ -1812,14 +1796,13 @@ out.printf("Position: (%.2f, %.2f), Distance: %.2f\n", position.x, position.y, d
                 } else {
                     telemetryAdd("Last error: " + errorString + ".\n");
                     telemetryAdd("Dpad up/down to change the value, left/right to move "
-                        + "the cursor, "+Y+"to switch input, "+A+" to run on the robot, "+X+" to exit.");
+                        + "the cursor, "+Y+" to switch input, "+A+" to run on the robot, "+X+" to exit.");
                     telemetryUpdate();
 
                     updateGamepadDriving();
 
                     if (gui.xButton()) {
-                        Prompt prompt = dialogs.savePrompt("Do you want to save your results?\n\n"
-                                + "Press "+A+" to save, "+B+" to cancel, "+X+" to exit without saving.");
+                        Prompt prompt = dialogs.savePrompt();
                         if (prompt == Prompt.SAVE) {
                             acceptParameters(testParameters);
                             break; // ====>
