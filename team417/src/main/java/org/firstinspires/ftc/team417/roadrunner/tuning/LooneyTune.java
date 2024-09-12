@@ -642,6 +642,14 @@ public class LooneyTune extends LinearOpMode {
         telemetry.update();
     }
 
+    // Get a divider string for telemetry purposes:
+    void putDivider(TelemetryPacket packet) {
+        StringBuilder divider = new StringBuilder();
+        for (int i = 0; i < 10; i++)
+            divider.append("\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af");
+        packet.put(divider.toString(), "");
+    }
+
     // Run an Action but end it early if Cancel is pressed.
     // Returns True if it ran without cancelling, False if it was cancelled.
     private boolean runCancelableAction(Action action) {
@@ -1296,8 +1304,8 @@ public class LooneyTune extends LinearOpMode {
 
                     if (dialogs.staticPrompt("Check out the graph on FTC Dashboard! The x axis is "
                             + String.format("velocity going up to %.1f\"/s. The y axis is ", maxVelocity)
-                            + String.format("voltage going up to %.1fV.\n\n", maxPower)
-                            + "Results:\n"
+                            + String.format("voltage going up to %.2fV.\n\n", maxPower)
+                            + "Results:\n\n"
                             + String.format("&ensp;kS: %.03f (was %.03f)\n", newParameters.params.kS, currentParameters.params.kS)
                             + String.format("&ensp;kV: %.04f (was %.04f)\n", newParameters.params.kV, currentParameters.params.kV)
                             + "\nIf these look good, press " + A + " to accept, " + B + " to cancel.")) {
@@ -1458,12 +1466,14 @@ public class LooneyTune extends LinearOpMode {
                 + "Press "+A+" to start, "+B+" to cancel")) {
 
             // Trigger a reset the first time into the loop:
-            double startTime = 0;
+            double profileStartTime = 0; // Profile start time, in seconds
+            double cycleStartTime = 0; // Cycle start time, in second (each cycle consumes 2 profiles)
             double maxVelocityFactor = 0.8;
             TimeProfile profile = null;
             boolean movingForwards = false;
             int queuedAButtons = 0;
-            double maxVelocity = 0;
+            double maxVelocity = 0.01; // Maximum measured velocity, non-zero at start to avoid divide by zero
+            double maxDuration = 4.0; // Maximum graph duration, in seconds, non-zero at start to avoid divide by zero
 
             // Allocate a repository for all of our velocity samples:
             class Sample {
@@ -1479,7 +1489,6 @@ public class LooneyTune extends LinearOpMode {
             final String TARGET_COLOR = "#4CAF50"; // Green
             final String ACTUAL_COLOR = "#3F51B5"; // Blue
             final double GRAPH_THROTTLE = 0.1; // Only update the graph every 0.1 seconds
-            final double GRAPH_DURATION = 6.0; // Show the last 6 seconds of samples
             double lastGraphTime = 0;
             LinkedList<Sample> samples = new LinkedList<>();
 
@@ -1488,13 +1497,13 @@ public class LooneyTune extends LinearOpMode {
                 telemetryAdd("Tune the feed forward constants:\n");
                 if (inputIndex == 0) {
                     telemetryAdd(String.format("&emsp;kV: <big><big>%s</big></big>&emsp;kA: %s\n", vInput.update(), aInput.get()));
-                    telemetryAdd("Look at the graph in FTC Dashboard. "
-                            + "Adjust <b>kV</b> to make the horizontal lines as close as possible in height. "
+                    telemetryAdd("View the graph in FTC Dashboard and adjust "
+                            + "<b>kV</b> to make the horizontal lines as close as possible in height. "
                             + "<b>vTarget</b> is green, <b>vActual</b> is blue, <i>kV = vTarget / vActual</i>.\n");
                 } else {
                     telemetryAdd(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n", vInput.get(), aInput.update()));
-                    telemetryAdd("Look at the graph in FTC Dashboard. "
-                            + "Adjust <b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap.\n");
+                    telemetryAdd("View the graph in FTC Dashboard and adjust "
+                            + "<b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap.\n");
                 }
 
                 if (gui.accept())
@@ -1508,11 +1517,11 @@ public class LooneyTune extends LinearOpMode {
                     telemetryUpdate();
 
                     double time = time();
-                    double elapsedTime = time - startTime;
+                    double elapsedTime = time - profileStartTime;
                     if (elapsedTime > profile.duration) {
                         if (movingForwards) {
                             movingForwards = false;
-                            startTime = time;
+                            profileStartTime = time;
                         } else {
                             profile = null;
                             continue; // ====>
@@ -1524,16 +1533,13 @@ public class LooneyTune extends LinearOpMode {
                         v = v.unaryMinus();
                     }
 
+                    // Calculate the new sample and log it:
                     Pose2D velocityPose = drive.opticalTracker.getVelocity();
                     double targetVelocity = v.get(0);
                     double actualVelocity = Math.signum(velocityPose.x) * Math.hypot(velocityPose.x, velocityPose.y);
                     maxVelocity = Math.max(maxVelocity, Math.max(Math.abs(targetVelocity), Math.abs(actualVelocity)));
-
-                    // Log the new sample and delete any expired samples:
+                    maxDuration = Math.max(maxDuration, time - cycleStartTime);
                     samples.addLast(new Sample(time, v.get(0), actualVelocity));
-                    while ((!samples.isEmpty()) && (time - samples.get(0).time > GRAPH_DURATION)) {
-                        samples.removeFirst();
-                    }
 
                     // Throttle the Dashboard updates so that it doesn't get overwhelmed as it
                     // has very bad rate control:
@@ -1545,7 +1551,7 @@ public class LooneyTune extends LinearOpMode {
                         canvas.setFill("#ffffff");
                         canvas.fillRect(-72, -72, 144, 144);
                         canvas.setTranslation(0, 72);
-                        double xScale = 144 / GRAPH_DURATION;
+                        double xScale = 144 / maxDuration;
                         double yScale = (maxVelocity == 0) ? 1 : 72 / maxVelocity;
 
                         int count = samples.size();
@@ -1554,7 +1560,7 @@ public class LooneyTune extends LinearOpMode {
                         double[] yActuals = new double[count];
                         for (int i = 0; i < count; i++) {
                             Sample sample = samples.get(i);
-                            xPoints[i] = (sample.time - (time - GRAPH_DURATION)) * xScale;
+                            xPoints[i] = (sample.time - (time - maxDuration)) * xScale;
                             yTargets[i] = sample.target * yScale;
                             yActuals[i] = sample.actual * yScale;
                         }
@@ -1567,6 +1573,7 @@ public class LooneyTune extends LinearOpMode {
                         // there as well:
                         packet.put("vActual", actualVelocity);
                         packet.put("vTarget", v.get(0));
+                        putDivider(packet);
                         MecanumDrive.sendTelemetryPacket(packet);
                     }
 
@@ -1617,7 +1624,8 @@ public class LooneyTune extends LinearOpMode {
                         queuedAButtons--;
                         stopMotors(); // Stop the user's driving
                         movingForwards = true;
-                        startTime = time();
+                        cycleStartTime = time();
+                        profileStartTime = time();
                         profile = new TimeProfile(constantProfile(
                                 DISTANCE, 0.0,
                                 MecanumDrive.PARAMS.maxWheelVel * maxVelocityFactor,
@@ -1816,6 +1824,7 @@ public class LooneyTune extends LinearOpMode {
                 }
 
                 packet.put("Error", error); // Make the error graphable
+                putDivider(packet);
 
                 if (gui.accept())
                     queuedAButtons++; // Let the x-button be queued up even while running
