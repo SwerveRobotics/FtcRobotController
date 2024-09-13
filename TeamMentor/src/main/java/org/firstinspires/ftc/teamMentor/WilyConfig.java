@@ -5,6 +5,8 @@ import com.wilyworks.common.WilyWorks;
 
 /**
  * This customizes the configuration of the Wily Works simulator to match your robot.
+ *
+ * @noinspection unused
  */
 @Wily
 public class WilyConfig extends WilyWorks.Config {
