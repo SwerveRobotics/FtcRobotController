@@ -303,7 +303,7 @@ class Gui {
     }
 
     // Button press state:
-    private final boolean[] buttonPressed = new boolean[10];
+    private final boolean[] buttonPressed = new boolean[11];
     private boolean buttonPress(boolean pressed, int index) {
         boolean press = pressed && !buttonPressed[index];
         buttonPressed[index] = pressed;
@@ -321,6 +321,7 @@ class Gui {
     boolean right() { return buttonPress(gamepad.dpad_right, 7); }
     boolean leftTrigger() { return buttonPress(gamepad.left_trigger >= ANALOG_THRESHOLD, 8); }
     boolean rightTrigger() { return buttonPress(gamepad.right_trigger >= ANALOG_THRESHOLD, 9); }
+    boolean leftBumper() { return buttonPress(gamepad.left_bumper, 10); }
 
     // Constructor:
     public Gui(Gamepad gamepad) {
@@ -655,7 +656,7 @@ public class LooneyTune extends LinearOpMode {
     private boolean runCancelableAction(Action action) {
         drive.runParallel(action);
         while (opModeIsActive() && !gui.cancel()) {
-            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+            TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
             dialogs.message("Press "+B+" to stop");
             boolean more = drive.doActionsWork(packet);
             MecanumDrive.sendTelemetryPacket(packet);
@@ -954,7 +955,7 @@ public class LooneyTune extends LinearOpMode {
 
     // Draw the spin sample points, plus the optional best-fit circle, on FTC Dashboard:
     void drawSpinPoints(ArrayList<Point> points, Circle circle) {
-        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+        TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
         Canvas canvas = packet.fieldOverlay();
         double[] xPoints = new double[points.size()];
         double[] yPoints = new double[points.size()];
@@ -1265,7 +1266,7 @@ public class LooneyTune extends LinearOpMode {
                             + "\n\nAborted, press "+A+" to continue.");
                 } else {
                     // Draw the results to the FTC dashboard:
-                    TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+                    TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
                     Canvas canvas = packet.fieldOverlay();
 
                     // Set a solid white background and an offset:
@@ -1349,41 +1350,80 @@ public class LooneyTune extends LinearOpMode {
 
     // Drive the robot around.
     void driveTest() {
-        useDrive(true); // Do use MecanumDrive
 
+        useDrive(true); // Do use MecanumDrive
         drive.setPose(zeroPose);
+        Pose2d previousPose = zeroPose;
+        double totalDistance = 0; // Inches
+        double totalRotation = 0; // Radians
 
         Pose2d homePose = null;
         while (opModeIsActive() && !gui.cancel()) {
-            if (gui.xButton())
+            if (gui.accept()) {
                 wheelDebugger();
-            if (gui.yButton())
+            }
+            if (gui.xButton()) {
+                drive.setPose(zeroPose);
+                homePose = null;
+                previousPose = zeroPose;
+            }
+            if (gui.yButton()) {
                 homePose = drive.pose;
+                totalDistance = 0;
+                totalRotation = 0;
+            }
 
             updateGamepadDriving();
             drive.updatePoseEstimate();
 
-            TelemetryPacket p = MecanumDrive.getTelemetryPacket();
+            // Now that updatePoseEstimate is called, get the new pose and track the distance
+            // traveled:
             Pose2d pose = drive.pose;
-            String message = "Use the controller to drive the robot around.\n\n"
-                    + String.format("&ensp;Pose: (%.2f\", %.2f\", %.2f\u00b0)\n",
-                        pose.position.x,
-                        pose.position.y,
-                        Math.toDegrees(pose.heading.toDouble()));
+            totalDistance += Math.hypot(
+                    pose.position.x - previousPose.position.x,
+                    pose.position.y - previousPose.position.y);
+            totalRotation += Math.abs(pose.heading.toDouble() - previousPose.heading.toDouble());
+            previousPose = pose;
+
+            TelemetryPacket packet = MecanumDrive.getTelemetryPacket(true);
+            String message = "Use the controller to drive the robot around.\n\n";
+
+            if (drive.opticalTracker != null) {
+                MecanumDrive.Params.Otos otos = currentParameters.params.otos;
+                if ((otos.linearScalar == 0) || (otos.angularScalar == 0) ||
+                    (otos.offset.x == 0) || (otos.offset.y == 0)) {
+
+                    message += "<font color='#e84e4f'>"
+                        + "WARNING: The optical sensor's parameters haven't been fully "
+                        + "tuned yet, so the robot's pose and its location shown in FTC Dashboard "
+                        + "will be off.</font>\n\n";
+                }
+            }
+            message += String.format("Pose: (%.2f\", %.2f\", %.2f\u00b0)\n",
+                        pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
 
             if (homePose != null) {
-                message += String.format("&ensp;Home \u0394: (%.2f\", %.2f\", %.2f\u00b0)\n", // Delta, degrees
-                        pose.position.x - homePose.position.x,
-                        pose.position.y - homePose.position.y,
-                        Math.toDegrees(pose.heading.toDouble() - homePose.heading.toDouble()));
+                double dx = pose.position.x - homePose.position.x;
+                double dy = pose.position.y - homePose.position.y;
+                double dTheta = pose.heading.toDouble() - homePose.heading.toDouble();
+
+                message += "\nAccumulated if positioned at home:\n\n"
+                    + String.format("&ensp;Difference: (%.2f\", %.2f\", %.2f\u00b0)\n", dx, dy, Math.toDegrees(dTheta));
+
+                if ((totalDistance != 0) && (totalRotation != 0)) {
+                    double distanceError = dx / totalDistance;
+                    double rotationError = Math.abs(dTheta) / totalRotation;
+                    message += String.format("&ensp;Distance error (%%): %.2f\n", distanceError * 100);
+                    message += String.format("&ensp;Rotation error (%%): %.2f\n", rotationError * 100);
+                }
             }
 
-            dialogs.message(message + "\nPress "+X+" to debug motor wheels, "+Y+" to set the home pose, "+B+" to exit.");
+            dialogs.message(message + "\nPress "+A+" to debug the wheels, "+B+" to exit, "+X+" to zero the pose, "+Y+" to set <i>home</i>.");
 
-            Canvas c = p.fieldOverlay();
-            c.setStroke("#3F51B5");
-            Drawing.drawRobot(c, pose);
-            MecanumDrive.sendTelemetryPacket(p);
+            Canvas canvas = packet.fieldOverlay();
+            canvas.setStroke("#3F51B5");
+            Drawing.drawRobot(canvas, pose);
+            MecanumDrive.sendTelemetryPacket(packet);
 
         }
         stopMotors();
@@ -1546,7 +1586,7 @@ public class LooneyTune extends LinearOpMode {
                     if (time - lastGraphTime > GRAPH_THROTTLE) {
                         lastGraphTime = time;
 
-                        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+                        TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
                         Canvas canvas = packet.fieldOverlay();
                         canvas.setFill("#ffffff");
                         canvas.fillRect(-72, -72, 144, 144);
@@ -1789,7 +1829,7 @@ public class LooneyTune extends LinearOpMode {
 
             while (opModeIsActive()) {
                 // Drive:
-                TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+                TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
                 boolean more = drive.doActionsWork(packet);
 
                 // Update the display:
@@ -1924,8 +1964,9 @@ public class LooneyTune extends LinearOpMode {
         useDrive(true); // Do use MecanumDrive
 
         // Show a preview on FTC Dashboard:
-        TelemetryPacket telemetry = MecanumDrive.getTelemetryPacket();
+        TelemetryPacket telemetry = MecanumDrive.getTelemetryPacket(false);
         action.preview(telemetry.fieldOverlay());
+        Drawing.drawRobot(telemetry.fieldOverlay(), zeroPose);
         MecanumDrive.sendTelemetryPacket(telemetry);
 
         while (opModeIsActive() && !gui.cancel()) {
@@ -1986,6 +2027,18 @@ public class LooneyTune extends LinearOpMode {
                 .splineTo(new Vector2d(0, 60), Math.PI)
                 .build());
     }
+    void lineToTurnExample() {
+        runTrajectory(drive.actionBuilder(zeroPose)
+                .lineToX(24)
+                .turn(Math.PI/2)
+                .lineToY(24)
+                .turn(Math.PI/2)
+                .lineToX(0)
+                .turn(Math.PI/2)
+                .lineToY(0)
+                .turn(Math.PI/2)
+                .build());
+    }
 
     @Override
     public void runOpMode() {
@@ -2008,6 +2061,10 @@ public class LooneyTune extends LinearOpMode {
             dialogs.staticPrompt("The SparkFun OTOS must be present and configured for radians and inches.");
             return; // ====>
         }
+
+        // Clear the Dashboard map:
+        TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
+        MecanumDrive.sendTelemetryPacket(packet);
 
         // Dynamically build the list of tests:
         gui.addRunnable("Drive test (motors)", this::driveTest);
@@ -2038,6 +2095,7 @@ public class LooneyTune extends LinearOpMode {
 
             // Examples:
             gui.addRunnable("Examples::Spline", this::splineExample);
+            gui.addRunnable("Examples::LineTo/Turn example", this::lineToTurnExample);
         }
 
         // Remind the user to press Start on the Driver Station, then press A on the gamepad.

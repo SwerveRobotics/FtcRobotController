@@ -943,7 +943,8 @@ public final class MecanumDrive {
     }
 
     // Create a new telemetry packet to draw stuff on the FTC Dashboard field.
-    public static TelemetryPacket getTelemetryPacket() {
+    public static TelemetryPacket getTelemetryPacket() { return getTelemetryPacket(true); }
+    public static TelemetryPacket getTelemetryPacket(boolean showField) {
         TelemetryPacket packet = new TelemetryPacket();
 
         // Prepare the packet for drawing.
@@ -954,7 +955,13 @@ public final class MecanumDrive {
         // Then draw the grid on top and finally set the transform to rotate all subsequent
         // rendering.
         Canvas canvas = packet.fieldOverlay();
-        canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144, Math.toRadians(90), 0, 144, true);
+        if (showField) {
+            canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144,
+                    Math.toRadians(90), 0, 144, true);
+        } else {
+            canvas.setFill("#000000");
+            canvas.fillRect(-72, -72, 144, 144);
+        }
         canvas.drawGrid(0, 0, 144, 144, 7, 7);
 
         canvas.setRotation(Math.toRadians(-90));
