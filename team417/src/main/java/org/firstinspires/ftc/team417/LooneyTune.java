@@ -580,7 +580,7 @@ public class LooneyTune extends LinearOpMode {
         }
 
         // Show a message and wait for an A or B button press. If accept (A) is pressed, return
-        // success. if cancel (B) is pressed, return failure. The robot CAN be driven while
+        // success. If cancel (B) is pressed, return failure. The robot CAN be driven while
         // waiting.
         boolean drivePrompt(String message) {
             boolean success = false;
@@ -599,7 +599,7 @@ public class LooneyTune extends LinearOpMode {
         }
 
         // Show a message and wait for an A or B button press. If accept (A) is pressed, return
-        // success. if cancel (B) is pressed, return failure. The robot CANNOT be driven while
+        // success. If cancel (B) is pressed, return failure. The robot CANNOT be driven while
         // waiting.
         boolean staticPrompt(String message) {
             while (opModeIsActive() && !gui.cancel()) {
@@ -670,8 +670,8 @@ public class LooneyTune extends LinearOpMode {
         return false;
     }
 
-    // Road Runner expects the hardware to be in different states when using high-level MecanumDrive/
-    // TankDrive functionality vs. its lower-level tuning functionality.
+    // Road Runner expects the hardware to be in different states when using high-level MecanumDrive
+    // functionality vs. its lower-level tuning functionality.
     private void useDrive(boolean enable) {
         DcMotorEx[] motors = { drive.leftFront, drive.leftBack, drive.rightBack, drive.rightFront };
         if (enable) {
@@ -719,7 +719,7 @@ public class LooneyTune extends LinearOpMode {
     // Measure the optical linear scale and orientation:
     void pushTuner() {
         final int DISTANCE = 96; // Test distance in inches
-        useDrive(false); // Don't use MecanumDrive/TankDrive
+        useDrive(false); // Don't use MecanumDrive
 
         // Reset the current OTOS settings:
         Pose2D oldOffset = drive.PARAMS.otos.offset;
@@ -982,7 +982,7 @@ public class LooneyTune extends LinearOpMode {
         final double REVOLUTION_COUNT = 10.0; // Number of revolutions to use
         final double SPIN_POWER = 0.5; // Speed of the revolutions
 
-        useDrive(true); // Use MecanumDrive/TankDrive
+        useDrive(true); // Use MecanumDrive
 
         // Zero these settings for the purpose of this test:
         drive.opticalTracker.setOffset(new Pose2D(0, 0, 0));
@@ -1349,7 +1349,7 @@ public class LooneyTune extends LinearOpMode {
 
     // Drive the robot around.
     void driveTest() {
-        useDrive(true); // Do use MecanumDrive/TankDrive
+        useDrive(true); // Do use MecanumDrive
 
         drive.setPose(zeroPose);
 
@@ -1393,7 +1393,7 @@ public class LooneyTune extends LinearOpMode {
     void lateralTuner() {
         final int DISTANCE = 48; // Test distance in inches
 
-        useDrive(true); // Do use MecanumDrive/TankDrive
+        useDrive(true); // Do use MecanumDrive
 
         if (dialogs.drivePrompt("The robot will strafe left for " + testDistance(DISTANCE) + ". "
                 + "Please ensure that there is sufficient room."
@@ -1446,7 +1446,7 @@ public class LooneyTune extends LinearOpMode {
     // Tune the kV and kA feed forward parameters:
     void interactiveFeedForwardTuner() {
         final int DISTANCE = 72; // Test distance in inches
-        useDrive(false); // Don't use MecanumDrive/TankDrive
+        useDrive(false); // Don't use MecanumDrive
 
         // Disable all lateral gains so that backward and forward behavior is not affected by the
         // PID/Ramsete algorithm. It's okay for the axial and rotation gains to be either zero
@@ -1755,7 +1755,7 @@ public class LooneyTune extends LinearOpMode {
     // Adjust the Ramsete/PID values:
     void interactivePidTuner(PidTunerType type) {
         final int DISTANCE = 48; // Test distance in inches
-        useDrive(true); // Do use MecanumDrive/TankDrive
+        useDrive(true); // Do use MecanumDrive
 
         TuneParameters testParameters = currentParameters.createClone();
         MecanumDrive.PARAMS = testParameters.params;
@@ -1886,32 +1886,9 @@ public class LooneyTune extends LinearOpMode {
         MecanumDrive.PARAMS = currentParameters.params;
     }
 
-    // Navigate a short spline as a completion test.
-    void completionTest() {
-        useDrive(true); // Do use MecanumDrive/TankDrive
-
-        if (dialogs.drivePrompt("The robot will drive forward 48 inches using a spline. "
-                + "It needs half a tile clearance on either side. "
-                + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel")) {
-
-            telemetryAdd("Press "+B+" to cancel");
-            telemetryUpdate();
-
-            Action action = drive.actionBuilder(drive.pose)
-                    .setTangent(Math.toRadians(60))
-                    .splineToLinearHeading(new Pose2d(24, 0, Math.toRadians(90)), Math.toRadians(-60))
-                    .splineToLinearHeading(new Pose2d(48, 0, Math.toRadians(180)), Math.toRadians(60))
-                    .endTrajectory()
-                    .setTangent(Math.toRadians(-180))
-                    .splineToLinearHeading(new Pose2d(0, 0, Math.toRadians(-0.0001)), Math.toRadians(-180))
-                    .build();
-            runCancelableAction(action);
-        }
-    }
-
     // Simple verification test for 'TrackWidth':
     void rotationTest() {
-        useDrive(true); // Do use MecanumDrive/TankDrive
+        useDrive(true); // Do use MecanumDrive
 
         if (dialogs.drivePrompt("To test 'trackWidthTicks', the robot will turn in-place for two complete "
                 + "rotations.\n\nPress "+A+" to start, "+B+" to cancel.")) {
@@ -1926,18 +1903,88 @@ public class LooneyTune extends LinearOpMode {
             Action action = drive.actionBuilder(drive.pose)
                     .turn(2 * Math.toRadians(360), new TurnConstraints(
                             MecanumDrive.PARAMS.maxAngVel / 3,
-                           -MecanumDrive.PARAMS.maxAngAccel,
+                            -MecanumDrive.PARAMS.maxAngAccel,
                             MecanumDrive.PARAMS.maxAngAccel))
                     .build();
             runCancelableAction(action);
 
             dialogs.staticPrompt("The robot should be facing the same direction as when it started. It it's "
-                + "not, run the spin tuner again to re-tune 'trackWidthTicks'."
-                + "\n\nPress "+A+" to continue.");
+                    + "not, run the spin tuner again to re-tune 'trackWidthTicks'."
+                    + "\n\nPress "+A+" to continue.");
 
             // Restore the parameters:
             MecanumDrive.PARAMS = currentParameters.params;
         }
+    }
+
+    // Run a simple trajectory with a preview and an option to disable odometry. The message
+    // can be null:
+    void runTrajectory(Action action) { runTrajectory(action, null);}
+    void runTrajectory(Action action, String message) {
+        useDrive(true); // Do use MecanumDrive
+
+        // Show a preview on FTC Dashboard:
+        TelemetryPacket telemetry = MecanumDrive.getTelemetryPacket();
+        action.preview(telemetry.fieldOverlay());
+        MecanumDrive.sendTelemetryPacket(telemetry);
+
+        while (opModeIsActive() && !gui.cancel()) {
+            if (message == null) {
+                message = "The robot will run the trajectory shown in FTC Dashboard.";
+            }
+            dialogs.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, "+X+" to run without odometry");
+            updateGamepadDriving();
+            if (gui.accept()) {
+                runCancelableAction(action);
+                break; // ====>
+            }
+            if (gui.xButton()) {
+                // Point MecanumDrive to some temporary parameters:
+                TuneParameters testParameters = currentParameters.createClone();
+                testParameters.params.axialGain = 0;
+                testParameters.params.axialVelGain = 0;
+                testParameters.params.lateralGain = 0;
+                testParameters.params.lateralVelGain = 0;
+                testParameters.params.headingGain = 0;
+                testParameters.params.headingVelGain = 0;
+                MecanumDrive.PARAMS = testParameters.params;
+
+                // Run the action itself:
+                runCancelableAction(action);
+
+                // Restore the MecanumDrive settings:
+                MecanumDrive.PARAMS = currentParameters.params;
+                break; // ====>
+            }
+        }
+        stopMotors();
+        drive.setPose(zeroPose); // Reset the pose once they stopped
+    }
+
+    // Navigate a short spline as a completion test.
+    void completionTest() {
+        Action action = drive.actionBuilder(drive.pose)
+                .setTangent(Math.toRadians(60))
+                .splineToLinearHeading(new Pose2d(24, 0, Math.toRadians(90)), Math.toRadians(-60))
+                .splineToLinearHeading(new Pose2d(48, 0, Math.toRadians(180)), Math.toRadians(60))
+                .endTrajectory()
+                .setTangent(Math.toRadians(-180))
+                .splineToLinearHeading(new Pose2d(0, 0, Math.toRadians(-0.0001)), Math.toRadians(-180))
+                .build();
+        String message = "The robot will drive forward 48 inches using a spline. "
+                + "It needs half a tile clearance on either side. "
+                + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel";
+
+        runTrajectory(action, message);
+        useDrive(true); // Do use MecanumDrive
+    }
+
+    // Examples:
+    void splineExample() {
+        runTrajectory(drive.actionBuilder(zeroPose)
+                .splineTo(new Vector2d(30, 30), Math.PI / 2)
+                .splineTo(new Vector2d(0, 60), Math.PI)
+                .build());
     }
 
     @Override
@@ -1988,6 +2035,9 @@ public class LooneyTune extends LinearOpMode {
             gui.addRunnable("Extras::Show accumulated parameter changes", this::showUpdatedParameters);
             gui.addRunnable("Extras::Rotation test (verify trackWidthTicks)", this::rotationTest,
                     ()->drive.PARAMS.trackWidthTicks != 0);
+
+            // Examples:
+            gui.addRunnable("Examples::Spline", this::splineExample);
         }
 
         // Remind the user to press Start on the Driver Station, then press A on the gamepad.
