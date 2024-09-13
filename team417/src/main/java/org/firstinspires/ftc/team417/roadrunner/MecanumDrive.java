@@ -228,10 +228,6 @@ public final class MecanumDrive {
 
         public DriveLocalizer() {
             imu = lazyImu.get();
-            configure();
-        }
-
-        void configure() { // @@@ Revert this?
             leftFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftFront));
             leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
             rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
