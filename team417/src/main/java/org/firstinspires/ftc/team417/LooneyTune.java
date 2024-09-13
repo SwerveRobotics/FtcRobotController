@@ -14,7 +14,7 @@
 // @@@ Add max-velocity/max-acceleration testing for both linear and angular
 // @@@ Add offset test to extras
 
-package org.firstinspires.ftc.team417.roadrunner.tuning;
+package org.firstinspires.ftc.team417;
 
 import static com.acmerobotics.roadrunner.Profiles.constantProfile;
 

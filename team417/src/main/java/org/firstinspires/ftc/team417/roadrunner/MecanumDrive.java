@@ -66,7 +66,7 @@ import org.firstinspires.ftc.team417.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
-import org.firstinspires.ftc.team417.roadrunner.tuning.LooneyTune;
+import org.firstinspires.ftc.team417.LooneyTune;
 import org.firstinspires.inspection.InspectionState;
 
 import java.util.Arrays;
