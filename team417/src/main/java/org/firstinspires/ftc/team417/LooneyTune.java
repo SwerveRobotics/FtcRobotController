@@ -1513,55 +1513,104 @@ public class LooneyTune extends LinearOpMode {
         stopMotors();
     }
 
+    // Compute the average of the singleton value plus the values of an array:
+    double average(double value, List<Double> values) {
+        for (double x: values) {
+            value += x;
+        }
+        return value / (values.size() + 1);
+    }
+
     // Tuner for the lateral multiplier on Mecanum drives.
     void lateralTuner() {
         final int DISTANCE = 48; // Test distance in inches
-
         useDrive(true); // Do use MecanumDrive
 
-        if (dialogs.drivePrompt("The robot will strafe left for " + testDistance(DISTANCE) + ". "
-                + "Please ensure that there is sufficient room."
+        if (dialogs.drivePrompt("Tune <b>lateralInPerTick</b>. The robot will strafe left and right for "
+                + testDistance(DISTANCE) + ". "
                 + "\n\nDrive the robot to position, press "+A+" to start, "+B+" to cancel")) {
+
+            double oldLateralInPerTick = currentParameters.params.lateralInPerTick;
 
             // Disable the PID gains so that the distance traveled isn't corrected:
             TuneParameters testParameters = currentParameters.createClone();
             testParameters.params.lateralGain = 0;
             testParameters.params.lateralVelGain = 0;
-            testParameters.params.lateralInPerTick = 1.0;
-
-            // Point the MecanumDrive to our test PARAMS:
             MecanumDrive.PARAMS = testParameters.params;
 
             // Now recreate the Kinematics object based on the new settings:
             drive.recreateKinematics();
 
             // Drive at a slow speed:
-            double maxVelocity = drive.PARAMS.maxWheelVel / 4;
+            TranslationalVelConstraint velConstraint
+                    = new TranslationalVelConstraint(drive.PARAMS.maxWheelVel / 3);
 
-            drive.opticalTracker.setPosition(new Pose2D(0, 0, 0));
-            if (runCancelableAction(drive.actionBuilder(drive.pose)
-                            .strafeTo(new Vector2d(0, DISTANCE), new TranslationalVelConstraint(maxVelocity))
+            ArrayList<Double> history = new ArrayList<>();
+            String resultsMessage = "";
+            while (opModeIsActive()) {
+                // Strafe left and then right:
+                drive.setPose(zeroPose);
+                if (runCancelableAction(drive.actionBuilder(drive.pose)
+                        .strafeTo(new Vector2d(0, DISTANCE), velConstraint)
+                        .build())) {
+
+                    double actualDistance1 = Math.hypot(drive.pose.position.x, drive.pose.position.y)
+                            * oldLateralInPerTick;
+
+                    drive.setPose(zeroPose);
+                    if (runCancelableAction(drive.actionBuilder(drive.pose)
+                            .strafeTo(new Vector2d(0, -DISTANCE), velConstraint)
                             .build())) {
 
-                Pose2D endPose = drive.opticalTracker.getPosition();
-                double actualDistance = Math.hypot(endPose.x, endPose.y);
-                double lateralMultiplier = actualDistance / DISTANCE;
-                double inchesPerTick = currentParameters.params.inPerTick * lateralMultiplier;
+                        double actualDistance2 = Math.hypot(drive.pose.position.x, drive.pose.position.y)
+                                * oldLateralInPerTick;
 
-                if (lateralMultiplier < 0.25) {
-                    dialogs.staticPrompt("The measured distance is too low to be correct. "
-                            + "Did it not move, or is the distance sensor not working properly?"
-                            + "\n\nPress "+A+"to continue.");
-                } else if (dialogs.staticPrompt(String.format("Measured lateral multiplier is %.3f. ", lateralMultiplier)
-                        + "Does that look good?"
-                        + "\n\nPress "+A+" to accept, "+B+" to cancel")) {
-                    TuneParameters newParameters = currentParameters.createClone();
-                    newParameters.params.lateralInPerTick = inchesPerTick;
-                    acceptParameters(newParameters);
+                        double multiplier1 = average(actualDistance1 / DISTANCE, history);
+                        history.add(multiplier1);
+                        double multiplier2 = average(actualDistance2 / DISTANCE, history);
+                        history.add(multiplier2);
+
+                        if (Math.min(multiplier1, multiplier2) < 0.25) {
+                            dialogs.staticPrompt("The measured distance is too low to be correct. "
+                                    + "Did it not move, or is the distance sensor not working properly?"
+                                    + "\n\nPress " + A + "to continue.");
+                            break; // ====>
+                        }
+
+                        StringBuilder builder = new StringBuilder(String.format(
+                                "The robot drove %.1f and %.1f inches, respectively.\n\n", actualDistance1, actualDistance2));
+                        builder.append("Test results, with the newest last:\n\n");
+                        builder.append(String.format("&ensp;lateralInPerTick: %.03f\n", oldLateralInPerTick));
+                        for (Double multiplier : history) {
+                            builder.append(String.format("&ensp;lateralInPerTick: %.03f\n", multiplier));
+                        }
+                        resultsMessage = builder + "\n";
+
+                        // Update the test settings:
+                        testParameters.params.lateralInPerTick = multiplier2;
+                        MecanumDrive.PARAMS = testParameters.params;
+                        drive.recreateKinematics();
+                    }
+                }
+
+                if (!dialogs.drivePrompt(resultsMessage + "Drive to reposition the robot (it may go farther this time), "
+                        + "press " + A + " to start another run, " + B + " to exit. "
+                        + "Every additional consecutive run helps the results converge.")) {
+
+                    Prompt prompt = dialogs.savePrompt();
+                    if (prompt == Prompt.EXIT)
+                        break; // ====>
+                    if (prompt == Prompt.SAVE) {
+                        // Don't accept 'testParameters' because that has gains set to zero!
+                        TuneParameters newParameters = currentParameters.createClone();
+                        newParameters.params.lateralInPerTick = history.get(history.size() - 1);
+                        acceptParameters(newParameters);
+                        break; // ====>
+                    }
                 }
             }
 
-            // We're done, set to our new state or back to the original state:
+            // Restore the kinematics:
             MecanumDrive.PARAMS = currentParameters.params;
             drive.recreateKinematics();
         }
