@@ -224,7 +224,7 @@ class Gui {
     static private final String DESCRIPTOR_SEPARATOR = "::";
     static final double INITIAL_DELAY = 0.6; // Seconds after initial press before starting to repeat
     static final double ADVANCE_DELAY = 0.1; // Seconds after any repeat to repeat again
-    private static Gui gui; // Points to our own  singleton object
+    private static Gui gui; // Points to our own singleton object
     Gamepad gamepad; // Gamepad to use for control
     ArrayList<Widget> menuStack = new ArrayList<>(); // Stack of menus, the last is the current
     int lastInput; // Last quantized input (-1, 0 or 1)
@@ -884,6 +884,7 @@ public class LooneyTune extends LinearOpMode {
         drive.rightBack.setPower(0);
         drive.leftFront.setPower(0);
         drive.leftBack.setPower(0);
+        sleep(333); // Give the robot a little time to actually stop
     }
 
     // Structure to describe the center of rotation for the robot:
@@ -1194,122 +1195,183 @@ public class LooneyTune extends LinearOpMode {
         return new BestFitLine(slope, intercept);
     }
 
-    // Automatically calculate the kS and kV terms of the feed-forward approximation by
-    // ramping up the velocity in a straight line. We increase power by a fixed increment.
-    void acceleratingStraightLineTuner() {
-        final int DISTANCE = 72; // Test distance in inches
-
+    // Helper for acceleratingStraightLineTuner that drives an accelerating straight line
+    // and samples voltage and velocity:
+    /** @noinspection SameParameterValue*/
+    ArrayList<Point> acceleratingStraightLine(double targetDistance, double direction) {
         final double VELOCITY_EPSILON = 2.0; // Inches/s
         final double POWER_FACTOR_ADDER_PER_SECOND = 0.1;
         final double MIN_POWER_FACTOR = 0.05;
         final double MAX_POWER_FACTOR = 0.9;
 
-        useDrive(true); // Set the brakes
-        if (dialogs.drivePrompt("The robot will drive forward for up to " + testDistance(DISTANCE) + ". "
-                + "It will start slowly but get faster and faster. "
-                + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel.")) {
+        // Reset the pose every time:
+        drive.setPose(zeroPose);
 
-            ArrayList<Point> points = new ArrayList<>();
-            double startTime = time();
-            double maxVelocity = 0; // Inches/s
-            double maxPower = 0; // Volts
-            boolean success = false;
-            while (opModeIsActive()) {
-                // Slowly ramp up the voltage. Increase power by the specified power adder:
-                double scaledPower = (time() - startTime) * POWER_FACTOR_ADDER_PER_SECOND;
-                double powerFactor = scaledPower + MIN_POWER_FACTOR;
+        ArrayList<Point> points = new ArrayList<>();
+        double startTime = time();
+        while (opModeIsActive() && !gui.cancel()) {
+            // Slowly ramp up the voltage. Increase power by the specified power adder:
+            double scaledPower = (time() - startTime) * POWER_FACTOR_ADDER_PER_SECOND;
+            double powerFactor = scaledPower + MIN_POWER_FACTOR;
 
-                drive.rightFront.setPower(powerFactor);
-                drive.rightBack.setPower(powerFactor);
-                drive.leftFront.setPower(powerFactor);
-                drive.leftBack.setPower(powerFactor);
+            drive.rightFront.setPower(powerFactor * direction);
+            drive.rightBack.setPower(powerFactor * direction);
+            drive.leftFront.setPower(powerFactor * direction);
+            drive.leftBack.setPower(powerFactor * direction);
 
-                Pose2D velocityVector = drive.opticalTracker.getVelocity();
-                double velocity = Math.hypot(velocityVector.x, velocityVector.y);
+            Pose2D velocityVector = drive.opticalTracker.getVelocity();
+            double velocity = Math.hypot(velocityVector.x, velocityVector.y);
 
-                // Discard zero velocities that will happen when the provided power isn't
-                // enough yet to overcome static friction:
-                if (velocity > VELOCITY_EPSILON) {
-                    double power = powerFactor * drive.voltageSensor.getVoltage();
-                    maxPower = Math.max(power, maxPower);
-                    points.add(new Point(velocity, power));
-                    maxVelocity = Math.max(velocity, maxVelocity);
-                }
-                // We're done if we've reach the maximum target voltage:
-                if (powerFactor > MAX_POWER_FACTOR) {
-                    success = true;
-                    break;
-                }
-                // We're also done if we've gone far enough:
-                Pose2D position = drive.opticalTracker.getPosition();
-                double distance = Math.hypot(position.x, position.y);
+            // Discard zero velocities that will happen when the provided power isn't
+            // enough yet to overcome static friction:
+            if (velocity > VELOCITY_EPSILON) {
+                double power = powerFactor * drive.voltageSensor.getVoltage();
+                points.add(new Point(velocity, power));
+            }
+            Pose2D position = drive.opticalTracker.getPosition();
+            double distance = Math.hypot(position.x, position.y);
 
-                if (distance > DISTANCE) {
-                    success = true;
-                    break;
-                }
-
-                double remaining = Math.max(0, DISTANCE - distance);
-                telemetryAdd(String.format("Inches remaining: %.1f, power: %.1f\n", remaining, powerFactor));
-                telemetryAdd("Press "+B+" to abort.");
-                telemetryUpdate();
+            // We're done if we've reach the maximum target voltage or gone far enough:
+            if ((powerFactor > MAX_POWER_FACTOR) || (distance > targetDistance)) {
+                stopMotors();
+                return points; // ====>
             }
 
-            // Stop the robot:
-            stopMotors();
-            if (success) {
-                if (maxVelocity == 0) {
-                    dialogs.staticPrompt("The optical tracking sensor returned only zero velocities. "
-                            + "Is it working properly?"
-                            + "\n\nAborted, press "+A+" to continue.");
-                } else {
-                    // Draw the results to the FTC dashboard:
-                    TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
-                    Canvas canvas = packet.fieldOverlay();
+            double remaining = Math.max(0, targetDistance - distance);
+            telemetryAdd(String.format("Inches remaining: %.1f, power: %.1f\n", remaining, powerFactor));
+            telemetryAdd("Press "+B+" to abort.");
+            telemetryUpdate();
+        }
 
-                    // Set a solid white background and an offset:
-                    canvas.setFill("#ffffff");
-                    canvas.fillRect(-72, -72, 144, 144);
-                    canvas.setTranslation(-72, 72);
+        // Stop the robot:
+        stopMotors();
+        return null;
+    }
 
-                    // The canvas coordinates go from -72 to 72 so scale appropriately. We don't
-                    // use canvas.setScale() because that scales up the stroke widths and so makes
-                    // the lines too fat.
-                    double xScale = 144 / maxVelocity;
-                    double yScale = 144 / maxPower;
+    // Find the independent (x, y) maximum values:
+    void findMaxValues(Point max, List<Point> points) {
+        for (Point point: points) {
+            max.x = Math.max(max.x, point.x);
+            max.y = Math.max(max.y, point.y);
+        }
+    }
 
-                    double[] xPoints = new double[points.size()];
-                    double[] yPoints = new double[points.size()];
-                    for (int i = 0; i < points.size(); i++) {
-                        xPoints[i] = points.get(i).x * xScale;
-                        yPoints[i] = points.get(i).y * yScale;
+    // Draw the points to the graph on the FTC Dashboard field:
+    void strokeSamples(Canvas canvas, Point scale, List<Point> points) {
+        double[] xPoints = new double[points.size()];
+        double[] yPoints = new double[points.size()];
+        for (int i = 0; i < points.size(); i++) {
+            xPoints[i] = points.get(i).x * scale.x;
+            yPoints[i] = points.get(i).y * scale.y;
+        }
+        canvas.strokePolyline(xPoints, yPoints);
+    }
+
+    // Automatically calculate the kS and kV terms of the feed-forward approximation by
+    // ramping up the velocity in a straight line. We increase power by a fixed increment.
+    void acceleratingStraightLineTuner() {
+        final int DISTANCE = 72; // Test distance in inches
+
+        useDrive(true); // Set the brakes
+        if (dialogs.drivePrompt("Tune <b>kS</b> and <b>kV</b>. "
+                + "The robot will drive forward and backward for up to " + testDistance(DISTANCE) + ". "
+                + "It will start slowly but get faster and faster in each direction. "
+                + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel.")) {
+
+            ArrayList<Point> resultHistory = new ArrayList<>(); // x is kS, y is kV
+            resultHistory.add(new Point(currentParameters.params.kS, currentParameters.params.kV));
+
+            ArrayList<Point> acceptedSamples = new ArrayList<>(); // x is velocity, y is power
+            Point max = new Point(0, 0); // x is velocity max, y is power max
+            while (opModeIsActive()) {
+                // Clear the FTC Dashboard field:
+                TelemetryPacket telemetryPacket = MecanumDrive.getTelemetryPacket(false);
+                MecanumDrive.sendTelemetryPacket(telemetryPacket);
+
+                // Do one forward and back run:
+                ArrayList<Point> forwardSamples = acceleratingStraightLine(DISTANCE,  1.0);
+                if (forwardSamples != null) {
+                    ArrayList<Point> reverseSamples = acceleratingStraightLine(DISTANCE, -1.0);
+                    if (reverseSamples != null) {
+                        findMaxValues(max, forwardSamples);
+                        findMaxValues(max, reverseSamples);
+                        if (max.x == 0) {
+                            dialogs.staticPrompt("The optical tracking sensor returned only zero velocities. "
+                                    + "Is it working properly?"
+                                    + "\n\nAborted, press " + A + " to continue.");
+                            break; // ====>
+                        } else {
+                            // Draw the results to the FTC dashboard:
+                            TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
+                            Canvas canvas = packet.fieldOverlay();
+
+                            // Set a solid white background and an offset then draw the point samples:
+                            canvas.setFill("#ffffff");
+                            canvas.fillRect(-72, -72, 144, 144);
+                            canvas.setTranslation(-72, 72);
+
+                            // The canvas coordinates go from -72 to 72 so scale appropriately. We don't
+                            // use canvas.setScale() because that scales up the stroke widths and so makes
+                            // the lines too fat.
+                            Point scale = new Point(144 / max.x, 144 / max.y);
+                            canvas.setStroke("#00ff00");
+                            strokeSamples(canvas, scale, forwardSamples);
+                            canvas.setStroke("#0000ff");
+                            strokeSamples(canvas, scale, reverseSamples);
+
+                            // Compute and draw the best-fit line for both sets of points:
+                            ArrayList<Point> combinedSamples = new ArrayList<>();
+                            combinedSamples.addAll(acceptedSamples);
+                            combinedSamples.addAll(forwardSamples);
+                            combinedSamples.addAll(reverseSamples);
+                            BestFitLine bestFitLine = fitLine(combinedSamples);
+
+                            canvas.setStrokeWidth(1);
+                            canvas.setStroke("#ff0000");
+                            canvas.strokeLine(0, bestFitLine.intercept * scale.y,
+                                    200 * scale.x, (bestFitLine.intercept + 200 * bestFitLine.slope) * scale.y);
+
+                            MecanumDrive.sendTelemetryPacket(packet);
+
+                            double kS = bestFitLine.intercept;
+                            double kV = bestFitLine.slope * currentParameters.params.inPerTick;
+
+                            StringBuilder builder = new StringBuilder("Check out the graph on FTC Dashboard! The x axis is "
+                                    + String.format("velocity going up to %.1f\"/s. The y axis is ", max.y)
+                                    + String.format("voltage going up to %.2fV.\n\n", max.x)
+                                    + "History of results:\n\n");
+
+                            for (Point result : resultHistory) {
+                                builder.append(String.format("&ensp;kS: %.03f, kV: %.03f\n", result.x, result.y));
+                            }
+                            builder.append(String.format("&ensp;<b>kS: %.03f, kV: %.03f</b> (this run)\n\n", kS, kV));
+                            builder.append("If this run looks good, press " + A + " to accept, " + B + " to discard it.");
+                            if (dialogs.staticPrompt(builder.toString())) {
+                                resultHistory.add(new Point(kS, kV));
+                                acceptedSamples = combinedSamples;
+                            }
+                        }
                     }
+                }
 
-                    canvas.setStroke("#00ff00");
-                    canvas.strokePolyline(xPoints, yPoints);
+                if (!dialogs.drivePrompt("Drive to reposition the robot, "
+                        + "press "+A+" to start another run, "+B+" to exit. "
+                        + "Every additional consecutive run helps the results converge.")) {
 
-                    // Compute and draw the best-fit line:
-                    BestFitLine bestFitLine = fitLine(points);
-                    canvas.setStrokeWidth(1);
-                    canvas.setStroke("#ff0000");
-                    canvas.strokeLine(0, bestFitLine.intercept * yScale,
-                            200 * xScale, (bestFitLine.intercept + 200 * bestFitLine.slope) * yScale);
-
-                    MecanumDrive.sendTelemetryPacket(packet);
-
-                    TuneParameters newParameters = currentParameters.createClone();
-                    newParameters.params.kS = bestFitLine.intercept;
-                    newParameters.params.kV = bestFitLine.slope * currentParameters.params.inPerTick;
-
-                    if (dialogs.staticPrompt("Check out the graph on FTC Dashboard! The x axis is "
-                            + String.format("velocity going up to %.1f\"/s. The y axis is ", maxVelocity)
-                            + String.format("voltage going up to %.2fV.\n\n", maxPower)
-                            + "Results:\n\n"
-                            + String.format("&ensp;kS: %.03f (was %.03f)\n", newParameters.params.kS, currentParameters.params.kS)
-                            + String.format("&ensp;kV: %.04f (was %.04f)\n", newParameters.params.kV, currentParameters.params.kV)
-                            + "\nIf these look good, press " + A + " to accept, " + B + " to cancel.")) {
-
+                    // Don't ask if they want to save if they didn't get any new results!
+                    if (resultHistory.size() == 1)
+                        break; // ====>
+                    Prompt prompt = dialogs.savePrompt();
+                    if (prompt == Prompt.EXIT)
+                        break; // ====>
+                    if (prompt == Prompt.SAVE) {
+                        // Save the newest result:
+                        Point result = resultHistory.get(resultHistory.size() - 1);
+                        TuneParameters newParameters = currentParameters.createClone();
+                        newParameters.params.kS = result.x;
+                        newParameters.params.kV = result.y;
                         acceptParameters(newParameters);
+                        break; // ====>
                     }
                 }
             }
