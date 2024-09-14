@@ -1332,11 +1332,11 @@ public class LooneyTune extends LinearOpMode {
             String description = motorDescriptions[i];
             telemetryAdd(String.format("This tests every motor individually, now testing '%s'.\n\n", description)
                 + String.format("&emsp;%s.setPower(%.2f)\n\n", description, power)
-                + "Press right trigger for forward, left trigger for reverse, "+X+" for next motor, "+B+" to cancel.");
+                + "Press right trigger for forward, left trigger for reverse, "+A+" for next motor, "+B+" to cancel.");
             telemetryUpdate();
 
             motors[i].setPower(power);
-            if (gui.xButton()) {
+            if (gui.accept()) {
                 motors[i].setPower(0);
                 i += 1;
                 if (i >= motors.length)
@@ -1350,25 +1350,31 @@ public class LooneyTune extends LinearOpMode {
 
     // Drive the robot around.
     void driveTest() {
+        // Choose a good initial place on this year's field to always start from. For Into the
+        // Deep, the (0, 0) origin is blocked by the 'submersible':
+        Pose2d startPose = new Pose2d(-48, 0, 0);
 
         useDrive(true); // Do use MecanumDrive
-        drive.setPose(zeroPose);
-        Pose2d previousPose = zeroPose;
+        drive.setPose(startPose);
+        Pose2d previousPose = startPose;
         double totalDistance = 0; // Inches
         double totalRotation = 0; // Radians
 
-        Pose2d homePose = null;
+        Pose2d baselinePose = null;
         while (opModeIsActive() && !gui.cancel()) {
             if (gui.accept()) {
                 wheelDebugger();
+                drive.setPose(startPose);
+                baselinePose = null;
+                previousPose = startPose;
             }
             if (gui.xButton()) {
-                drive.setPose(zeroPose);
-                homePose = null;
-                previousPose = zeroPose;
+                drive.setPose(startPose);
+                baselinePose = null;
+                previousPose = startPose;
             }
             if (gui.yButton()) {
-                homePose = drive.pose;
+                baselinePose = drive.pose;
                 totalDistance = 0;
                 totalRotation = 0;
             }
@@ -1402,25 +1408,29 @@ public class LooneyTune extends LinearOpMode {
             message += String.format("Pose: (%.2f\", %.2f\", %.2f\u00b0)\n",
                         pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
 
-            if (homePose != null) {
-                double dx = pose.position.x - homePose.position.x;
-                double dy = pose.position.y - homePose.position.y;
-                double dTheta = pose.heading.toDouble() - homePose.heading.toDouble();
+            if (baselinePose != null) {
+                double dx = pose.position.x - baselinePose.position.x;
+                double dy = pose.position.y - baselinePose.position.y;
+                double dTheta = pose.heading.toDouble() - baselinePose.heading.toDouble();
 
-                message += "\nAccumulated if positioned at home:\n\n"
-                    + String.format("&ensp;Difference: (%.2f\", %.2f\", %.2f\u00b0)\n", dx, dy, Math.toDegrees(dTheta));
+                message += "\nError analysis if back at the baseline position:\n\n"
+                    + String.format("&ensp;Offset: (%.2f\", %.2f\"), %.2f\u00b0\n", dx, dy, Math.toDegrees(dTheta));
 
                 if ((totalDistance != 0) && (totalRotation != 0)) {
                     double distanceError = dx / totalDistance;
                     double rotationError = Math.abs(dTheta) / totalRotation;
-                    message += String.format("&ensp;Distance error (%%): %.2f\n", distanceError * 100);
-                    message += String.format("&ensp;Rotation error (%%): %.2f\n", rotationError * 100);
+                    message += String.format("&ensp;Distance error: %.2f%%\n", distanceError * 100);
+                    message += String.format("&ensp;Rotation error: %.2f%%\n", rotationError * 100);
                 }
             }
 
-            dialogs.message(message + "\nPress "+A+" to debug the wheels, "+B+" to exit, "+X+" to zero the pose, "+Y+" to set <i>home</i>.");
+            dialogs.message(message + "\nPress "+A+" to debug the wheels, "+B+" to exit, "+X+" to reset the pose, "+Y+" to set the baseline pose.");
 
             Canvas canvas = packet.fieldOverlay();
+            if (baselinePose != null) {
+                canvas.setStroke("#c0c0c0");
+                Drawing.drawRobot(canvas, baselinePose);
+            }
             canvas.setStroke("#3F51B5");
             Drawing.drawRobot(canvas, pose);
             MecanumDrive.sendTelemetryPacket(packet);
@@ -1960,7 +1970,7 @@ public class LooneyTune extends LinearOpMode {
     // Run a simple trajectory with a preview and an option to disable odometry. The message
     // can be null:
     void runTrajectory(Action action) { runTrajectory(action, null);}
-    void runTrajectory(Action action, String message) {
+    void runTrajectory(Action action, String promptMessage) {
         useDrive(true); // Do use MecanumDrive
 
         // Show a preview on FTC Dashboard:
@@ -1969,32 +1979,41 @@ public class LooneyTune extends LinearOpMode {
         Drawing.drawRobot(telemetry.fieldOverlay(), zeroPose);
         MecanumDrive.sendTelemetryPacket(telemetry);
 
+        boolean useOdometry = true;
         while (opModeIsActive() && !gui.cancel()) {
-            if (message == null) {
+            String message = promptMessage;
+            if (message == null)
                 message = "The robot will run the trajectory shown in FTC Dashboard.";
-            }
-            dialogs.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, "+X+" to run without odometry");
+            if (useOdometry)
+                message += "\n\nRunning with normal odometry correction. Press the left bumper to "
+                        + "disable as a test of how well all the non-odometry settings are tuned. "
+                        + "Ideally odometry shouldn't have to make big corrections. ";
+            else
+                message += "\n\nRunning without odometry correction. Press the left bumper to re-enable.";
+
+            dialogs.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, "+X+" to toggle odometry");
             updateGamepadDriving();
-            if (gui.accept()) {
-                runCancelableAction(action);
-                break; // ====>
+
+            if (gui.leftBumper()) {
+                useOdometry = !useOdometry;
             }
-            if (gui.xButton()) {
-                // Point MecanumDrive to some temporary parameters:
-                TuneParameters testParameters = currentParameters.createClone();
-                testParameters.params.axialGain = 0;
-                testParameters.params.axialVelGain = 0;
-                testParameters.params.lateralGain = 0;
-                testParameters.params.lateralVelGain = 0;
-                testParameters.params.headingGain = 0;
-                testParameters.params.headingVelGain = 0;
-                MecanumDrive.PARAMS = testParameters.params;
-
-                // Run the action itself:
-                runCancelableAction(action);
-
-                // Restore the MecanumDrive settings:
-                MecanumDrive.PARAMS = currentParameters.params;
+            if (gui.accept()) {
+                if (useOdometry) {
+                    runCancelableAction(action);
+                } else {
+                    // Point MecanumDrive to some temporary parameters, run the action, then
+                    // restore the settings:
+                    TuneParameters testParameters = currentParameters.createClone();
+                    testParameters.params.axialGain = 0;
+                    testParameters.params.axialVelGain = 0;
+                    testParameters.params.lateralGain = 0;
+                    testParameters.params.lateralVelGain = 0;
+                    testParameters.params.headingGain = 0;
+                    testParameters.params.headingVelGain = 0;
+                    MecanumDrive.PARAMS = testParameters.params;
+                    runCancelableAction(action);
+                    MecanumDrive.PARAMS = currentParameters.params;
+                }
                 break; // ====>
             }
         }
@@ -2064,6 +2083,8 @@ public class LooneyTune extends LinearOpMode {
 
         // Clear the Dashboard map:
         TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
+        Canvas canvas = packet.fieldOverlay();
+        canvas.fillText("Looney Tune!", -36, 0, "", 0, false);
         MecanumDrive.sendTelemetryPacket(packet);
 
         // Dynamically build the list of tests:
