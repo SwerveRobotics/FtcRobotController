@@ -722,13 +722,12 @@ public class LooneyTune extends LinearOpMode {
         final int DISTANCE = 96; // Test distance in inches
         useDrive(false); // Don't use MecanumDrive
 
-        // Reset the current OTOS settings:
-        Pose2D oldOffset = drive.PARAMS.otos.offset;
-        double oldLinearScalar = drive.PARAMS.otos.linearScalar;
-        drive.opticalTracker.setOffset(new Pose2D(oldOffset.x, oldOffset.y, 0));
-        drive.opticalTracker.setLinearScalar(1.0);
+        double oldOffsetHeading = currentParameters.params.otos.offset.h;
+        double oldLinearScalar = currentParameters.params.otos.linearScalar;
+        if (oldLinearScalar == 0)
+            oldLinearScalar = 1.0; // Can happen on the very first run, stock Road Runner sets to zero
 
-        if (dialogs.drivePrompt("Tune OTOS's linearScalar and orientation by pushing the robot forward in a straight line "
+        if (dialogs.drivePrompt("Tune OTOS's <b>linearScalar</b> and <b>offset heading</b> by pushing the robot forward in a straight line "
                 + "along a field wall for exactly "+testDistance(DISTANCE)+". To start, align the robot by hand "
                 + "at its starting point along a wall. "
                 + "\n\nPress "+A+" when in position, "+B+" to cancel.")) {
@@ -753,7 +752,7 @@ public class LooneyTune extends LinearOpMode {
                     + String.format("&ensp;Sensor reading: (%.1f\", %.1f\", %.1f\u00b0)\n", pose.x, pose.y, Math.toDegrees(pose.h))
                     + String.format("&ensp;Effective distance: %.2f\"\n", distance)
                     + String.format("&ensp;Heading angle: %.2f\u00b0\n", Math.toDegrees(heading))
-                    + "\nPress "+A+" when you're finished pushing, "+B+" to cancel");
+                    + "\nPress "+A+" when you've finished pushing, "+B+" to cancel");
             }
 
             if (success) {
@@ -761,22 +760,23 @@ public class LooneyTune extends LinearOpMode {
                 if (distance == 0)
                     distance = 0.001;
 
-                TuneParameters newParameters = currentParameters.createClone();
-                newParameters.params.otos.linearScalar = (DISTANCE / distance);
-                newParameters.params.otos.offset.h = normalizeAngle(heading);
+                // Calculate the new settings and undo the corrections that the OTOS sensor
+                // was applying:
+                double newLinearScalar = (DISTANCE / distance) * oldLinearScalar;
+                double newOffsetHeading = normalizeAngle(heading + oldOffsetHeading);
 
-                double linearScalarChange = Math.abs((oldLinearScalar - newParameters.params.otos.linearScalar)
+                double linearScalarChange = Math.abs((oldLinearScalar - newLinearScalar)
                         / oldLinearScalar * 100.0); // Percentage
-                double headingChange = normalizeAngle(Math.abs(oldOffset.h - newParameters.params.otos.offset.h));
+                double headingChange = normalizeAngle(Math.abs(oldOffsetHeading - newOffsetHeading));
 
-                if (newParameters.params.otos.linearScalar < SparkFunOTOS.MIN_SCALAR) {
+                if (newLinearScalar < SparkFunOTOS.MIN_SCALAR) {
                     String message = String.format("The measured distance of %.1f\" is not close enough to "
                             + "the expected distance of %d\". It can't measure more than %.1f\". "
                             + "Either you didn't push straight for "+testDistance(DISTANCE)+" or something is wrong "
                             + "with the sensor. ", distance, DISTANCE, DISTANCE / SparkFunOTOS.MIN_SCALAR);
                     message += "Maybe the distance of the sensor to the tile is less than 10.0 mm? ";
                     dialogs.staticPrompt(message + "\n\nAborted, press "+A+" to continue");
-                } else if (newParameters.params.otos.linearScalar > SparkFunOTOS.MAX_SCALAR) {
+                } else if (newLinearScalar > SparkFunOTOS.MAX_SCALAR) {
                     String message = String.format("The measured distance of %.1f\" is not close enough to "
                             + "the expected distance of %d\". It can't measure less than %.1f\". "
                             + "Either you didn't push straight for "+testDistance(DISTANCE)+" or something is wrong "
@@ -784,25 +784,28 @@ public class LooneyTune extends LinearOpMode {
 
                     // If the measured distance is close to zero, don't bother with the following
                     // suggestion:
-                    if (newParameters.params.otos.linearScalar < 1.5) {
+                    if (newLinearScalar < 1.5) {
                         message += "Maybe the distance of the sensor to the tile is more than 10.0 mm?";
                     }
                     dialogs.staticPrompt(message + "\n\nAborted, press "+A+" to continue");
                 } else {
-                    if (dialogs.staticPrompt(String.format("New offset heading %.3f\u00b0 is %.1f\u00b0 off from old.\n",
-                            Math.toDegrees(newParameters.params.otos.offset.h), Math.toDegrees(headingChange))
+                    if (dialogs.staticPrompt(String.format("New offset heading %.2f\u00b0 is %.2f\u00b0 off from old.\n",
+                                    Math.toDegrees(newOffsetHeading), Math.toDegrees(headingChange))
                             + String.format("New linear scalar %.3f is %.1f%% off from old.\n\n",
-                            newParameters.params.otos.linearScalar, linearScalarChange)
+                                    newLinearScalar, linearScalarChange)
                             + "Use these results? Press "+A+" if they look good, "+B+" to cancel.")) {
 
+                        TuneParameters newParameters = currentParameters.createClone();
+                        newParameters.params.otos.linearScalar = newLinearScalar;
+                        newParameters.params.otos.offset.h = newOffsetHeading;
                         acceptParameters(newParameters);
+
+                        // Make sure the OTOS hardware is informed of the new parameters too:
+                        setOtosHardware();
                     }
                 }
             }
         }
-
-        // Set the hardware to the new (or original) settings:
-        setOtosHardware();
     }
 
     // Prompt the user for how to set the new parameters and save them to the registry:
@@ -929,7 +932,6 @@ public class LooneyTune extends LinearOpMode {
 
     // Start tracking total amount of rotation:
     double initiateSparkFunRotation() {
-        assert(drive.opticalTracker != null);
         accumulatedSparkFunRotation = 0;
         previousSparkFunHeading = drive.opticalTracker.getPosition().h;
         return previousSparkFunHeading;
@@ -978,8 +980,6 @@ public class LooneyTune extends LinearOpMode {
 
     // This is the robot spin test for calibrating the optical sensor angular scale and offset:
     void spinTuner() {
-        assert(drive.opticalTracker != null);
-
         final double REVOLUTION_COUNT = 10.0; // Number of revolutions to use
         final double SPIN_POWER = 0.5; // Speed of the revolutions
 
@@ -1205,8 +1205,6 @@ public class LooneyTune extends LinearOpMode {
         final double MAX_POWER_FACTOR = 0.9;
 
         useDrive(true); // Set the brakes
-        assert(drive.opticalTracker != null);
-
         if (dialogs.drivePrompt("The robot will drive forward for up to " + testDistance(DISTANCE) + ". "
                 + "It will start slowly but get faster and faster. "
                 + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel.")) {
@@ -1316,8 +1314,6 @@ public class LooneyTune extends LinearOpMode {
                 }
             }
         }
-
-        setOtosHardware();
     }
 
     // Test the robot motors.
@@ -1362,7 +1358,7 @@ public class LooneyTune extends LinearOpMode {
 
         Pose2d baselinePose = null;
         while (opModeIsActive() && !gui.cancel()) {
-            if (gui.accept()) {
+            if (gui.leftBumper()) {
                 wheelDebugger();
                 drive.setPose(startPose);
                 baselinePose = null;
@@ -1382,6 +1378,20 @@ public class LooneyTune extends LinearOpMode {
             updateGamepadDriving();
             drive.updatePoseEstimate();
 
+            // Query the OTOS for any problems:
+            SparkFunOTOS.Status status = drive.opticalTracker.getStatus();
+            String statusMessage = "";
+            if (status.errorLsm)
+                statusMessage += "errorLsm ";
+            if (status.errorPaa)
+                statusMessage += "errorPaa ";
+            if (status.warnOpticalTracking)
+                statusMessage += "warnOpticalTracking ";
+            if (status.warnTiltAngle)
+                statusMessage += "warnTileAngle ";
+            if (statusMessage.isEmpty())
+                statusMessage = "Good!";
+
             // Now that updatePoseEstimate is called, get the new pose and track the distance
             // traveled:
             Pose2d pose = drive.pose;
@@ -1400,13 +1410,14 @@ public class LooneyTune extends LinearOpMode {
                     (otos.offset.x == 0) || (otos.offset.y == 0)) {
 
                     message += "<font color='#e84e4f'>"
-                        + "WARNING: The optical sensor's parameters haven't been fully "
-                        + "tuned yet, so the robot's pose and its location shown in FTC Dashboard "
+                        + "WARNING: The optical sensor's parameters haven't yet been fully "
+                        + "tuned, so the robot's pose and its location shown in FTC Dashboard "
                         + "will be off.</font>\n\n";
                 }
             }
-            message += String.format("Pose: (%.2f\", %.2f\", %.2f\u00b0)\n",
+            message += String.format("Pose: (%.2f\", %.2f\"), %.2f\u00b0\n",
                         pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
+            message += String.format("OTOS status: %s\n", statusMessage);
 
             if (baselinePose != null) {
                 double dx = pose.position.x - baselinePose.position.x;
@@ -1424,7 +1435,8 @@ public class LooneyTune extends LinearOpMode {
                 }
             }
 
-            dialogs.message(message + "\nPress "+A+" to debug the wheels, "+B+" to exit, "+X+" to reset the pose, "+Y+" to set the baseline pose.");
+
+            dialogs.message(message + "\nPress left bumper to debug the wheels, "+B+" to exit, "+X+" to reset the pose, "+Y+" to set the baseline pose.");
 
             Canvas canvas = packet.fieldOverlay();
             if (baselinePose != null) {
@@ -1986,10 +1998,10 @@ public class LooneyTune extends LinearOpMode {
                 message = "The robot will run the trajectory shown in FTC Dashboard.";
             if (useOdometry)
                 message += "\n\nRunning with normal odometry correction. Press the left bumper to "
-                        + "disable as a test of how well all the non-odometry settings are tuned. "
-                        + "Ideally odometry shouldn't have to make big corrections. ";
+                        + "disable so as to test how well all the non-odometry settings are tuned. "
+                        + "If well tuned, the robot should drive close to the intended path. ";
             else
-                message += "\n\nRunning without odometry correction. Press the left bumper to re-enable.";
+                message += "\n\nRunning <b>without</b> odometry correction. Press the left bumper to re-enable.";
 
             dialogs.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, "+X+" to toggle odometry");
             updateGamepadDriving();
