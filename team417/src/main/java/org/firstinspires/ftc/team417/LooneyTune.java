@@ -31,10 +31,10 @@ import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.MotorFeedforward;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.ProfileAccelConstraint;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.TimeProfile;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
-import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.acmerobotics.roadrunner.TurnConstraints;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.google.gson.Gson;
@@ -1523,14 +1523,14 @@ public class LooneyTune extends LinearOpMode {
 
     // Tuner for the lateral multiplier on Mecanum drives.
     void lateralTuner() {
-        final int DISTANCE = 48; // Test distance in inches
+        final int DISTANCE = 72; // Test distance in inches
         useDrive(true); // Do use MecanumDrive
 
         if (dialogs.drivePrompt("Tune <b>lateralInPerTick</b>. The robot will strafe left and right for "
                 + testDistance(DISTANCE) + ". "
-                + "\n\nDrive the robot to position, press "+A+" to start, "+B+" to cancel")) {
+                + "\n\nDrive the robot to position, press "+A+" to start, "+B+" to cancel.")) {
 
-            double oldLateralInPerTick = currentParameters.params.lateralInPerTick;
+            double startLateralInPerTick = currentParameters.params.lateralInPerTick;
 
             // Disable the PID gains so that the distance traveled isn't corrected:
             TuneParameters testParameters = currentParameters.createClone();
@@ -1541,9 +1541,8 @@ public class LooneyTune extends LinearOpMode {
             // Now recreate the Kinematics object based on the new settings:
             drive.recreateKinematics();
 
-            // Drive at a slow speed:
-            TranslationalVelConstraint velConstraint
-                    = new TranslationalVelConstraint(drive.PARAMS.maxWheelVel / 3);
+            // Accelerate and decelerate slowly so we don't overshoot:
+            ProfileAccelConstraint accelConstraint = new ProfileAccelConstraint(-10, 15);
 
             ArrayList<Double> history = new ArrayList<>();
             String resultsMessage = "";
@@ -1551,24 +1550,20 @@ public class LooneyTune extends LinearOpMode {
                 // Strafe left and then right:
                 drive.setPose(zeroPose);
                 if (runCancelableAction(drive.actionBuilder(drive.pose)
-                        .strafeTo(new Vector2d(0, DISTANCE), velConstraint)
+                        .strafeTo(new Vector2d(0, DISTANCE), null, accelConstraint)
                         .build())) {
 
-                    double actualDistance1 = Math.hypot(drive.pose.position.x, drive.pose.position.y)
-                            * oldLateralInPerTick;
+                    double actualDistance1 = Math.hypot(drive.pose.position.x, drive.pose.position.y);
 
                     drive.setPose(zeroPose);
                     if (runCancelableAction(drive.actionBuilder(drive.pose)
-                            .strafeTo(new Vector2d(0, -DISTANCE), velConstraint)
+                            .strafeTo(new Vector2d(0, -DISTANCE), null, accelConstraint)
                             .build())) {
 
-                        double actualDistance2 = Math.hypot(drive.pose.position.x, drive.pose.position.y)
-                                * oldLateralInPerTick;
+                        double actualDistance2 = Math.hypot(drive.pose.position.x, drive.pose.position.y);
 
-                        double multiplier1 = average(actualDistance1 / DISTANCE, history);
-                        history.add(multiplier1);
-                        double multiplier2 = average(actualDistance2 / DISTANCE, history);
-                        history.add(multiplier2);
+                        double multiplier1 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance1 / DISTANCE);
+                        double multiplier2 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance2 / DISTANCE);
 
                         if (Math.min(multiplier1, multiplier2) < 0.25) {
                             dialogs.staticPrompt("The measured distance is too low to be correct. "
@@ -1577,25 +1572,30 @@ public class LooneyTune extends LinearOpMode {
                             break; // ====>
                         }
 
+                        double multiplier = (multiplier1 + multiplier2) / 2.0; // Compute the average
+
+                        // Compute the average of all results for the new lateralInPerTick value:
+                        double newLateralInPerTick = average(multiplier, history);
+                        history.add(newLateralInPerTick);
+
                         StringBuilder builder = new StringBuilder(String.format(
                                 "The robot drove %.1f and %.1f inches, respectively.\n\n", actualDistance1, actualDistance2));
                         builder.append("Test results, with the newest last:\n\n");
-                        builder.append(String.format("&ensp;lateralInPerTick: %.03f\n", oldLateralInPerTick));
-                        for (Double multiplier : history) {
-                            builder.append(String.format("&ensp;lateralInPerTick: %.03f\n", multiplier));
+                        builder.append(String.format("&ensp;lateralInPerTick: %.03f\n", startLateralInPerTick));
+                        for (Double lateralInPerTick : history) {
+                            builder.append(String.format("&ensp;lateralInPerTick: %.03f\n", lateralInPerTick));
                         }
                         resultsMessage = builder + "\n";
 
-                        // Update the test settings:
-                        testParameters.params.lateralInPerTick = multiplier2;
+                        // Adopt the new settings:
+                        testParameters.params.lateralInPerTick = newLateralInPerTick;
                         MecanumDrive.PARAMS = testParameters.params;
                         drive.recreateKinematics();
                     }
                 }
 
                 if (!dialogs.drivePrompt(resultsMessage + "Drive to reposition the robot (it may go farther this time), "
-                        + "press " + A + " to start another run, " + B + " to exit. "
-                        + "Every additional consecutive run helps the results converge.")) {
+                        + "press " + A + " to start another run, " + B + " to exit. ")) {
 
                     Prompt prompt = dialogs.savePrompt();
                     if (prompt == Prompt.EXIT)
