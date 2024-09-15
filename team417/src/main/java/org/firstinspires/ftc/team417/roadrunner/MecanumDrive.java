@@ -85,8 +85,7 @@ public final class MecanumDrive {
             maxAngAccel = Math.PI;
 
             if (isDevBot) {
-                // Your DevBot Looney Tune configuration goes here!
-
+                // Your DevBot Looney Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
@@ -94,8 +93,8 @@ public final class MecanumDrive {
                 lateralInPerTick = 1.0;
                 trackWidthTicks = 0;
 
-                kS = 0.575;
-                kV = 0.187;
+                kS = 0;
+                kV = 0;
                 kA = 0;
 
                 axialGain      = 0;
@@ -108,12 +107,11 @@ public final class MecanumDrive {
                 otos.offset.x = 0;
                 otos.offset.y = 0;
                 otos.offset.h = Math.toRadians(0);
-                otos.linearScalar = 1.0000000001; // @@@@@@
+                otos.linearScalar = 0;
                 otos.angularScalar = 0;
 
             } else {
-                // Your competition robot Looney Tune configuration goes here!
-
+                // Your competition robot Looney Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
@@ -207,8 +205,8 @@ public final class MecanumDrive {
     public LazyImu lazyImu;
 
     public Localizer localizer;
-    public Pose2d pose; // Actual pose
-    public Pose2d targetPose; // Target pose
+    public Pose2d pose; // Current actual pose
+    public Pose2d targetPose; // Target pose when actively traversing a trajectory
     public SparkFunOTOS opticalTracker = null; // Can be null which means no optical tracking sensor
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
