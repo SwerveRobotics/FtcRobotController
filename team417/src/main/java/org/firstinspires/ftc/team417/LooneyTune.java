@@ -3,16 +3,13 @@
  */
 
 // Short-term:
-// @@@ Show old values, amount of change for: lateralInPerTick
-// @@@ Add velocity test to extras
-// @@@ Add fast button to push tuner
-// @@@ Add dependency graph when a change is made
-// @@@ Don't show position while driving until calibrated
 //
 // Long-term:
+// @@@ Add dependency graph when a change is made
 // @@@ Add LED support
 // @@@ Add max-velocity/max-acceleration testing for both linear and angular
 // @@@ Add offset test to extras
+// @@@ Draw acceleration portion of feedback test in different color
 
 package org.firstinspires.ftc.team417;
 
@@ -205,7 +202,7 @@ class TuneParameters {
         compare("otos.offset.y", "%.3f", oldSettings.params.otos.offset.y, params.otos.offset.y);
         compareRadians("otos.offset.h", "%.3f", oldSettings.params.otos.offset.h, params.otos.offset.h);
         compare("otos.linearScalar", "%.3f", oldSettings.params.otos.linearScalar, params.otos.linearScalar);
-        compare("otos.angularScalar", "%.3f", oldSettings.params.otos.angularScalar, params.otos.angularScalar);
+        compare("otos.angularScalar", "%.4f", oldSettings.params.otos.angularScalar, params.otos.angularScalar);
         compare("maxWheelVel", "%.2f", oldSettings.params.maxWheelVel, params.maxWheelVel);
         compare("minProfileAccel", "%.2f", oldSettings.params.minProfileAccel, params.minProfileAccel);
         compare("maxProfileAccel", "%.2f", oldSettings.params.maxProfileAccel, params.maxProfileAccel);
@@ -555,7 +552,7 @@ public class LooneyTune extends LinearOpMode {
                         while (gamepad.back)
                             Thread.sleep(1);
                     } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                        return; // Don't save if STOP has been pressed
                     }
                 }
 
@@ -659,8 +656,9 @@ public class LooneyTune extends LinearOpMode {
             TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
             dialogs.message("Press "+B+" to stop");
             boolean more = drive.doActionsWork(packet);
-            MecanumDrive.sendTelemetryPacket(packet);
-            if (!more) {
+            if (more) {
+                MecanumDrive.sendTelemetryPacket(packet);
+            } else {
                 // We successfully completed the Action!
                 return true; // ====>
             }
@@ -673,9 +671,11 @@ public class LooneyTune extends LinearOpMode {
 
     // Road Runner expects the hardware to be in different states when using high-level MecanumDrive
     // functionality vs. its lower-level tuning functionality.
-    private void useDrive(boolean enable) {
+    private void configureToDrive(boolean enableRoadRunnerDefaults) {
+        MecanumDrive.clearDashboardTelemetry();
+
         DcMotorEx[] motors = { drive.leftFront, drive.leftBack, drive.rightBack, drive.rightFront };
-        if (enable) {
+        if (enableRoadRunnerDefaults) {
             // Initialize hardware state the same way that MecanumDrive does:
             for (DcMotorEx motor: motors) {
                 motor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -720,7 +720,7 @@ public class LooneyTune extends LinearOpMode {
     // Measure the optical linear scale and orientation:
     void pushTuner() {
         final int DISTANCE = 96; // Test distance in inches
-        useDrive(false); // Don't use MecanumDrive
+        configureToDrive(false); // Don't use MecanumDrive
 
         double oldOffsetHeading = currentParameters.params.otos.offset.h;
         double oldLinearScalar = currentParameters.params.otos.linearScalar;
@@ -984,14 +984,14 @@ public class LooneyTune extends LinearOpMode {
         final double REVOLUTION_COUNT = 10.0; // Number of revolutions to use
         final double SPIN_POWER = 0.5; // Speed of the revolutions
 
-        useDrive(true); // Use MecanumDrive
+        configureToDrive(true); // Use MecanumDrive
 
         // Zero these settings for the purpose of this test:
         drive.opticalTracker.setOffset(new Pose2D(0, 0, 0));
         drive.opticalTracker.setAngularScalar(0);
 
-        if (dialogs.drivePrompt("In this test, you'll position the robot against a wall, then drive "
-                + String.format("it out so that the robot can rotate in place %.1f times, then position ", REVOLUTION_COUNT)
+        if (dialogs.drivePrompt("Tune <b>trackWidthTicks</b>, <b>otos.angularScalar</b> and <b>otos.offset position</b>. Position the robot against a wall, then drive "
+                + String.format("it out so that the robot can rotate in place %.1f times, then drive ", REVOLUTION_COUNT)
                 + "the robot against the wall again."
                 + "\n\nFirst, carefully drive the robot to a wall and align it so that "
                 + "it's facing forward. This marks the start orientation for calibration."
@@ -1124,7 +1124,7 @@ public class LooneyTune extends LinearOpMode {
         String results = String.format("Sensor thinks %.2f circles were completed.\n\n", totalMeasuredCircles);
         results += String.format("Circle-fit position: (%.2f, %.2f), radius: %.2f\n", rawOffset.x, rawOffset.y, center.radius);
         results += String.format("Radius-corrected position: (%.2f, %.2f)\n", offset.x, offset.y);
-        results += String.format("Angular scalar: %.3f\n", angularScalar);
+        results += String.format("Angular scalar: %.4f\n", angularScalar);
         results += String.format("Track width: %.2f\"\n", trackWidth);
         results += "\n";
 
@@ -1272,7 +1272,7 @@ public class LooneyTune extends LinearOpMode {
     void acceleratingStraightLineTuner() {
         final int DISTANCE = 72; // Test distance in inches
 
-        useDrive(true); // Set the brakes
+        configureToDrive(true); // Set the brakes
         if (dialogs.drivePrompt("Tune <b>kS</b> and <b>kV</b>. "
                 + "The robot will drive forward and backward for up to " + testDistance(DISTANCE) + ". "
                 + "It will start slowly but get faster and faster in each direction. "
@@ -1337,8 +1337,8 @@ public class LooneyTune extends LinearOpMode {
                             double kV = bestFitLine.slope * currentParameters.params.inPerTick;
 
                             StringBuilder builder = new StringBuilder("Check out the graph on FTC Dashboard! The x axis is "
-                                    + String.format("velocity going up to %.1f\"/s. The y axis is ", max.y)
-                                    + String.format("voltage going up to %.2fV.\n\n", max.x)
+                                    + String.format("velocity going up to %.1f\"/s. The y axis is ", max.x)
+                                    + String.format("voltage going up to %.2fV.\n\n", max.y)
                                     + "History of results:\n\n");
 
                             for (Point result : resultHistory) {
@@ -1412,11 +1412,12 @@ public class LooneyTune extends LinearOpMode {
         // Deep, the (0, 0) origin is blocked by the 'submersible':
         Pose2d startPose = new Pose2d(-48, 0, 0);
 
-        useDrive(true); // Do use MecanumDrive
+        configureToDrive(true); // Do use MecanumDrive
         drive.setPose(startPose);
         Pose2d previousPose = startPose;
         double totalDistance = 0; // Inches
         double totalRotation = 0; // Radians
+        String lastSeenStatus = ""; // Most recently reported non-zero status from the OTOS
 
         Pose2d baselinePose = null;
         while (opModeIsActive() && !gui.cancel()) {
@@ -1442,17 +1443,17 @@ public class LooneyTune extends LinearOpMode {
 
             // Query the OTOS for any problems:
             SparkFunOTOS.Status status = drive.opticalTracker.getStatus();
-            String statusMessage = "";
+            String currentStatus = "";
             if (status.errorLsm)
-                statusMessage += "errorLsm ";
+                currentStatus += "errorLsm ";
             if (status.errorPaa)
-                statusMessage += "errorPaa ";
+                currentStatus += "errorPaa ";
             if (status.warnOpticalTracking)
-                statusMessage += "warnOpticalTracking ";
+                currentStatus += "warnOpticalTracking ";
             if (status.warnTiltAngle)
-                statusMessage += "warnTileAngle ";
-            if (statusMessage.isEmpty())
-                statusMessage = "Good!";
+                currentStatus += "warnTileAngle ";
+            if (!currentStatus.isEmpty())
+                lastSeenStatus = currentStatus;
 
             // Now that updatePoseEstimate is called, get the new pose and track the distance
             // traveled:
@@ -1479,7 +1480,14 @@ public class LooneyTune extends LinearOpMode {
             }
             message += String.format("Pose: (%.2f\", %.2f\"), %.2f\u00b0\n",
                         pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
-            message += String.format("OTOS status: %s\n", statusMessage);
+            if (currentStatus.isEmpty()) {
+                if (lastSeenStatus.isEmpty())
+                    message += "OTOS status: Good!\n";
+                else
+                    message += String.format("OTOS status: Good now, but was %s\n", lastSeenStatus);
+            } else {
+                message += String.format("OTOS status: %s\n", currentStatus);
+            }
 
             if (baselinePose != null) {
                 double dx = pose.position.x - baselinePose.position.x;
@@ -1490,7 +1498,7 @@ public class LooneyTune extends LinearOpMode {
                     + String.format("&ensp;Offset: (%.2f\", %.2f\"), %.2f\u00b0\n", dx, dy, Math.toDegrees(dTheta));
 
                 if ((totalDistance != 0) && (totalRotation != 0)) {
-                    double distanceError = dx / totalDistance;
+                    double distanceError = Math.abs(dx) / totalDistance;
                     double rotationError = Math.abs(dTheta) / totalRotation;
                     message += String.format("&ensp;Distance error: %.2f%%\n", distanceError * 100);
                     message += String.format("&ensp;Rotation error: %.2f%%\n", rotationError * 100);
@@ -1524,7 +1532,7 @@ public class LooneyTune extends LinearOpMode {
     // Tuner for the lateral multiplier on Mecanum drives.
     void lateralTuner() {
         final int DISTANCE = 72; // Test distance in inches
-        useDrive(true); // Do use MecanumDrive
+        configureToDrive(true); // Do use MecanumDrive
 
         if (dialogs.drivePrompt("Tune <b>lateralInPerTick</b>. The robot will strafe left and right for "
                 + testDistance(DISTANCE) + ". "
@@ -1619,7 +1627,7 @@ public class LooneyTune extends LinearOpMode {
     // Tune the kV and kA feed forward parameters:
     void interactiveFeedForwardTuner() {
         final int DISTANCE = 72; // Test distance in inches
-        useDrive(false); // Don't use MecanumDrive
+        configureToDrive(false); // Don't use MecanumDrive
 
         // Disable all lateral gains so that backward and forward behavior is not affected by the
         // PID/Ramsete algorithm. It's okay for the axial and rotation gains to be either zero
@@ -1633,9 +1641,9 @@ public class LooneyTune extends LinearOpMode {
         NumericInput vInput = new NumericInput(drive.PARAMS, "kV", -2, 3, 0.000001, 20);
         NumericInput aInput = new NumericInput(drive.PARAMS, "kA", -3, 4, 0, 1);
 
-        if (dialogs.drivePrompt("The robot will drive forwards then backwards for " + testDistance(DISTANCE) + ". "
-                + "Tune 'kV' and 'kA' using FTC Dashboard. Follow "
-                + "<u><a href='https://learnroadrunner.com/feedforward-tuning.html#tuning'>LearnRoadRunner's guide</a></u>.\n\n"
+        if (dialogs.drivePrompt("Tune <b>kV</b> and <b>kA</b> with FTC Dashboard. "
+                + "The robot will drive forwards then backwards for " + testDistance(DISTANCE) + ". "
+                + "Follow <u><a href='https://learnroadrunner.com/feedforward-tuning.html#tuning'>LearnRoadRunner's guide</a></u>.\n\n"
                 + "Press "+A+" to start, "+B+" to cancel")) {
 
             // Trigger a reset the first time into the loop:
@@ -1645,8 +1653,8 @@ public class LooneyTune extends LinearOpMode {
             TimeProfile profile = null;
             boolean movingForwards = false;
             int queuedAButtons = 0;
-            double maxVelocity = 0.01; // Maximum measured velocity, non-zero at start to avoid divide by zero
-            double maxDuration = 4.0; // Maximum graph duration, in seconds, non-zero at start to avoid divide by zero
+            double maxVelocity = 0; // Maximum measured velocity
+            double maxDuration = 4; // Maximum graph duration, in seconds
 
             // Allocate a repository for all of our velocity samples:
             class Sample {
@@ -1676,7 +1684,8 @@ public class LooneyTune extends LinearOpMode {
                 } else {
                     telemetryAdd(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n", vInput.get(), aInput.update()));
                     telemetryAdd("View the graph in FTC Dashboard and adjust "
-                            + "<b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap.\n");
+                            + "<b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap "
+                            + "where the robot accelerates. Don't worry about the deceleration portions.");
                 }
 
                 if (gui.accept())
@@ -1724,7 +1733,7 @@ public class LooneyTune extends LinearOpMode {
                         canvas.setFill("#ffffff");
                         canvas.fillRect(-72, -72, 144, 144);
                         canvas.setTranslation(0, 72);
-                        double xScale = 144 / maxDuration;
+                        double xScale = (maxDuration == 0) ? 1 : 144 / maxDuration;
                         double yScale = (maxVelocity == 0) ? 1 : 72 / maxVelocity;
 
                         int count = samples.size();
@@ -1789,10 +1798,14 @@ public class LooneyTune extends LinearOpMode {
                                 break; // ====>
                         }
                     }
-                    if (gui.leftTrigger())
+                    if (gui.leftTrigger()) {
                         maxVelocityFactor = Math.max(maxVelocityFactor - 0.1, 0.2);
-                    if (gui.rightTrigger())
+                        maxDuration = 0; // A different speed will have a different window size
+                    }
+                    if (gui.rightTrigger()) {
                         maxVelocityFactor = Math.min(maxVelocityFactor + 0.1, 1.0);
+                        maxDuration = 0; // A different speed will have a different window size
+                    }
                     if (queuedAButtons > 0) {
                         queuedAButtons--;
                         stopMotors(); // Stop the user's driving
@@ -1928,7 +1941,7 @@ public class LooneyTune extends LinearOpMode {
     // Adjust the Ramsete/PID values:
     void interactivePidTuner(PidTunerType type) {
         final int DISTANCE = 48; // Test distance in inches
-        useDrive(true); // Do use MecanumDrive
+        configureToDrive(true); // Do use MecanumDrive
 
         TuneParameters testParameters = currentParameters.createClone();
         MecanumDrive.PARAMS = testParameters.params;
@@ -2061,7 +2074,7 @@ public class LooneyTune extends LinearOpMode {
 
     // Simple verification test for 'TrackWidth':
     void rotationTest() {
-        useDrive(true); // Do use MecanumDrive
+        configureToDrive(true); // Do use MecanumDrive
 
         if (dialogs.drivePrompt("To test 'trackWidthTicks', the robot will turn in-place for two complete "
                 + "rotations.\n\nPress "+A+" to start, "+B+" to cancel.")) {
@@ -2094,9 +2107,10 @@ public class LooneyTune extends LinearOpMode {
     // can be null:
     void runTrajectory(Action action) { runTrajectory(action, null);}
     void runTrajectory(Action action, String promptMessage) {
-        useDrive(true); // Do use MecanumDrive
+        configureToDrive(true); // Do use MecanumDrive
 
         // Show a preview on FTC Dashboard:
+        drive.setPose(zeroPose);
         TelemetryPacket telemetry = MecanumDrive.getTelemetryPacket(false);
         action.preview(telemetry.fieldOverlay());
         Drawing.drawRobot(telemetry.fieldOverlay(), zeroPose);
@@ -2114,13 +2128,14 @@ public class LooneyTune extends LinearOpMode {
             else
                 message += "\n\nRunning <b>without</b> odometry correction. Press the left bumper to re-enable.";
 
-            dialogs.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, "+X+" to toggle odometry");
+            dialogs.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, left bumper to toggle odometry");
             updateGamepadDriving();
 
             if (gui.leftBumper()) {
                 useOdometry = !useOdometry;
             }
             if (gui.accept()) {
+                drive.setPose(zeroPose);
                 if (useOdometry) {
                     runCancelableAction(action);
                 } else {
@@ -2159,7 +2174,6 @@ public class LooneyTune extends LinearOpMode {
                 + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel";
 
         runTrajectory(action, message);
-        useDrive(true); // Do use MecanumDrive
     }
 
     // Examples:
@@ -2214,7 +2228,7 @@ public class LooneyTune extends LinearOpMode {
         gui.addRunnable("Drive test (motors)", this::driveTest);
         if (drive.opticalTracker != null) {
             // Basic tuners:
-            gui.addRunnable("Push tuner (OTOS orientation, linearScalar)", this::pushTuner);
+            gui.addRunnable("Push tuner (OTOS offset heading, linearScalar)", this::pushTuner);
             gui.addRunnable("Accelerating straight line tuner (kS and kV)", this::acceleratingStraightLineTuner,
                 ()->drive.PARAMS.otos.linearScalar != 0);
             gui.addRunnable("Interactive feed forward tuner (kV and kA)", this::interactiveFeedForwardTuner,
