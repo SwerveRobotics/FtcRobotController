@@ -18,8 +18,8 @@
 package org.firstinspires.ftc.team417.roadrunner.tuning;
 
 import static com.acmerobotics.roadrunner.Profiles.constantProfile;
-
 import static java.lang.System.nanoTime;
+import static java.lang.System.out;
 
 import android.annotation.SuppressLint;
 
@@ -41,22 +41,21 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.google.gson.Gson;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
+import com.qualcomm.hardware.sparkfun.SparkFunOTOS.Pose2D;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.hardware.sparkfun.SparkFunOTOS.Pose2D;
 import com.wilyworks.common.WilyWorks;
-
-import static java.lang.System.out;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.team417.CompetitionAuto;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
-import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team417.roadrunner.HolonomicDrive;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -121,11 +120,11 @@ class Point { // Can't derive from vector2d because it's marked as final (by def
  */
 class TuneParameters {
     String robotName;
-    MecanumDrive.Params params;
+    HolonomicDrive.Params params;
 
     // Get the settings from the current MecanumDrive object:
-    public TuneParameters(MecanumDrive drive) {
-        robotName = MecanumDrive.getBotName();
+    public TuneParameters(HolonomicDrive drive) {
+        robotName = HolonomicDrive.getBotName();
         params = drive.PARAMS;
     }
 
@@ -511,7 +510,7 @@ public class LooneyTuner extends LinearOpMode {
     // Member fields referenced by every test:
     Gui gui;
     Dialogs dialogs;
-    MecanumDrive drive;
+    HolonomicDrive drive;
     TuneParameters currentParameters;
     TuneParameters originalParameters;
 
@@ -521,7 +520,7 @@ public class LooneyTuner extends LinearOpMode {
     // Check if the robot code setting the MecanumDrive configuration parameters is up to date
     // with the last results from tuning:
     /** @noinspection BusyWait*/
-    static public void verifyCodeMatchesTuneResults(MecanumDrive drive, Telemetry telemetry, Gamepad gamepad) {
+    static public void verifyCodeMatchesTuneResults(HolonomicDrive drive, Telemetry telemetry, Gamepad gamepad) {
         // There's no point in complaining about mismatches when running under the simulator:
         if (WilyWorks.isSimulating)
             return; // ====>
@@ -629,10 +628,10 @@ public class LooneyTuner extends LinearOpMode {
     private boolean runCancelableAction(Action action) {
         drive.runParallel(action);
         while (opModeIsActive() && !gui.cancel()) {
-            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+            TelemetryPacket packet = HolonomicDrive.getTelemetryPacket();
             dialogs.message("Press "+B+" to stop");
             boolean more = drive.doActionsWork(packet);
-            MecanumDrive.sendTelemetryPacket(packet);
+            HolonomicDrive.sendTelemetryPacket(packet);
             if (!more) {
                 // We successfully completed the Action!
                 return true; // ====>
@@ -784,7 +783,7 @@ public class LooneyTuner extends LinearOpMode {
         if (comparison.isEmpty()) {
             dialogs.staticPrompt("The new results match your current settings.\n\nPress "+A+" to continue.");
         } else {
-            MecanumDrive.PARAMS = newParameters.params;
+            HolonomicDrive.PARAMS = newParameters.params;
             currentParameters = newParameters;
             currentParameters.save();
             dialogs.staticPrompt("Double-tap the shift key in Android Studio, enter '<b>md.params</b>' to jump to the "
@@ -829,7 +828,7 @@ public class LooneyTuner extends LinearOpMode {
 
     // Ramp the motors up or down to or from the target spin speed. Turns counter-clockwise
     // when provided a positive power value.
-    void rampMotorsSpin(MecanumDrive drive, double targetPower) {
+    void rampMotorsSpin(HolonomicDrive drive, double targetPower) {
         final double RAMP_TIME = 0.5; // Seconds
         double startPower = drive.rightFront.getPower();
         double deltaPower = targetPower - startPower;
@@ -928,7 +927,7 @@ public class LooneyTuner extends LinearOpMode {
 
     // Draw the spin sample points, plus the optional best-fit circle, on FTC Dashboard:
     void drawSpinPoints(ArrayList<Point> points, Circle circle) {
-        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+        TelemetryPacket packet = HolonomicDrive.getTelemetryPacket();
         Canvas canvas = packet.fieldOverlay();
         double[] xPoints = new double[points.size()];
         double[] yPoints = new double[points.size()];
@@ -1238,7 +1237,7 @@ public class LooneyTuner extends LinearOpMode {
                             + "\n\nAborted, press "+A+" to continue.");
                 } else {
                     // Draw the results to the FTC dashboard:
-                    TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+                    TelemetryPacket packet = HolonomicDrive.getTelemetryPacket();
                     Canvas canvas = packet.fieldOverlay();
 
                     // Set a solid white background:
@@ -1333,7 +1332,7 @@ public class LooneyTuner extends LinearOpMode {
             updateGamepadDriving();
             drive.updatePoseEstimate();
 
-            TelemetryPacket p = MecanumDrive.getTelemetryPacket();
+            TelemetryPacket p = HolonomicDrive.getTelemetryPacket();
             Pose2d pose = drive.pose;
             dialogs.message("Use the controller to drive the robot around.\n\n"
                     + String.format("&ensp;Pose: (%.2f\", %.2f\", %.2f\u00b0)\n", pose.position.x, pose.position.y, pose.heading.toDouble())
@@ -1342,7 +1341,7 @@ public class LooneyTuner extends LinearOpMode {
             Canvas c = p.fieldOverlay();
             c.setStroke("#3F51B5");
             Drawing.drawRobot(c, drive.pose);
-            MecanumDrive.sendTelemetryPacket(p);
+            HolonomicDrive.sendTelemetryPacket(p);
 
         }
         stopMotors();
@@ -1365,7 +1364,7 @@ public class LooneyTuner extends LinearOpMode {
             testParameters.params.lateralInPerTick = 1.0;
 
             // Point the MecanumDrive to our test PARAMS:
-            MecanumDrive.PARAMS = testParameters.params;
+            HolonomicDrive.PARAMS = testParameters.params;
 
             // Now recreate the Kinematics object based on the new settings:
             drive.recreateKinematics();
@@ -1397,7 +1396,7 @@ public class LooneyTuner extends LinearOpMode {
             }
 
             // We're done, set to our new state or back to the original state:
-            MecanumDrive.PARAMS = currentParameters.params;
+            HolonomicDrive.PARAMS = currentParameters.params;
             drive.recreateKinematics();
         }
     }
@@ -1413,7 +1412,7 @@ public class LooneyTuner extends LinearOpMode {
         TuneParameters testParameters = currentParameters.createClone();
         testParameters.params.lateralGain = 0;
         testParameters.params.lateralVelGain = 0;
-        MecanumDrive.PARAMS = testParameters.params;
+        HolonomicDrive.PARAMS = testParameters.params;
 
         int inputIndex = 0;
         NumericInput[] numericInputs = {
@@ -1423,11 +1422,11 @@ public class LooneyTuner extends LinearOpMode {
 
         // Register the variables with non-zero results now so that they can be registered for
         // graphing in FTC Dashboard even before the first test is run:
-        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+        TelemetryPacket packet = HolonomicDrive.getTelemetryPacket();
         packet.put("\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af", "\u23af");
         packet.put("vRef", 0.001);
         packet.put("vActual", 0.001);
-        MecanumDrive.sendTelemetryPacket(packet);
+        HolonomicDrive.sendTelemetryPacket(packet);
 
         if (dialogs.drivePrompt("The robot will drive forwards then backwards for " + testDistance(DISTANCE) + ". "
                 + "Tune 'kV' and 'kA' using FTC Dashboard. Follow "
@@ -1465,7 +1464,7 @@ public class LooneyTuner extends LinearOpMode {
 
                     Pose2D velocityPose = drive.opticalTracker.getVelocity();
                     double velocity = Math.signum(velocityPose.x) * Math.hypot(velocityPose.x, velocityPose.y);
-                    packet = MecanumDrive.getTelemetryPacket();
+                    packet = HolonomicDrive.getTelemetryPacket();
                     packet.put("vActual", velocity);
 
                     double t = time() - startTime;
@@ -1484,11 +1483,11 @@ public class LooneyTuner extends LinearOpMode {
                         v = v.unaryMinus();
                     }
                     packet.put("vRef", v.get(0));
-                    MecanumDrive.sendTelemetryPacket(packet);
+                    HolonomicDrive.sendTelemetryPacket(packet);
 
-                    MotorFeedforward feedForward = new MotorFeedforward(MecanumDrive.PARAMS.kS,
-                            MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
-                            MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick);
+                    MotorFeedforward feedForward = new MotorFeedforward(HolonomicDrive.PARAMS.kS,
+                            HolonomicDrive.PARAMS.kV / HolonomicDrive.PARAMS.inPerTick,
+                            HolonomicDrive.PARAMS.kA / HolonomicDrive.PARAMS.inPerTick);
 
                     double power = feedForward.compute(v) / drive.voltageSensor.getVoltage();
                     drive.setDrivePowers(new PoseVelocity2d(new Vector2d(power, 0.0), 0.0));
@@ -1542,9 +1541,9 @@ public class LooneyTuner extends LinearOpMode {
                         startTime = time();
                         profile = new TimeProfile(constantProfile(
                                 DISTANCE, 0.0,
-                                MecanumDrive.PARAMS.maxWheelVel * maxVelocityFactor,
-                                MecanumDrive.PARAMS.minProfileAccel,
-                                MecanumDrive.PARAMS.maxProfileAccel).baseProfile);
+                                HolonomicDrive.PARAMS.maxWheelVel * maxVelocityFactor,
+                                HolonomicDrive.PARAMS.minProfileAccel,
+                                HolonomicDrive.PARAMS.maxProfileAccel).baseProfile);
 
                         // Reset the start position on every cycle. This ensures that getVelocity().x
                         // is the appropriate velocity to read, and it resets after we reposition
@@ -1556,7 +1555,7 @@ public class LooneyTuner extends LinearOpMode {
         }
 
         // We're done, undo any temporary state we set:
-        MecanumDrive.PARAMS = currentParameters.params;
+        HolonomicDrive.PARAMS = currentParameters.params;
         stopMotors();
     }
 
@@ -1668,7 +1667,7 @@ public class LooneyTuner extends LinearOpMode {
         useDrive(true); // Do use MecanumDrive/TankDrive
 
         TuneParameters testParameters = currentParameters.createClone();
-        MecanumDrive.PARAMS = testParameters.params;
+        HolonomicDrive.PARAMS = testParameters.params;
         String prompt, gainName, velGainName;
 
         TrajectoryActionBuilder trajectory = drive.actionBuilder(zeroPose);
@@ -1702,7 +1701,7 @@ public class LooneyTuner extends LinearOpMode {
 
             while (opModeIsActive()) {
                 // Drive:
-                TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+                TelemetryPacket packet = HolonomicDrive.getTelemetryPacket();
                 boolean more = drive.doActionsWork(packet);
 
                 // Process the gamepad numeric input:
@@ -1741,7 +1740,7 @@ public class LooneyTuner extends LinearOpMode {
 
                     // Only send the packet if there's more to the trajectory, otherwise the
                     // field view will be erased once the trajectory terminates:
-                    MecanumDrive.sendTelemetryPacket(packet);
+                    HolonomicDrive.sendTelemetryPacket(packet);
 
                     if (gui.cancel()) {
                         // Cancel the current cycle but remain in this test:
@@ -1788,7 +1787,7 @@ public class LooneyTuner extends LinearOpMode {
             stopMotors();
 
         }
-        MecanumDrive.PARAMS = currentParameters.params;
+        HolonomicDrive.PARAMS = currentParameters.params;
     }
 
     // Navigate a short spline as a completion test.
@@ -1826,13 +1825,13 @@ public class LooneyTuner extends LinearOpMode {
             TuneParameters testParameters = currentParameters.createClone();
             testParameters.params.headingGain = 0;
             testParameters.params.headingVelGain = 0;
-            MecanumDrive.PARAMS = testParameters.params;
+            HolonomicDrive.PARAMS = testParameters.params;
 
             Action action = drive.actionBuilder(drive.pose)
                     .turn(2 * Math.toRadians(360), new TurnConstraints(
-                            MecanumDrive.PARAMS.maxAngVel / 3,
-                           -MecanumDrive.PARAMS.maxAngAccel,
-                            MecanumDrive.PARAMS.maxAngAccel))
+                            HolonomicDrive.PARAMS.maxAngVel / 3,
+                           -HolonomicDrive.PARAMS.maxAngAccel,
+                            HolonomicDrive.PARAMS.maxAngAccel))
                     .build();
             runCancelableAction(action);
 
@@ -1841,7 +1840,7 @@ public class LooneyTuner extends LinearOpMode {
                 + "\n\nPress "+A+" to continue.");
 
             // Restore the parameters:
-            MecanumDrive.PARAMS = currentParameters.params;
+            HolonomicDrive.PARAMS = currentParameters.params;
         }
     }
 
@@ -1856,7 +1855,7 @@ public class LooneyTuner extends LinearOpMode {
         // Initialize member fields:
         gui = new Gui(gamepad1);
         dialogs = new Dialogs();
-        drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, zeroPose);
+        drive = new HolonomicDrive(hardwareMap, telemetry, gamepad1, zeroPose, CompetitionAuto.kinematicType);
         currentParameters = new TuneParameters(drive);
         originalParameters = currentParameters.createClone();
 

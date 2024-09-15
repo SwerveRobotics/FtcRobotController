@@ -73,9 +73,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class MecanumDrive {
+public final class HolonomicDrive {
 
-    private final KinematicType kinematicType = KinematicType.MECANUM;
+    private KinematicType kinematicType;
 
     public static class Params {
         Params() {
@@ -225,10 +225,10 @@ public final class MecanumDrive {
         }
 
         void configure() { // @@@ Revert this?
-            leftFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftFront));
-            leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
-            rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
-            rightFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightFront));
+            leftFront = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftFront));
+            leftBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftBack));
+            rightBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.rightBack));
+            rightFront = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.rightFront));
 
             // TODO: reverse encoders if needed
             //   leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -298,7 +298,8 @@ public final class MecanumDrive {
         }
     }
 
-    public MecanumDrive(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
+    public HolonomicDrive(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose, KinematicType kinematicType) {
+        this.kinematicType = kinematicType;
         this.pose = pose;
 
         WilyWorks.setStartPose(pose, new PoseVelocity2d(new Vector2d(0, 0), 0));
