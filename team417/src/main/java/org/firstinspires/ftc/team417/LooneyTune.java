@@ -200,7 +200,7 @@ class TuneParameters {
         compare("headingVelGain", "%.2f", oldSettings.params.headingVelGain, params.headingVelGain);
         compare("otos.offset.x", "%.3f", oldSettings.params.otos.offset.x, params.otos.offset.x);
         compare("otos.offset.y", "%.3f", oldSettings.params.otos.offset.y, params.otos.offset.y);
-        compareRadians("otos.offset.h", "%.3f", oldSettings.params.otos.offset.h, params.otos.offset.h);
+        compareRadians("otos.offset.h", "%.2f", oldSettings.params.otos.offset.h, params.otos.offset.h);
         compare("otos.linearScalar", "%.3f", oldSettings.params.otos.linearScalar, params.otos.linearScalar);
         compare("otos.angularScalar", "%.4f", oldSettings.params.otos.angularScalar, params.otos.angularScalar);
         compare("maxWheelVel", "%.2f", oldSettings.params.maxWheelVel, params.maxWheelVel);
@@ -1685,7 +1685,7 @@ public class LooneyTune extends LinearOpMode {
                     telemetryAdd(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n", vInput.get(), aInput.update()));
                     telemetryAdd("View the graph in FTC Dashboard and adjust "
                             + "<b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap "
-                            + "where the robot accelerates. Don't worry about the deceleration portions.");
+                            + "where the robot accelerates. Don't worry about the deceleration portions.\n");
                 }
 
                 if (gui.accept())
@@ -1949,19 +1949,19 @@ public class LooneyTune extends LinearOpMode {
 
         TrajectoryActionBuilder trajectory = drive.actionBuilder(zeroPose);
         if (type == PidTunerType.AXIAL) {
-            description = "Tune the axial gains. The robot will drive forwards and then backwards " + testDistance(DISTANCE) + ". ";
+            description = "Tune the <b>axial gains</b>. The robot will drive forwards and then backwards " + testDistance(DISTANCE) + ". ";
             trajectory = trajectory.lineToX(DISTANCE).lineToX(0);
             gainName = "axialGain";
             velGainName = "axialVelGain";
 
         } else if (type == PidTunerType.LATERAL) {
-            description = "Tune the lateral gains. The robot will strafe left and then right " + testDistance(DISTANCE) + ". ";
+            description = "Tune the <b>lateral gains</b>. The robot will strafe left and then right " + testDistance(DISTANCE) + ". ";
             trajectory = trajectory.strafeTo(new Vector2d(0, DISTANCE)).strafeTo(new Vector2d(0, 0));
             gainName = "lateralGain";
             velGainName = "lateralVelGain";
 
         } else {
-            description = "Tune the heading gains. The robot will rotate in place 180\u00b0 clockwise and then counterclockwise. "; // Degree symbol
+            description = "Tune the <b>heading gains</b>. The robot will rotate in place 180\u00b0 clockwise and then counterclockwise. "; // Degree symbol
             trajectory = trajectory.turn(Math.PI).turn(-Math.PI);
             gainName = "headingGain";
             velGainName = "headingVelGain";
