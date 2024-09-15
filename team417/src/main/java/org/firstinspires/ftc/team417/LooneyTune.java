@@ -2086,7 +2086,7 @@ public class LooneyTune extends LinearOpMode {
             testParameters.params.headingVelGain = 0;
             MecanumDrive.PARAMS = testParameters.params;
 
-            Action action = drive.actionBuilder(drive.pose)
+            Action action = drive.actionBuilder(zeroPose)
                     .turn(2 * Math.toRadians(360), new TurnConstraints(
                             MecanumDrive.PARAMS.maxAngVel / 3,
                             -MecanumDrive.PARAMS.maxAngAccel,
@@ -2135,6 +2135,7 @@ public class LooneyTune extends LinearOpMode {
                 useOdometry = !useOdometry;
             }
             if (gui.accept()) {
+                stopMotors();
                 drive.setPose(zeroPose);
                 if (useOdometry) {
                     runCancelableAction(action);
@@ -2161,7 +2162,7 @@ public class LooneyTune extends LinearOpMode {
 
     // Navigate a short spline as a completion test.
     void completionTest() {
-        Action action = drive.actionBuilder(drive.pose)
+        Action action = drive.actionBuilder(zeroPose)
                 .setTangent(Math.toRadians(60))
                 .splineToLinearHeading(new Pose2d(24, 0, Math.toRadians(90)), Math.toRadians(-60))
                 .splineToLinearHeading(new Pose2d(48, 0, Math.toRadians(180)), Math.toRadians(60))
