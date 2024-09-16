@@ -52,6 +52,7 @@ public class CompetitionAuto extends BaseOpMode {
         boolean more = true;
         while (opModeIsActive() && more) {
             telemetry.addLine("Running Auto!");
+            telemetry.addData("Kinematic Type", kinematicType);
             telemetry.update();
 
             // 'packet' is the object used to send data to FTC Dashboard:
