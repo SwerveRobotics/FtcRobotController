@@ -10,7 +10,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 
-import org.firstinspires.ftc.team417.roadrunner.HolonomicDrive;
+import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
 
 /**
@@ -27,7 +27,7 @@ public class CompetitionAuto extends BaseOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
-        HolonomicDrive drive = new HolonomicDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
+        MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
 
         // Build the trajectory *before* the start button is pressed because Road Runner
         // can take multiple seconds for this operation. We wouldn't want to have to wait
@@ -42,9 +42,9 @@ public class CompetitionAuto extends BaseOpMode {
         trajectoryAction.preview(previewCanvas);
 
         // Show the preview on FTC Dashboard now.
-        TelemetryPacket packet = HolonomicDrive.getTelemetryPacket();
+        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
         packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
-        HolonomicDrive.sendTelemetryPacket(packet);
+        MecanumDrive.sendTelemetryPacket(packet);
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
@@ -55,7 +55,7 @@ public class CompetitionAuto extends BaseOpMode {
             telemetry.update();
 
             // 'packet' is the object used to send data to FTC Dashboard:
-            packet = HolonomicDrive.getTelemetryPacket();
+            packet = MecanumDrive.getTelemetryPacket();
 
             // Draw the preview and then run the next step of the trajectory on top:
             packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
@@ -64,7 +64,7 @@ public class CompetitionAuto extends BaseOpMode {
             // Only send the packet if there's more to do in order to keep the very last
             // drawing up on the field once the robot is done:
             if (more)
-                HolonomicDrive.sendTelemetryPacket(packet);
+                MecanumDrive.sendTelemetryPacket(packet);
         }
     }
 }

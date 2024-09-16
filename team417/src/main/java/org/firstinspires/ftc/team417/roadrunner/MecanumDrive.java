@@ -72,7 +72,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class HolonomicDrive {
+public final class MecanumDrive {
     public final KinematicType kinematicType;
 
     public static class Params {
@@ -227,10 +227,10 @@ public final class HolonomicDrive {
 
         public DriveLocalizer() {
             imu = lazyImu.get();
-            leftFront = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftFront));
-            leftBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftBack));
-            rightBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.rightBack));
-            rightFront = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.rightFront));
+            leftFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftFront));
+            leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
+            rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
+            rightFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightFront));
 
             // TODO: reverse encoders if needed
             //   leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -300,7 +300,7 @@ public final class HolonomicDrive {
         }
     }
 
-    public HolonomicDrive(KinematicType kinematicType, HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
+    public MecanumDrive(KinematicType kinematicType, HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
         this.kinematicType = kinematicType;
         this.pose = pose;
 

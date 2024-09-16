@@ -3,6 +3,8 @@ package org.firstinspires.ftc.team417.roadrunner;
 import static java.lang.Math.abs;
 import static java.lang.Math.sqrt;
 
+import androidx.annotation.NonNull;
+
 import com.acmerobotics.roadrunner.Arclength;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -84,19 +86,19 @@ public class HolonomicKinematics {
         }
     }
 
-    public <Param> Twist2dDual forward(WheelIncrements<Param> w) {
+    public <Param> Twist2dDual<Param> forward(WheelIncrements<Param> w) {
         switch (kinematicType) {
             case MECANUM:
-                return new Twist2dDual(
-                        new Vector2dDual(
+                return new Twist2dDual<>(
+                        new Vector2dDual<>(
                                 (w.leftFront.plus(w.leftBack).plus(w.rightBack).plus(w.rightFront)).times(0.25),
                                 (w.leftFront.unaryMinus().plus(w.leftBack).minus(w.rightBack).plus(w.rightFront)).times(0.25 / lateralMultiplier)
                         ),
                         (w.leftFront.unaryMinus().minus(w.leftBack).plus(w.rightBack).plus(w.rightFront)).times(0.25 / trackWidth)
                 );
             case X:
-                return new Twist2dDual(
-                        new Vector2dDual(
+                return new Twist2dDual<>(
+                        new Vector2dDual<>(
                                 (w.leftFront.plus(w.leftBack).plus(w.rightBack).plus(w.rightFront)).times(0.25 / sqrt(2.0)),
                                 (w.leftFront.unaryMinus().plus(w.leftBack).minus(w.rightBack).plus(w.rightFront)).times(0.25 / sqrt(2.0))
                         ),
@@ -154,7 +156,7 @@ public class HolonomicKinematics {
         }
 
         @Override
-        public double maxRobotVel(Pose2dDual<Arclength> robotPose, PosePath path, double s) {
+        public double maxRobotVel(Pose2dDual<Arclength> robotPose, @NonNull PosePath path, double s) {
             Pose2d txRobotWorld = robotPose.value().inverse();
             PoseVelocity2d robotVelWorld = robotPose.velocity().value();
             PoseVelocity2d robotVelRobot = txRobotWorld.times(robotVelWorld);
