@@ -20,7 +20,7 @@ import java.util.NoSuchElementException;
 import java.util.OptionalDouble;
 
 public class HolonomicKinematics {
-    public final KinematicType kinematicType;
+    public KinematicType kinematicType;
     public final double trackWidth;
     public final double lateralMultiplier;
 
@@ -32,6 +32,17 @@ public class HolonomicKinematics {
      */
     public HolonomicKinematics(KinematicType kinematicType, double trackWidth) {
         this(kinematicType, trackWidth, 1);
+    }
+
+    /**
+     * Constructor for HolonomicKinematics.
+     *
+     * @param trackWidth         Distance between wheels on opposite sides.
+     * @param lateralMultiplier  Factor to adjust strafe velocity, ignored for X kinematic type.
+     */
+    public HolonomicKinematics(double trackWidth, double lateralMultiplier) {
+        this.trackWidth = trackWidth;
+        this.lateralMultiplier = lateralMultiplier;
     }
 
     /**

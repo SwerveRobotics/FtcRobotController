@@ -9,7 +9,8 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
-import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team417.roadrunner.KinematicType;
+import org.firstinspires.ftc.team417.roadrunner.HolonomicDrive;
 
 /**
  * This class exposes the competition version of TeleOp. As a general rule, add code to the
@@ -17,12 +18,13 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  */
 @TeleOp(name="TeleOp", group="Competition")
 public class CompetitionTeleOp extends BaseOpMode {
+    public final KinematicType kinematicType = KinematicType.MECANUM;
 
     @Override
     public void runOpMode() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, new Pose2d(0, 0, 0));
+        HolonomicDrive drive = new HolonomicDrive(kinematicType, hardwareMap, telemetry, gamepad1, new Pose2d(0, 0, 0));
 
         waitForStart();
 
@@ -41,10 +43,10 @@ public class CompetitionTeleOp extends BaseOpMode {
             telemetry.addLine("Kinematic type is " + kinematicType);
             telemetry.update();
 
-            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+            TelemetryPacket packet = HolonomicDrive.getTelemetryPacket();
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
-            MecanumDrive.sendTelemetryPacket(packet);
+            HolonomicDrive.sendTelemetryPacket(packet);
         }
     }
 }

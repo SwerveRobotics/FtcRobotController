@@ -17,7 +17,6 @@ import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.HolonomicController;
-import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.MotorFeedforward;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -73,9 +72,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class MecanumDrive {
-
-    //private final KinematicType kinematicType = KinematicType.MECANUM;
+public final class HolonomicDrive {
+    public final KinematicType kinematicType;
 
     public static class Params {
         Params() {
@@ -180,7 +178,7 @@ public final class MecanumDrive {
 
     public static Params PARAMS = new Params();
 
-    public MecanumKinematics kinematics = new MecanumKinematics(
+    public HolonomicKinematics kinematics = new HolonomicKinematics(
             PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
 
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
@@ -225,10 +223,10 @@ public final class MecanumDrive {
         }
 
         void configure() { // @@@ Revert this?
-            leftFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftFront));
-            leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
-            rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
-            rightFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightFront));
+            leftFront = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftFront));
+            leftBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftBack));
+            rightBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.rightBack));
+            rightFront = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.rightFront));
 
             // TODO: reverse encoders if needed
             //   leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -265,7 +263,7 @@ public final class MecanumDrive {
             }
 
             double headingDelta = heading.minus(lastHeading);
-            Twist2dDual<Time> twist = kinematics.forward(new MecanumKinematics.WheelIncrements<>(
+            Twist2dDual<Time> twist = kinematics.forward(new HolonomicKinematics.WheelIncrements<>(
                     new DualNum<Time>(new double[]{
                             (leftFrontPosVel.position - lastLeftFrontPos),
                             leftFrontPosVel.velocity,
@@ -298,8 +296,11 @@ public final class MecanumDrive {
         }
     }
 
-    public MecanumDrive(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
+    public HolonomicDrive(KinematicType kinematicType, HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
+        this.kinematicType = kinematicType;
         this.pose = pose;
+
+        kinematics.kinematicType = kinematicType;
 
         WilyWorks.setStartPose(pose, new PoseVelocity2d(new Vector2d(0, 0), 0));
 
@@ -447,7 +448,7 @@ public final class MecanumDrive {
         if (WilyWorks.setDrivePowers(powers, new PoseVelocity2d(new Vector2d(0, 0), 0)))
             return; // ====>
 
-        MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
+        HolonomicKinematics.WheelVelocities<Time> wheelVels = new HolonomicKinematics(kinematicType, 1).inverse(
                 PoseVelocity2dDual.constant(powers, 1));
 
         double maxPowerMag = 1;
@@ -520,7 +521,7 @@ public final class MecanumDrive {
                 assistVelocity.linearVel.x, assistVelocity.linearVel.y), assistVelocity.angVel);
 
         // Compute the wheel powers for the stick contribution:
-        MecanumKinematics.WheelVelocities<Time> manualVels = new MecanumKinematics(1).inverse(
+        HolonomicKinematics.WheelVelocities<Time> manualVels = new HolonomicKinematics(kinematicType, 1).inverse(
                 PoseVelocity2dDual.constant(stickVelocity, 1));
 
         double leftFrontPower = manualVels.leftFront.get(0);
@@ -541,7 +542,7 @@ public final class MecanumDrive {
         PoseVelocity2dDual<Time> command = new HolonomicController(0, 0, 0)
                 .compute(computedDualPose, pose, poseVelocity);
 
-        MecanumKinematics.WheelVelocities<Time> assistVels = kinematics.inverse(command);
+        HolonomicKinematics.WheelVelocities<Time> assistVels = kinematics.inverse(command);
 
         double voltage = getVoltage();
         final MotorFeedforward feedforward = new MotorFeedforward(
@@ -631,7 +632,7 @@ public final class MecanumDrive {
             // Remember the target pose:
             targetPose = txWorldTarget.value();
 
-            MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
+            HolonomicKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
 
             double voltage = getVoltage();
 
@@ -733,7 +734,7 @@ public final class MecanumDrive {
             // Remember the target pose:
             targetPose = txWorldTarget.value();
 
-            MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
+            HolonomicKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
 
             updateLoopTimeStatistic(p);
             double voltage = getVoltage();
@@ -874,7 +875,8 @@ public final class MecanumDrive {
 
     // Recreate the kinematics object using the current settings:
     public void recreateKinematics() {
-        kinematics = new MecanumKinematics(
+        kinematics = new HolonomicKinematics(
+                kinematicType,
                 PARAMS.inPerTick * PARAMS.trackWidthTicks,
                 PARAMS.inPerTick / PARAMS.lateralInPerTick);
     }
