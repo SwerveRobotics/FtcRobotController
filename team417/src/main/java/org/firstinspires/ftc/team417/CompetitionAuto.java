@@ -29,10 +29,6 @@ public class CompetitionAuto extends BaseOpMode {
         Pose2d beginPose = new Pose2d(0, 0, 0);
         HolonomicDrive drive = new HolonomicDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
 
-        telemetry.addLine("Running 417's TeleOp!");
-        telemetry.addLine("Kinematic type is " + drive.kinematicType);
-        telemetry.update();
-
         // Build the trajectory *before* the start button is pressed because Road Runner
         // can take multiple seconds for this operation. We wouldn't want to have to wait
         // as soon as the Start button is pressed!
@@ -46,9 +42,9 @@ public class CompetitionAuto extends BaseOpMode {
         trajectoryAction.preview(previewCanvas);
 
         // Show the preview on FTC Dashboard now.
-        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+        TelemetryPacket packet = HolonomicDrive.getTelemetryPacket();
         packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
-        MecanumDrive.sendTelemetryPacket(packet);
+        HolonomicDrive.sendTelemetryPacket(packet);
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
@@ -59,7 +55,7 @@ public class CompetitionAuto extends BaseOpMode {
             telemetry.update();
 
             // 'packet' is the object used to send data to FTC Dashboard:
-            packet = MecanumDrive.getTelemetryPacket();
+            packet = HolonomicDrive.getTelemetryPacket();
 
             // Draw the preview and then run the next step of the trajectory on top:
             packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
@@ -68,7 +64,7 @@ public class CompetitionAuto extends BaseOpMode {
             // Only send the packet if there's more to do in order to keep the very last
             // drawing up on the field once the robot is done:
             if (more)
-                MecanumDrive.sendTelemetryPacket(packet);
+                HolonomicDrive.sendTelemetryPacket(packet);
         }
     }
 }
