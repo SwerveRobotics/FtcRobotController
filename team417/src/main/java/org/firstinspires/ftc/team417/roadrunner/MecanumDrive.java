@@ -17,6 +17,7 @@ import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.HolonomicController;
+import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.MotorFeedforward;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -54,7 +55,6 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
-
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -73,9 +73,9 @@ import java.util.LinkedList;
 import java.util.List;
 
 @Config
-public final class HolonomicDrive {
+public final class MecanumDrive {
 
-    private KinematicType kinematicType;
+    //private final KinematicType kinematicType = KinematicType.MECANUM;
 
     public static class Params {
         Params() {
@@ -180,8 +180,8 @@ public final class HolonomicDrive {
 
     public static Params PARAMS = new Params();
 
-    public HolonomicKinematics kinematics = new HolonomicKinematics(
-            kinematicType, PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
+    public MecanumKinematics kinematics = new MecanumKinematics(
+            PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
 
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
             PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
@@ -225,10 +225,10 @@ public final class HolonomicDrive {
         }
 
         void configure() { // @@@ Revert this?
-            leftFront = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftFront));
-            leftBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftBack));
-            rightBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.rightBack));
-            rightFront = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.rightFront));
+            leftFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftFront));
+            leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
+            rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
+            rightFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightFront));
 
             // TODO: reverse encoders if needed
             //   leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -265,7 +265,7 @@ public final class HolonomicDrive {
             }
 
             double headingDelta = heading.minus(lastHeading);
-            Twist2dDual<Time> twist = kinematics.forward(new HolonomicKinematics.WheelIncrements<>(
+            Twist2dDual<Time> twist = kinematics.forward(new MecanumKinematics.WheelIncrements<>(
                     new DualNum<Time>(new double[]{
                             (leftFrontPosVel.position - lastLeftFrontPos),
                             leftFrontPosVel.velocity,
@@ -298,8 +298,7 @@ public final class HolonomicDrive {
         }
     }
 
-    public HolonomicDrive(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose, KinematicType kinematicType) {
-        this.kinematicType = kinematicType;
+    public MecanumDrive(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
         this.pose = pose;
 
         WilyWorks.setStartPose(pose, new PoseVelocity2d(new Vector2d(0, 0), 0));
@@ -448,7 +447,7 @@ public final class HolonomicDrive {
         if (WilyWorks.setDrivePowers(powers, new PoseVelocity2d(new Vector2d(0, 0), 0)))
             return; // ====>
 
-        HolonomicKinematics.WheelVelocities<Time> wheelVels = new HolonomicKinematics(kinematicType, 1).inverse(
+        MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
                 PoseVelocity2dDual.constant(powers, 1));
 
         double maxPowerMag = 1;
@@ -521,7 +520,7 @@ public final class HolonomicDrive {
                 assistVelocity.linearVel.x, assistVelocity.linearVel.y), assistVelocity.angVel);
 
         // Compute the wheel powers for the stick contribution:
-        HolonomicKinematics.WheelVelocities<Time> manualVels = new HolonomicKinematics(kinematicType, 1).inverse(
+        MecanumKinematics.WheelVelocities<Time> manualVels = new MecanumKinematics(1).inverse(
                 PoseVelocity2dDual.constant(stickVelocity, 1));
 
         double leftFrontPower = manualVels.leftFront.get(0);
@@ -542,7 +541,7 @@ public final class HolonomicDrive {
         PoseVelocity2dDual<Time> command = new HolonomicController(0, 0, 0)
                 .compute(computedDualPose, pose, poseVelocity);
 
-        HolonomicKinematics.WheelVelocities<Time> assistVels = kinematics.inverse(command);
+        MecanumKinematics.WheelVelocities<Time> assistVels = kinematics.inverse(command);
 
         double voltage = getVoltage();
         final MotorFeedforward feedforward = new MotorFeedforward(
@@ -632,7 +631,7 @@ public final class HolonomicDrive {
             // Remember the target pose:
             targetPose = txWorldTarget.value();
 
-            HolonomicKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
+            MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
 
             double voltage = getVoltage();
 
@@ -734,7 +733,7 @@ public final class HolonomicDrive {
             // Remember the target pose:
             targetPose = txWorldTarget.value();
 
-            HolonomicKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
+            MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
 
             updateLoopTimeStatistic(p);
             double voltage = getVoltage();
@@ -875,8 +874,7 @@ public final class HolonomicDrive {
 
     // Recreate the kinematics object using the current settings:
     public void recreateKinematics() {
-        kinematics = new HolonomicKinematics(
-                kinematicType,
+        kinematics = new MecanumKinematics(
                 PARAMS.inPerTick * PARAMS.trackWidthTicks,
                 PARAMS.inPerTick / PARAMS.lateralInPerTick);
     }
