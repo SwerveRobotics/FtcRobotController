@@ -7,8 +7,6 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
  * This is the Wily Works implementation of the standard FTC Telemetry object.
  */
 public class WilyTelemetry implements Telemetry {
-    int weird = 1; // @@@
-
     @Override
     public Item addData(String caption, String format, Object... args) {
         return null;
@@ -35,14 +33,10 @@ public class WilyTelemetry implements Telemetry {
     }
 
     @Override
-    public void clear() {
-        System.out.println("Hi!"); // @@@
-    }
+    public void clear() { }
 
     @Override
-    public void clearAll() {
-
-    }
+    public void clearAll() { }
 
     @Override
     public Object addAction(Runnable action) {
@@ -55,14 +49,10 @@ public class WilyTelemetry implements Telemetry {
     }
 
     @Override
-    public void speak(String text) {
-
-    }
+    public void speak(String text) { }
 
     @Override
-    public void speak(String text, String languageCode, String countryCode) {
-
-    }
+    public void speak(String text, String languageCode, String countryCode) { }
 
     @Override
     public boolean update() {
@@ -90,9 +80,7 @@ public class WilyTelemetry implements Telemetry {
     }
 
     @Override
-    public void setAutoClear(boolean autoClear) {
-
-    }
+    public void setAutoClear(boolean autoClear) { }
 
     @Override
     public int getMsTransmissionInterval() {
@@ -100,9 +88,7 @@ public class WilyTelemetry implements Telemetry {
     }
 
     @Override
-    public void setMsTransmissionInterval(int msTransmissionInterval) {
-
-    }
+    public void setMsTransmissionInterval(int msTransmissionInterval) { }
 
     @Override
     public String getItemSeparator() {
@@ -110,9 +96,7 @@ public class WilyTelemetry implements Telemetry {
     }
 
     @Override
-    public void setItemSeparator(String itemSeparator) {
-
-    }
+    public void setItemSeparator(String itemSeparator) { }
 
     @Override
     public String getCaptionValueSeparator() {
@@ -120,14 +104,10 @@ public class WilyTelemetry implements Telemetry {
     }
 
     @Override
-    public void setCaptionValueSeparator(String captionValueSeparator) {
-
-    }
+    public void setCaptionValueSeparator(String captionValueSeparator) { }
 
     @Override
-    public void setDisplayFormat(DisplayFormat displayFormat) {
-
-    }
+    public void setDisplayFormat(DisplayFormat displayFormat) { }
 
     @Override
     public Log log() {

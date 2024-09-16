@@ -24,11 +24,17 @@ public class CompetitionTeleOp extends BaseOpMode {
     public void runOpMode() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        HolonomicDrive drive = new HolonomicDrive(kinematicType, hardwareMap, telemetry, gamepad1, new Pose2d(0, 0, 0));
+        Pose2d beginPose = new Pose2d(0, 0, 0);
+        HolonomicDrive drive = new HolonomicDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
 
+        // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
 
         while (opModeIsActive()) {
+            telemetry.addLine("Running TeleOp!");
+            telemetry.update();
+
+            // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
                             -gamepad1.left_stick_y,
@@ -37,13 +43,20 @@ public class CompetitionTeleOp extends BaseOpMode {
                     -gamepad1.right_stick_x
             ));
 
+            // Update the current pose:
             drive.updatePoseEstimate();
 
             telemetry.addLine("Running 417's TeleOp!");
             telemetry.addLine("Kinematic type is " + kinematicType);
             telemetry.update();
 
+            // 'packet' is the object used to send data to FTC Dashboard:
             TelemetryPacket packet = HolonomicDrive.getTelemetryPacket();
+
+            // Do the work now for all active Road Runner actions, if any:
+            drive.doActionsWork(packet);
+
+            // Draw the robot and field:
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
             HolonomicDrive.sendTelemetryPacket(packet);

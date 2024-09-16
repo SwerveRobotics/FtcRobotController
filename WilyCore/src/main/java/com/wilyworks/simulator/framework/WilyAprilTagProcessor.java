@@ -28,7 +28,7 @@ public class WilyAprilTagProcessor extends AprilTagProcessor {
     WilyWorks.Config.Camera cameraDescriptor; // Describes the camera placement on the robot, if any
     double lastDetectionTime = WilyCore.time(); // Time of the last fresh detection
     ArrayList<AprilTagDetection> lastDetections = new ArrayList<>(); // A copy of the last detections provided
-    AprilTagMetadata[] tags = AprilTagGameDatabase.getCenterStageTagLibrary().getAllTags(); // Tag database
+    AprilTagMetadata[] tags = AprilTagGameDatabase.getIntoTheDeepTagLibrary().getAllTags(); // Tag database
 
     public WilyAprilTagProcessor(double fx, double fy, double cx, double cy, DistanceUnit outputUnitsLength, AngleUnit outputUnitsAngle, AprilTagLibrary tagLibrary, boolean drawAxes, boolean drawCube, boolean drawOutline, boolean drawTagID, TagFamily tagFamily, int threads) {
     }

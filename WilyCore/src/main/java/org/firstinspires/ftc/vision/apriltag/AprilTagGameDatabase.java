@@ -92,6 +92,34 @@ public class AprilTagGameDatabase
     }
 
     /**
+     * Get the {@link AprilTagLibrary} for the Into The Deep FTC game
+     * @return the {@link AprilTagLibrary} for the Into The Deep FTC game
+     */
+    public static AprilTagLibrary getIntoTheDeepTagLibrary()
+    {
+        return new AprilTagLibrary.Builder()
+                .addTag(11, "BlueAudienceWall",
+                        4, new VectorF(-70.25f, 46.83f, 5.75f), DistanceUnit.INCH,
+                        new Quaternion(0.5f, -0.5f, -0.5f, 0.5f, 0))
+                .addTag(12, "BlueAllianceWall",
+                        4, new VectorF(0.0f, 70.25f, 5.75f), DistanceUnit.INCH,
+                        new Quaternion(0.7071067f, -0.7071067f, 0.0f, 0.0f, 0))
+                .addTag(13, "BlueRearWall",
+                        4, new VectorF(70.25f, 46.83f, 5.75f), DistanceUnit.INCH,
+                        new Quaternion(0.5f, -0.5f, 0.5f, -0.5f, 0))
+                .addTag(14, "RedRearWall",
+                        4, new VectorF(70.25f, -46.83f, 5.75f), DistanceUnit.INCH,
+                        new Quaternion(0.5f, -0.5f, 0.5f, -0.5f, 0))
+                .addTag(15, "RedAllianceWall",
+                        4, new VectorF(0.0f, -70.25f, 5.75f), DistanceUnit.INCH,
+                        new Quaternion(0.0f, 0.0f, 0.7071067f, -0.7071067f, 0))
+                .addTag(16, "RedAudienceWall",
+                        4, new VectorF(-70.25f, -46.83f, 5.75f), DistanceUnit.INCH,
+                        new Quaternion(0.5f, -0.5f, -0.5f, 0.5f, 0))
+                .build();
+    }
+
+    /**
      * Get the {@link AprilTagLibrary} for the tags used in the sample OpModes
      * @return the {@link AprilTagLibrary} for the tags used in the sample OpModes
      */

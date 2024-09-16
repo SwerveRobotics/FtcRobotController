@@ -64,7 +64,7 @@ import org.firstinspires.ftc.team417.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
-import org.firstinspires.ftc.team417.roadrunner.tuning.LooneyTuner;
+import org.firstinspires.ftc.team417.LooneyTune;
 import org.firstinspires.inspection.InspectionState;
 
 import java.util.Arrays;
@@ -85,11 +85,12 @@ public final class HolonomicDrive {
             maxAngAccel = Math.PI;
 
             if (isDevBot) {
+                // Your DevBot Looney Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
-                inPerTick = 1;
-                lateralInPerTick = 0;
+                inPerTick = 1.0;
+                lateralInPerTick = 1.0;
                 trackWidthTicks = 0;
 
                 kS = 0;
@@ -110,6 +111,7 @@ public final class HolonomicDrive {
                 otos.angularScalar = 0;
 
             } else {
+                // Your competition robot Looney Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
@@ -127,6 +129,12 @@ public final class HolonomicDrive {
                 lateralVelGain = 0.0;
                 headingGain = 0.0;
                 headingVelGain = 0.0;
+
+                otos.offset.x = 0;
+                otos.offset.y = 0;
+                otos.offset.h = Math.toRadians(0);
+                otos.linearScalar = 0;
+                otos.angularScalar = 0;
             }
         }
 
@@ -198,8 +206,8 @@ public final class HolonomicDrive {
     public LazyImu lazyImu;
 
     public Localizer localizer;
-    public Pose2d pose; // Actual pose
-    public Pose2d targetPose; // Target pose
+    public Pose2d pose; // Current actual pose
+    public Pose2d targetPose; // Target pose when actively traversing a trajectory
     public SparkFunOTOS opticalTracker = null; // Can be null which means no optical tracking sensor
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
@@ -219,10 +227,6 @@ public final class HolonomicDrive {
 
         public DriveLocalizer() {
             imu = lazyImu.get();
-            configure();
-        }
-
-        void configure() { // @@@ Revert this?
             leftFront = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftFront));
             leftBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.leftBack));
             rightBack = new OverflowEncoder(new RawEncoder(HolonomicDrive.this.rightBack));
@@ -323,7 +327,7 @@ public final class HolonomicDrive {
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
 
         // Now that configuration is complete, verify the parameters:
-        LooneyTuner.verifyCodeMatchesTuneResults(this, telemetry, gamepad);
+        LooneyTune.verifyCodeMatchesTuneResults(this, telemetry, gamepad);
     }
 
     // This is where you configure Road Runner to work with your hardware:
@@ -331,7 +335,7 @@ public final class HolonomicDrive {
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         if (isDevBot) {
-            opticalTracker = hardwareMap.get(SparkFunOTOS.class, "optical");
+            opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
             initializeOpticalTracker();
 
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
@@ -345,14 +349,12 @@ public final class HolonomicDrive {
             // TODO: Create the optical tracking object:
             //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
 
-            leftFront = hardwareMap.get(DcMotorEx.class, "???");
-            leftBack = hardwareMap.get(DcMotorEx.class, "???");
-            rightBack = hardwareMap.get(DcMotorEx.class, "???");
-            rightFront = hardwareMap.get(DcMotorEx.class, "???");
+            leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+            leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+            rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+            rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
             // TODO: reverse motor directions if needed
-            //   leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
-
             leftFront.setDirection(DcMotorEx.Direction.REVERSE);
             leftBack.setDirection(DcMotorEx.Direction.REVERSE);
         }
@@ -798,15 +800,10 @@ public final class HolonomicDrive {
             // if we'll actually need it - i.e., if using non-zero velocity gains:
             SparkFunOTOS.Pose2D position = new SparkFunOTOS.Pose2D(0, 0, 0);
             SparkFunOTOS.Pose2D velocity = new SparkFunOTOS.Pose2D(0, 0, 0);
-            if ((PARAMS.axialVelGain == 0) && (PARAMS.lateralVelGain == 0) && (PARAMS.headingVelGain == 0)) {
-                position = opticalTracker.getPosition();
-            } else {
-                SparkFunOTOS.Pose2D acceleration = new SparkFunOTOS.Pose2D(0, 0, 0);
+            SparkFunOTOS.Pose2D acceleration = new SparkFunOTOS.Pose2D(0, 0, 0);
 
-                // Note that this single call is faster than separate calls to getPosition()
-                // and getVelocity(), even if we don't use the acceleration:
-                opticalTracker.getPosVelAcc(position, velocity, acceleration);
-            }
+            // This single call is faster than separate calls to getPosition() and getVelocity():
+            opticalTracker.getPosVelAcc(position, velocity, acceleration);
 
             // Road Runner requires the pose to be field-relative while the velocity has to be
             // robot-relative, but the optical tracking sensor reports everything as field-
@@ -896,6 +893,9 @@ public final class HolonomicDrive {
         this.pose = pose;
         this.targetPose = pose;
 
+        // Clear the history as it's no longer relevant:
+        poseHistory.clear();
+
         // Set the pose on the optical tracking sensor:
         if (opticalTracker != null) {
             opticalTracker.setPosition(new SparkFunOTOS.Pose2D(
@@ -955,7 +955,8 @@ public final class HolonomicDrive {
     }
 
     // Create a new telemetry packet to draw stuff on the FTC Dashboard field.
-    public static TelemetryPacket getTelemetryPacket() {
+    public static TelemetryPacket getTelemetryPacket() { return getTelemetryPacket(true); }
+    public static TelemetryPacket getTelemetryPacket(boolean showField) {
         TelemetryPacket packet = new TelemetryPacket();
 
         // Prepare the packet for drawing.
@@ -966,9 +967,21 @@ public final class HolonomicDrive {
         // Then draw the grid on top and finally set the transform to rotate all subsequent
         // rendering.
         Canvas canvas = packet.fieldOverlay();
-        canvas.drawImage("/dash/centerstage.webp", 0, 0, 144, 144, Math.toRadians(90), 0, 144, true);
+        if (showField) {
+            canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144,
+                    Math.toRadians(90), 0, 144, true);
+        } else {
+            canvas.setFill("#000000");
+            canvas.fillRect(-72, -72, 144, 144);
+        }
         canvas.drawGrid(0, 0, 144, 144, 7, 7);
+
         canvas.setRotation(Math.toRadians(-90));
+        // Fade field and grid to white by drawing transparent white over it:
+        canvas.setAlpha(0.8);
+        canvas.setFill("#ffffff");
+        canvas.fillRect(-72, -72, 144, 144);
+        canvas.setAlpha(1.0);
 
         return packet;
     }
@@ -976,5 +989,10 @@ public final class HolonomicDrive {
     // When done with an FTC Dashboard telemetry packet, send it!
     public static void sendTelemetryPacket(TelemetryPacket packet) {
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
+    }
+
+    // Remove any variables that had been 'put' to the TelemetryPacket from the Dashboard view:
+    public static void clearDashboardTelemetry() {
+        FtcDashboard.getInstance().clearTelemetry();
     }
 }

@@ -44,12 +44,10 @@ repositories {
 dependencies {
     implementation project(':FtcRobotController')
     implementation project(path: ':WilyWorks')
-    annotationProcessor files('lib/OpModeAnnotationProcessor.jar')
 
     implementation "com.acmerobotics.roadrunner:ftc:0.1.13"
     implementation "com.acmerobotics.roadrunner:core:1.0.0"
     implementation "com.acmerobotics.roadrunner:actions:1.0.0"
-    implementation "com.acmerobotics.dashboard:dashboard:0.4.14"
+    implementation "com.acmerobotics.dashboard:dashboard:0.4.16"
     implementation 'org.team11260:fast-load:0.1.2'
 }
-

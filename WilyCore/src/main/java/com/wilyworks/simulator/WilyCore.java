@@ -267,8 +267,10 @@ class Field {
         this.simulation = simulation;
         ClassLoader classLoader = currentThread().getContextClassLoader();
 
-        InputStream compassStream = classLoader.getResourceAsStream("background/misc/compass-rose-white-text.png");
-        InputStream fieldStream = classLoader.getResourceAsStream("background/season-2023-centerstage/field-2023-juice-dark.png");
+        InputStream compassStream = classLoader.getResourceAsStream(
+                "background/misc/compass-rose-white-text.png");
+        InputStream fieldStream = classLoader.getResourceAsStream(
+                "background/season-2024-intothedeep/field-2024-juice-dark.png");
 
         try {
             if (compassStream != null) {
@@ -371,7 +373,7 @@ class Field {
         AffineTransform oldTransform = setFieldTransform(g);
         renderRobot(g);
         if (FtcDashboard.fieldOverlay != null)
-            FtcDashboard.fieldOverlay.renderAndClear(g);
+            FtcDashboard.fieldOverlay.render(g);
         g.setTransform(oldTransform);
     }
 
@@ -430,7 +432,6 @@ public class WilyCore {
 
     private static boolean simulationUpdated; // True if WilyCore.update() has been called since
     private static double lastUpdateWallClockTime = nanoTime() * 1e-9; // Clock time since last update() call, in seconds
-    private static double lastRenderTime = 0; // Time of last render() call, in seconds
     private static double elapsedTime = 0; // Elapsed time of simulation, in seconds
 
     // Time, in seconds, that have elapsed in the simulation (which can be different from the
@@ -458,11 +459,6 @@ public class WilyCore {
     // Render the field during steady state:
     static public void render() { render(false); }
     static public void render(boolean startScreenOverlay) {
-        // Don't update the screen at more than 30 fps while waiting for the Start button to press:
-        if ((status.state == State.INITIALIZED) && (time() - lastRenderTime < 0.030))
-            return;
-        lastRenderTime = time();
-
         // All Graphics objects can be cast to Graphics2D:
         Graphics2D g = (Graphics2D) dashboardCanvas.getBufferStrategy().getDrawGraphics();
         g.clearRect(0, 0, dashboardCanvas.getWidth(), dashboardCanvas.getHeight());
@@ -491,7 +487,7 @@ public class WilyCore {
         simulation.advance(deltaT);
 
         // Render everything:
-        render(false);
+        render();
 
         simulationUpdated = true;
     }
