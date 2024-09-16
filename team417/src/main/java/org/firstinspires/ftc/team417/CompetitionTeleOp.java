@@ -40,6 +40,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             drive.updatePoseEstimate();
 
             telemetry.addLine("Running 417's TeleOp!");
+            telemetry.addLine("Kinematic type is " + kinematicType);
             telemetry.update();
 
             TelemetryPacket packet = HolonomicDrive.getTelemetryPacket();
