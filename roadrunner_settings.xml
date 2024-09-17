@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
-<properties>
-<entry key="gui">{"SETTINGS_FILE":"roadrunner_settings.xml","robotName":"DevBot","type":"OPTICAL","opticalAngularScalar":1.0,"opticalLinearScalar":960.0,"opticalOffset":{"x":0.0,"y":0.0,"h":-0.0}}</entry>
-</properties>
