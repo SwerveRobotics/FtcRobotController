@@ -339,7 +339,7 @@ class Gui {
         StringBuilder output = new StringBuilder();
 
         // Add a header with submenu names:
-        output.append("<h2>");
+        output.append("<big><big>");
         if (menuStack.size() <= 1) {
             output.append("Dpad to navigate, "+LooneyTune.A+" to select");
         } else {
@@ -350,7 +350,7 @@ class Gui {
             }
             output.append(", "+LooneyTune.A+" to select, "+LooneyTune.B+" to exit");
         }
-        output.append("</h2>");
+        output.append("</big></big><br><small><small><br></small></small>"); // Leave half a line blank
 
         // Process dpad up and down with auto-repeat and clamping:
         MenuWidget menu = (MenuWidget) menuStack.get(menuStack.size() - 1);
@@ -1147,7 +1147,7 @@ public class LooneyTune extends LinearOpMode {
                 acceptParameters(newSettings);
 
                 // We changed 'trackWidthTicks' so recreate the kinematics object:
-                drive.recreateKinematics();
+                drive.initializeKinematics();
             }
         }
     }
@@ -1547,7 +1547,7 @@ public class LooneyTune extends LinearOpMode {
             MecanumDrive.PARAMS = testParameters.params;
 
             // Now recreate the Kinematics object based on the new settings:
-            drive.recreateKinematics();
+            drive.initializeKinematics();
 
             // Accelerate and decelerate slowly so we don't overshoot:
             ProfileAccelConstraint accelConstraint = new ProfileAccelConstraint(-10, 15);
@@ -1598,7 +1598,7 @@ public class LooneyTune extends LinearOpMode {
                         // Adopt the new settings:
                         testParameters.params.lateralInPerTick = newLateralInPerTick;
                         MecanumDrive.PARAMS = testParameters.params;
-                        drive.recreateKinematics();
+                        drive.initializeKinematics();
                     }
                 }
 
@@ -1620,7 +1620,7 @@ public class LooneyTune extends LinearOpMode {
 
             // Restore the kinematics:
             MecanumDrive.PARAMS = currentParameters.params;
-            drive.recreateKinematics();
+            drive.initializeKinematics();
         }
     }
 
@@ -2236,7 +2236,7 @@ public class LooneyTune extends LinearOpMode {
                 ()->drive.PARAMS.otos.linearScalar != 0 && drive.PARAMS.kS != 0 && drive.PARAMS.kV != 0);
             gui.addRunnable("Lateral tuner (lateralInPerTick)", this::lateralTuner,
                     ()->drive.PARAMS.otos.linearScalar != 0 && drive.PARAMS.kS != 0 && drive.PARAMS.kV != 0);
-            gui.addRunnable("Spin tuner (OTOS angularScalar, offset)", this::spinTuner,
+            gui.addRunnable("Spin tuner (trackWidthTicks, OTOS angularScalar, offset)", this::spinTuner,
                     ()->drive.PARAMS.otos.linearScalar != 0 && drive.PARAMS.kS != 0 && drive.PARAMS.kV != 0);
             gui.addRunnable("Interactive PiD tuner (axialGain)", ()->interactivePidTuner(PidTunerType.AXIAL),
                 ()->drive.PARAMS.otos.linearScalar != 0 && drive.PARAMS.kS != 0 && drive.PARAMS.kV != 0);

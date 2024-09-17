@@ -185,16 +185,10 @@ public final class MecanumDrive {
 
     public static Params PARAMS = new Params();
 
-    public MecanumKinematics kinematics = new MecanumKinematics(
-            PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
-
+    public MecanumKinematics kinematics; // Initialized by initializeKinematics()
+    public VelConstraint defaultVelConstraint; // Initialized by initializeKinematics()
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
             PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
-    public final VelConstraint defaultVelConstraint =
-            new MinVelConstraint(Arrays.asList(
-                    kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
-                    new AngularVelConstraint(PARAMS.maxAngVel)
-            ));
     public final AccelConstraint defaultAccelConstraint =
             new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccel);
 
@@ -299,7 +293,10 @@ public final class MecanumDrive {
         }
     }
 
+    // Constructor for the Mecanum Drive object.
     public MecanumDrive(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
+        initializeKinematics();
+
         this.pose = pose;
 
         WilyWorks.setStartPose(pose, new PoseVelocity2d(new Vector2d(0, 0), 0));
@@ -864,11 +861,16 @@ public final class MecanumDrive {
         );
     }
 
-    // Recreate the kinematics object using the current settings:
-    public void recreateKinematics() {
+    // Create the kinematics object and any dependents from the current settings:
+    public void initializeKinematics() {
         kinematics = new MecanumKinematics(
                 PARAMS.inPerTick * PARAMS.trackWidthTicks,
                 PARAMS.inPerTick / PARAMS.lateralInPerTick);
+        defaultVelConstraint =
+                new MinVelConstraint(Arrays.asList(
+                        kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
+                        new AngularVelConstraint(PARAMS.maxAngVel)
+                ));
     }
 
     /** @noinspection unused*/ // Rotate a vector by a prescribed angle:
