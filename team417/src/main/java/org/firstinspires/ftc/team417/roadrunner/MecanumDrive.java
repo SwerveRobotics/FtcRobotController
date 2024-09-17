@@ -683,7 +683,7 @@ public final class MecanumDrive {
     }
 
     public final class TurnAction implements Action {
-        private final TimeTurn turn;
+        public final TimeTurn turn;
 
         private double beginTs = -1;
 

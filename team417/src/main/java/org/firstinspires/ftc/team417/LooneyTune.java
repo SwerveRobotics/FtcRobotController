@@ -27,10 +27,14 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.MotorFeedforward;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Pose2dDual;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
+import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.TimeProfile;
+import com.acmerobotics.roadrunner.TimeTrajectory;
+import com.acmerobotics.roadrunner.TimeTurn;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.TurnConstraints;
 import com.acmerobotics.roadrunner.Vector2d;
@@ -56,6 +60,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -568,6 +573,97 @@ public class LooneyTune extends LinearOpMode {
     enum Prompt { SAVE, EXIT, CANCEL }
 
     /**
+     * Class for previewing a trajectory action on Road Runner.
+     */
+    static class TrajectoryPreview {
+        final double PAUSE_TIME = 1.0; // Pause this many seconds between preview cycles
+        Action sequentialAction;
+        List<Action> actions = new ArrayList<>();
+        Iterator<Action> actionIterator;
+        Action currentAction = null; // Current action in the actions list
+        double startTime = time();
+        TrajectoryPreview(Action action) {
+            sequentialAction = action;
+            if (action instanceof SequentialAction) {
+                SequentialAction sequential = (SequentialAction) action;
+
+                // Get the SequentialAction 'actions' field even though it's marked private:
+                try {
+                    Field field = SequentialAction.class.getDeclaredField("actions");
+                    field.setAccessible(true);
+                    //noinspection unchecked
+                    actions = (List<Action>) field.get(sequential);
+                } catch (NoSuchFieldException|IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+                if (actions != null) {
+                    actionIterator = actions.iterator();
+                    currentAction = actionIterator.next();
+                }
+            }
+        }
+
+        // Get a trajectory action's target pose at the current time. Return null if past the
+        // the end of the entire sequential action's duration:
+        Pose2d getTargetPose() {
+            while (true) {
+                double deltaT = time() - startTime;
+                if (currentAction instanceof MecanumDrive.TurnAction) {
+                    TimeTurn turn = ((MecanumDrive.TurnAction) currentAction).turn;
+                    if (deltaT > turn.duration) {
+                        if (!actionIterator.hasNext()) {
+                            actionIterator = actions.iterator();
+                            currentAction = actionIterator.next();
+                            return null;
+                        }
+                        currentAction = actionIterator.next();
+                        startTime = time();
+                        continue; // ====>
+                    }
+                    Pose2dDual<Time> txWorldTarget = turn.get(deltaT);
+                    return txWorldTarget.value();
+                } else if (currentAction instanceof MecanumDrive.FollowTrajectoryAction) {
+                    TimeTrajectory timeTrajectory = ((MecanumDrive.FollowTrajectoryAction) currentAction).timeTrajectory;
+                    if (deltaT > timeTrajectory.duration) {
+                        if (!actionIterator.hasNext()) {
+                            actionIterator = actions.iterator();
+                            currentAction = actionIterator.next();
+                            return null;
+                        }
+                        currentAction = actionIterator.next();
+                        startTime = time();
+                        continue; // ===>
+                    }
+                    Pose2dDual<Time> txWorldTarget = timeTrajectory.get(deltaT);
+                    return txWorldTarget.value();
+                } else {
+                    return null;
+                }
+            }
+        }
+
+        // Update the preview
+        void update() {
+            if (currentAction != null) {
+                TelemetryPacket telemetry = MecanumDrive.getTelemetryPacket(false);
+                Canvas canvas = telemetry.fieldOverlay();
+                canvas.fillText("Preview", -24, 60, "", 0, false);
+                sequentialAction.preview(canvas);
+                canvas.setStroke("#4CAF50");
+                double time = time();
+                if (time > startTime) {
+                    Pose2d pose = getTargetPose();
+                    if (pose == null)
+                        startTime = time + PAUSE_TIME; // Start new cycle after a delay
+                    else
+                        Drawing.drawRobot(canvas, pose);
+                }
+                MecanumDrive.sendTelemetryPacket(telemetry);
+            }
+        }
+    }
+
+    /**
      * Class that encapsulates the dialogs framework.
      */
     class Dialogs {
@@ -577,12 +673,15 @@ public class LooneyTune extends LinearOpMode {
             telemetryUpdate();
         }
 
-        // Show a message and wait for an A or B button press. If accept (A) is pressed, return
-        // success. If cancel (B) is pressed, return failure. The robot CAN be driven while
-        // waiting.
-        boolean drivePrompt(String message) {
+        // Show a message, preview an optional trajectory, drive the robot, and wait for an A or
+        // B button press. If accept (A) is pressed, return success. If cancel (B) is pressed,
+        // return failure. The robot CAN be driven while waiting.
+        boolean drivePrompt(String message) { return drivePrompt(message, null); }
+        boolean drivePrompt(String message, Action trajectory) {
+            TrajectoryPreview preview = new TrajectoryPreview(trajectory);
             boolean success = false;
             while (opModeIsActive() && !gui.cancel()) {
+                preview.update();
                 message(message);
                 if (gui.accept()) {
                     success = true;
@@ -2108,13 +2207,7 @@ public class LooneyTune extends LinearOpMode {
     void runTrajectory(Action action) { runTrajectory(action, null);}
     void runTrajectory(Action action, String promptMessage) {
         configureToDrive(true); // Do use MecanumDrive
-
-        // Show a preview on FTC Dashboard:
-        drive.setPose(zeroPose);
-        TelemetryPacket telemetry = MecanumDrive.getTelemetryPacket(false);
-        action.preview(telemetry.fieldOverlay());
-        Drawing.drawRobot(telemetry.fieldOverlay(), zeroPose);
-        MecanumDrive.sendTelemetryPacket(telemetry);
+        TrajectoryPreview preview = new TrajectoryPreview(action);
 
         boolean useOdometry = true;
         while (opModeIsActive() && !gui.cancel()) {
@@ -2130,6 +2223,7 @@ public class LooneyTune extends LinearOpMode {
 
             dialogs.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, left bumper to toggle odometry");
             updateGamepadDriving();
+            preview.update();
 
             if (gui.leftBumper()) {
                 useOdometry = !useOdometry;
