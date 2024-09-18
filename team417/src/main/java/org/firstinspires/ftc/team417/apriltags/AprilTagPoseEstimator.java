@@ -1,6 +1,5 @@
 package org.firstinspires.ftc.team417.apriltags;
 
-import static org.firstinspires.ftc.team417.roadrunner.MecanumDrive.isDevBot;
 import static org.firstinspires.ftc.team417.utilities.FTCMath.isEpsilonEquals;
 
 import android.util.Size;
@@ -13,6 +12,8 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.BuiltinCameraDirection;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
+import org.firstinspires.ftc.team417.DriveParameters;
+import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.utilities.AprilTagInfo;
 import org.firstinspires.ftc.team417.utilities.InfoWithDetection;
 import org.firstinspires.ftc.vision.VisionPortal;
@@ -101,7 +102,7 @@ public class AprilTagPoseEstimator {
         }
 
         // Sets the status light for latency testing, etc.
-        if (isDevBot) {
+        if (MecanumDrive.driveParameters == DriveParameters.DEVBOT_MECANUM) {
             statusLight = myHardwareMap.get(DigitalChannel.class, "green");
             statusLight.setMode(DigitalChannel.Mode.OUTPUT);
         }
@@ -146,7 +147,7 @@ public class AprilTagPoseEstimator {
         // Declaring variables
         double d, beta, gamma, relativeX, relativeY, absoluteX, absoluteY, absoluteTheta;
 
-        if (isDevBot) {
+        if (MecanumDrive.driveParameters == DriveParameters.DEVBOT_MECANUM) {
             // d - absolute distance from April-tag to robot
             d = Math.hypot(detection.ftcPose.x + Constants.DEVBOT_CAMERA_TO_CENTER_X, detection.ftcPose.y + Constants.DEVBOT_CAMERA_TO_CENTER_Y);
 

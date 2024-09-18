@@ -18,8 +18,6 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  */
 @TeleOp(name="TeleOp", group="Competition")
 public class CompetitionTeleOp extends BaseOpMode {
-    public final KinematicType kinematicType = KinematicType.MECANUM;
-
     @Override
     public void runOpMode() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());

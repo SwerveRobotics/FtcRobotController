@@ -9,9 +9,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
-import org.firstinspires.ftc.team417.roadrunner.KinematicType;
 
 /**
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
@@ -19,8 +17,6 @@ import org.firstinspires.ftc.team417.roadrunner.KinematicType;
  */
 @Autonomous(name="Auto", group="Competition", preselectTeleOp="CompetitionTeleOp")
 public class CompetitionAuto extends BaseOpMode {
-    public static final KinematicType kinematicType = KinematicType.MECANUM;
-
     @Override
     public void runOpMode() {
         // Send all telemetry data to both the Driver Hub and FTC Dashboard:

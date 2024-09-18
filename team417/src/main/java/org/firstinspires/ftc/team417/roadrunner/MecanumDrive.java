@@ -60,11 +60,12 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.team417.DriveParameters;
+import org.firstinspires.ftc.team417.LooneyTune;
 import org.firstinspires.ftc.team417.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
-import org.firstinspires.ftc.team417.LooneyTune;
 import org.firstinspires.inspection.InspectionState;
 
 import java.util.Arrays;
@@ -84,57 +85,87 @@ public final class MecanumDrive {
             maxAngVel = Math.PI;
             maxAngAccel = Math.PI;
 
-            if (isDevBot) {
-                // Your DevBot Looney Tune configuration is here:
-                logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-                usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+            switch (driveParameters) {
+                case DEVBOT_MECANUM:
+                    // Your DevBot Looney Tune configuration is here:
+                    logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
+                    usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
-                inPerTick = 1.0;
-                lateralInPerTick = 1.0;
-                trackWidthTicks = 0;
+                    inPerTick = 1.0;
+                    lateralInPerTick = 1.0;
+                    trackWidthTicks = 0;
 
-                kS = 0;
-                kV = 0;
-                kA = 0;
+                    kS = 0.455; // Was 0
+                    kV = 0.187; // Was 0
+                    kA = 0;
 
-                axialGain = 0;
-                axialVelGain = 0;
-                lateralGain = 0;
-                lateralVelGain = 0;
-                headingGain = 0;
-                headingVelGain = 0;
+                    axialGain = 0;
+                    axialVelGain = 0;
+                    lateralGain = 0;
+                    lateralVelGain = 0;
+                    headingGain = 0;
+                    headingVelGain = 0;
 
-                otos.offset.x = 0;
-                otos.offset.y = 0;
-                otos.offset.h = Math.toRadians(0);
-                otos.linearScalar = 0;
-                otos.angularScalar = 0;
+                    otos.offset.x = 0;
+                    otos.offset.y = 0;
+                    otos.offset.h = Math.toRadians(-88.29); // Was Math.toRadians(0)
+                    otos.linearScalar = 1.058; // Was 0
+                    otos.angularScalar = 0;
+                    break;
 
-            } else {
-                // Your competition robot Looney Tune configuration is here:
-                logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-                usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+                case DEVBOT_X:
+                    // Your competition robot Looney Tune configuration is here:
+                    logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
+                    usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
-                inPerTick = 1;
-                lateralInPerTick = inPerTick;
-                trackWidthTicks = 0;
+                    inPerTick = 1;
+                    lateralInPerTick = inPerTick;
+                    trackWidthTicks = 0;
 
-                kS = 0;
-                kV = 0;
-                kA = 0;
+                    kS = 0;
+                    kV = 0;
+                    kA = 0;
 
-                axialGain = 0.0;
-                axialVelGain = 0.0;
-                lateralGain = 0.0;
-                lateralVelGain = 0.0;
-                headingGain = 0.0;
-                headingVelGain = 0.0;
+                    axialGain = 0.0;
+                    axialVelGain = 0.0;
+                    lateralGain = 0.0;
+                    lateralVelGain = 0.0;
+                    headingGain = 0.0;
+                    headingVelGain = 0.0;
 
-                otos.offset.x = 0;
-                otos.offset.y = 0;
-                otos.offset.h = Math.toRadians(0);
-                otos.linearScalar = 0;
-                otos.angularScalar = 0;
+                    otos.offset.x = 0;
+                    otos.offset.y = 0;
+                    otos.offset.h = Math.toRadians(0);
+                    otos.linearScalar = 0;
+                    otos.angularScalar = 0;
+                    break;
+
+                case COMPETITION_ROBOT:
+                    // Your competition robot Looney Tune configuration is here:
+                    logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
+                    usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+
+                    inPerTick = 1;
+                    lateralInPerTick = inPerTick;
+                    trackWidthTicks = 0;
+
+                    kS = 0;
+                    kV = 0;
+                    kA = 0;
+
+                    axialGain = 0.0;
+                    axialVelGain = 0.0;
+                    lateralGain = 0.0;
+                    lateralVelGain = 0.0;
+                    headingGain = 0.0;
+                    headingVelGain = 0.0;
+
+                    otos.offset.x = 0;
+                    otos.offset.y = 0;
+                    otos.offset.h = Math.toRadians(0);
+                    otos.linearScalar = 0;
+                    otos.angularScalar = 0;
+                    break;
             }
         }
 
@@ -182,7 +213,19 @@ public final class MecanumDrive {
         return inspection.deviceName;
     }
 
-    public static boolean isDevBot = getBotName().equals("DevBot");
+    private static DriveParameters getDriveParameters() {
+        switch (getBotName()) {
+            case "DevBot":
+                return DriveParameters.DEVBOT_MECANUM;
+            case "DevBotX":
+                return DriveParameters.DEVBOT_X;
+            case "417-RC":
+                return DriveParameters.COMPETITION_ROBOT;
+        }
+        throw new IllegalArgumentException("Not one of 417's robots");
+    }
+
+    public static DriveParameters driveParameters = getDriveParameters();
 
     public static Params PARAMS = new Params();
 
@@ -334,29 +377,46 @@ public final class MecanumDrive {
     public void configure(HardwareMap hardwareMap) {
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
-        if (isDevBot) {
-            opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
-            initializeOpticalTracker();
+        switch (driveParameters) {
+            case DEVBOT_MECANUM:
+                opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+                initializeOpticalTracker();
 
-            leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-            leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
-            rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-            rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+                leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+                leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+                rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+                rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
-            leftFront.setDirection(DcMotorEx.Direction.REVERSE);
-            leftBack.setDirection(DcMotorEx.Direction.REVERSE);
-        } else {
-            // TODO: Create the optical tracking object:
-            //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
+                leftFront.setDirection(DcMotorEx.Direction.REVERSE);
+                leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+                break;
 
-            leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-            leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
-            rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-            rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+            case DEVBOT_X:
+                opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+                initializeOpticalTracker();
 
-            // TODO: reverse motor directions if needed
-            leftFront.setDirection(DcMotorEx.Direction.REVERSE);
-            leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+                leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+                leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+                rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+                rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+
+                leftFront.setDirection(DcMotorEx.Direction.REVERSE);
+                leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+                break;
+
+            case COMPETITION_ROBOT:
+                // TODO: Create the optical tracking object:
+                //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
+
+                leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+                leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+                rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+                rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+
+                // TODO: reverse motor directions if needed
+                leftFront.setDirection(DcMotorEx.Direction.REVERSE);
+                leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+                break;
         }
 
         // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
@@ -955,7 +1015,10 @@ public final class MecanumDrive {
     }
 
     // Create a new telemetry packet to draw stuff on the FTC Dashboard field.
-    public static TelemetryPacket getTelemetryPacket() { return getTelemetryPacket(true); }
+    public static TelemetryPacket getTelemetryPacket() {
+        return getTelemetryPacket(true);
+    }
+
     public static TelemetryPacket getTelemetryPacket(boolean showField) {
         TelemetryPacket packet = new TelemetryPacket();
 
