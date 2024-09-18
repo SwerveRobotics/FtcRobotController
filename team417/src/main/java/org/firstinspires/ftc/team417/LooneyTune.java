@@ -573,16 +573,16 @@ public class LooneyTune extends LinearOpMode {
     enum Prompt { SAVE, EXIT, CANCEL }
 
     /**
-     * Class for previewing a trajectory action on Road Runner.
+     * Class for doing an animated preview of a Road Runner trajectory action.
      */
-    static class TrajectoryPreview {
+    static class TrajectoryPreviewer {
         final double PAUSE_TIME = 1.0; // Pause this many seconds between preview cycles
         Action sequentialAction;
         List<Action> actions = new ArrayList<>();
         Iterator<Action> actionIterator;
         Action currentAction = null; // Current action in the actions list
         double startTime = time();
-        TrajectoryPreview(Action action) {
+        TrajectoryPreviewer(Action action) {
             sequentialAction = action;
             if (action instanceof SequentialAction) {
                 SequentialAction sequential = (SequentialAction) action;
@@ -647,9 +647,9 @@ public class LooneyTune extends LinearOpMode {
             if (currentAction != null) {
                 TelemetryPacket telemetry = MecanumDrive.getTelemetryPacket(false);
                 Canvas canvas = telemetry.fieldOverlay();
-                canvas.fillText("Preview", -24, 60, "", 0, false);
+                canvas.fillText("Preview", -19, 5, "", 0, false);
                 sequentialAction.preview(canvas);
-                canvas.setStroke("#4CAF50");
+                canvas.setStroke("#c0c0c0"); // Gray
                 double time = time();
                 if (time > startTime) {
                     Pose2d pose = getTargetPose();
@@ -676,12 +676,12 @@ public class LooneyTune extends LinearOpMode {
         // Show a message, preview an optional trajectory, drive the robot, and wait for an A or
         // B button press. If accept (A) is pressed, return success. If cancel (B) is pressed,
         // return failure. The robot CAN be driven while waiting.
-        boolean drivePrompt(String message) { return drivePrompt(message, null); }
-        boolean drivePrompt(String message, Action trajectory) {
-            TrajectoryPreview preview = new TrajectoryPreview(trajectory);
+        boolean drivePrompt(String message) { return drivePrompt(null, message); }
+        boolean drivePrompt(Action trajectory, String message) {
+            TrajectoryPreviewer previewer = new TrajectoryPreviewer(trajectory);
             boolean success = false;
             while (opModeIsActive() && !gui.cancel()) {
-                preview.update();
+                previewer.update();
                 message(message);
                 if (gui.accept()) {
                     success = true;
@@ -826,7 +826,11 @@ public class LooneyTune extends LinearOpMode {
         if (oldLinearScalar == 0)
             oldLinearScalar = 1.0; // Can happen on the very first run, stock Road Runner sets to zero
 
-        if (dialogs.drivePrompt("Tune OTOS's <b>linearScalar</b> and <b>offset heading</b> by pushing the robot forward in a straight line "
+        Action preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, -60, 0))
+                .lineToX(DISTANCE/2.0)
+                .build();
+        if (dialogs.drivePrompt(preview,
+                "Tune OTOS's <b>linearScalar</b> and <b>offset heading</b> by pushing the robot forward in a straight line "
                 + "along a field wall for exactly "+testDistance(DISTANCE)+". To start, align the robot by hand "
                 + "at its starting point along a wall. "
                 + "\n\nPress "+A+" when in position, "+B+" to cancel.")) {
@@ -1026,6 +1030,19 @@ public class LooneyTune extends LinearOpMode {
         return new Circle(centerX, centerY, radius);
     }
 
+    // Calculate the center of the cluster of points via a simple average:
+    static Point clusterCenter(List<Point> points) {
+        int size = points.size();
+        if (size == 0)
+            return new Point(0, 0);
+
+        Point sum = new Point(0, 0);
+        for (Point point: points) {
+            sum = sum.add(point);
+        }
+        return new Point(sum.x / size, sum.y / size);
+    }
+
     // Persisted state for initiateSparkFunRotation and updateSparkFunRotation:
     double previousSparkFunHeading = 0;
     double accumulatedSparkFunRotation = 0;
@@ -1089,7 +1106,12 @@ public class LooneyTune extends LinearOpMode {
         drive.opticalTracker.setOffset(new Pose2D(0, 0, 0));
         drive.opticalTracker.setAngularScalar(0);
 
-        if (dialogs.drivePrompt("Tune <b>trackWidthTicks</b>, <b>otos.angularScalar</b> and <b>otos.offset position</b>. Position the robot against a wall, then drive "
+        Action preview = drive.actionBuilder(new Pose2d(0, -60, 0))
+                .strafeTo(new Vector2d(0, -48))
+                .turn(2*2*Math.PI)
+                .strafeTo(new Vector2d(0, -60))
+                .build();
+        if (dialogs.drivePrompt(preview, "Tune <b>trackWidthTicks</b>, <b>otos.angularScalar</b> and <b>otos.offset position</b>. Position the robot against a wall, then drive "
                 + String.format("it out so that the robot can rotate in place %.1f times, then drive ", REVOLUTION_COUNT)
                 + "the robot against the wall again."
                 + "\n\nFirst, carefully drive the robot to a wall and align it so that "
@@ -1176,6 +1198,7 @@ public class LooneyTune extends LinearOpMode {
                         + "place and orientation as it started."
                         + "\n\nDrive the robot to its wall position, press "+A+" when done, "+B+" to cancel")) {
 
+                    Point clusterCenter = clusterCenter(points);
                     Circle circle = fitCircle(points, farthestPoint.x / 2, farthestPoint.y / 2);
 
                     // Draw results with the fitted circle:
@@ -1188,7 +1211,7 @@ public class LooneyTune extends LinearOpMode {
 
                     double totalMeasuredRotation = getSparkFunRotation() - scalarStartRotation;
                     double distancePerRevolution = averageVelocity * (endTime - startTime) / REVOLUTION_COUNT;
-                    processSpinResults(circle, totalMeasuredRotation, distancePerRevolution);
+                    processSpinResults(clusterCenter, circle, totalMeasuredRotation, distancePerRevolution);
                 }
             }
         }
@@ -1198,7 +1221,7 @@ public class LooneyTune extends LinearOpMode {
     }
 
     // Process the spin results:
-    void processSpinResults(Circle center, double totalMeasuredRotation, double distancePerRevolution) {
+    void processSpinResults(Point clusterCenter, Circle center, double totalMeasuredRotation, double distancePerRevolution) {
         double totalMeasuredCircles = totalMeasuredRotation / (2 * Math.PI);
         double integerCircles = Math.round(totalMeasuredCircles);
         double angularScalar = integerCircles / totalMeasuredCircles;
@@ -1212,6 +1235,7 @@ public class LooneyTune extends LinearOpMode {
 
         // Undo the offset heading that the OTOS sensor automatically applies:
         Point rawOffset = new Point(center.x, center.y).rotate(-drive.PARAMS.otos.offset.h);
+        Point clusterOffset = new Point(clusterCenter.x, clusterCenter.y).rotate(-drive.PARAMS.otos.offset.h);
 
         // Our initial origin where we established (0, 0) at the start of every circle is much
         // less reliable than the best-fit circle center and radius because the former uses
@@ -1221,6 +1245,7 @@ public class LooneyTune extends LinearOpMode {
         Point offset = new Point(Math.cos(theta) * center.radius, Math.sin(theta) * center.radius);
 
         String results = String.format("Sensor thinks %.2f circles were completed.\n\n", totalMeasuredCircles);
+        results += String.format("Cluster center: (%.2f, %.2f)\n", clusterOffset.x, clusterOffset.y);
         results += String.format("Circle-fit position: (%.2f, %.2f), radius: %.2f\n", rawOffset.x, rawOffset.y, center.radius);
         results += String.format("Radius-corrected position: (%.2f, %.2f)\n", offset.x, offset.y);
         results += String.format("Angular scalar: %.4f\n", angularScalar);
@@ -1372,7 +1397,10 @@ public class LooneyTune extends LinearOpMode {
         final int DISTANCE = 72; // Test distance in inches
 
         configureToDrive(true); // Set the brakes
-        if (dialogs.drivePrompt("Tune <b>kS</b> and <b>kV</b>. "
+        Action preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, 0, 0))
+                .lineToX(DISTANCE/2.0, null, new ProfileAccelConstraint(-100, 10))
+                .build();
+        if (dialogs.drivePrompt(preview, "Tune <b>kS</b> and <b>kV</b>. "
                 + "The robot will drive forward and backward for up to " + testDistance(DISTANCE) + ". "
                 + "It will start slowly but get faster and faster in each direction. "
                 + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel.")) {
@@ -1518,7 +1546,8 @@ public class LooneyTune extends LinearOpMode {
         double totalRotation = 0; // Radians
         String lastSeenStatus = ""; // Most recently reported non-zero status from the OTOS
 
-        Pose2d baselinePose = null;
+        double baselineImu = 0; // IMU heading when the baseline was set
+        Pose2d baselinePose = null; // Position where the baseline was set
         while (opModeIsActive() && !gui.cancel()) {
             if (gui.leftBumper()) {
                 wheelDebugger();
@@ -1532,6 +1561,7 @@ public class LooneyTune extends LinearOpMode {
                 previousPose = startPose;
             }
             if (gui.yButton()) {
+                baselineImu = drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
                 baselinePose = drive.pose;
                 totalDistance = 0;
                 totalRotation = 0;
@@ -1591,19 +1621,20 @@ public class LooneyTune extends LinearOpMode {
             if (baselinePose != null) {
                 double dx = pose.position.x - baselinePose.position.x;
                 double dy = pose.position.y - baselinePose.position.y;
-                double dTheta = pose.heading.toDouble() - baselinePose.heading.toDouble();
+                double otosTheta = normalizeAngle(pose.heading.toDouble() - baselinePose.heading.toDouble());
+                double imuTheta = normalizeAngle(drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) - baselineImu);
 
                 message += "\nError analysis if back at the baseline position:\n\n"
-                    + String.format("&ensp;Offset: (%.2f\", %.2f\"), %.2f\u00b0\n", dx, dy, Math.toDegrees(dTheta));
+                    + String.format("&ensp;Offset: (%.2f\", %.2f\"), %.2f\u00b0, IMU: %.2f\u00b0\n",
+                        dx, dy, Math.toDegrees(otosTheta), Math.toDegrees(imuTheta));
 
                 if ((totalDistance != 0) && (totalRotation != 0)) {
                     double distanceError = Math.abs(dx) / totalDistance;
-                    double rotationError = Math.abs(dTheta) / totalRotation;
+                    double rotationError = Math.abs(otosTheta) / totalDistance;
                     message += String.format("&ensp;Distance error: %.2f%%\n", distanceError * 100);
-                    message += String.format("&ensp;Rotation error: %.2f%%\n", rotationError * 100);
+                    message += String.format("&ensp;Rotation error: %.3f\u00b0/inch\n", rotationError);
                 }
             }
-
 
             dialogs.message(message + "\nPress left bumper to debug the wheels, "+B+" to exit, "+X+" to reset the pose, "+Y+" to set the baseline pose.");
 
@@ -1633,7 +1664,11 @@ public class LooneyTune extends LinearOpMode {
         final int DISTANCE = 72; // Test distance in inches
         configureToDrive(true); // Do use MecanumDrive
 
-        if (dialogs.drivePrompt("Tune <b>lateralInPerTick</b>. The robot will strafe left and right for "
+        Action preview = drive.actionBuilder(new Pose2d(0, -DISTANCE/2.0, 0))
+                .strafeTo(new Vector2d(0, DISTANCE/2.0))
+                .strafeTo(new Vector2d(0, -DISTANCE/2.0))
+                .build();
+        if (dialogs.drivePrompt(preview, "Tune <b>lateralInPerTick</b>. The robot will strafe left and right for "
                 + testDistance(DISTANCE) + ". "
                 + "\n\nDrive the robot to position, press "+A+" to start, "+B+" to cancel.")) {
 
@@ -1740,7 +1775,11 @@ public class LooneyTune extends LinearOpMode {
         NumericInput vInput = new NumericInput(drive.PARAMS, "kV", -2, 3, 0.000001, 20);
         NumericInput aInput = new NumericInput(drive.PARAMS, "kA", -3, 4, 0, 1);
 
-        if (dialogs.drivePrompt("Tune <b>kV</b> and <b>kA</b> with FTC Dashboard. "
+        Action preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, 0, 0))
+                .lineToX(DISTANCE/2.0)
+                .lineToX(-DISTANCE/2.0)
+                .build();
+        if (dialogs.drivePrompt(preview, "Tune <b>kV</b> and <b>kA</b> with FTC Dashboard. "
                 + "The robot will drive forwards then backwards for " + testDistance(DISTANCE) + ". "
                 + "Follow <u><a href='https://learnroadrunner.com/feedforward-tuning.html#tuning'>LearnRoadRunner's guide</a></u>.\n\n"
                 + "Press "+A+" to start, "+B+" to cancel")) {
@@ -2047,25 +2086,38 @@ public class LooneyTune extends LinearOpMode {
         String description, gainName, velGainName;
 
         TrajectoryActionBuilder trajectory = drive.actionBuilder(zeroPose);
+        Action preview;
         if (type == PidTunerType.AXIAL) {
             description = "Tune the <b>axial gains</b>. The robot will drive forwards and then backwards " + testDistance(DISTANCE) + ". ";
             trajectory = trajectory.lineToX(DISTANCE).lineToX(0);
             gainName = "axialGain";
             velGainName = "axialVelGain";
+            preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, 0, 0))
+                    .lineToX(DISTANCE/2.0)
+                    .lineToX(-DISTANCE/2.0)
+                    .build();
 
         } else if (type == PidTunerType.LATERAL) {
             description = "Tune the <b>lateral gains</b>. The robot will strafe left and then right " + testDistance(DISTANCE) + ". ";
             trajectory = trajectory.strafeTo(new Vector2d(0, DISTANCE)).strafeTo(new Vector2d(0, 0));
             gainName = "lateralGain";
             velGainName = "lateralVelGain";
+            preview = drive.actionBuilder(new Pose2d(0, -DISTANCE/2.0, 0))
+                    .strafeTo(new Vector2d(0, DISTANCE/2.0))
+                    .strafeTo(new Vector2d(0, -DISTANCE/2.0))
+                    .build();
 
         } else {
-            description = "Tune the <b>heading gains</b>. The robot will rotate in place 180\u00b0 clockwise and then counterclockwise. "; // Degree symbol
+            description = "Tune the <b>heading gains</b>. The robot will rotate in place 180\u00b0 counterclockwise and then clockwise. "; // Degree symbol
             trajectory = trajectory.turn(Math.PI).turn(-Math.PI);
             gainName = "headingGain";
             velGainName = "headingVelGain";
+            preview = drive.actionBuilder(zeroPose)
+                    .turn(Math.PI)
+                    .turn(-Math.PI)
+                    .build();
         }
-        if (dialogs.drivePrompt(description + "\n\nPress "+A+" to start, "+B+" to cancel")) {
+        if (dialogs.drivePrompt(preview, description + "\n\nPress "+A+" to start, "+B+" to cancel")) {
 
             int inputIndex = 0;
             int queuedAButtons = 0;
@@ -2207,7 +2259,7 @@ public class LooneyTune extends LinearOpMode {
     void runTrajectory(Action action) { runTrajectory(action, null);}
     void runTrajectory(Action action, String promptMessage) {
         configureToDrive(true); // Do use MecanumDrive
-        TrajectoryPreview preview = new TrajectoryPreview(action);
+        TrajectoryPreviewer preview = new TrajectoryPreviewer(action);
 
         boolean useOdometry = true;
         while (opModeIsActive() && !gui.cancel()) {
@@ -2267,7 +2319,6 @@ public class LooneyTune extends LinearOpMode {
         String message = "The robot will drive forward 48 inches using a spline. "
                 + "It needs half a tile clearance on either side. "
                 + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel";
-
         runTrajectory(action, message);
     }
 
@@ -2316,7 +2367,7 @@ public class LooneyTune extends LinearOpMode {
         // Clear the Dashboard map:
         TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
         Canvas canvas = packet.fieldOverlay();
-        canvas.fillText("Looney Tune!", -36, 0, "", 0, false);
+        canvas.fillText("Looney Tune!", -32, 0, "", 0, false);
         MecanumDrive.sendTelemetryPacket(packet);
 
         // Dynamically build the list of tests:
