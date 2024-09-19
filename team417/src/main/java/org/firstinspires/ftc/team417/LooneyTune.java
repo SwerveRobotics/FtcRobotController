@@ -1269,8 +1269,8 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                     + "Aborted, press "+A+" to continue.");
         } else {
             TuneParameters newSettings = currentParameters.createClone();
-            newSettings.params.otos.offset.x = offset.x;
-            newSettings.params.otos.offset.y = offset.y;
+            newSettings.params.otos.offset.x = clusterOffset.x;
+            newSettings.params.otos.offset.y = clusterOffset.y;
             newSettings.params.otos.angularScalar = angularScalar;
             newSettings.params.trackWidthTicks = trackWidthTicks;
 
