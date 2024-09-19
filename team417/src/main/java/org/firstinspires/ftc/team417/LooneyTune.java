@@ -2361,6 +2361,20 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                 .turn(Math.PI/2)
                 .build());
     }
+    void lineWithRotationExample() {
+        final double DISTANCE = 60.0;
+        runTrajectory(drive.actionBuilder(zeroPose)
+                // To simply turn 180 degrees while traveling down a line, do this:
+                //   .lineToXLinearHeading(DISTANCE, Math.PI)
+                // But we want to turn a complete 360 degrees, and then return, so it's complicated:
+                .splineToSplineHeading(new Pose2d(DISTANCE / 2.0, 0, Math.PI), 0)
+                .splineToSplineHeading(new Pose2d(DISTANCE, 0, -0.0001), 0)
+                .endTrajectory() // Stop at the end of the line
+                .setTangent(Math.PI) // When we start again, go in the direction of 180 degrees
+                .splineToSplineHeading(new Pose2d(DISTANCE / 2.0, 0, Math.PI), Math.PI)
+                .splineToSplineHeading(new Pose2d(0, 0, 0.0001), Math.PI)
+                .build());
+    }
 
     @Override
     public void runOpMode() {
@@ -2424,13 +2438,14 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                 ()->drive.PARAMS.axialGain != 0 && drive.PARAMS.lateralGain != 0 && drive.PARAMS.headingGain != 0);
 
             // Extras:
-            gui.addRunnable("Extras::Show accumulated parameter changes", this::showUpdatedParameters);
             gui.addRunnable("Extras::Rotation test (verify trackWidthTicks)", this::rotationTest,
-                    ()->drive.PARAMS.trackWidthTicks != 0);
+                ()->drive.PARAMS.trackWidthTicks != 0);
+            gui.addRunnable("Extras::Show accumulated parameter changes", this::showUpdatedParameters);
 
             // Examples:
             gui.addRunnable("Examples::Spline", this::splineExample);
             gui.addRunnable("Examples::LineTo/Turn example", this::lineToTurnExample);
+            gui.addRunnable("Examples::Line with rotation", this::lineWithRotationExample);
         }
 
         while (opModeIsActive()) {
