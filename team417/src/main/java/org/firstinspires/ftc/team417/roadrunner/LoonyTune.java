@@ -1,17 +1,15 @@
 /**
- * Looney Tune is a parameters tuner for robots using Road Runner.
+ * Loony Tune is a parameters tuner for robots using Road Runner.
  */
 
 // Short-term:
 //
 // Long-term:
-// @@@ Add dependency graph when a change is made
 // @@@ Add LED support
 // @@@ Add max-velocity/max-acceleration testing for both linear and angular
-// @@@ Add offset test to extras
 // @@@ Draw acceleration portion of feedback test in different color
 
-package org.firstinspires.ftc.team417;
+package org.firstinspires.ftc.team417.roadrunner;
 
 import static com.acmerobotics.roadrunner.Profiles.constantProfile;
 
@@ -55,8 +53,6 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.team417.roadrunner.Drawing;
-import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -345,14 +341,14 @@ class Gui {
         // Add a header with submenu names:
         output.append("<big><big>");
         if (menuStack.size() <= 1) {
-            output.append("Dpad to navigate, "+LooneyTune.A+" to select");
+            output.append("Dpad to navigate, "+ LoonyTune.A+" to select");
         } else {
             for (int i = 1; i < menuStack.size(); i++) {
                 if (i > 1)
                     output.append("\u00b7");
                 output.append(menuStack.get(i).description);
             }
-            output.append(", "+LooneyTune.A+" to select, "+LooneyTune.B+" to cancel");
+            output.append(", "+ LoonyTune.A+" to select, "+ LoonyTune.B+" to cancel");
         }
         output.append("</big></big><br><small><small><br></small></small>"); // Leave half a line blank
 
@@ -499,13 +495,13 @@ class Gui {
 }
 
 /**
- * Looney Tune's opMode class for running the tuning tests.
+ * Loony Tune's opMode class for running the tuning tests.
  *
  * @noinspection UnnecessaryUnicodeEscape, AccessStaticViaInstance, ClassEscapesDefinedScope
  */
 @SuppressLint("DefaultLocale")
-@TeleOp(name="Looney Tune", group="Tuning")
-public class LooneyTune extends LinearOpMode {
+@TeleOp(name="Loony Tune", group="Tuning")
+public class LoonyTune extends LinearOpMode {
     static final String A = "\ud83c\udd50"; // Symbol for the gamepad A button
     static final String B = "\ud83c\udd51"; // Symbol for the gamepad B button
     static final String X = "\ud83c\udd67"; // Symbol for the gamepad X button
@@ -562,16 +558,16 @@ public class LooneyTune extends LinearOpMode {
                 // There is no way to query the current display format so we have to assume it
                 // could be either HTML or non-HTML.
                 telemetry.clear();
-                telemetry.addLine("YOUR CODE IS OUT OF SYNC WITH LOONEY TUNE");
+                telemetry.addLine("YOUR CODE IS OUT OF SYNC WITH LOONY TUNE");
                 telemetry.addLine();
                 telemetry.addLine("The code's configuration parameters don't match the last "
-                        + "results saved in Looney Tune. To use the Looney Tune results, double-tap the shift key in Android "
+                        + "results saved in Loony Tune. To use the Loony Tune results, double-tap the shift key in Android "
                         + "Studio, enter 'md.params' to jump to the MecanumDrive Params constructor, "
                         + "then update as follows:");
                 telemetry.addLine();
                 telemetry.addLine(comparison);
                 telemetry.addLine("Please update your code and restart now. Or, to proceed anyway and "
-                        + "delete the Looney Tune results, triple-tap the BACK button on the gamepad.");
+                        + "delete the Loony Tune results, triple-tap the BACK button on the gamepad.");
                 telemetry.update();
 
                 // Wait for a triple-tap of the button:
@@ -589,7 +585,7 @@ public class LooneyTune extends LinearOpMode {
                 // If we reached this point, the user has chosen to ignore the last tuning results.
                 // Override those results with the current settings:
                 currentSettings.save();
-                telemetry.addLine("Looney Tune results have been overridden");
+                telemetry.addLine("Loony Tune results have been overridden");
                 telemetry.update();
             }
         }
@@ -2540,7 +2536,7 @@ public class LooneyTune extends LinearOpMode {
         // Clear the Dashboard map:
         TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
         Canvas canvas = packet.fieldOverlay();
-        canvas.fillText("Looney Tune!", -32, 0, "", 0, false);
+        canvas.fillText("Loony Tune!", -32, 0, "", 0, false);
         MecanumDrive.sendTelemetryPacket(packet);
 
         // Dynamically build the list of tests:

@@ -66,7 +66,6 @@ import org.firstinspires.ftc.team417.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
-import org.firstinspires.ftc.team417.LooneyTune;
 import org.firstinspires.inspection.InspectionState;
 
 import java.util.Arrays;
@@ -85,7 +84,7 @@ public final class MecanumDrive {
             maxAngAccel = Math.PI;
 
             if (isDevBot) {
-                // Your DevBot Looney Tune configuration is here:
+                // Your DevBot Loony Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
@@ -111,7 +110,7 @@ public final class MecanumDrive {
                 otos.angularScalar = 0;
 
             } else {
-                // Your competition robot Looney Tune configuration is here:
+                // Your competition robot Loony Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
@@ -320,7 +319,7 @@ public final class MecanumDrive {
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
 
         // Now that configuration is complete, verify the parameters:
-        LooneyTune.verifyCodeMatchesTuneResults(this, telemetry, gamepad);
+        LoonyTune.verifyCodeMatchesTuneResults(this, telemetry, gamepad);
     }
 
     // This is where you configure Road Runner to work with your hardware:
