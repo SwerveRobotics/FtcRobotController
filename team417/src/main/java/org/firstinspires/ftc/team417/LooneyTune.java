@@ -354,7 +354,7 @@ class Gui {
                     output.append("\u00b7");
                 output.append(menuStack.get(i).description);
             }
-            output.append(", "+LooneyTune.A+" to select, "+LooneyTune.B+" to exit");
+            output.append(", "+LooneyTune.A+" to select, "+LooneyTune.B+" to cancel");
         }
         output.append("</big></big><br><small><small><br></small></small>"); // Leave half a line blank
 
@@ -511,10 +511,12 @@ public class LooneyTune extends LinearOpMode {
     static final String B = "\ud83c\udd51"; // Symbol for the gamepad B button
     static final String X = "\ud83c\udd67"; // Symbol for the gamepad X button
     static final String Y = "\ud83c\udd68"; // Symbol for the gamepad Y button
-    static final String BUMPERS = "<span style='background:#808080;'>bumpers</span>";
+    static final String BUMPER = "<span style='background:#808080;'>bumper</span>";
     static final String TRIGGERS = "<span style='background:#808080;'>triggers</span>";
     static final String LEFT_TRIGGER = "<span style='background:#808080;'>left trigger</span>";
     static final String RIGHT_TRIGGER = "<span style='background:#808080;'>right trigger</span>";
+    static final String DPAD_LEFT_RIGHT = "<span style='background:#808080;'>Dpad left/right</span>";
+    static final String DPAD_UP_DOWN = "<span style='background:#808080;'>Dpad up/down</span>";
 
     // Member fields referenced by every test:
     Gui gui;
@@ -678,18 +680,42 @@ public class LooneyTune extends LinearOpMode {
             telemetryUpdate();
         }
 
-        // Show a message, preview an optional trajectory, drive the robot, and wait for an A or
-        // B button press. If accept (A) is pressed, return success. If cancel (B) is pressed,
-        // return failure. The robot CAN be driven while waiting.
-        boolean drivePrompt(String message) { return drivePrompt(null, message); }
-        boolean drivePrompt(Action trajectory, String message) {
-            TrajectoryPreviewer previewer = new TrajectoryPreviewer(trajectory);
+        // Show a message and animate a trajectory while driving the robot and waiting for
+        // an A or B button pressed. If accept (A) is pressed, return success. If cancel (B) is
+        // pressed, return failure.
+        boolean previewPrompt(Action previewTrajectory, String message) {
+            TrajectoryPreviewer previewer = new TrajectoryPreviewer(previewTrajectory);
             boolean success = false;
             while (!isStopRequested() && !gui.cancel()) {
                 previewer.update();
                 message(message);
                 if (gui.accept()) {
                     success = true;
+                    break;
+                }
+                updateGamepadDriving();
+            }
+            stopMotors();
+            drive.setPose(zeroPose); // Reset the pose once they stopped
+            return success;
+        }
+
+        // Show a message, drive the robot, and wait for either an A/B button press, or an
+        // A/X button press. If accept is pressed, return success. If the other button is
+        // pressed, return failure. The robot CAN be driven while waiting.
+        boolean cancelPrompt(String message) { return drivePrompt(message, false); }
+        /** @noinspection BooleanMethodIsAlwaysInverted*/
+        boolean exitPrompt(String message) { return drivePrompt(message, true); }
+        boolean drivePrompt(String message, boolean exit) {
+            boolean success = true;
+            while (!gui.accept()) {
+                message(message);
+                if (isStopRequested()) {
+                    success = false;
+                    break;
+                }
+                if ((exit && gui.exit()) || (!exit && gui.cancel())) {
+                    success = false;
                     break;
                 }
                 updateGamepadDriving();
@@ -834,7 +860,7 @@ public class LooneyTune extends LinearOpMode {
         Action preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, -60, 0))
                 .lineToX(DISTANCE/2.0)
                 .build();
-        if (dialogs.drivePrompt(preview,
+        if (dialogs.previewPrompt(preview,
                 "Tune OTOS's <b>linearScalar</b> and <b>offset heading</b> by pushing the robot forward in a straight line "
                 + "along a field wall for exactly "+testDistance(DISTANCE)+". To start, align the robot by hand "
                 + "at its starting point along a wall. "
@@ -1116,7 +1142,7 @@ public class LooneyTune extends LinearOpMode {
                 .turn(2*2*Math.PI)
                 .strafeTo(new Vector2d(0, -60))
                 .build();
-        if (dialogs.drivePrompt(preview, "Tune <b>trackWidthTicks</b>, <b>otos.angularScalar</b> and <b>otos.offset position</b>. Position the robot against a wall, then drive "
+        if (dialogs.previewPrompt(preview, "Tune <b>trackWidthTicks</b>, <b>otos.angularScalar</b> and <b>otos.offset position</b>. Position the robot against a wall, then drive "
                 + String.format("it out so that the robot can rotate in place %.1f times, then drive ", REVOLUTION_COUNT)
                 + "the robot against the wall again."
                 + "\n\nFirst, carefully drive the robot to a wall and align it so that "
@@ -1124,7 +1150,7 @@ public class LooneyTune extends LinearOpMode {
                 + "\n\nDrive the robot to the start position, press "+A+" when ready, "+B+" to cancel")) {
 
             // Let the user position the robot:
-            if (dialogs.drivePrompt("Now move the robot far enough away from the wall (and any objects) so "
+            if (dialogs.cancelPrompt("Now move the robot far enough away from the wall (and any objects) so "
                     + "that it can freely rotate in place."
                     + "\n\nPress "+A+" when ready for the robot to rotate, "+B+" to cancel")) {
 
@@ -1202,7 +1228,7 @@ public class LooneyTune extends LinearOpMode {
                 // Stop the rotation:
                 rampMotorsSpin(drive, 0);
 
-                if ((success) && dialogs.drivePrompt("Now drive the robot to align it at the wall in the same "
+                if ((success) && dialogs.cancelPrompt("Now drive the robot to align it at the wall in the same "
                         + "place and orientation as it started."
                         + "\n\nDrive the robot to its wall position, press "+A+" when done, "+B+" to cancel")) {
 
@@ -1413,7 +1439,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                 .lineToX(DISTANCE/2.0, null, new ProfileAccelConstraint(-100, 10))
                 .lineToX(-DISTANCE/2.0, null, new ProfileAccelConstraint(-100, 20))
                 .build();
-        if (dialogs.drivePrompt(preview, "Tune <b>kS</b> and <b>kV</b>. "
+        if (dialogs.previewPrompt(preview, "Tune <b>kS</b> and <b>kV</b>. "
                 + "The robot will drive forward and backward for up to " + testDistance(DISTANCE) + ". "
                 + "It will start slowly but get faster and faster in each direction. "
                 + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel.")) {
@@ -1494,8 +1520,8 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                     }
                 }
 
-                if (!dialogs.drivePrompt("Drive to reposition the robot, "
-                        + "press "+A+" to start another run, "+B+" to exit. "
+                if (!dialogs.exitPrompt("Drive to reposition the robot, "
+                        + "press "+A+" to start another run, "+X+" to exit. "
                         + "Every additional consecutive run helps the results converge.")) {
 
                     // Don't ask if they want to save if they didn't get any new results!
@@ -1530,7 +1556,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
             String description = motorDescriptions[motor];
             telemetryAdd(String.format("This tests every motor individually, now testing <b>%s</b>'.\n\n", description)
                 + String.format("&emsp;%s.setPower(%.2f)\n\n", description, power)
-                + "Press "+RIGHT_TRIGGER+" for forward, "+LEFT_TRIGGER+" for reverse, "+BUMPERS+" to switch motor, "+X+" to exit.");
+                + "Press "+RIGHT_TRIGGER+" for forward, "+LEFT_TRIGGER+" for reverse, "+BUMPER+" to switch motor, "+X+" to exit.");
             telemetryUpdate();
 
             motors[motor].setPower(power);
@@ -1681,7 +1707,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
 
             dialogs.message(message + "\nPress "+X+" to exit, "+Y+
                     ((baselinePose == null) ? " when in the golden home position, " : " to reset home, ")
-                    +BUMPERS+" to debug the wheels.");
+                    +BUMPER+" to debug the wheels.");
 
             Canvas canvas = packet.fieldOverlay();
             canvas.setStroke("#ffd700"); // Gold
@@ -1714,7 +1740,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                 .strafeTo(new Vector2d(0, DISTANCE/2.0))
                 .strafeTo(new Vector2d(0, -DISTANCE/2.0))
                 .build();
-        if (dialogs.drivePrompt(preview, "Tune <b>lateralInPerTick</b>. The robot will strafe left and right for "
+        if (dialogs.previewPrompt(preview, "Tune <b>lateralInPerTick</b>. The robot will strafe left and right for "
                 + testDistance(DISTANCE) + ". "
                 + "\n\nDrive the robot to position, press "+A+" to start, "+B+" to cancel.")) {
 
@@ -1782,8 +1808,8 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                     }
                 }
 
-                if (!dialogs.drivePrompt(resultsMessage + "Drive to reposition the robot (it may go farther this time), "
-                        + "press " + A + " to start another run, " + B + " to exit. ")) {
+                if (!dialogs.exitPrompt(resultsMessage + "Drive to reposition the robot (it may go farther this time), "
+                        + "press "+A+" to start another run, "+X+" to exit. ")) {
 
                     Prompt prompt = dialogs.savePrompt();
                     if (prompt == Prompt.EXIT)
@@ -1825,7 +1851,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                 .lineToX(DISTANCE/2.0)
                 .lineToX(-DISTANCE/2.0)
                 .build();
-        if (dialogs.drivePrompt(preview, "Tune <b>kV</b> and <b>kA</b> with FTC Dashboard. "
+        if (dialogs.previewPrompt(preview, "Tune <b>kV</b> and <b>kA</b> with FTC Dashboard. "
                 + "The robot will drive forwards then backwards for " + testDistance(DISTANCE) + ". "
                 + "Follow <u><a href='https://learnroadrunner.com/feedforward-tuning.html#tuning'>LearnRoadRunner's guide</a></u>.\n\n"
                 + "Press "+A+" to start, "+B+" to cancel")) {
@@ -1958,11 +1984,11 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                         profile = null;
                     }
                 } else {
-                    telemetryAdd("Use the triggers to change velocity to lengthen or shorten the horizontal lines. "
+                    telemetryAdd("Use "+TRIGGERS+" to change velocity to lengthen or shorten the horizontal lines. "
                             +  String.format("Max velocity is <b>%.0f%%</b>.\n", maxVelocityFactor * 100.0));
 
-                    telemetryAdd("Dpad up/down to change the value, left/right to move "
-                            + "the cursor, "+Y+" to switch input, triggers to change max velocity, "
+                    telemetryAdd(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
+                            + "the cursor, "+Y+" to switch input, "+TRIGGERS+" to change max velocity, "
                             + A+" to run on the robot, "+X+" to exit.");
                     telemetryUpdate();
 
@@ -2163,7 +2189,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                     .turn(-Math.PI)
                     .build();
         }
-        if (dialogs.drivePrompt(preview, description + "\n\nPress "+A+" to start, "+B+" to cancel")) {
+        if (dialogs.previewPrompt(preview, description + "\n\nPress "+A+" to start, "+B+" to cancel")) {
 
             int inputIndex = 0;
             int queuedAButtons = 0;
@@ -2231,7 +2257,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                     }
                 } else {
                     telemetryAdd("Last error: " + errorString + ".\n");
-                    telemetryAdd("Dpad up/down to change the value, left/right to move "
+                    telemetryAdd(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
                         + "the cursor, "+Y+" to switch input, "+A+" to run on the robot, "+X+" to exit.");
                     telemetryUpdate();
 
@@ -2255,7 +2281,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                         stopMotors(); // Stop the user's driving
                         drive.setPose(zeroPose);
                         if (type == PidTunerType.HEADING) {
-                            // An apparent Road Runner build prevents a trajectory from being reused:
+                            // An apparent Road Runner bug prevents a turn trajectory from being reused:
                             drive.runParallel(drive.actionBuilder(zeroPose).turn(Math.PI).turn(-Math.PI).build());
                         } else {
                             drive.runParallel(trajectory.build());
@@ -2274,7 +2300,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
     void rotationTest() {
         configureToDrive(true); // Do use MecanumDrive
 
-        if (dialogs.drivePrompt("To test 'trackWidthTicks', the robot will turn in-place for two complete "
+        if (dialogs.cancelPrompt("To test 'trackWidthTicks', the robot will turn in-place for two complete "
                 + "rotations.\n\nPress "+A+" to start, "+B+" to cancel.")) {
 
             // Disable the rotational PID/Ramsete behavior so that we can test just the
@@ -2314,17 +2340,17 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
             if (message == null)
                 message = "The robot will run the trajectory shown in FTC Dashboard.";
             if (useOdometry)
-                message += "\n\nRunning with normal odometry correction. Press the left bumper to "
+                message += "\n\nRunning with normal odometry correction. Press a "+BUMPER+" to "
                         + "disable so as to test how well all the non-odometry settings are tuned. "
                         + "If well tuned, the robot should drive close to the intended path. ";
             else
-                message += "\n\nRunning <b>without</b> odometry correction. Press the left bumper to re-enable.";
+                message += "\n\nRunning <b>without</b> odometry correction. Press a "+BUMPER+" to re-enable.";
 
-            dialogs.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, left bumper to toggle odometry");
+            dialogs.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, "+BUMPER+" to toggle odometry");
             updateGamepadDriving();
             preview.update();
 
-            if (gui.leftBumper()) {
+            if (gui.leftBumper() || gui.rightBumper()) {
                 useOdometry = !useOdometry;
             }
             if (gui.accept()) {
