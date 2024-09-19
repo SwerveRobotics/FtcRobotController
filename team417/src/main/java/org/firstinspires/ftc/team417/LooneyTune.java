@@ -64,7 +64,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.function.BiConsumer;
-import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -232,9 +231,10 @@ class Gui {
     int lastInput; // Last quantized input (-1, 0 or 1)
     double nextAdvanceTime; // Time at which to advance the value
 
-    abstract private static class Widget {
+    abstract public static class Widget {
         String description;
-        BooleanSupplier isEnabled;
+        boolean isEnabled;
+        boolean isStarred;
         Widget(String descriptor) {
             // The description comes after the last separator:
             int lastIndex = descriptor.lastIndexOf(DESCRIPTOR_SEPARATOR);
@@ -242,7 +242,7 @@ class Gui {
                 descriptor = descriptor.substring(lastIndex + DESCRIPTOR_SEPARATOR.length());
             }
             description = descriptor;
-            isEnabled = ()->true; // Default is to be enabled
+            isEnabled = true; // Default is to be enabled
         }
         abstract public String string();
     }
@@ -293,14 +293,12 @@ class Gui {
     }
     private static class RunWidget extends Widget {
         Runnable runnable;
-        public RunWidget(String descriptor, Runnable runnable, BooleanSupplier isEnabled) {
+        public RunWidget(String descriptor, Runnable runnable) {
             super(descriptor);
             this.runnable = runnable;
-            if (isEnabled != null)
-                this.isEnabled = isEnabled;
         }
         public String string() {
-            return isEnabled.getAsBoolean() ? description : "<font color='#808080'>" + description + "</font>";
+            return isEnabled ? description : "<font color='#808080'>" + description + "</font>";
         }
     }
 
@@ -374,11 +372,14 @@ class Gui {
         // Now output the widgets:
         for (int i = 0; i < menu.widgets.size(); i++) {
             Widget widget = menu.widgets.get(i);
-            if (i != menu.current)
-                output.append("\u25c7 " + widget.string() + "\n");
-            else
+            if (i != menu.current) {
+                String bullet = (widget.isStarred) ? "\u2606" : "\u25c7"; // Hollow star or circle
+                output.append(bullet + " " + widget.string() + "\n");
+            } else {
                 // Highlight current item:
-                output.append("<span style='background: #88285a'>\u25c6 " + widget.string() + "</span>\n");
+                String bullet = (widget.isStarred) ? "\u2605" : "\u25c6"; // Solid star or circle
+                output.append("<span style='background: #88285a'>" + bullet + " " + widget.string() + "</span>\n");
+            }
         }
 
         Widget widget = menu.widgets.get(menu.current);
@@ -427,7 +428,7 @@ class Gui {
         } else if (widget instanceof RunWidget) {
             RunWidget runWidget = (RunWidget) widget;
             if (accept()) {
-                if ((runWidget.isEnabled == null) || (runWidget.isEnabled.getAsBoolean())) {
+                if (runWidget.isEnabled) {
                     runWidget.runnable.run();
                 }
             }
@@ -437,7 +438,7 @@ class Gui {
     }
 
     // Add a new widget to the appropriate spot in the menu hierarchy:
-    private void add(String descriptor, Widget newWidget) {
+    private Widget add(String descriptor, Widget newWidget) {
         MenuWidget menu = (MenuWidget) menuStack.get(0); // Root menu
 
         // Peel off the hierarchy which is in the form "Vision::Configuration::Setting":
@@ -466,36 +467,34 @@ class Gui {
             menu = submenu;
         }
         menu.widgets.add(newWidget);
+        return newWidget;
     }
 
     // Add a toggleable widget to the menu:
     /** @noinspection unused*/
-    public static void addToggle(String descriptor, boolean initialValue, Consumer<Boolean> callback) {
+    public static Widget addToggle(String descriptor, boolean initialValue, Consumer<Boolean> callback) {
         callback.accept(initialValue);
-        gui.add(descriptor, new ToggleWidget(descriptor, initialValue, callback));
+        return gui.add(descriptor, new ToggleWidget(descriptor, initialValue, callback));
     }
     // Add a list widget to the menu:
     /** @noinspection unused*/
-    public static void addList(String descriptor, String[] list, int initialIndex, BiConsumer<Integer, String> callback) {
+    public static Widget addList(String descriptor, String[] list, int initialIndex, BiConsumer<Integer, String> callback) {
         callback.accept(initialIndex, list[initialIndex]);
-        gui.add(descriptor, new ListWidget(descriptor, initialIndex, list, callback));
+        return gui.add(descriptor, new ListWidget(descriptor, initialIndex, list, callback));
     }
     // Add a widget that can only be activated:
     /** @noinspection unused*/
-    public static void addActivation(String descriptor, Function<Boolean, String> callback) {
+    public static Widget addActivation(String descriptor, Function<Boolean, String> callback) {
         callback.apply(true);
-        gui.add(descriptor, new ActivationWidget(descriptor, callback));
+        return gui.add(descriptor, new ActivationWidget(descriptor, callback));
     }
     /** @noinspection unused*/
-    public static void addStats(String descriptor, Supplier<String> callback) {
-        gui.add(descriptor, new StatsWidget(descriptor, callback));
+    public static Widget addStats(String descriptor, Supplier<String> callback) {
+        return gui.add(descriptor, new StatsWidget(descriptor, callback));
     }
     // Add a widget that can be run:
-    public static void addRunnable(String descriptor, Runnable callback, BooleanSupplier isEnabled) {
-        gui.add(descriptor, new RunWidget(descriptor, callback, isEnabled));
-    }
-    public static void addRunnable(String descriptor, Runnable callback) {
-        gui.add(descriptor, new RunWidget(descriptor, callback, ()->true));
+    public static Widget addRunnable(String descriptor, Runnable callback) {
+        return gui.add(descriptor, new RunWidget(descriptor, callback));
     }
 }
 
@@ -517,6 +516,25 @@ public class LooneyTune extends LinearOpMode {
     static final String RIGHT_TRIGGER = "<span style='background:#808080;'>right trigger</span>";
     static final String DPAD_LEFT_RIGHT = "<span style='background:#808080;'>Dpad left/right</span>";
     static final String DPAD_UP_DOWN = "<span style='background:#808080;'>Dpad up/down</span>";
+
+    // Menu widgets for each of the tuners:
+    enum Tuner {
+        PUSH(0),
+        ACCELERATING(1),
+        FEED_FORWARD(2),
+        LATERAL(3),
+        SPIN(4),
+        AXIAL_GAIN(5),
+        LATERAL_GAIN(6),
+        HEADING_GAIN(7),
+        COMPLETION_TEST(8),
+
+        COUNT(9); // Count of tuners
+
+        final int index;
+        Tuner(int index) { this.index = index; }
+    }
+    Gui.Widget[] widgets = new Gui.Widget[Tuner.COUNT.index];
 
     // Member fields referenced by every test:
     Gui gui;
@@ -933,6 +951,7 @@ public class LooneyTune extends LinearOpMode {
                         newParameters.params.otos.linearScalar = newLinearScalar;
                         newParameters.params.otos.offset.h = newOffsetHeading;
                         acceptParameters(newParameters);
+                        updateTunerDependencies(Tuner.PUSH);
 
                         // Make sure the OTOS hardware is informed of the new parameters too:
                         setOtosHardware();
@@ -1261,8 +1280,6 @@ public class LooneyTune extends LinearOpMode {
         double angularScalar = integerCircles / fractionalMeasuredCircles;
         double imuYawScalar = integerCircles / (integerCircles + imuYawDelta / (2 * Math.PI));
 
-out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta), imuYawScalar);
-
         // Now that we have measured the angular scalar, we can correct the distance-per-revolution:
         distancePerRevolution *= angularScalar;
 
@@ -1307,6 +1324,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
 
             if (dialogs.staticPrompt(results + "Use these results? Press "+A+" if they look good, "+B+" to discard them.")) {
                 acceptParameters(newSettings);
+                updateTunerDependencies(Tuner.SPIN);
 
                 // We changed 'trackWidthTicks' so recreate the kinematics object:
                 drive.initializeKinematics();
@@ -1520,8 +1538,8 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                     }
                 }
 
-                if (!dialogs.exitPrompt("Drive to reposition the robot, "
-                        + "press "+A+" to start another run, "+X+" to exit. "
+                if (!dialogs.exitPrompt("If the results look good, press "+X+" to exit. Otherwise, "
+                        + "reposition the robot and press "+A+" to start another run. "
                         + "Every additional consecutive run helps the results converge.")) {
 
                     // Don't ask if they want to save if they didn't get any new results!
@@ -1537,6 +1555,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                         newParameters.params.kS = result.x;
                         newParameters.params.kV = result.y;
                         acceptParameters(newParameters);
+                        updateTunerDependencies(Tuner.ACCELERATING);
                         break; // ====>
                     }
                 }
@@ -1554,7 +1573,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
         while (opModeIsActive() && !gui.exit()) {
             double power = gamepad1.right_trigger - gamepad1.left_trigger;
             String description = motorDescriptions[motor];
-            telemetryAdd(String.format("This tests every motor individually, now testing <b>%s</b>'.\n\n", description)
+            telemetryAdd(String.format("This tests every motor individually, now testing <b>%s</b>.\n\n", description)
                 + String.format("&emsp;%s.setPower(%.2f)\n\n", description, power)
                 + "Press "+RIGHT_TRIGGER+" for forward, "+LEFT_TRIGGER+" for reverse, "+BUMPER+" to switch motor, "+X+" to exit.");
             telemetryUpdate();
@@ -1808,8 +1827,9 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                     }
                 }
 
-                if (!dialogs.exitPrompt(resultsMessage + "Drive to reposition the robot (it may go farther this time), "
-                        + "press "+A+" to start another run, "+X+" to exit. ")) {
+                if (!dialogs.exitPrompt(resultsMessage + "If the results look good, press "+X+" to exit. "
+                        + "Otherwise drive to reposition the robot (it may go farther this time) and "
+                        + "press "+A+" to start another run. ")) {
 
                     Prompt prompt = dialogs.savePrompt();
                     if (prompt == Prompt.EXIT)
@@ -1819,6 +1839,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                         TuneParameters newParameters = currentParameters.createClone();
                         newParameters.params.lateralInPerTick = history.get(history.size() - 1);
                         acceptParameters(newParameters);
+                        updateTunerDependencies(Tuner.LATERAL);
                         break; // ====>
                     }
                 }
@@ -2001,6 +2022,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                             testParameters.params.lateralGain = currentParameters.params.lateralGain;
                             testParameters.params.lateralVelGain = currentParameters.params.lateralVelGain;
                             acceptParameters(testParameters);
+                            updateTunerDependencies(Tuner.FEED_FORWARD);
                             break; // ====>
                         } else if (prompt == Prompt.EXIT) {
                             if (dialogs.staticPrompt("Are you sure you want to exit without saving?\n\n"
@@ -2156,6 +2178,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
         TuneParameters testParameters = currentParameters.createClone();
         MecanumDrive.PARAMS = testParameters.params;
         String description, gainName, velGainName;
+        Tuner tuner;
 
         TrajectoryActionBuilder trajectory = drive.actionBuilder(zeroPose);
         Action preview;
@@ -2164,6 +2187,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
             trajectory = trajectory.lineToX(DISTANCE).lineToX(0);
             gainName = "axialGain";
             velGainName = "axialVelGain";
+            tuner = Tuner.AXIAL_GAIN;
             preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, 0, 0))
                     .lineToX(DISTANCE/2.0)
                     .lineToX(-DISTANCE/2.0)
@@ -2174,6 +2198,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
             trajectory = trajectory.strafeTo(new Vector2d(0, DISTANCE)).strafeTo(new Vector2d(0, 0));
             gainName = "lateralGain";
             velGainName = "lateralVelGain";
+            tuner = Tuner.LATERAL_GAIN;
             preview = drive.actionBuilder(new Pose2d(0, -DISTANCE/2.0, 0))
                     .strafeTo(new Vector2d(0, DISTANCE/2.0))
                     .strafeTo(new Vector2d(0, -DISTANCE/2.0))
@@ -2184,6 +2209,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
             trajectory = trajectory.turn(Math.PI).turn(-Math.PI);
             gainName = "headingGain";
             velGainName = "headingVelGain";
+            tuner = Tuner.HEADING_GAIN;
             preview = drive.actionBuilder(zeroPose)
                     .turn(Math.PI)
                     .turn(-Math.PI)
@@ -2267,6 +2293,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                         Prompt prompt = dialogs.savePrompt();
                         if (prompt == Prompt.SAVE) {
                             acceptParameters(testParameters);
+                            updateTunerDependencies(tuner);
                             break; // ====>
                         } else if (prompt == Prompt.EXIT) {
                             if (dialogs.staticPrompt("Are you sure you want to exit without saving?\n\n"
@@ -2393,6 +2420,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                 + "It needs half a tile clearance on either side. "
                 + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel";
         runTrajectory(action, message);
+        updateTunerDependencies(Tuner.COMPLETION_TEST);
     }
 
     // Examples:
@@ -2427,6 +2455,53 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                 .splineToSplineHeading(new Pose2d(DISTANCE / 2.0, 0, Math.PI), Math.PI)
                 .splineToSplineHeading(new Pose2d(0, 0, 0.0001), Math.PI)
                 .build());
+    }
+
+    // Update which tuners need to be disabled and which need to be run:
+    void updateTunerDependencies(Tuner tuner) {
+        MecanumDrive.Params params = drive.PARAMS;
+        MecanumDrive.Params.Otos otos = params.otos;
+
+        // Calculate which tests can be enabled base on their dependencies:
+        widgets[Tuner.ACCELERATING.index].isEnabled = otos.linearScalar != 0;
+        widgets[Tuner.FEED_FORWARD.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
+        widgets[Tuner.LATERAL.index].isEnabled      = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
+        widgets[Tuner.SPIN.index].isEnabled         = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
+        widgets[Tuner.AXIAL_GAIN.index].isEnabled   = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
+        widgets[Tuner.LATERAL_GAIN.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0 && params.lateralInPerTick != 0;
+        widgets[Tuner.HEADING_GAIN.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0 && params.trackWidthTicks != 0;
+        widgets[Tuner.COMPLETION_TEST.index].isEnabled = params.axialGain != 0 && params.lateralGain != 0 && params.headingGain != 0;
+
+        final Tuner[] PUSH_DEPENDENTS = { Tuner.ACCELERATING, Tuner.FEED_FORWARD, Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] ACCELERATING_DEPENDENTS = { Tuner.FEED_FORWARD, Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] FEED_FORWARD_DEPENDENTS = { Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] LATERAL_DEPENDENTS = { Tuner.LATERAL_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] SPIN_DEPENDENTS = { Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] GAIN_DEPENDENTS = { Tuner.COMPLETION_TEST };
+
+        // When a tuner is updated with a new value, star any other tuners that should be run:
+        if (tuner != null) {
+            Tuner[] dependents = null;
+            switch (tuner) {
+                case PUSH: dependents = PUSH_DEPENDENTS; break;
+                case ACCELERATING: dependents = ACCELERATING_DEPENDENTS; break;
+                case FEED_FORWARD: dependents = FEED_FORWARD_DEPENDENTS; break;
+                case LATERAL: dependents = LATERAL_DEPENDENTS; break;
+                case SPIN: dependents = SPIN_DEPENDENTS; break;
+                case AXIAL_GAIN:
+                case LATERAL_GAIN:
+                case HEADING_GAIN:
+                    dependents = GAIN_DEPENDENTS; break;
+            }
+            if (dependents != null) {
+                for (Tuner dependent : dependents) {
+                    widgets[dependent.index].isStarred = true;
+                }
+            }
+
+            // We can un-star the current tuner because it's now completed:
+            widgets[tuner.index].isStarred = false;
+        }
     }
 
     @Override
@@ -2472,27 +2547,18 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
         gui.addRunnable("Drive test (motors)", this::driveTest);
         if (drive.opticalTracker != null) {
             // Basic tuners:
-            gui.addRunnable("Push tuner (OTOS offset heading, linearScalar)", this::pushTuner);
-            gui.addRunnable("Accelerating straight line tuner (kS and kV)", this::acceleratingStraightLineTuner,
-                ()->drive.PARAMS.otos.linearScalar != 0);
-            gui.addRunnable("Interactive feed forward tuner (kV and kA)", this::interactiveFeedForwardTuner,
-                ()->drive.PARAMS.otos.linearScalar != 0 && drive.PARAMS.kS != 0 && drive.PARAMS.kV != 0);
-            gui.addRunnable("Lateral tuner (lateralInPerTick)", this::lateralTuner,
-                    ()->drive.PARAMS.otos.linearScalar != 0 && drive.PARAMS.kS != 0 && drive.PARAMS.kV != 0);
-            gui.addRunnable("Spin tuner (trackWidthTicks, OTOS angularScalar, offset)", this::spinTuner,
-                    ()->drive.PARAMS.otos.linearScalar != 0 && drive.PARAMS.kS != 0 && drive.PARAMS.kV != 0);
-            gui.addRunnable("Interactive PiD tuner (axialGain)", ()->interactivePidTuner(PidTunerType.AXIAL),
-                ()->drive.PARAMS.otos.linearScalar != 0 && drive.PARAMS.kS != 0 && drive.PARAMS.kV != 0);
-            gui.addRunnable("Interactive PiD tuner (lateralGain)", ()->interactivePidTuner(PidTunerType.LATERAL),
-                ()->drive.PARAMS.otos.linearScalar != 0 && drive.PARAMS.lateralInPerTick != 0 && drive.PARAMS.kS != 0 && drive.PARAMS.kV != 0);
-            gui.addRunnable("Interactive PiD tuner (headingGain)", ()->interactivePidTuner(PidTunerType.HEADING),
-                ()->drive.PARAMS.otos.linearScalar != 0 && drive.PARAMS.trackWidthTicks != 0 && drive.PARAMS.kS != 0 && drive.PARAMS.kV != 0);
-            gui.addRunnable("Completion test (overall verification)", this::completionTest,
-                ()->drive.PARAMS.axialGain != 0 && drive.PARAMS.lateralGain != 0 && drive.PARAMS.headingGain != 0);
+            widgets[Tuner.PUSH.index] = gui.addRunnable("Push tuner (OTOS offset heading, linearScalar)", this::pushTuner);
+            widgets[Tuner.ACCELERATING.index] = gui.addRunnable("Accelerating straight line tuner (kS and kV)", this::acceleratingStraightLineTuner);
+            widgets[Tuner.FEED_FORWARD.index] = gui.addRunnable("Interactive feed forward tuner (kV and kA)", this::interactiveFeedForwardTuner);
+            widgets[Tuner.LATERAL.index] = gui.addRunnable("Lateral tuner (lateralInPerTick)", this::lateralTuner);
+            widgets[Tuner.SPIN.index] = gui.addRunnable("Spin tuner (trackWidthTicks, OTOS angularScalar, offset)", this::spinTuner);
+            widgets[Tuner.AXIAL_GAIN.index] = gui.addRunnable("Interactive PiD tuner (axialGain)", ()->interactivePidTuner(PidTunerType.AXIAL));
+            widgets[Tuner.LATERAL_GAIN.index] = gui.addRunnable("Interactive PiD tuner (lateralGain)", ()->interactivePidTuner(PidTunerType.LATERAL));
+            widgets[Tuner.HEADING_GAIN.index] = gui.addRunnable("Interactive PiD tuner (headingGain)", ()->interactivePidTuner(PidTunerType.HEADING));
+            widgets[Tuner.COMPLETION_TEST.index] = gui.addRunnable("Completion test (overall verification)", this::completionTest);
 
             // Extras:
-            gui.addRunnable("Extras::Rotation test (verify trackWidthTicks)", this::rotationTest,
-                ()->drive.PARAMS.trackWidthTicks != 0);
+            gui.addRunnable("Extras::Rotation test (verify trackWidthTicks)", this::rotationTest);
             gui.addRunnable("Extras::Show accumulated parameter changes", this::showUpdatedParameters);
 
             // Examples:
@@ -2500,6 +2566,9 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
             gui.addRunnable("Examples::LineTo/Turn example", this::lineToTurnExample);
             gui.addRunnable("Examples::Line with rotation", this::lineWithRotationExample);
         }
+
+        // Set the initial enable/disable status:
+        updateTunerDependencies(null);
 
         while (opModeIsActive()) {
             telemetryAdd(gui.update());
