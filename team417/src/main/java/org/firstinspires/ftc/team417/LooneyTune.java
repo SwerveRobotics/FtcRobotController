@@ -680,7 +680,7 @@ public class LooneyTune extends LinearOpMode {
         boolean drivePrompt(Action trajectory, String message) {
             TrajectoryPreviewer previewer = new TrajectoryPreviewer(trajectory);
             boolean success = false;
-            while (opModeIsActive() && !gui.cancel()) {
+            while (!isStopRequested() && !gui.cancel()) {
                 previewer.update();
                 message(message);
                 if (gui.accept()) {
@@ -699,7 +699,7 @@ public class LooneyTune extends LinearOpMode {
         // success. If cancel (B) is pressed, return failure. The robot CANNOT be driven while
         // waiting.
         boolean staticPrompt(String message) {
-            while (opModeIsActive() && !gui.cancel()) {
+            while (!isStopRequested() && !gui.cancel()) {
                 message(message);
                 if (gui.accept())
                     return true;
@@ -710,7 +710,7 @@ public class LooneyTune extends LinearOpMode {
         // Show a prompt asking to save. If accept (A) is pressed, return Prompt.SAVE. If
         // cancel (B) is pressed, return Prompt.CANCEL. If exit (X) is pressed, return Prompt.EXIT.
         Prompt savePrompt() {
-            while (opModeIsActive()) {
+            while (!isStopRequested()) {
                 message("Do you want to save your results?\n\n"
                         + "Press "+A+" to save, "+B+" to cancel, "+X+" to exit without saving.");
                 if (gui.accept())
@@ -1143,6 +1143,7 @@ public class LooneyTune extends LinearOpMode {
                 Point originPosition = new Point(0, 0); // The origin of the start of every circle
                 double nextCircleRotation = 0;
 
+                double imuYawStart = drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
                 Pose2D offsetStartPosition = updateRotationAndGetPose();
                 double offsetStartHeading = offsetStartPosition.h;
                 double offsetStartRotation = getSparkFunRotation();
@@ -1189,6 +1190,8 @@ public class LooneyTune extends LinearOpMode {
                     rawPosition = new Point(rawPose.x, rawPose.y);
                 } while (opModeIsActive() && !gui.cancel());
 
+                double imuYawDelta = normalizeAngle(drive.lazyImu.get().getRobotYawPitchRollAngles()
+                        .getYaw(AngleUnit.RADIANS)- imuYawStart);
                 double endTime = time();
 
                 // Stop the rotation:
@@ -1211,7 +1214,7 @@ public class LooneyTune extends LinearOpMode {
 
                     double totalMeasuredRotation = getSparkFunRotation() - scalarStartRotation;
                     double distancePerRevolution = averageVelocity * (endTime - startTime) / REVOLUTION_COUNT;
-                    processSpinResults(clusterCenter, circle, totalMeasuredRotation, distancePerRevolution);
+                    processSpinResults(clusterCenter, circle, totalMeasuredRotation, distancePerRevolution, imuYawDelta);
                 }
             }
         }
@@ -1221,10 +1224,13 @@ public class LooneyTune extends LinearOpMode {
     }
 
     // Process the spin results:
-    void processSpinResults(Point clusterCenter, Circle center, double totalMeasuredRotation, double distancePerRevolution) {
-        double totalMeasuredCircles = totalMeasuredRotation / (2 * Math.PI);
-        double integerCircles = Math.round(totalMeasuredCircles);
-        double angularScalar = integerCircles / totalMeasuredCircles;
+    void processSpinResults(Point clusterCenter, Circle center, double totalMeasuredRotation, double distancePerRevolution, double imuYawDelta) {
+        double fractionalMeasuredCircles = totalMeasuredRotation / (2 * Math.PI);
+        double integerCircles = Math.round(fractionalMeasuredCircles);
+        double angularScalar = integerCircles / fractionalMeasuredCircles;
+        double imuYawScalar = integerCircles / (integerCircles + imuYawDelta / (2 * Math.PI));
+
+out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", imuYawDelta, imuYawScalar);
 
         // Now that we have measured the angular scalar, we can correct the distance-per-revolution:
         distancePerRevolution *= angularScalar;
@@ -1244,12 +1250,13 @@ public class LooneyTune extends LinearOpMode {
         double theta = rawOffset.atan2();
         Point offset = new Point(Math.cos(theta) * center.radius, Math.sin(theta) * center.radius);
 
-        String results = String.format("Sensor thinks %.2f circles were completed.\n\n", totalMeasuredCircles);
+        String results = String.format("Sensor thinks %.2f circles were completed.\n\n", fractionalMeasuredCircles);
         results += String.format("Cluster center: (%.2f, %.2f)\n", clusterOffset.x, clusterOffset.y);
         results += String.format("Circle-fit position: (%.2f, %.2f), radius: %.2f\n", rawOffset.x, rawOffset.y, center.radius);
         results += String.format("Radius-corrected position: (%.2f, %.2f)\n", offset.x, offset.y);
         results += String.format("Angular scalar: %.4f\n", angularScalar);
         results += String.format("Track width: %.2f\"\n", trackWidth);
+        results += String.format("IMU yaw scalar: %.4f\n", imuYawScalar);
         results += "\n";
 
         // Do some sanity checking on the results:
@@ -1545,9 +1552,11 @@ public class LooneyTune extends LinearOpMode {
         double totalDistance = 0; // Inches
         double totalRotation = 0; // Radians
         String lastSeenStatus = ""; // Most recently reported non-zero status from the OTOS
+        double lastSeenTime = 0; // Time at which lastSeenStatus was set
 
         double baselineImu = 0; // IMU heading when the baseline was set
         Pose2d baselinePose = null; // Position where the baseline was set
+        double maxSpeed = 0; // Max speed seen
         while (opModeIsActive() && !gui.cancel()) {
             if (gui.leftBumper()) {
                 wheelDebugger();
@@ -1568,7 +1577,8 @@ public class LooneyTune extends LinearOpMode {
             }
 
             updateGamepadDriving();
-            drive.updatePoseEstimate();
+            PoseVelocity2d velocity = drive.updatePoseEstimate();
+            maxSpeed = Math.max(maxSpeed, Math.hypot(velocity.linearVel.x, velocity.linearVel.y));
 
             // Query the OTOS for any problems:
             SparkFunOTOS.Status status = drive.opticalTracker.getStatus();
@@ -1581,8 +1591,10 @@ public class LooneyTune extends LinearOpMode {
                 currentStatus += "warnOpticalTracking ";
             if (status.warnTiltAngle)
                 currentStatus += "warnTileAngle ";
-            if (!currentStatus.isEmpty())
+            if (!currentStatus.isEmpty()) {
                 lastSeenStatus = currentStatus;
+                lastSeenTime = time();
+            }
 
             // Now that updatePoseEstimate is called, get the new pose and track the distance
             // traveled:
@@ -1612,11 +1624,15 @@ public class LooneyTune extends LinearOpMode {
             if (currentStatus.isEmpty()) {
                 if (lastSeenStatus.isEmpty())
                     message += "OTOS status: Good!\n";
-                else
-                    message += String.format("OTOS status: Good now, but was %s\n", lastSeenStatus);
+                else {
+                    double minutesAgo = (time() - lastSeenTime) / 60.0;
+                    message += String.format("OTOS status: Good now, was '%s' %.1f minutes ago\n",
+                            lastSeenStatus, minutesAgo);
+                }
             } else {
                 message += String.format("OTOS status: %s\n", currentStatus);
             }
+            message += String.format("Max velocity: %.1f\"/s\n", maxSpeed);
 
             if (baselinePose != null) {
                 double dx = pose.position.x - baselinePose.position.x;
@@ -2344,8 +2360,10 @@ public class LooneyTune extends LinearOpMode {
 
     @Override
     public void runOpMode() {
-        // Set the display format to use HTML:
+        // Set the display format to use HTML and change the interval from 250 to 100ms for
+        // more responsive UI:
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
+        telemetry.setMsTransmissionInterval(100);
 
         // Send telemetry to both FTC Dashboard and the Driver Station:
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -2357,10 +2375,19 @@ public class LooneyTune extends LinearOpMode {
         currentParameters = new TuneParameters(drive);
         originalParameters = currentParameters.createClone();
 
+        // Remind the user to press Start on the Driver Station, then press A on the gamepad.
+        // We require the latter because enabling the gamepad on the DS after it's been booted
+        // causes an A press to be sent to the app, and we don't want that to accidentally
+        // invoke a menu option:
+        dialogs.message("<big><big><big><big><big><big><big><big><b>Press \u25B6");
+        waitForStart();
+        dialogs.staticPrompt("<big><big><big><big><big><big><big><b>Press Gamepad "+A+" or "+B);
+
         if ((drive.opticalTracker != null) &&
             ((drive.opticalTracker.getAngularUnit() != AngleUnit.RADIANS) ||
              (drive.opticalTracker.getLinearUnit() != DistanceUnit.INCH))) {
-            dialogs.staticPrompt("The SparkFun OTOS must be present and configured for radians and inches.");
+            dialogs.staticPrompt("The SparkFun OTOS must be present and configured for radians and inches.\n\n"
+                    + "Press "+A+" to quit.");
             return; // ====>
         }
 
@@ -2401,14 +2428,6 @@ public class LooneyTune extends LinearOpMode {
             gui.addRunnable("Examples::Spline", this::splineExample);
             gui.addRunnable("Examples::LineTo/Turn example", this::lineToTurnExample);
         }
-
-        // Remind the user to press Start on the Driver Station, then press A on the gamepad.
-        // We require the latter because enabling the gamepad on the DS after it's been booted
-        // causes an A press to be sent to the app, and we don't want that to accidentally
-        // invoke a menu option:
-        dialogs.message("<big><big><big><big><big><big><big><big><b>Press \u25B6");
-        waitForStart();
-        dialogs.staticPrompt("<big><big><big><big><big><big><big><b>Press Gamepad "+A+" or "+B);
 
         while (opModeIsActive()) {
             telemetryAdd(gui.update());
