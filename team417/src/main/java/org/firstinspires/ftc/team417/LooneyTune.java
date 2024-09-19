@@ -1230,7 +1230,7 @@ public class LooneyTune extends LinearOpMode {
         double angularScalar = integerCircles / fractionalMeasuredCircles;
         double imuYawScalar = integerCircles / (integerCircles + imuYawDelta / (2 * Math.PI));
 
-out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", imuYawDelta, imuYawScalar);
+out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta), imuYawScalar);
 
         // Now that we have measured the angular scalar, we can correct the distance-per-revolution:
         distancePerRevolution *= angularScalar;
@@ -1406,6 +1406,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", imuYawDelta, imuYawScalar)
         configureToDrive(true); // Set the brakes
         Action preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, 0, 0))
                 .lineToX(DISTANCE/2.0, null, new ProfileAccelConstraint(-100, 10))
+                .lineToX(-DISTANCE/2.0, null, new ProfileAccelConstraint(-100, 20))
                 .build();
         if (dialogs.drivePrompt(preview, "Tune <b>kS</b> and <b>kV</b>. "
                 + "The robot will drive forward and backward for up to " + testDistance(DISTANCE) + ". "
@@ -1558,22 +1559,24 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", imuYawDelta, imuYawScalar)
         Pose2d baselinePose = null; // Position where the baseline was set
         double maxSpeed = 0; // Max speed seen
         while (opModeIsActive() && !gui.cancel()) {
-            if (gui.leftBumper()) {
+            if (gui.leftBumper()) { // Debug wheels
                 wheelDebugger();
                 drive.setPose(startPose);
                 baselinePose = null;
                 previousPose = startPose;
             }
-            if (gui.xButton()) {
+            if (gui.xButton()) { // Reset the pose
                 drive.setPose(startPose);
                 baselinePose = null;
                 previousPose = startPose;
+                maxSpeed = 0;
             }
-            if (gui.yButton()) {
+            if (gui.yButton()) { // Set the baseline pose
                 baselineImu = drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
                 baselinePose = drive.pose;
                 totalDistance = 0;
                 totalRotation = 0;
+                maxSpeed = 0;
             }
 
             updateGamepadDriving();
@@ -1626,7 +1629,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", imuYawDelta, imuYawScalar)
                     message += "OTOS status: Good!\n";
                 else {
                     double minutesAgo = (time() - lastSeenTime) / 60.0;
-                    message += String.format("OTOS status: Good now, was '%s' %.1f minutes ago\n",
+                    message += String.format("OTOS status: Was '%s' %.1f minutes ago\n",
                             lastSeenStatus, minutesAgo);
                 }
             } else {
@@ -1646,7 +1649,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", imuYawDelta, imuYawScalar)
 
                 if ((totalDistance != 0) && (totalRotation != 0)) {
                     double distanceError = Math.abs(dx) / totalDistance;
-                    double rotationError = Math.abs(otosTheta) / totalDistance;
+                    double rotationError = Math.abs(Math.toDegrees(otosTheta)) / totalDistance;
                     message += String.format("&ensp;Distance error: %.2f%%\n", distanceError * 100);
                     message += String.format("&ensp;Rotation error: %.3f\u00b0/inch\n", rotationError);
                 }
@@ -2155,7 +2158,8 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", imuYawDelta, imuYawScalar)
                             gainName, gainInput.get(), velGainName, velGainInput.update()));
                 }
 
-                telemetryAdd("As the gains increase, the circles should align and the measured "
+                telemetryAdd("The blue circle is actual position, green is target. "
+                        + "As the gains increase, the circles should align and the measured "
                         + String.format("error should decrease. First, increase <b>%s</b> until the robot starts ", gainName)
                         + String.format("to shake. Then switch to <b>%s</b> and increase it to minimize ", velGainName)
                         + "shaking but don't overdo it. "
