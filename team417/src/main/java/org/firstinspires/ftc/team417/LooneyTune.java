@@ -305,7 +305,7 @@ class Gui {
     }
 
     // Button press state:
-    private final boolean[] buttonPressed = new boolean[11];
+    private final boolean[] buttonPressed = new boolean[12];
     private boolean buttonPress(boolean pressed, int index) {
         boolean press = pressed && !buttonPressed[index];
         buttonPressed[index] = pressed;
@@ -315,7 +315,7 @@ class Gui {
     // Button press status:
     boolean accept() { return buttonPress(gamepad.a, 0); }
     boolean cancel() { return buttonPress(gamepad.b, 1); }
-    boolean xButton() { return buttonPress(gamepad.x, 2); }
+    boolean exit() { return buttonPress(gamepad.x, 2); }
     boolean yButton() { return buttonPress(gamepad.y, 3); }
     boolean up() { return buttonPress(gamepad.dpad_up, 4); }
     boolean down() { return buttonPress(gamepad.dpad_down, 5); }
@@ -324,6 +324,7 @@ class Gui {
     boolean leftTrigger() { return buttonPress(gamepad.left_trigger >= ANALOG_THRESHOLD, 8); }
     boolean rightTrigger() { return buttonPress(gamepad.right_trigger >= ANALOG_THRESHOLD, 9); }
     boolean leftBumper() { return buttonPress(gamepad.left_bumper, 10); }
+    boolean rightBumper() { return buttonPress(gamepad.right_bumper, 11); }
 
     // Constructor:
     public Gui(Gamepad gamepad) {
@@ -510,6 +511,10 @@ public class LooneyTune extends LinearOpMode {
     static final String B = "\ud83c\udd51"; // Symbol for the gamepad B button
     static final String X = "\ud83c\udd67"; // Symbol for the gamepad X button
     static final String Y = "\ud83c\udd68"; // Symbol for the gamepad Y button
+    static final String BUMPERS = "<span style='background:#808080;'>bumpers</span>";
+    static final String TRIGGERS = "<span style='background:#808080;'>triggers</span>";
+    static final String LEFT_TRIGGER = "<span style='background:#808080;'>left trigger</span>";
+    static final String RIGHT_TRIGGER = "<span style='background:#808080;'>right trigger</span>";
 
     // Member fields referenced by every test:
     Gui gui;
@@ -715,7 +720,7 @@ public class LooneyTune extends LinearOpMode {
                         + "Press "+A+" to save, "+B+" to cancel, "+X+" to exit without saving.");
                 if (gui.accept())
                     return Prompt.SAVE;
-                if (gui.xButton())
+                if (gui.exit())
                     return Prompt.EXIT;
                 if (gui.cancel())
                     return Prompt.CANCEL;
@@ -1517,39 +1522,45 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
     void wheelDebugger() {
         String[] motorDescriptions = { "leftFront", "leftBack", "rightBack", "rightFront" };
         DcMotorEx[] motors = { drive.leftFront, drive.leftBack, drive.rightBack, drive.rightFront };
-        int i = 0;
+        int motor = 0;
 
         stopMotors();
-        while (opModeIsActive() && !gui.cancel()) {
+        while (opModeIsActive() && !gui.exit()) {
             double power = gamepad1.right_trigger - gamepad1.left_trigger;
-            String description = motorDescriptions[i];
-            telemetryAdd(String.format("This tests every motor individually, now testing '%s'.\n\n", description)
+            String description = motorDescriptions[motor];
+            telemetryAdd(String.format("This tests every motor individually, now testing <b>%s</b>'.\n\n", description)
                 + String.format("&emsp;%s.setPower(%.2f)\n\n", description, power)
-                + "Press right trigger for forward, left trigger for reverse, "+A+" for next motor, "+B+" to cancel.");
+                + "Press "+RIGHT_TRIGGER+" for forward, "+LEFT_TRIGGER+" for reverse, "+BUMPERS+" to switch motor, "+X+" to exit.");
             telemetryUpdate();
 
-            motors[i].setPower(power);
-            if (gui.accept()) {
-                motors[i].setPower(0);
-                i += 1;
-                if (i >= motors.length)
-                    i = 0;
+            motors[motor].setPower(power);
+            if (gui.leftBumper()) {
+                motors[motor].setPower(0);
+                motor--;
+                if (motor < 0)
+                    motor = motors.length - 1;
+            } else if (gui.rightBumper()) {
+                motors[motor].setPower(0);
+                motor++;
+                if (motor >= motors.length)
+                    motor = 0;
             }
         }
-
-        drive.setPose(zeroPose);
         stopMotors();
     }
 
     // Drive the robot around.
     void driveTest() {
-        // Choose a good initial place on this year's field to always start from. For Into the
-        // Deep, the (0, 0) origin is blocked by the 'submersible':
-        Pose2d startPose = new Pose2d(-48, 0, 0);
+        // We dedicate an unobstructed corner of the field to use as the home position for this
+        // test. The robot can nestle in the corner and thereby establish a consistent physical
+        // location and orientation for measuring tracking drift error. We choose the lower-right
+        // corner, and assume that the robot is 18 inches on each side:
+        Pose2d homePose = new Pose2d(72-9, -72+9, 0);
 
         configureToDrive(true); // Do use MecanumDrive
-        drive.setPose(startPose);
-        Pose2d previousPose = startPose;
+
+        drive.setPose(zeroPose);
+        Pose2d previousPose = zeroPose; // Robot's pose on the previous iteration, for measuring deltas
         double totalDistance = 0; // Inches
         double totalRotation = 0; // Radians
         String lastSeenStatus = ""; // Most recently reported non-zero status from the OTOS
@@ -1557,31 +1568,39 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
 
         double baselineImu = 0; // IMU heading when the baseline was set
         Pose2d baselinePose = null; // Position where the baseline was set
-        double maxSpeed = 0; // Max speed seen
-        while (opModeIsActive() && !gui.cancel()) {
-            if (gui.leftBumper()) { // Debug wheels
+        double maxLinearSpeed = 0; // Max linear speed seen
+        double maxRotationalSpeed = 0; // Max rotational speed seen, radians/s
+        while (opModeIsActive() && !gui.exit()) {
+            TelemetryPacket packet = MecanumDrive.getTelemetryPacket(true);
+
+            if (gui.leftBumper() || gui.rightBumper()) { // Debug wheels
                 wheelDebugger();
-                drive.setPose(startPose);
+                drive.setPose(homePose);
                 baselinePose = null;
-                previousPose = startPose;
+                previousPose = homePose;
             }
-            if (gui.xButton()) { // Reset the pose
-                drive.setPose(startPose);
-                baselinePose = null;
-                previousPose = startPose;
-                maxSpeed = 0;
-            }
-            if (gui.yButton()) { // Set the baseline pose
+            if (gui.yButton()) { // Set baseline at home
+                drive.setPose(homePose);
+                previousPose = homePose;
                 baselineImu = drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
                 baselinePose = drive.pose;
                 totalDistance = 0;
                 totalRotation = 0;
-                maxSpeed = 0;
+                maxLinearSpeed = 0;
+                maxRotationalSpeed = 0;
             }
 
             updateGamepadDriving();
             PoseVelocity2d velocity = drive.updatePoseEstimate();
-            maxSpeed = Math.max(maxSpeed, Math.hypot(velocity.linearVel.x, velocity.linearVel.y));
+
+            // Calculate some statistics about the velocity:
+            double linearSpeed = Math.hypot(velocity.linearVel.x, velocity.linearVel.y);
+            double rotationalSpeed = Math.abs(velocity.angVel);
+            packet.put("Linear speed", linearSpeed);
+            packet.put("Rotational speed", rotationalSpeed);
+            putDivider(packet);
+            maxLinearSpeed = Math.max(maxLinearSpeed, linearSpeed);
+            maxRotationalSpeed = Math.max(maxRotationalSpeed, rotationalSpeed);
 
             // Query the OTOS for any problems:
             SparkFunOTOS.Status status = drive.opticalTracker.getStatus();
@@ -1608,8 +1627,12 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
             totalRotation += Math.abs(pose.heading.toDouble() - previousPose.heading.toDouble());
             previousPose = pose;
 
-            TelemetryPacket packet = MecanumDrive.getTelemetryPacket(true);
-            String message = "Use the controller to drive the robot around.\n\n";
+            String message = "Use the controller to drive the robot around. ";
+            if (baselinePose == null) {
+                message += "To show pose estimates, press "+Y+" when the robot is physically positioned "
+                        + "in the corner as indicated by the golden pose on FTC Dashboard.";
+            }
+            message += "\n\n";
 
             if (drive.opticalTracker != null) {
                 MecanumDrive.Params.Otos otos = currentParameters.params.otos;
@@ -1624,6 +1647,8 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
             }
             message += String.format("Pose: (%.2f\", %.2f\"), %.2f\u00b0\n",
                         pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
+            message += String.format("Max velocities: %.1f\"/s, %.0f\u00b0/s\n",
+                    maxLinearSpeed, Math.toDegrees(maxRotationalSpeed));
             if (currentStatus.isEmpty()) {
                 if (lastSeenStatus.isEmpty())
                     message += "OTOS status: Good!\n";
@@ -1635,7 +1660,6 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
             } else {
                 message += String.format("OTOS status: %s\n", currentStatus);
             }
-            message += String.format("Max velocity: %.1f\"/s\n", maxSpeed);
 
             if (baselinePose != null) {
                 double dx = pose.position.x - baselinePose.position.x;
@@ -1643,27 +1667,30 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
                 double otosTheta = normalizeAngle(pose.heading.toDouble() - baselinePose.heading.toDouble());
                 double imuTheta = normalizeAngle(drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) - baselineImu);
 
-                message += "\nError analysis if back at the baseline position:\n\n"
+                message += "\nData that's relevant only when physically at the home position:\n\n"
                     + String.format("&ensp;Offset: (%.2f\", %.2f\"), %.2f\u00b0, IMU: %.2f\u00b0\n",
                         dx, dy, Math.toDegrees(otosTheta), Math.toDegrees(imuTheta));
 
                 if ((totalDistance != 0) && (totalRotation != 0)) {
                     double distanceError = Math.abs(dx) / totalDistance;
                     double rotationError = Math.abs(Math.toDegrees(otosTheta)) / totalDistance;
-                    message += String.format("&ensp;Distance error: %.2f%%\n", distanceError * 100);
-                    message += String.format("&ensp;Rotation error: %.3f\u00b0/inch\n", rotationError);
+                    message += String.format("&ensp;Error: %.2f%% (distance), ", distanceError * 100);
+                    message += String.format("%.3f\u00b0/inch (rotational)\n", rotationError);
                 }
             }
 
-            dialogs.message(message + "\nPress left bumper to debug the wheels, "+B+" to exit, "+X+" to reset the pose, "+Y+" to set the baseline pose.");
+            dialogs.message(message + "\nPress "+X+" to exit, "+Y+
+                    ((baselinePose == null) ? " when in the golden home position, " : " to reset home, ")
+                    +BUMPERS+" to debug the wheels.");
 
             Canvas canvas = packet.fieldOverlay();
+            canvas.setStroke("#ffd700"); // Gold
+            Drawing.drawRobot(canvas, homePose);
+
             if (baselinePose != null) {
-                canvas.setStroke("#c0c0c0");
-                Drawing.drawRobot(canvas, baselinePose);
+                canvas.setStroke("#3F51B5");
+                Drawing.drawRobot(canvas, pose);
             }
-            canvas.setStroke("#3F51B5");
-            Drawing.drawRobot(canvas, pose);
             MecanumDrive.sendTelemetryPacket(packet);
 
         }
@@ -1941,7 +1968,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
 
                     updateGamepadDriving();
 
-                    if (gui.xButton()) {
+                    if (gui.exit()) {
                         Prompt prompt = dialogs.savePrompt();
                         if (prompt == Prompt.SAVE) {
                             // Restore the state that we zeroed to run the test:
@@ -2210,7 +2237,7 @@ out.printf("imuYawDelta: %.4f, imuYawScalar: %.4f\n", Math.toDegrees(imuYawDelta
 
                     updateGamepadDriving();
 
-                    if (gui.xButton()) {
+                    if (gui.exit()) {
                         Prompt prompt = dialogs.savePrompt();
                         if (prompt == Prompt.SAVE) {
                             acceptParameters(testParameters);
