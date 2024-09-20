@@ -66,7 +66,6 @@ import org.firstinspires.ftc.team417.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
-import org.firstinspires.ftc.team417.LooneyTune;
 import org.firstinspires.inspection.InspectionState;
 
 import java.util.Arrays;
@@ -85,7 +84,7 @@ public final class MecanumDrive {
             maxAngAccel = Math.PI;
 
             if (isDevBot) {
-                // Your DevBot Looney Tune configuration is here:
+                // Your DevBot Loony Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
@@ -111,7 +110,7 @@ public final class MecanumDrive {
                 otos.angularScalar = 0;
 
             } else {
-                // Your competition robot Looney Tune configuration is here:
+                // Your competition robot Loony Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
@@ -185,16 +184,10 @@ public final class MecanumDrive {
 
     public static Params PARAMS = new Params();
 
-    public MecanumKinematics kinematics = new MecanumKinematics(
-            PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
-
+    public MecanumKinematics kinematics; // Initialized by initializeKinematics()
+    public VelConstraint defaultVelConstraint; // Initialized by initializeKinematics()
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
             PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
-    public final VelConstraint defaultVelConstraint =
-            new MinVelConstraint(Arrays.asList(
-                    kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
-                    new AngularVelConstraint(PARAMS.maxAngVel)
-            ));
     public final AccelConstraint defaultAccelConstraint =
             new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccel);
 
@@ -299,7 +292,10 @@ public final class MecanumDrive {
         }
     }
 
+    // Constructor for the Mecanum Drive object.
     public MecanumDrive(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
+        initializeKinematics();
+
         this.pose = pose;
 
         WilyWorks.setStartPose(pose, new PoseVelocity2d(new Vector2d(0, 0), 0));
@@ -323,7 +319,7 @@ public final class MecanumDrive {
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
 
         // Now that configuration is complete, verify the parameters:
-        LooneyTune.verifyCodeMatchesTuneResults(this, telemetry, gamepad);
+        LoonyTune.verifyCodeMatchesTuneResults(this, telemetry, gamepad);
     }
 
     // This is where you configure Road Runner to work with your hardware:
@@ -332,7 +328,6 @@ public final class MecanumDrive {
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         if (isDevBot) {
             opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
-            initializeOpticalTracker();
 
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
             leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -345,15 +340,20 @@ public final class MecanumDrive {
             // TODO: Create the optical tracking object:
             //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
 
+            opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
             leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
             rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
             rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
             // TODO: reverse motor directions if needed
-            leftFront.setDirection(DcMotorEx.Direction.REVERSE);
             leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+            rightBack.setDirection(DcMotorEx.Direction.REVERSE);
         }
+
+        // Initialize the OTOS, if any:
+        initializeOpticalTracker();
 
         // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
@@ -686,7 +686,7 @@ public final class MecanumDrive {
     }
 
     public final class TurnAction implements Action {
-        private final TimeTurn turn;
+        public final TimeTurn turn;
 
         private double beginTs = -1;
 
@@ -864,11 +864,16 @@ public final class MecanumDrive {
         );
     }
 
-    // Recreate the kinematics object using the current settings:
-    public void recreateKinematics() {
+    // Create the kinematics object and any dependents from the current settings:
+    public void initializeKinematics() {
         kinematics = new MecanumKinematics(
                 PARAMS.inPerTick * PARAMS.trackWidthTicks,
                 PARAMS.inPerTick / PARAMS.lateralInPerTick);
+        defaultVelConstraint =
+                new MinVelConstraint(Arrays.asList(
+                        kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
+                        new AngularVelConstraint(PARAMS.maxAngVel)
+                ));
     }
 
     /** @noinspection unused*/ // Rotate a vector by a prescribed angle:

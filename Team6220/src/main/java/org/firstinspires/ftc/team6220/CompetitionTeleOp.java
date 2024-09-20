@@ -29,7 +29,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            telemetry.addLine("Running 6220 TeleOp!");
+            telemetry.addLine("Running TeleOp!");
             telemetry.update();
 
             // Set the drive motor powers according to the gamepad input:
