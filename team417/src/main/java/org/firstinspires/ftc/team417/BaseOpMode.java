@@ -9,5 +9,5 @@ import org.firstinspires.ftc.team417.roadrunner.KinematicType;
  * Autonomous logic. All TeleOp and Autonomous classes should derive from this class.
  */
 abstract public class BaseOpMode extends LinearOpMode {
-    public static final KinematicType kinematicType = KinematicType.X;
+    public static final KinematicType kinematicType = KinematicType.MECANUM;
 }
