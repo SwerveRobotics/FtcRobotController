@@ -9,7 +9,6 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
-import org.firstinspires.ftc.team417.roadrunner.KinematicType;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 /**
@@ -18,6 +17,8 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  */
 @TeleOp(name="TeleOp", group="Competition")
 public class CompetitionTeleOp extends BaseOpMode {
+    private double speedMultiplier = 1;
+
     @Override
     public void runOpMode() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
@@ -29,24 +30,29 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            telemetry.addLine("Running TeleOp!");
-            telemetry.addData("Kinematic Type", kinematicType);
-            telemetry.update();
+            if (gamepad1.left_bumper && gamepad1.right_bumper) {
+                speedMultiplier = 0.25;
+            } else if (gamepad1.left_bumper || gamepad1.right_bumper) {
+                speedMultiplier = 0.5;
+            } else {
+                speedMultiplier = 1;
+            }
 
             // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
-                            -gamepad1.left_stick_y,
-                            -gamepad1.left_stick_x
+                            -gamepad1.left_stick_y * speedMultiplier,
+                            -gamepad1.left_stick_x * speedMultiplier
                     ),
-                    -gamepad1.right_stick_x
+                    -gamepad1.right_stick_x * speedMultiplier
             ));
 
             // Update the current pose:
             drive.updatePoseEstimate();
 
-            telemetry.addLine("Running 417's TeleOp!");
-            telemetry.addLine("Kinematic type is " + kinematicType);
+            telemetry.addLine("Running TeleOp!");
+            telemetry.addData("Kinematic Type", kinematicType);
+            telemetry.addData("Speed Multiplier", speedMultiplier);
             telemetry.update();
 
             // 'packet' is the object used to send data to FTC Dashboard:

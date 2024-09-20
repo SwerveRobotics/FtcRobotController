@@ -392,14 +392,14 @@ public final class MecanumDrive {
                 break;
 
             case DEVBOT_X:
-                opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
-                initializeOpticalTracker();
+                // TODO: Create the optical tracking object:
+                //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
+                //   initializeOpticalTracker();
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
                 rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
                 rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
-
                 leftFront.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
