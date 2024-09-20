@@ -105,8 +105,9 @@ public final class MecanumDrive {
 
                 otos.offset.x = 0;
                 otos.offset.y = 0;
-                otos.offset.h = Math.toRadians(0);
-                otos.linearScalar = 0;
+                otos.offset.h = Math.toRadians(89.29);
+                    //was Math.toRadians(0.00)
+                otos.linearScalar = 0.943; //was 0.000
                 otos.angularScalar = 0;
 
             } else {
