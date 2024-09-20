@@ -95,8 +95,8 @@ public final class MecanumDrive {
                     lateralInPerTick = 1.0;
                     trackWidthTicks = 0;
 
-                    kS = 0.455; // Was 0
-                    kV = 0.187; // Was 0
+                    kS = 0.608; // Was 0
+                    kV = 0.188; // Was 0
                     kA = 0;
 
                     axialGain = 0;
@@ -108,8 +108,8 @@ public final class MecanumDrive {
 
                     otos.offset.x = 0;
                     otos.offset.y = 0;
-                    otos.offset.h = Math.toRadians(-88.29); // Was Math.toRadians(0)
-                    otos.linearScalar = 1.058; // Was 0
+                    otos.offset.h = Math.toRadians(-89.71); // Was Math.toRadians(0)
+                    otos.linearScalar = 1.041; // Was 0
                     otos.angularScalar = 0;
                     break;
 
