@@ -348,7 +348,7 @@ public final class MecanumDrive {
             rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
             // TODO: reverse motor directions if needed
-            leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+            rightFront.setDirection(DcMotorEx.Direction.REVERSE);
             rightBack.setDirection(DcMotorEx.Direction.REVERSE);
         }
 
