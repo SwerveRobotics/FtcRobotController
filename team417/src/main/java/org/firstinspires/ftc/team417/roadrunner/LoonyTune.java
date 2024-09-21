@@ -17,6 +17,7 @@ import static java.lang.System.nanoTime;
 
 import android.annotation.SuppressLint;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.canvas.CanvasOp;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -121,22 +122,16 @@ class Ui {
     static final double ANALOG_THRESHOLD = 0.5; // Threshold to consider an analog button pressed
 
     final private Telemetry telemetry; // Driver Station telemetry object
-    private String welcomeMessage; // Welcome message to show only on the Driver Station
+    private String welcomeMessage; // Welcome message to show only on Driver Station, if any
     public Gamepad gamepad; // Gamepad reference
     private boolean showField; // True if this year's game bitmap is to be shown, false if it should be blank
     private String messageCopy = ""; // Copy of the most recently shown message
     private List<CanvasOp> canvasOpsCopy; // Copy of the most recently shown field canvas
 
-    // We always output our UI to the FTC Dashboard telemetry. We can optionally also show it
-    // on the Driver Station. This flag dictates whether the Driver Station should be effectively
-    // disabled and show only a static startup message, or whether it should show the current menu
-    // (true):
-    private boolean enableDriverStationDisplay = false;
-
     // The following are null when not in an active begin/end bracket:
     private StringBuilder message; // Message that is begin built
-    private TelemetryPacket packet; // Current FTC Dashboard telemetry object
     private Canvas canvas; // Current FTC Dashboard field canvas
+    public TelemetryPacket packet; // Current FTC Dashboard telemetry object
 
     Ui(Gamepad gamepad, Telemetry telemetry) {
         this.gamepad = gamepad;
@@ -179,7 +174,7 @@ class Ui {
     // Set the message to be shown constantly on the Driver Station screen (at least until they
     // press Start):
     /** @noinspection SameParameterValue*/
-    void setDriverStationMessage(String message) {
+    void setWelcomeMessage(String message) {
         welcomeMessage = message;
     }
 
@@ -187,12 +182,16 @@ class Ui {
     // show blank when updating the field:
     void begin() { begin(showField); }
     void begin(boolean showField) {
-        packet = MecanumDrive.getTelemetryPacket();
+        assert(packet == null);
+        assert(message == null);
+        assert(canvas == null);
+
+        packet = new TelemetryPacket();
         message = new StringBuilder();
 
-        // Enable the Driver Station display if they've pressed 'start' on the controller:
+        // Disable the welcome message if they've pressed the gamepad's 'start'"
         if (start()) {
-            enableDriverStationDisplay = true;
+            welcomeMessage = null;
         }
     }
 
@@ -212,6 +211,13 @@ class Ui {
     void redraw() {
         begin();
         end();
+    }
+
+    // Abort a begin/end bracket:
+    void reset() {
+        message = null;
+        packet = null;
+        canvas = null;
     }
 
     // End a UI update and send the results to the Driver Station telemetry, the FTC Dashboard
@@ -236,17 +242,15 @@ class Ui {
         // Send the completed message to the FTC Dashboard telemetry (remembering that it doesn't
         // like newlines) and to the Driver Station (if enabled):
         packet.addLine(messageCopy.replace("\n", "<br>"));
-        if ((enableDriverStationDisplay) || (welcomeMessage == null)){
-            telemetry.addLine(messageCopy);
-        } else {
+        if (welcomeMessage != null) {
             telemetry.addLine(welcomeMessage);
+        } else {
+            telemetry.addLine(messageCopy);
         }
         telemetry.update();
 
-        // Clean up in preparation for the next begin():
-        message = null;
-        packet = null;
-        canvas = null;
+        // Prepare for the next begin():
+        reset();
     }
 
     // Get a canvas for drawing on the field. Callable only when in a begin/end bracket:
@@ -276,6 +280,25 @@ class Ui {
         }
         return canvas;
     }
+
+    // Put a stick FTC Dashboard telemetry value:
+    void put(String key, Object value) {
+        packet.put(key, value);
+    }
+
+    // Put a sticky divider string in the telemetry:
+    void putDivider() {
+        StringBuilder divider = new StringBuilder();
+        for (int i = 0; i < 10; i++)
+            //noinspection UnnecessaryUnicodeEscape
+            divider.append("\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af");
+        packet.put(divider.toString(), "");
+    }
+
+    // Get rid of any sticky variables that have shown up in FTC Dashboard's telemetry:
+    void clearDashboardTelemetry() {
+        FtcDashboard.getInstance().clearTelemetry();
+    }
 }
 
 /**
@@ -283,12 +306,10 @@ class Ui {
  * @noinspection AccessStaticViaInstance
  */
 class TuneParameters {
-    String robotName;
     MecanumDrive.Params params;
 
     // Get the settings from the current MecanumDrive object:
     public TuneParameters(MecanumDrive drive) {
-        robotName = MecanumDrive.getBotName();
         params = drive.PARAMS;
     }
 
@@ -341,8 +362,6 @@ class TuneParameters {
         // Now compare to the current settings:
         if ((savedParameters == null) || (savedParameters.params == null))
             return null; // No saved settings were found
-        if (!savedParameters.robotName.equals(robotName))
-            return null; // Different robots, so discard
         return savedParameters;
     }
 
@@ -916,38 +935,20 @@ public class LoonyTune extends LinearOpMode {
         return String.format("%d inches (%.1f tiles)", distance, distance / 24.0);
     }
 
-    // Convert telemetry newlines to HTML breaks so that FTC Dashboard renders the text properly:
-    void telemetryAdd(String line) {
-        telemetry.addLine(line.replace("\n", "<br>"));
-    }
-
-    // Send the telemetry packet to the Driver Station:
-    void telemetryUpdate() {
-        telemetry.update();
-    }
-
-    // Get a divider string for telemetry purposes:
-    void putDivider(TelemetryPacket packet) {
-        StringBuilder divider = new StringBuilder();
-        for (int i = 0; i < 10; i++)
-            divider.append("\u23af\u23af\u23af\u23af\u23af\u23af\u23af\u23af");
-        packet.put(divider.toString(), "");
-    }
-
     // Run an Action but end it early if Cancel is pressed.
     // Returns True if it ran without cancelling, False if it was cancelled.
     private boolean runCancelableAction(Action action) {
         drive.runParallel(action);
         while (opModeIsActive() && !ui.cancel()) {
-            TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
-            ui.message("Press "+B+" to stop");
-            boolean more = drive.doActionsWork(packet);
-            if (more) {
-                MecanumDrive.sendTelemetryPacket(packet);
-            } else {
-                // We successfully completed the Action!
+            ui.begin(false);
+            ui.add("Press "+B+" to stop");
+            boolean more = drive.doActionsWork(ui.packet);
+            if (!more) {
+                // We successfully completed the Action! Abort the current canvas:
+                ui.reset();
                 return true; // ====>
             }
+            ui.end();
         }
         // The user either pressed Cancel or End:
         drive.abortActions();
@@ -958,7 +959,7 @@ public class LoonyTune extends LinearOpMode {
     // Road Runner expects the hardware to be in different states when using high-level MecanumDrive
     // functionality vs. its lower-level tuning functionality.
     private void configureToDrive(boolean enableRoadRunnerDefaults) {
-        MecanumDrive.clearDashboardTelemetry();
+        ui.clearDashboardTelemetry();
 
         DcMotorEx[] motors = { drive.leftFront, drive.leftBack, drive.rightBack, drive.rightFront };
         if (enableRoadRunnerDefaults) {
@@ -1268,8 +1269,8 @@ public class LoonyTune extends LinearOpMode {
 
     // Draw the spin sample points, plus the optional best-fit circle, on FTC Dashboard:
     void drawSpinPoints(ArrayList<Point> points, Circle circle) {
-        TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
-        Canvas canvas = packet.fieldOverlay();
+        ui.begin();
+        Canvas canvas = ui.canvas();
         double[] xPoints = new double[points.size()];
         double[] yPoints = new double[points.size()];
         for (int i = 0; i < points.size(); i++) {
@@ -1286,7 +1287,7 @@ public class LoonyTune extends LinearOpMode {
             canvas.strokeCircle(circle.x, circle.y, circle.radius);
         }
 
-        MecanumDrive.sendTelemetryPacket(packet);
+        ui.end();
     }
 
     // This is the robot spin test for calibrating the optical sensor angular scale and offset:
@@ -1378,9 +1379,11 @@ public class LoonyTune extends LinearOpMode {
                     // Update the telemetry:
                     drawSpinPoints(points, null);
                     double rotationsRemaining = (terminationRotation - offsetRotation) / (2 * Math.PI);
-                    telemetryAdd(String.format("%.2f rotations remaining, %d samples", rotationsRemaining, points.size()));
-                    telemetryAdd("\nPress "+B+" to abort.");
-                    telemetryUpdate();
+
+                    ui.begin();
+                    ui.add(String.format("%.2f rotations remaining, %d samples", rotationsRemaining, points.size()));
+                    ui.add("\n\nPress "+B+" to abort.");
+                    ui.end();
 
                     // Update for next iteration of the loop:
                     Pose2D rawPose = updateRotationAndGetPose();
@@ -1568,9 +1571,10 @@ public class LoonyTune extends LinearOpMode {
             }
 
             double remaining = Math.max(0, targetDistance - distance);
-            telemetryAdd(String.format("Inches remaining: %.1f, power: %.1f\n", remaining, powerFactor));
-            telemetryAdd("Press "+B+" to abort.");
-            telemetryUpdate();
+            ui.begin();
+            ui.add(String.format("Inches remaining: %.1f, power: %.1f\n", remaining, powerFactor));
+            ui.add("Press "+B+" to abort.");
+            ui.end();
         }
 
         // Stop the robot:
@@ -1619,10 +1623,6 @@ public class LoonyTune extends LinearOpMode {
             ArrayList<Point> acceptedSamples = new ArrayList<>(); // x is velocity, y is power
             Point max = new Point(0, 0); // x is velocity max, y is power max
             while (opModeIsActive()) {
-                // Clear the FTC Dashboard field:
-                TelemetryPacket telemetryPacket = MecanumDrive.getTelemetryPacket(false);
-                MecanumDrive.sendTelemetryPacket(telemetryPacket);
-
                 // Do one forward and back run:
                 ArrayList<Point> forwardSamples = acceleratingStraightLine(DISTANCE,  1.0);
                 if (forwardSamples != null) {
@@ -1638,8 +1638,8 @@ public class LoonyTune extends LinearOpMode {
                             break; // ====>
                         } else {
                             // Draw the results to the FTC dashboard:
-                            TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
-                            Canvas canvas = packet.fieldOverlay();
+                            ui.begin();
+                            Canvas canvas = ui.canvas();
 
                             // Set a solid white background and an offset then draw the point samples:
                             canvas.setFill("#ffffff");
@@ -1667,7 +1667,7 @@ public class LoonyTune extends LinearOpMode {
                             canvas.strokeLine(0, bestFitLine.intercept * scale.y,
                                     200 * scale.x, (bestFitLine.intercept + 200 * bestFitLine.slope) * scale.y);
 
-                            MecanumDrive.sendTelemetryPacket(packet);
+                            ui.end();
 
                             double kS = bestFitLine.intercept;
                             double kV = bestFitLine.slope * currentParameters.params.inPerTick;
@@ -1727,10 +1727,12 @@ public class LoonyTune extends LinearOpMode {
         while (opModeIsActive() && !ui.exit()) {
             double power = gamepad1.right_trigger - gamepad1.left_trigger;
             String description = motorDescriptions[motor];
-            telemetryAdd(String.format("This tests every motor individually, now testing <b>%s</b>.\n\n", description)
+
+            ui.begin();
+            ui.add(String.format("This tests every motor individually, now testing <b>%s</b>.\n\n", description)
                 + String.format("&emsp;%s.setPower(%.2f)\n\n", description, power)
                 + "Press "+RIGHT_TRIGGER+" for forward, "+LEFT_TRIGGER+" for reverse, "+BUMPER+" to switch motor, "+X+" to exit.");
-            telemetryUpdate();
+            ui.end();
 
             motors[motor].setPower(power);
             if (ui.leftBumper()) {
@@ -1770,7 +1772,7 @@ public class LoonyTune extends LinearOpMode {
         double maxLinearSpeed = 0; // Max linear speed seen
         double maxRotationalSpeed = 0; // Max rotational speed seen, radians/s
         while (opModeIsActive() && !ui.exit()) {
-            TelemetryPacket packet = MecanumDrive.getTelemetryPacket(true);
+            ui.begin(true);
 
             if (ui.leftBumper() || ui.rightBumper()) { // Debug wheels
                 wheelDebugger();
@@ -1795,9 +1797,9 @@ public class LoonyTune extends LinearOpMode {
             // Calculate some statistics about the velocity:
             double linearSpeed = Math.hypot(velocity.linearVel.x, velocity.linearVel.y);
             double rotationalSpeed = Math.abs(velocity.angVel);
-            packet.put("Linear speed", linearSpeed);
-            packet.put("Rotational speed", rotationalSpeed);
-            putDivider(packet);
+            ui.put("Linear speed", linearSpeed);
+            ui.put("Rotational speed", rotationalSpeed);
+            ui.putDivider();
             maxLinearSpeed = Math.max(maxLinearSpeed, linearSpeed);
             maxRotationalSpeed = Math.max(maxRotationalSpeed, rotationalSpeed);
 
@@ -1878,11 +1880,11 @@ public class LoonyTune extends LinearOpMode {
                 }
             }
 
-            ui.message(message + "\nPress "+X+" to exit, "+Y+
+            ui.add(message + "\nPress "+X+" to exit, "+Y+
                     ((baselinePose == null) ? " when in the golden home position, " : " to reset home, ")
                     +BUMPER+" to debug the wheels.");
 
-            Canvas canvas = packet.fieldOverlay();
+            Canvas canvas = ui.canvas();
             canvas.setStroke("#ffd700"); // Gold
             Drawing.drawRobot(canvas, homePose);
 
@@ -1890,7 +1892,7 @@ public class LoonyTune extends LinearOpMode {
                 canvas.setStroke("#3F51B5");
                 Drawing.drawRobot(canvas, pose);
             }
-            MecanumDrive.sendTelemetryPacket(packet);
+            ui.end();
 
         }
         stopMotors();
@@ -2063,15 +2065,16 @@ public class LoonyTune extends LinearOpMode {
 
             while (opModeIsActive()) {
                 // Process the gamepad numeric input:
-                telemetryAdd("Tune the feed forward constants:\n");
+                ui.begin();
+                ui.add("Tune the feed forward constants:\n\n");
                 if (inputIndex == 0) {
-                    telemetryAdd(String.format("&emsp;kV: <big><big>%s</big></big>&emsp;kA: %s\n", vInput.update(), aInput.get()));
-                    telemetryAdd("View the graph in FTC Dashboard and adjust "
+                    ui.add(String.format("&emsp;kV: <big><big>%s</big></big>&emsp;kA: %s\n\n", vInput.update(), aInput.get()));
+                    ui.add("View the graph in FTC Dashboard and adjust "
                             + "<b>kV</b> to make the horizontal lines as close as possible in height. "
                             + "<b>vTarget</b> is green, <b>vActual</b> is blue, <i>kV = vTarget / vActual</i>.\n");
                 } else {
-                    telemetryAdd(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n", vInput.get(), aInput.update()));
-                    telemetryAdd("View the graph in FTC Dashboard and adjust "
+                    ui.add(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n\n", vInput.get(), aInput.update()));
+                    ui.add("View the graph in FTC Dashboard and adjust "
                             + "<b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap "
                             + "where the robot accelerates. Don't worry about the deceleration portions.\n");
                 }
@@ -2083,8 +2086,8 @@ public class LoonyTune extends LinearOpMode {
 
                 // If there's a profile, that means we're actively moving:
                 if (profile != null) {
-                    telemetryAdd("Press "+B+" to cancel");
-                    telemetryUpdate();
+                    ui.add("Press "+B+" to cancel\n");
+                    ui.end();
 
                     double time = time();
                     double elapsedTime = time - profileStartTime;
@@ -2116,8 +2119,8 @@ public class LoonyTune extends LinearOpMode {
                     if (time - lastGraphTime > GRAPH_THROTTLE) {
                         lastGraphTime = time;
 
-                        TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
-                        Canvas canvas = packet.fieldOverlay();
+                        ui.begin(false);
+                        Canvas canvas = ui.canvas();
                         canvas.setFill("#ffffff");
                         canvas.fillRect(-72, -72, 144, 144);
                         canvas.setTranslation(0, 72);
@@ -2141,10 +2144,10 @@ public class LoonyTune extends LinearOpMode {
 
                         // Make the results available to FTC Dashboard so that they can be graphed
                         // there as well:
-                        packet.put("vActual", actualVelocity);
-                        packet.put("vTarget", v.get(0));
-                        putDivider(packet);
-                        MecanumDrive.sendTelemetryPacket(packet);
+                        ui.put("vActual", actualVelocity);
+                        ui.put("vTarget", v.get(0));
+                        ui.putDivider();
+                        ui.end();
                     }
 
                     // Set the motors to the appropriate values:
@@ -2162,13 +2165,13 @@ public class LoonyTune extends LinearOpMode {
                         profile = null;
                     }
                 } else {
-                    telemetryAdd("Use "+TRIGGERS+" to change velocity to lengthen or shorten the horizontal lines. "
-                            +  String.format("Max velocity is <b>%.0f%%</b>.\n", maxVelocityFactor * 100.0));
+                    ui.add("Use "+TRIGGERS+" to change velocity to lengthen or shorten the horizontal lines. "
+                            +  String.format("Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0));
 
-                    telemetryAdd(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
+                    ui.add(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
                             + "the cursor, "+Y+" to switch input, "+TRIGGERS+" to change max velocity, "
                             + A+" to run on the robot, "+X+" to exit.");
-                    telemetryUpdate();
+                    ui.end();
 
                     updateGamepadDriving();
 
@@ -2221,7 +2224,7 @@ public class LoonyTune extends LinearOpMode {
         // We're done, undo any temporary state we set:
         MecanumDrive.PARAMS = currentParameters.params;
         stopMotors();
-        MecanumDrive.clearDashboardTelemetry();
+        ui.clearDashboardTelemetry();
     }
 
     /**
@@ -2383,20 +2386,20 @@ public class LoonyTune extends LinearOpMode {
 
             while (opModeIsActive()) {
                 // Drive:
-                TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
-                boolean more = drive.doActionsWork(packet);
+                ui.begin(false);
+                boolean more = drive.doActionsWork(ui.packet);
 
                 // Update the display:
-                telemetryAdd("Tune the gains:\n");
+                ui.add("Tune the gains:\n\n");
                 if (inputIndex == 0) {
-                    telemetryAdd(String.format("&emsp;%s: <big><big>%s</big></big>&emsp;%s: %s\n",
+                    ui.add(String.format("&emsp;%s: <big><big>%s</big></big>&emsp;%s: %s\n\n",
                             gainName, gainInput.update(), velGainName, velGainInput.get()));
                 } else {
-                    telemetryAdd(String.format("&emsp;%s: %s&emsp;%s: <big><big>%s</big></big>\n",
+                    ui.add(String.format("&emsp;%s: %s&emsp;%s: <big><big>%s</big></big>\n\n",
                             gainName, gainInput.get(), velGainName, velGainInput.update()));
                 }
 
-                telemetryAdd("The blue circle is actual position, green is target. "
+                ui.add("The blue circle is actual position, green is target. "
                         + "As the gains increase, the circles should align and the measured "
                         + String.format("error should decrease. First, increase <b>%s</b> until the robot starts ", gainName)
                         + String.format("to shake. Then switch to <b>%s</b> and increase it to minimize ", velGainName)
@@ -2418,8 +2421,8 @@ public class LoonyTune extends LinearOpMode {
                     errorString = String.format("%.2f\u00b0", error);
                 }
 
-                packet.put("Error", error); // Make the error graphable
-                putDivider(packet);
+                ui.put("Error", error); // Make the error graphable
+                ui.putDivider();
 
                 if (ui.ok())
                     queuedAButtons++; // Let the x-button be queued up even while running
@@ -2427,24 +2430,24 @@ public class LoonyTune extends LinearOpMode {
                     inputIndex ^= 1; // Toggle the index
 
                 if (more) {
-                    telemetryAdd("Current error: " + errorString + ".\n");
-                    telemetryAdd("Press "+B+" to cancel");
-                    telemetryUpdate();
+                    ui.add("Current error: " + errorString + ".\n\n");
+                    ui.add("Press "+B+" to cancel\n");
 
                     // Only send the packet if there's more to the trajectory, otherwise the
                     // field view will be erased once the trajectory terminates:
-                    MecanumDrive.sendTelemetryPacket(packet);
-
+                    ui.end();
                     if (ui.cancel()) {
                         // Cancel the current cycle but remain in this test:
                         drive.abortActions();
                         queuedAButtons = 0;
                     }
                 } else {
-                    telemetryAdd("Last error: " + errorString + ".\n");
-                    telemetryAdd(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
+                    ui.reset();
+
+                    ui.add("Last error: " + errorString + ".\n\n");
+                    ui.add(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
                         + "the cursor, "+Y+" to switch input, "+A+" to run on the robot, "+X+" to exit.");
-                    telemetryUpdate();
+                    ui.end();
 
                     updateGamepadDriving();
 
@@ -2679,9 +2682,13 @@ public class LoonyTune extends LinearOpMode {
         // We require the latter because enabling the gamepad on the DS after it's been booted
         // causes an A press to be sent to the app, and we don't want that to accidentally
         // invoke a menu option:
-        ui.message("<big><big><big><big><big><big><big><big><b>Press \u25B6");
+        ui.begin(false);
+        ui.add("<big><big><big><big><big><big><big><big><b>Press \u25B6");
+        ui.canvas().fillText("Loony Tune!", -32, 0, "", 0, false);
+        ui.end();
+
         waitForStart();
-        ui.setDriverStationMessage("<h2>Loony Tune</h2>"
+        ui.setWelcomeMessage("<h2>Loony Tune</h2>"
                 + "This tuner requires FTC Dashboard. Make sure you're Wi-Fi connected "
                 + "to the robot and go to <u>http://192.168.43.1:8080/dash</u> in your web browser. "
                 + "\n\n"
@@ -2705,12 +2712,6 @@ public class LoonyTune extends LinearOpMode {
             query.ok();
             return; // ====>
         }
-
-        // Clear the Dashboard map:
-        TelemetryPacket packet = MecanumDrive.getTelemetryPacket(false);
-        Canvas canvas = packet.fieldOverlay();
-        canvas.fillText("Loony Tune!", -32, 0, "", 0, false);
-        MecanumDrive.sendTelemetryPacket(packet);
 
         // Dynamically build the list of tests:
         menu.addRunnable("Drive test (motors)", this::driveTest);
@@ -2740,8 +2741,7 @@ public class LoonyTune extends LinearOpMode {
         updateTunerDependencies(null);
 
         while (opModeIsActive()) {
-            telemetryAdd(menu.update());
-            telemetryUpdate();
+            ui.message(menu.update());
         }
     }
 }
