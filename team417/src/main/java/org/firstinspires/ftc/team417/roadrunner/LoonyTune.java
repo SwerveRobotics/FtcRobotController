@@ -118,13 +118,13 @@ class Point { // Can't derive from vector2d because it's marked as final (by def
  * field.
  * @noinspection unused
  */
-class Ui {
+class Io {
     static final double ANALOG_THRESHOLD = 0.5; // Threshold to consider an analog button pressed
 
     final private Telemetry telemetry; // Driver Station telemetry object
     private String welcomeMessage; // Welcome message to show only on Driver Station, if any
     public Gamepad gamepad; // Gamepad reference
-    private boolean showField; // True if this year's game bitmap is to be shown, false if it should be blank
+    private boolean blankField = true; // True if the field should be blank, false if to show this year's game
     private String messageCopy = ""; // Copy of the most recently shown message
     private List<CanvasOp> canvasOpsCopy; // Copy of the most recently shown field canvas
 
@@ -133,7 +133,7 @@ class Ui {
     private Canvas canvas; // Current FTC Dashboard field canvas
     public TelemetryPacket packet; // Current FTC Dashboard telemetry object
 
-    Ui(Gamepad gamepad, Telemetry telemetry) {
+    Io(Gamepad gamepad, Telemetry telemetry) {
         this.gamepad = gamepad;
         this.telemetry = telemetry;
 
@@ -143,13 +143,13 @@ class Ui {
         telemetry.setMsTransmissionInterval(100);
 
         // Initialize the field view:
-        begin(false);
+        begin();
         canvas(); // Draws the field
         end();
     }
 
     // Button press state:
-    private final boolean[] buttonPressed = new boolean[13];
+    private final boolean[] buttonPressed = new boolean[14];
     private boolean buttonPress(boolean pressed, int index) {
         boolean press = pressed && !buttonPressed[index];
         buttonPressed[index] = pressed;
@@ -159,7 +159,7 @@ class Ui {
     // Button press status:
     boolean ok() { return buttonPress(gamepad.a, 0); }
     boolean cancel() { return buttonPress(gamepad.b, 1); }
-    boolean exit() { return buttonPress(gamepad.x, 2); }
+    boolean x() { return buttonPress(gamepad.b, 2); }
     boolean y() { return buttonPress(gamepad.y, 3); }
     boolean up() { return buttonPress(gamepad.dpad_up, 4); }
     boolean down() { return buttonPress(gamepad.dpad_down, 5); }
@@ -169,7 +169,8 @@ class Ui {
     boolean rightTrigger() { return buttonPress(gamepad.right_trigger >= ANALOG_THRESHOLD, 9); }
     boolean leftBumper() { return buttonPress(gamepad.left_bumper, 10); }
     boolean rightBumper() { return buttonPress(gamepad.right_bumper, 11); }
-    boolean start() { return buttonPress(gamepad.start, 12); }
+    boolean home() { return buttonPress(gamepad.guide, 12); }
+    boolean start() { return buttonPress(gamepad.start, 13); }
 
     // Set the message to be shown constantly on the Driver Station screen (at least until they
     // press Start):
@@ -178,10 +179,14 @@ class Ui {
         welcomeMessage = message;
     }
 
+    // Show a blank field if true, this year's game field if false:
+    void setBlankField(boolean blankField) {
+        this.blankField = blankField;
+    }
+
     // Begin a UI update. The optional 'showField' parameter dictates whether draw the field or
     // show blank when updating the field:
-    void begin() { begin(showField); }
-    void begin(boolean showField) {
+    void begin() {
         assert(packet == null);
         assert(message == null);
         assert(canvas == null);
@@ -196,6 +201,9 @@ class Ui {
     }
 
     // Add a string to the current UI update message. Note that this does NOT add a newline:
+    void add(String string) {
+        message.append(string);
+    }
     void add(String format, Object... args) {
         message.append(String.format(format, args));
     }
@@ -211,13 +219,6 @@ class Ui {
     void redraw() {
         begin();
         end();
-    }
-
-    // Abort a begin/end bracket:
-    void reset() {
-        message = null;
-        packet = null;
-        canvas = null;
     }
 
     // End a UI update and send the results to the Driver Station telemetry, the FTC Dashboard
@@ -250,7 +251,9 @@ class Ui {
         telemetry.update();
 
         // Prepare for the next begin():
-        reset();
+        message = null;
+        packet = null;
+        canvas = null;
     }
 
     // Get a canvas for drawing on the field. Callable only when in a begin/end bracket:
@@ -262,12 +265,12 @@ class Ui {
             // Then draw the grid on top and finally set the transform to rotate all subsequent
             // rendering.
             canvas = packet.fieldOverlay();
-            if (showField) {
-                canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144,
-                        Math.toRadians(90), 0, 144, true);
-            } else {
+            if (blankField) {
                 canvas.setFill("#000000");
                 canvas.fillRect(-72, -72, 144, 144);
+            } else {
+                canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144,
+                        Math.toRadians(90), 0, 144, true);
             }
             canvas.drawGrid(0, 0, 144, 144, 7, 7);
 
@@ -281,7 +284,12 @@ class Ui {
         return canvas;
     }
 
-    // Put a stick FTC Dashboard telemetry value:
+    // Toss any rendering that was done to the canvas:
+    void abortCanvas() {
+        canvas = null;
+    }
+
+    // Put a sticky FTC Dashboard telemetry value:
     void put(String key, Object value) {
         packet.put(key, value);
     }
@@ -295,7 +303,7 @@ class Ui {
         packet.put(divider.toString(), "");
     }
 
-    // Get rid of any sticky variables that have shown up in FTC Dashboard's telemetry:
+    // Get rid of any sticky variables that have accumulated in FTC Dashboard's telemetry:
     void clearDashboardTelemetry() {
         FtcDashboard.getInstance().clearTelemetry();
     }
@@ -407,7 +415,7 @@ class Menu {
     static final double INITIAL_DELAY = 0.6; // Seconds after initial press before starting to repeat
     static final double ADVANCE_DELAY = 0.1; // Seconds after any repeat to repeat again
     private static Menu menu; // Points to our own singleton object
-    Ui ui; // We use this for UI input and output
+    Io io; // We use this for user input and output
     ArrayList<Widget> menuStack = new ArrayList<>(); // Stack of menus, the last is the current
     int lastInput; // Last quantized input (-1, 0 or 1)
     double nextAdvanceTime; // Time at which to advance the value
@@ -484,12 +492,10 @@ class Menu {
     }
 
     // Constructor:
-    public Menu(Ui ui) {
+    public Menu(Io io) {
         Menu.menu = this;
-        this.ui = ui;
-
-        // Create the root menu:
-        menuStack.add(new MenuWidget(""));
+        this.io = io;
+        menuStack.add(new MenuWidget("")); // The root menu
     }
 
     // Return a high resolution time count, in seconds:
@@ -511,13 +517,13 @@ class Menu {
                     output.append("\u00b7");
                 output.append(menuStack.get(i).description);
             }
-            output.append(", "+ LoonyTune.A+" to select, "+ LoonyTune.B+" to cancel");
+            output.append(", "+ LoonyTune.HOME+" to exit");
         }
         output.append("</big></big><br><small><small><br></small></small>"); // Leave half a line blank
 
         // Process dpad up and down with auto-repeat and clamping:
         MenuWidget menu = (MenuWidget) menuStack.get(menuStack.size() - 1);
-        int input = ui.gamepad.dpad_up ? -1 : (ui.gamepad.dpad_down ? 1 : 0); // -1, 0 or 1
+        int input = io.gamepad.dpad_up ? -1 : (io.gamepad.dpad_down ? 1 : 0); // -1, 0 or 1
         if (input != lastInput) {
             nextAdvanceTime = time() + INITIAL_DELAY;
             lastInput = input;
@@ -542,7 +548,7 @@ class Menu {
         }
 
         Widget widget = menu.widgets.get(menu.current);
-        if (ui.cancel()) {
+        if (io.home()) {
             if (menuStack.size() > 1) {
                 // Pop up the menu stack:
                 menuStack.remove(menuStack.size() - 1);
@@ -550,14 +556,14 @@ class Menu {
         }
         else if (widget instanceof ToggleWidget) {
             ToggleWidget toggleWidget = (ToggleWidget) widget;
-            if (ui.ok()) {
+            if (io.ok()) {
                 toggleWidget.value = !toggleWidget.value;
                 toggleWidget.callback.accept(toggleWidget.value);
             }
         } else if (widget instanceof ListWidget) {
             ListWidget listWidget = (ListWidget) widget;
-            boolean left = ui.left();
-            boolean right = ui.right();
+            boolean left = io.left();
+            boolean right = io.right();
             if (left || right) {
                 if (left) {
                     listWidget.index--;
@@ -572,21 +578,21 @@ class Menu {
                 listWidget.callback.accept(listWidget.index, listWidget.list[listWidget.index]);
             }
         } else if (widget instanceof ActivationWidget) {
-            if (ui.ok()) {
+            if (io.ok()) {
                 ActivationWidget activationWidget = (ActivationWidget) widget;
                 activationWidget.callback.apply(true);
             }
         } else if (widget instanceof StatsWidget) {
-            if (ui.ok()) {
+            if (io.ok()) {
                 menuStack.add(widget);
             }
         } else if (widget instanceof MenuWidget) {
-            if (ui.ok()) {
+            if (io.ok()) {
                 menuStack.add(widget);
             }
         } else if (widget instanceof RunWidget) {
             RunWidget runWidget = (RunWidget) widget;
-            if (ui.ok()) {
+            if (io.ok()) {
                 if (runWidget.isEnabled) {
                     runWidget.runnable.run();
                 }
@@ -665,12 +671,13 @@ public class LoonyTune extends LinearOpMode {
     static final String B = "\ud83c\udd51"; // Symbol for the gamepad B button
     static final String X = "\ud83c\udd67"; // Symbol for the gamepad X button
     static final String Y = "\ud83c\udd68"; // Symbol for the gamepad Y button
-    static final String BUMPER = "<span style='background:#808080;'>bumper</span>";
+    static final String BUMPER = "<span style='background:#808080;'>bumper \u23f4\u23f5</span>";
     static final String TRIGGERS = "<span style='background:#808080;'>triggers</span>";
     static final String LEFT_TRIGGER = "<span style='background:#808080;'>left trigger</span>";
     static final String RIGHT_TRIGGER = "<span style='background:#808080;'>right trigger</span>";
-    static final String DPAD_LEFT_RIGHT = "<span style='background:#808080;'>Dpad left/right</span>";
-    static final String DPAD_UP_DOWN = "<span style='background:#808080;'>Dpad up/down</span>";
+    static final String DPAD_LEFT_RIGHT = "<span style='background:#808080;'>Dpad \u2194</span>";
+    static final String DPAD_UP_DOWN = "<span style='background:#808080;'>Dpad \u2195</span>";
+    static final String HOME = "<span style='background:#808080;'>\u2302 Home</span>";
 
     // Menu widgets for each of the tuners:
     enum Tuner {
@@ -692,9 +699,9 @@ public class LoonyTune extends LinearOpMode {
     Menu.Widget[] widgets = new Menu.Widget[Tuner.COUNT.index];
 
     // Member fields referenced by every test:
-    Ui ui;
+    Io io;
     Menu menu;
-    Query query;
+    Poll poll;
     MecanumDrive drive;
     TuneParameters currentParameters;
     TuneParameters originalParameters;
@@ -757,15 +764,15 @@ public class LoonyTune extends LinearOpMode {
      * Class for doing an animated preview of a Road Runner trajectory action.
      */
     static class TrajectoryPreviewer {
-        Ui ui;
+        Io io;
         final double PAUSE_TIME = 1.0; // Pause this many seconds between preview cycles
         Action sequentialAction;
         List<Action> actions = new ArrayList<>();
         Iterator<Action> actionIterator;
         Action currentAction = null; // Current action in the actions list
         double startTime = time();
-        TrajectoryPreviewer(Ui ui, Action action) {
-            this.ui = ui;
+        TrajectoryPreviewer(Io io, Action action) {
+            this.io = io;
             this.sequentialAction = action;
             if (action instanceof SequentialAction) {
                 SequentialAction sequential = (SequentialAction) action;
@@ -828,8 +835,8 @@ public class LoonyTune extends LinearOpMode {
         // Update the preview
         void update() {
             if (currentAction != null) {
-                ui.begin();
-                Canvas canvas = ui.canvas();
+                io.begin();
+                Canvas canvas = io.canvas();
                 canvas.fillText("Preview", -19, 5, "", 0, false);
                 sequentialAction.preview(canvas);
                 canvas.setStroke("#c0c0c0"); // Gray
@@ -841,7 +848,7 @@ public class LoonyTune extends LinearOpMode {
                     else
                         Drawing.drawRobot(canvas, pose);
                 }
-                ui.end();
+                io.end();
             }
         }
     }
@@ -849,16 +856,16 @@ public class LoonyTune extends LinearOpMode {
     /**
      * Class that encapsulates user queries.
      */
-    class Query {
+    class Poll {
         // Animate a trajectory while driving the robot and waiting for
         // an A or B button pressed. If accept (A) is pressed, return success. If cancel (B) is
         // pressed, return failure.
-        boolean okCancelPreview(Action previewTrajectory) {
-            TrajectoryPreviewer previewer = new TrajectoryPreviewer(ui, previewTrajectory);
+        boolean okCancelWithPreview(Action previewTrajectory) {
+            TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, previewTrajectory);
             boolean success = false;
-            while (!isStopRequested() && !ui.cancel()) {
+            while (!isStopRequested() && !io.cancel()) {
                 previewer.update();
-                if (ui.ok()) {
+                if (io.ok()) {
                     success = true;
                     break;
                 }
@@ -872,18 +879,18 @@ public class LoonyTune extends LinearOpMode {
         // Show a message, drive the robot, and wait for either an A/B button press, or an
         // A/X button press. If accept is pressed, return success. If the other button is
         // pressed, return failure. The robot CAN be driven while waiting.
-        boolean okCancelDrive() { return drive(false); }
+        boolean okCancelWithDriving() { return drive(false); }
         /** @noinspection BooleanMethodIsAlwaysInverted*/
         boolean okExitDrive() { return drive(true); }
         boolean drive(boolean exit) {
             boolean success = true;
-            while (!ui.ok()) {
-                ui.redraw();
+            while (!io.ok()) {
+                io.redraw();
                 if (isStopRequested()) {
                     success = false;
                     break;
                 }
-                if ((exit && ui.exit()) || (!exit && ui.cancel())) {
+                if ((exit && io.home()) || (!exit && io.cancel())) {
                     success = false;
                     break;
                 }
@@ -899,9 +906,9 @@ public class LoonyTune extends LinearOpMode {
         // success. If cancel (B) is pressed, return failure. The robot CANNOT be driven while
         // waiting.
         boolean okCancel() {
-            while (!isStopRequested() && !ui.cancel()) {
-                ui.redraw();
-                if (ui.ok())
+            while (!isStopRequested() && !io.cancel()) {
+                io.redraw();
+                if (io.ok())
                     return true;
             }
             return false;
@@ -909,21 +916,21 @@ public class LoonyTune extends LinearOpMode {
 
         // Wait for an A button press:
         void ok() {
-            while (!isStopRequested() && !ui.ok())
-                ui.redraw();
+            while (!isStopRequested() && !io.ok())
+                io.redraw();
         }
 
         // Show a prompt asking to save. If accept (A) is pressed, return Prompt.SAVE. If
-        // cancel (B) is pressed, return Prompt.CANCEL. If exit (X) is pressed, return Prompt.EXIT.
+        // cancel (B) is pressed, return Prompt.CANCEL. If exit (Home) is pressed, return Prompt.EXIT.
         Prompt save() {
             while (!isStopRequested()) {
-                ui.message("Do you want to save your results?\n\n"
-                        + "Press "+A+" to save, "+B+" to cancel, "+X+" to exit without saving.");
-                if (ui.ok())
+                io.message("Do you want to save your results?\n\n"
+                        + "Press "+A+" to save, "+B+" to cancel, "+HOME+" to exit without saving.");
+                if (io.ok())
                     return Prompt.SAVE;
-                if (ui.exit())
+                if (io.home())
                     return Prompt.EXIT;
-                if (ui.cancel())
+                if (io.cancel())
                     return Prompt.CANCEL;
             }
             return Prompt.EXIT;
@@ -939,16 +946,17 @@ public class LoonyTune extends LinearOpMode {
     // Returns True if it ran without cancelling, False if it was cancelled.
     private boolean runCancelableAction(Action action) {
         drive.runParallel(action);
-        while (opModeIsActive() && !ui.cancel()) {
-            ui.begin(false);
-            ui.add("Press "+B+" to stop");
-            boolean more = drive.doActionsWork(ui.packet);
+        while (opModeIsActive() && !io.cancel()) {
+            io.begin();
+            io.add("Press "+B+" to stop");
+            boolean more = drive.doActionsWork(io.packet);
             if (!more) {
                 // We successfully completed the Action! Abort the current canvas:
-                ui.reset();
+                io.abortCanvas();
+                io.end();
                 return true; // ====>
             }
-            ui.end();
+            io.end();
         }
         // The user either pressed Cancel or End:
         drive.abortActions();
@@ -959,7 +967,7 @@ public class LoonyTune extends LinearOpMode {
     // Road Runner expects the hardware to be in different states when using high-level MecanumDrive
     // functionality vs. its lower-level tuning functionality.
     private void configureToDrive(boolean enableRoadRunnerDefaults) {
-        ui.clearDashboardTelemetry();
+        io.clearDashboardTelemetry();
 
         DcMotorEx[] motors = { drive.leftFront, drive.leftBack, drive.rightBack, drive.rightFront };
         if (enableRoadRunnerDefaults) {
@@ -1017,11 +1025,11 @@ public class LoonyTune extends LinearOpMode {
         Action preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, -60, 0))
                 .lineToX(DISTANCE/2.0)
                 .build();
-        ui.message("Tune OTOS's <b>linearScalar</b> and <b>offset heading</b> by pushing the robot forward in a straight line "
+        io.message("Tune OTOS's <b>linearScalar</b> and <b>offset heading</b> by pushing the robot forward in a straight line "
                 + "along a field wall for exactly "+testDistance(DISTANCE)+". To start, align the robot by hand "
                 + "at its starting point along a wall. "
                 + "\n\nPress "+A+" when in position, "+B+" to cancel.");
-        if (query.okCancelPreview(preview)) {
+        if (poll.okCancelWithPreview(preview)) {
 
             double distance = 0;
             double heading = 0;
@@ -1029,8 +1037,8 @@ public class LoonyTune extends LinearOpMode {
             drive.opticalTracker.resetTracking();
 
             boolean success = false;
-            while (opModeIsActive() && !ui.cancel()) {
-                if (ui.ok()) {
+            while (opModeIsActive() && !io.cancel()) {
+                if (io.ok()) {
                     success = true;
                     break; // ====>
                 }
@@ -1039,7 +1047,7 @@ public class LoonyTune extends LinearOpMode {
                 distance = Math.hypot(pose.x, pose.y);
                 heading = -Math.atan2(pose.y, pose.x); // Rise over run
 
-                ui.message("Push forward exactly "+testDistance(DISTANCE)+" along the field wall.\n\n"
+                io.message("Push forward exactly "+testDistance(DISTANCE)+" along the field wall.\n\n"
                     + String.format("&ensp;Sensor reading: (%.1f\", %.1f\", %.1f\u00b0)\n", pose.x, pose.y, Math.toDegrees(pose.h))
                     + String.format("&ensp;Effective distance: %.2f\"\n", distance)
                     + String.format("&ensp;Heading angle: %.2f\u00b0\n", Math.toDegrees(heading))
@@ -1066,8 +1074,8 @@ public class LoonyTune extends LinearOpMode {
                             + "Either you didn't push straight for "+testDistance(DISTANCE)+" or something is wrong "
                             + "with the sensor. ", distance, DISTANCE, DISTANCE / SparkFunOTOS.MIN_SCALAR);
                     message += "Maybe the distance of the sensor to the tile is less than 10.0 mm? ";
-                    ui.message(message + "\n\nAborted, press "+A+" to continue");
-                    query.ok();
+                    io.message(message + "\n\nAborted, press "+A+" to continue");
+                    poll.ok();
                 } else if (newLinearScalar > SparkFunOTOS.MAX_SCALAR) {
                     String message = String.format("The measured distance of %.1f\" is not close enough to "
                             + "the expected distance of %d\". It can't measure less than %.1f\". "
@@ -1079,15 +1087,15 @@ public class LoonyTune extends LinearOpMode {
                     if (newLinearScalar < 1.5) {
                         message += "Maybe the distance of the sensor to the tile is more than 10.0 mm?";
                     }
-                    ui.message(message + "\n\nAborted, press "+A+" to continue");
-                    query.ok();
+                    io.message(message + "\n\nAborted, press "+A+" to continue");
+                    poll.ok();
                 } else {
-                    ui.message(String.format("New offset heading %.2f\u00b0 is %.2f\u00b0 off from old.\n",
+                    io.message(String.format("New offset heading %.2f\u00b0 is %.2f\u00b0 off from old.\n",
                             Math.toDegrees(newOffsetHeading), Math.toDegrees(headingChange))
                             + String.format("New linear scalar %.3f is %.1f%% off from old.\n\n",
                             newLinearScalar, linearScalarChange)
                             + "Use these results? Press "+A+" if they look good, "+B+" to cancel.");
-                    if (query.okCancel()) {
+                    if (poll.okCancel()) {
                         TuneParameters newParameters = currentParameters.createClone();
                         newParameters.params.otos.linearScalar = newLinearScalar;
                         newParameters.params.otos.offset.h = newOffsetHeading;
@@ -1106,17 +1114,17 @@ public class LoonyTune extends LinearOpMode {
     public void acceptParameters(TuneParameters newParameters) {
         String comparison = newParameters.compare(currentParameters, true);
         if (comparison.isEmpty()) {
-            ui.message("The new results match your current settings.\n\nPress "+A+" to continue.");
-            query.okCancel();
+            io.message("The new results match your current settings.\n\nPress "+A+" to continue.");
+            poll.okCancel();
         } else {
             MecanumDrive.PARAMS = newParameters.params;
             currentParameters = newParameters;
             currentParameters.save();
-            ui.message("Double-tap the shift key in Android Studio, enter '<b>md.params</b>' to jump to the "
+            io.message("Double-tap the shift key in Android Studio, enter '<b>md.params</b>' to jump to the "
                     + "MecanumDrive Params constructor, then update as follows:\n\n"
                     + comparison
                     + "\nPress "+A+" to continue.");
-            query.ok();
+            poll.ok();
         }
     }
 
@@ -1124,15 +1132,15 @@ public class LoonyTune extends LinearOpMode {
     public void showUpdatedParameters() {
         String comparison = currentParameters.compare(originalParameters, true);
         if (comparison.isEmpty()) {
-            ui.message("There are no changes from your current settings.\n\nPress "+A+" to continue.");
-            query.ok();
+            io.message("There are no changes from your current settings.\n\nPress "+A+" to continue.");
+            poll.ok();
         } else {
-            ui.message("Here are all of the parameter updates from your current run. "
+            io.message("Here are all of the parameter updates from your current run. "
                     + "Double-tap the shift key in Android Studio, enter 'md.params' to jump to the "
                     + "MecanumDrive Params constructor, then update as follows:\n\n"
                     + comparison
                     + "\nPress "+A+" to continue.");
-            query.ok();
+            poll.ok();
         }
     }
 
@@ -1269,8 +1277,8 @@ public class LoonyTune extends LinearOpMode {
 
     // Draw the spin sample points, plus the optional best-fit circle, on FTC Dashboard:
     void drawSpinPoints(ArrayList<Point> points, Circle circle) {
-        ui.begin();
-        Canvas canvas = ui.canvas();
+        io.begin();
+        Canvas canvas = io.canvas();
         double[] xPoints = new double[points.size()];
         double[] yPoints = new double[points.size()];
         for (int i = 0; i < points.size(); i++) {
@@ -1287,7 +1295,7 @@ public class LoonyTune extends LinearOpMode {
             canvas.strokeCircle(circle.x, circle.y, circle.radius);
         }
 
-        ui.end();
+        io.end();
     }
 
     // This is the robot spin test for calibrating the optical sensor angular scale and offset:
@@ -1307,19 +1315,19 @@ public class LoonyTune extends LinearOpMode {
                 .strafeTo(new Vector2d(0, -60))
                 .build();
 
-        ui.message("Tune <b>trackWidthTicks</b>, <b>otos.angularScalar</b> and <b>otos.offset position</b>. Position the robot against a wall, then drive "
+        io.message("Tune <b>trackWidthTicks</b>, <b>otos.angularScalar</b> and <b>otos.offset position</b>. Position the robot against a wall, then drive "
                 + String.format("it out so that the robot can rotate in place %.1f times, then drive ", REVOLUTION_COUNT)
                 + "the robot against the wall again."
                 + "\n\nFirst, carefully drive the robot to a wall and align it so that "
                 + "it's facing forward. This marks the start orientation for calibration."
                 + "\n\nDrive the robot to the start position, press "+A+" when ready, "+B+" to cancel");
-        if (query.okCancelPreview(preview)) {
+        if (poll.okCancelWithPreview(preview)) {
 
             // Let the user position the robot:
-            ui.message("Now move the robot far enough away from the wall (and any objects) so "
+            io.message("Now move the robot far enough away from the wall (and any objects) so "
                     + "that it can freely rotate in place."
                     + "\n\nPress "+A+" when ready for the robot to rotate, "+B+" to cancel");
-            if (query.okCancelDrive()) {
+            if (poll.okCancelWithDriving()) {
 
                 ArrayList<Point> points = new ArrayList<>();
 
@@ -1380,15 +1388,15 @@ public class LoonyTune extends LinearOpMode {
                     drawSpinPoints(points, null);
                     double rotationsRemaining = (terminationRotation - offsetRotation) / (2 * Math.PI);
 
-                    ui.begin();
-                    ui.add(String.format("%.2f rotations remaining, %d samples", rotationsRemaining, points.size()));
-                    ui.add("\n\nPress "+B+" to abort.");
-                    ui.end();
+                    io.begin();
+                    io.add(String.format("%.2f rotations remaining, %d samples", rotationsRemaining, points.size()));
+                    io.add("\n\nPress "+B+" to abort.");
+                    io.end();
 
                     // Update for next iteration of the loop:
                     Pose2D rawPose = updateRotationAndGetPose();
                     rawPosition = new Point(rawPose.x, rawPose.y);
-                } while (opModeIsActive() && !ui.cancel());
+                } while (opModeIsActive() && !io.cancel());
 
                 double imuYawDelta = normalizeAngle(drive.lazyImu.get().getRobotYawPitchRollAngles()
                         .getYaw(AngleUnit.RADIANS)- imuYawStart);
@@ -1397,10 +1405,10 @@ public class LoonyTune extends LinearOpMode {
                 // Stop the rotation:
                 rampMotorsSpin(drive, 0);
 
-                ui.message("Now drive the robot to align it at the wall in the same "
+                io.message("Now drive the robot to align it at the wall in the same "
                         + "place and orientation as it started."
                         + "\n\nDrive the robot to its wall position, press "+A+" when done, "+B+" to cancel");
-                if ((success) && query.okCancelDrive()) {
+                if ((success) && poll.okCancelWithDriving()) {
                     Point clusterCenter = clusterCenter(points);
                     Circle circle = fitCircle(points, farthestPoint.x / 2, farthestPoint.y / 2);
 
@@ -1459,14 +1467,14 @@ public class LoonyTune extends LinearOpMode {
 
         // Do some sanity checking on the results:
         if ((Math.abs(offset.x) > 12) || (Math.abs(offset.y) > 12)) {
-            ui.message(results + "The results are bad, the calculated center-of-rotation is bogus.\n\n"
+            io.message(results + "The results are bad, the calculated center-of-rotation is bogus.\n\n"
                     + "Aborted, press "+A+" to continue.");
-            query.ok();
+            poll.ok();
         } else if  ((angularScalar < SparkFunOTOS.MIN_SCALAR) || (angularScalar > SparkFunOTOS.MAX_SCALAR)) {
-            ui.message(results + "The measured number of circles is bad. Did you properly align "
+            io.message(results + "The measured number of circles is bad. Did you properly align "
                     + "the robot on the wall the same way at both the start and end of this test?\n\n"
                     + "Aborted, press "+A+" to continue.");
-            query.ok();
+            poll.ok();
         } else {
             TuneParameters newSettings = currentParameters.createClone();
             newSettings.params.otos.offset.x = clusterOffset.x;
@@ -1474,8 +1482,8 @@ public class LoonyTune extends LinearOpMode {
             newSettings.params.otos.angularScalar = angularScalar;
             newSettings.params.trackWidthTicks = trackWidthTicks;
 
-            ui.message(results + "Use these results? Press "+A+" if they look good, "+B+" to discard them.");
-            if (query.okCancel()) {
+            io.message(results + "Use these results? Press "+A+" if they look good, "+B+" to discard them.");
+            if (poll.okCancel()) {
                 acceptParameters(newSettings);
                 updateTunerDependencies(Tuner.SPIN);
 
@@ -1542,7 +1550,7 @@ public class LoonyTune extends LinearOpMode {
 
         ArrayList<Point> points = new ArrayList<>();
         double startTime = time();
-        while (opModeIsActive() && !ui.cancel()) {
+        while (opModeIsActive() && !io.cancel()) {
             // Slowly ramp up the voltage. Increase power by the specified power adder:
             double scaledPower = (time() - startTime) * POWER_FACTOR_ADDER_PER_SECOND;
             double powerFactor = scaledPower + MIN_POWER_FACTOR;
@@ -1571,10 +1579,10 @@ public class LoonyTune extends LinearOpMode {
             }
 
             double remaining = Math.max(0, targetDistance - distance);
-            ui.begin();
-            ui.add(String.format("Inches remaining: %.1f, power: %.1f\n", remaining, powerFactor));
-            ui.add("Press "+B+" to abort.");
-            ui.end();
+            io.begin();
+            io.add(String.format("Inches remaining: %.1f, power: %.1f\n\n", remaining, powerFactor));
+            io.add("Press "+B+" to abort.");
+            io.end();
         }
 
         // Stop the robot:
@@ -1611,11 +1619,11 @@ public class LoonyTune extends LinearOpMode {
                 .lineToX(DISTANCE/2.0, null, new ProfileAccelConstraint(-100, 10))
                 .lineToX(-DISTANCE/2.0, null, new ProfileAccelConstraint(-100, 20))
                 .build();
-        ui.message("Tune <b>kS</b> and <b>kV</b>. "
+        io.message("Tune <b>kS</b> and <b>kV</b>. "
                 + "The robot will drive forward and backward for up to " + testDistance(DISTANCE) + ". "
                 + "It will start slowly but get faster and faster in each direction. "
                 + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel.");
-        if (query.okCancelPreview(preview)) {
+        if (poll.okCancelWithPreview(preview)) {
 
             ArrayList<Point> resultHistory = new ArrayList<>(); // x is kS, y is kV
             resultHistory.add(new Point(currentParameters.params.kS, currentParameters.params.kV));
@@ -1631,15 +1639,15 @@ public class LoonyTune extends LinearOpMode {
                         findMaxValues(max, forwardSamples);
                         findMaxValues(max, reverseSamples);
                         if (max.x == 0) {
-                            ui.message("The optical tracking sensor returned only zero velocities. "
+                            io.message("The optical tracking sensor returned only zero velocities. "
                                     + "Is it working properly?"
                                     + "\n\nAborted, press " + A + " to continue.");
-                            query.ok();
+                            poll.ok();
                             break; // ====>
                         } else {
                             // Draw the results to the FTC dashboard:
-                            ui.begin();
-                            Canvas canvas = ui.canvas();
+                            io.begin();
+                            Canvas canvas = io.canvas();
 
                             // Set a solid white background and an offset then draw the point samples:
                             canvas.setFill("#ffffff");
@@ -1667,7 +1675,7 @@ public class LoonyTune extends LinearOpMode {
                             canvas.strokeLine(0, bestFitLine.intercept * scale.y,
                                     200 * scale.x, (bestFitLine.intercept + 200 * bestFitLine.slope) * scale.y);
 
-                            ui.end();
+                            io.end();
 
                             double kS = bestFitLine.intercept;
                             double kV = bestFitLine.slope * currentParameters.params.inPerTick;
@@ -1682,8 +1690,8 @@ public class LoonyTune extends LinearOpMode {
                             }
                             builder.append(String.format("&ensp;<b>kS: %.03f, kV: %.03f</b> (this run)\n\n", kS, kV));
                             builder.append("If this run looks good, press " + A + " to accept, " + B + " to discard it.");
-                            ui.message(builder.toString());
-                            if (query.okCancel()) {
+                            io.message(builder.toString());
+                            if (poll.okCancel()) {
                                 resultHistory.add(new Point(kS, kV));
                                 acceptedSamples = combinedSamples;
                             }
@@ -1691,15 +1699,15 @@ public class LoonyTune extends LinearOpMode {
                     }
                 }
 
-                ui.message("If the results look good, press "+X+" to exit. Otherwise, "
+                io.message("If the results look good, press "+HOME+" to exit. Otherwise, "
                         + "reposition the robot and press "+A+" to start another run. "
                         + "Every additional consecutive run helps the results converge.");
-                if (!query.okExitDrive()) {
+                if (!poll.okExitDrive()) {
 
                     // Don't ask if they want to save if they didn't get any new results!
                     if (resultHistory.size() == 1)
                         break; // ====>
-                    Prompt prompt = query.save();
+                    Prompt prompt = poll.save();
                     if (prompt == Prompt.EXIT)
                         break; // ====>
                     if (prompt == Prompt.SAVE) {
@@ -1724,23 +1732,23 @@ public class LoonyTune extends LinearOpMode {
         int motor = 0;
 
         stopMotors();
-        while (opModeIsActive() && !ui.exit()) {
+        while (opModeIsActive() && !io.home()) {
             double power = gamepad1.right_trigger - gamepad1.left_trigger;
             String description = motorDescriptions[motor];
 
-            ui.begin();
-            ui.add(String.format("This tests every motor individually, now testing <b>%s</b>.\n\n", description)
+            io.begin();
+            io.add(String.format("This tests every motor individually, now testing <b>%s</b>.\n\n", description)
                 + String.format("&emsp;%s.setPower(%.2f)\n\n", description, power)
-                + "Press "+RIGHT_TRIGGER+" for forward, "+LEFT_TRIGGER+" for reverse, "+BUMPER+" to switch motor, "+X+" to exit.");
-            ui.end();
+                + "Press "+RIGHT_TRIGGER+" for forward, "+LEFT_TRIGGER+" for reverse, "+BUMPER+" to switch motor, "+HOME+" to exit.");
+            io.end();
 
             motors[motor].setPower(power);
-            if (ui.leftBumper()) {
+            if (io.leftBumper()) {
                 motors[motor].setPower(0);
                 motor--;
                 if (motor < 0)
                     motor = motors.length - 1;
-            } else if (ui.rightBumper()) {
+            } else if (io.rightBumper()) {
                 motors[motor].setPower(0);
                 motor++;
                 if (motor >= motors.length)
@@ -1771,16 +1779,15 @@ public class LoonyTune extends LinearOpMode {
         Pose2d baselinePose = null; // Position where the baseline was set
         double maxLinearSpeed = 0; // Max linear speed seen
         double maxRotationalSpeed = 0; // Max rotational speed seen, radians/s
-        while (opModeIsActive() && !ui.exit()) {
-            ui.begin(true);
+        while (opModeIsActive() && !io.home()) {
 
-            if (ui.leftBumper() || ui.rightBumper()) { // Debug wheels
+            if (io.leftBumper() || io.rightBumper()) { // Debug wheels
                 wheelDebugger();
                 drive.setPose(homePose);
                 baselinePose = null;
                 previousPose = homePose;
             }
-            if (ui.y()) { // Set baseline at home
+            if (io.x()) { // Set baseline at home
                 drive.setPose(homePose);
                 previousPose = homePose;
                 baselineImu = drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
@@ -1793,13 +1800,14 @@ public class LoonyTune extends LinearOpMode {
 
             updateGamepadDriving();
             PoseVelocity2d velocity = drive.updatePoseEstimate();
+            io.begin();
 
             // Calculate some statistics about the velocity:
             double linearSpeed = Math.hypot(velocity.linearVel.x, velocity.linearVel.y);
             double rotationalSpeed = Math.abs(velocity.angVel);
-            ui.put("Linear speed", linearSpeed);
-            ui.put("Rotational speed", rotationalSpeed);
-            ui.putDivider();
+            io.put("Linear speed", linearSpeed);
+            io.put("Rotational speed", rotationalSpeed);
+            io.putDivider();
             maxLinearSpeed = Math.max(maxLinearSpeed, linearSpeed);
             maxRotationalSpeed = Math.max(maxRotationalSpeed, rotationalSpeed);
 
@@ -1880,11 +1888,11 @@ public class LoonyTune extends LinearOpMode {
                 }
             }
 
-            ui.add(message + "\nPress "+X+" to exit, "+Y+
-                    ((baselinePose == null) ? " when in the golden home position, " : " to reset home, ")
-                    +BUMPER+" to debug the wheels.");
+            io.add(message);
+            io.add("\nPress "+X+((baselinePose == null) ? " when in the golden home position, " : " to reset home, "));
+            io.add(BUMPER+" to debug the wheels, "+HOME+" to exit.");
 
-            Canvas canvas = ui.canvas();
+            Canvas canvas = io.canvas();
             canvas.setStroke("#ffd700"); // Gold
             Drawing.drawRobot(canvas, homePose);
 
@@ -1892,7 +1900,7 @@ public class LoonyTune extends LinearOpMode {
                 canvas.setStroke("#3F51B5");
                 Drawing.drawRobot(canvas, pose);
             }
-            ui.end();
+            io.end();
 
         }
         stopMotors();
@@ -1915,10 +1923,10 @@ public class LoonyTune extends LinearOpMode {
                 .strafeTo(new Vector2d(0, DISTANCE/2.0))
                 .strafeTo(new Vector2d(0, -DISTANCE/2.0))
                 .build();
-        ui.message("Tune <b>lateralInPerTick</b>. The robot will strafe left and right for "
+        io.message("Tune <b>lateralInPerTick</b>. The robot will strafe left and right for "
                 + testDistance(DISTANCE) + ". "
                 + "\n\nDrive the robot to position, press "+A+" to start, "+B+" to cancel.");
-        if (query.okCancelPreview(preview)) {
+        if (poll.okCancelWithPreview(preview)) {
 
             double startLateralInPerTick = currentParameters.params.lateralInPerTick;
 
@@ -1938,28 +1946,29 @@ public class LoonyTune extends LinearOpMode {
             String resultsMessage = "";
             while (opModeIsActive()) {
                 // Strafe left and then right:
-                drive.setPose(zeroPose);
-                if (runCancelableAction(drive.actionBuilder(drive.pose)
-                        .strafeTo(new Vector2d(0, DISTANCE), null, accelConstraint)
+                Pose2d startPose1 = new Pose2d(0, -DISTANCE/2.0, 0);
+                drive.setPose(startPose1);
+                if (runCancelableAction(drive.actionBuilder(startPose1)
+                        .strafeTo(new Vector2d(0, DISTANCE/2.0), null, accelConstraint)
                         .build())) {
 
                     double actualDistance1 = Math.hypot(drive.pose.position.x, drive.pose.position.y);
 
-                    drive.setPose(zeroPose);
-                    if (runCancelableAction(drive.actionBuilder(drive.pose)
-                            .strafeTo(new Vector2d(0, -DISTANCE), null, accelConstraint)
+                    Pose2d startPose2 = new Pose2d(0, DISTANCE/2.0, 0);
+                    drive.setPose(startPose2);
+                    if (runCancelableAction(drive.actionBuilder(startPose2)
+                            .strafeTo(new Vector2d(0, -DISTANCE/2.0), null, accelConstraint)
                             .build())) {
 
                         double actualDistance2 = Math.hypot(drive.pose.position.x, drive.pose.position.y);
-
                         double multiplier1 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance1 / DISTANCE);
                         double multiplier2 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance2 / DISTANCE);
 
                         if (Math.min(multiplier1, multiplier2) < 0.25) {
-                            ui.message("The measured distance is too low to be correct. "
+                            io.message("The measured distance is too low to be correct. "
                                     + "Did it not move, or is the distance sensor not working properly?"
                                     + "\n\nPress " + A + "to continue.");
-                            query.ok();
+                            poll.ok();
                             break; // ====>
                         }
 
@@ -1985,11 +1994,11 @@ public class LoonyTune extends LinearOpMode {
                     }
                 }
 
-                ui.message(resultsMessage + "If the results look good, press "+X+" to exit. "
+                io.message(resultsMessage + "If the results look good, press "+HOME+" to save and exit. "
                         + "Otherwise drive to reposition the robot (it may go farther this time) and "
                         + "press "+A+" to start another run. ");
-                if (!query.okExitDrive()) {
-                    Prompt prompt = query.save();
+                if (!poll.okExitDrive()) {
+                    Prompt prompt = poll.save();
                     if (prompt == Prompt.EXIT)
                         break; // ====>
                     if (prompt == Prompt.SAVE) {
@@ -2030,11 +2039,11 @@ public class LoonyTune extends LinearOpMode {
                 .lineToX(DISTANCE/2.0)
                 .lineToX(-DISTANCE/2.0)
                 .build();
-        ui.message("Tune <b>kV</b> and <b>kA</b> with FTC Dashboard. "
+        io.message("Tune <b>kV</b> and <b>kA</b> with FTC Dashboard. "
                 + "The robot will drive forwards then backwards for " + testDistance(DISTANCE) + ". "
                 + "Follow <u><a href='https://learnroadrunner.com/feedforward-tuning.html#tuning'>LearnRoadRunner's guide</a></u>.\n\n"
                 + "Press "+A+" to start, "+B+" to cancel");
-        if (query.okCancelPreview(preview)) {
+        if (poll.okCancelWithPreview(preview)) {
 
             // Trigger a reset the first time into the loop:
             double profileStartTime = 0; // Profile start time, in seconds
@@ -2065,29 +2074,29 @@ public class LoonyTune extends LinearOpMode {
 
             while (opModeIsActive()) {
                 // Process the gamepad numeric input:
-                ui.begin();
-                ui.add("Tune the feed forward constants:\n\n");
+                io.begin();
+                io.add("Tune the feed forward constants:\n\n");
                 if (inputIndex == 0) {
-                    ui.add(String.format("&emsp;kV: <big><big>%s</big></big>&emsp;kA: %s\n\n", vInput.update(), aInput.get()));
-                    ui.add("View the graph in FTC Dashboard and adjust "
+                    io.add(String.format("&emsp;kV: <big><big>%s</big></big>&emsp;kA: %s\n\n", vInput.update(), aInput.get()));
+                    io.add("View the graph in FTC Dashboard and adjust "
                             + "<b>kV</b> to make the horizontal lines as close as possible in height. "
-                            + "<b>vTarget</b> is green, <b>vActual</b> is blue, <i>kV = vTarget / vActual</i>.\n");
+                            + "<b>vTarget</b> is green, <b>vActual</b> is blue, <i>kV = vTarget / vActual</i>.\n\n");
                 } else {
-                    ui.add(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n\n", vInput.get(), aInput.update()));
-                    ui.add("View the graph in FTC Dashboard and adjust "
+                    io.add(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n\n", vInput.get(), aInput.update()));
+                    io.add("View the graph in FTC Dashboard and adjust "
                             + "<b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap "
-                            + "where the robot accelerates. Don't worry about the deceleration portions.\n");
+                            + "where the robot accelerates. Don't worry about the deceleration portions.\n\n");
                 }
 
-                if (ui.ok())
+                if (io.ok())
                     queuedAButtons++; // Let the a-button be queued up even while running
-                if (ui.y())
+                if (io.leftBumper() || io.rightBumper())
                     inputIndex ^= 1; // Toggle the index
 
                 // If there's a profile, that means we're actively moving:
                 if (profile != null) {
-                    ui.add("Press "+B+" to cancel\n");
-                    ui.end();
+                    io.add("Press "+B+" to cancel\n");
+                    io.end();
 
                     double time = time();
                     double elapsedTime = time - profileStartTime;
@@ -2119,8 +2128,8 @@ public class LoonyTune extends LinearOpMode {
                     if (time - lastGraphTime > GRAPH_THROTTLE) {
                         lastGraphTime = time;
 
-                        ui.begin(false);
-                        Canvas canvas = ui.canvas();
+                        io.begin();
+                        Canvas canvas = io.canvas();
                         canvas.setFill("#ffffff");
                         canvas.fillRect(-72, -72, 144, 144);
                         canvas.setTranslation(0, 72);
@@ -2144,10 +2153,10 @@ public class LoonyTune extends LinearOpMode {
 
                         // Make the results available to FTC Dashboard so that they can be graphed
                         // there as well:
-                        ui.put("vActual", actualVelocity);
-                        ui.put("vTarget", v.get(0));
-                        ui.putDivider();
-                        ui.end();
+                        io.put("vActual", actualVelocity);
+                        io.put("vTarget", v.get(0));
+                        io.putDivider();
+                        io.end();
                     }
 
                     // Set the motors to the appropriate values:
@@ -2158,25 +2167,25 @@ public class LoonyTune extends LinearOpMode {
                     double power = feedForward.compute(v) / drive.voltageSensor.getVoltage();
                     drive.setDrivePowers(new PoseVelocity2d(new Vector2d(power, 0.0), 0.0));
 
-                    if (ui.cancel()) {
+                    if (io.cancel()) {
                         // Cancel the current cycle but remain in this test:
                         stopMotors();
                         queuedAButtons = 0;
                         profile = null;
                     }
                 } else {
-                    ui.add("Use "+TRIGGERS+" to change velocity to lengthen or shorten the horizontal lines. "
-                            +  String.format("Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0));
+                    io.add("Use "+TRIGGERS+" to change velocity to lengthen or shorten the horizontal lines. "
+                            + String.format("Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0));
 
-                    ui.add(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
-                            + "the cursor, "+Y+" to switch input, "+TRIGGERS+" to change max velocity, "
-                            + A+" to run on the robot, "+X+" to exit.");
-                    ui.end();
+                    io.add(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
+                            + "the cursor, "+BUMPER+" to switch input, "+TRIGGERS+" to change max velocity, "
+                            + A+" to run on the robot, "+HOME+" to exit.");
+                    io.end();
 
                     updateGamepadDriving();
 
-                    if (ui.exit()) {
-                        Prompt prompt = query.save();
+                    if (io.home()) {
+                        Prompt prompt = poll.save();
                         if (prompt == Prompt.SAVE) {
                             // Restore the state that we zeroed to run the test:
                             testParameters.params.lateralGain = currentParameters.params.lateralGain;
@@ -2185,17 +2194,17 @@ public class LoonyTune extends LinearOpMode {
                             updateTunerDependencies(Tuner.FEED_FORWARD);
                             break; // ====>
                         } else if (prompt == Prompt.EXIT) {
-                            ui.message("Are you sure you want to exit without saving?\n\n"
+                            io.message("Are you sure you want to exit without saving?\n\n"
                                     + "Press "+A+" to exit without saving, "+B+" to cancel.");
-                            if (query.okCancel())
+                            if (poll.okCancel())
                                 break; // ====>
                         }
                     }
-                    if (ui.leftTrigger()) {
+                    if (io.leftTrigger()) {
                         maxVelocityFactor = Math.max(maxVelocityFactor - 0.1, 0.2);
                         maxDuration = 0; // A different speed will have a different window size
                     }
-                    if (ui.rightTrigger()) {
+                    if (io.rightTrigger()) {
                         maxVelocityFactor = Math.min(maxVelocityFactor + 0.1, 1.0);
                         maxDuration = 0; // A different speed will have a different window size
                     }
@@ -2224,7 +2233,7 @@ public class LoonyTune extends LinearOpMode {
         // We're done, undo any temporary state we set:
         MecanumDrive.PARAMS = currentParameters.params;
         stopMotors();
-        ui.clearDashboardTelemetry();
+        io.clearDashboardTelemetry();
     }
 
     /**
@@ -2271,10 +2280,10 @@ public class LoonyTune extends LinearOpMode {
 
         // Update the variable according to the latest gamepad input.
         String update() {
-            if (ui.left()) {
+            if (io.left()) {
                 digit = Math.min(digit + 1, 2);
             }
-            if (ui.right()) {
+            if (io.right()) {
                 digit = Math.max(digit - 1, -decimalDigits);
             }
             if ((digit > 0) && (Math.pow(10, digit) > Math.abs(value))) {
@@ -2282,7 +2291,7 @@ public class LoonyTune extends LinearOpMode {
             }
 
             // Advance the value according to the thumb stick state:
-            int input = ui.gamepad.dpad_up ? 1 : (ui.gamepad.dpad_down ? -1 : 0); // -1, 0 or 1
+            int input = io.gamepad.dpad_up ? 1 : (io.gamepad.dpad_down ? -1 : 0); // -1, 0 or 1
             if (input != lastInput) {
                 nextAdvanceTime = time() + INITIAL_DELAY;
                 lastInput = input;
@@ -2376,8 +2385,8 @@ public class LoonyTune extends LinearOpMode {
                     .turn(-Math.PI)
                     .build();
         }
-        ui.message(description + "\n\nPress "+A+" to start, "+B+" to cancel");
-        if (query.okCancelPreview(preview)) {
+        io.message(description + "\n\nPress "+A+" to start, "+B+" to cancel");
+        if (poll.okCancelWithPreview(preview)) {
 
             int inputIndex = 0;
             int queuedAButtons = 0;
@@ -2386,25 +2395,25 @@ public class LoonyTune extends LinearOpMode {
 
             while (opModeIsActive()) {
                 // Drive:
-                ui.begin(false);
-                boolean more = drive.doActionsWork(ui.packet);
+                io.begin();
+                boolean more = drive.doActionsWork(io.packet);
 
                 // Update the display:
-                ui.add("Tune the gains:\n\n");
+                io.add("Tune the gains:\n\n");
                 if (inputIndex == 0) {
-                    ui.add(String.format("&emsp;%s: <big><big>%s</big></big>&emsp;%s: %s\n\n",
+                    io.add(String.format("&emsp;%s: <big><big>%s</big></big>&emsp;%s: %s\n\n",
                             gainName, gainInput.update(), velGainName, velGainInput.get()));
                 } else {
-                    ui.add(String.format("&emsp;%s: %s&emsp;%s: <big><big>%s</big></big>\n\n",
+                    io.add(String.format("&emsp;%s: %s&emsp;%s: <big><big>%s</big></big>\n\n",
                             gainName, gainInput.get(), velGainName, velGainInput.update()));
                 }
 
-                ui.add("The blue circle is actual position, green is target. "
+                io.add("The blue circle is actual position, green is target. "
                         + "As the gains increase, the circles should align and the measured "
                         + String.format("error should decrease. First, increase <b>%s</b> until the robot starts ", gainName)
                         + String.format("to shake. Then switch to <b>%s</b> and increase it to minimize ", velGainName)
                         + "shaking but don't overdo it. "
-                        + String.format("Then switch back to <b>%s</b> and try to increase it even more.\n", gainName));
+                        + String.format("Then switch back to <b>%s</b> and try to increase it even more.\n\n", gainName));
 
                 // Compute the relevant error:
                 double error;
@@ -2421,46 +2430,45 @@ public class LoonyTune extends LinearOpMode {
                     errorString = String.format("%.2f\u00b0", error);
                 }
 
-                ui.put("Error", error); // Make the error graphable
-                ui.putDivider();
+                io.put("Error", error); // Make the error graphable
+                io.putDivider();
 
-                if (ui.ok())
+                if (io.ok())
                     queuedAButtons++; // Let the x-button be queued up even while running
-                if (ui.y())
+                if (io.y())
                     inputIndex ^= 1; // Toggle the index
 
                 if (more) {
-                    ui.add("Current error: " + errorString + ".\n\n");
-                    ui.add("Press "+B+" to cancel\n");
+                    io.add("Current error: " + errorString + ".\n\n");
+                    io.add("Press "+B+" to cancel\n");
 
                     // Only send the packet if there's more to the trajectory, otherwise the
                     // field view will be erased once the trajectory terminates:
-                    ui.end();
-                    if (ui.cancel()) {
+                    io.end();
+                    if (io.cancel()) {
                         // Cancel the current cycle but remain in this test:
                         drive.abortActions();
                         queuedAButtons = 0;
                     }
                 } else {
-                    ui.reset();
-
-                    ui.add("Last error: " + errorString + ".\n\n");
-                    ui.add(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
-                        + "the cursor, "+Y+" to switch input, "+A+" to run on the robot, "+X+" to exit.");
-                    ui.end();
+                    io.abortCanvas();
+                    io.add("Last error: " + errorString + ".\n\n");
+                    io.add(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
+                        + "the cursor, "+Y+" to switch input, "+A+" to run on the robot, "+HOME+" to exit.");
+                    io.end();
 
                     updateGamepadDriving();
 
-                    if (ui.exit()) {
-                        Prompt prompt = query.save();
+                    if (io.home()) {
+                        Prompt prompt = poll.save();
                         if (prompt == Prompt.SAVE) {
                             acceptParameters(testParameters);
                             updateTunerDependencies(tuner);
                             break; // ====>
                         } else if (prompt == Prompt.EXIT) {
-                            ui.message("Are you sure you want to exit without saving?\n\n"
+                            io.message("Are you sure you want to exit without saving?\n\n"
                                     + "Press "+A+" to exit without saving, "+B+" to cancel.");
-                            if (query.okCancel())
+                            if (poll.okCancel())
                                 break; // ====>
                         }
                     }
@@ -2490,9 +2498,9 @@ public class LoonyTune extends LinearOpMode {
     void rotationTest() {
         configureToDrive(true); // Do use MecanumDrive
 
-        ui.message("To test 'trackWidthTicks', the robot will turn in-place for two complete "
+        io.message("To test 'trackWidthTicks', the robot will turn in-place for two complete "
                 + "rotations.\n\nPress "+A+" to start, "+B+" to cancel.");
-        if (query.okCancelDrive()) {
+        if (poll.okCancelWithDriving()) {
             // Disable the rotational PID/Ramsete behavior so that we can test just the
             // feed-forward rotation:
             TuneParameters testParameters = currentParameters.createClone();
@@ -2508,10 +2516,10 @@ public class LoonyTune extends LinearOpMode {
                     .build();
             runCancelableAction(action);
 
-            ui.message("The robot should be facing the same direction as when it started. It it's "
+            io.message("The robot should be facing the same direction as when it started. It it's "
                     + "not, run the spin tuner again to re-tune 'trackWidthTicks'."
                     + "\n\nPress "+A+" to continue.");
-            query.ok();
+            poll.ok();
 
             // Restore the parameters:
             MecanumDrive.PARAMS = currentParameters.params;
@@ -2523,28 +2531,28 @@ public class LoonyTune extends LinearOpMode {
     void runTrajectory(Action action) { runTrajectory(action, null);}
     void runTrajectory(Action action, String promptMessage) {
         configureToDrive(true); // Do use MecanumDrive
-        TrajectoryPreviewer preview = new TrajectoryPreviewer(ui, action);
+        TrajectoryPreviewer preview = new TrajectoryPreviewer(io, action);
 
         boolean useOdometry = true;
-        while (opModeIsActive() && !ui.cancel()) {
+        while (opModeIsActive() && !io.cancel()) {
             String message = promptMessage;
             if (message == null)
                 message = "The robot will run the trajectory shown in FTC Dashboard.";
             if (useOdometry)
-                message += "\n\nRunning with normal odometry correction. Press a "+BUMPER+" to "
+                message += "\n\nRunning with normal odometry correction. Press "+BUMPER+" to "
                         + "disable so as to test how well all the non-odometry settings are tuned. "
                         + "If well tuned, the robot should drive close to the intended path. ";
             else
-                message += "\n\nRunning <b>without</b> odometry correction. Press a "+BUMPER+" to re-enable.";
+                message += "\n\nRunning <b>without</b> odometry correction. Press "+BUMPER+" to re-enable.";
 
-            ui.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, "+BUMPER+" to toggle odometry");
+            io.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, "+BUMPER+" to toggle odometry.");
             updateGamepadDriving();
             preview.update();
 
-            if (ui.leftBumper() || ui.rightBumper()) {
+            if (io.leftBumper() || io.rightBumper()) {
                 useOdometry = !useOdometry;
             }
-            if (ui.ok()) {
+            if (io.ok()) {
                 stopMotors();
                 drive.setPose(zeroPose);
                 if (useOdometry) {
@@ -2581,8 +2589,7 @@ public class LoonyTune extends LinearOpMode {
                 .splineToLinearHeading(new Pose2d(0, 0, Math.toRadians(-0.0001)), Math.toRadians(-180))
                 .build();
         String message = "The robot will drive forward 48 inches using a spline. "
-                + "It needs half a tile clearance on either side. "
-                + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel";
+                + "It needs half a tile clearance on either side. ";
         runTrajectory(action, message);
         updateTunerDependencies(Tuner.COMPLETION_TEST);
     }
@@ -2671,9 +2678,9 @@ public class LoonyTune extends LinearOpMode {
     @Override
     public void runOpMode() {
         // Initialize member fields:
-        ui = new Ui(gamepad1, telemetry);
-        menu = new Menu(ui);
-        query = new Query();
+        io = new Io(gamepad1, telemetry);
+        menu = new Menu(io);
+        poll = new Poll();
         drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, zeroPose);
         currentParameters = new TuneParameters(drive);
         originalParameters = currentParameters.createClone();
@@ -2682,13 +2689,13 @@ public class LoonyTune extends LinearOpMode {
         // We require the latter because enabling the gamepad on the DS after it's been booted
         // causes an A press to be sent to the app, and we don't want that to accidentally
         // invoke a menu option:
-        ui.begin(false);
-        ui.add("<big><big><big><big><big><big><big><big><b>Press \u25B6");
-        ui.canvas().fillText("Loony Tune!", -32, 0, "", 0, false);
-        ui.end();
+        io.begin();
+        io.add("<big><big><big><big><big><big><big><big><b>Press \u25B6");
+        io.canvas().fillText("Loony Tune!", -32, 0, "", 0, false);
+        io.end();
 
         waitForStart();
-        ui.setWelcomeMessage("<h2>Loony Tune</h2>"
+        io.setWelcomeMessage("<h2>Loony Tune</h2>"
                 + "This tuner requires FTC Dashboard. Make sure you're Wi-Fi connected "
                 + "to the robot and go to <u>http://192.168.43.1:8080/dash</u> in your web browser. "
                 + "\n\n"
@@ -2699,17 +2706,22 @@ public class LoonyTune extends LinearOpMode {
                 + "Follow the prompts in the FTC Dashboard Telemetry window and use the Driver "
                 + "Station's gamepad to navigate the UI."
                 + "\n\n"
+                + "<b>Don't break your robot, press "+B+" at any time to stop the robot during a "
+                + "test!</b>"
+                + "\n\n"
                 + "<small><font color='#a0a0a0'>If you really want to see the UI here on the Driver "
                 + "Station, press the gamepad's Start button.</font></small>");
-        ui.message("<big><big><big><big><big><big><big><b>Press Gamepad "+A);
-        query.ok();
+        io.message("<big><big><big><big><big>Press "+HOME+"</big></big></big></big></big>"
+            + "\n\nIt's the big button on the middle of the gamepad, also know as the Guide button.");
+        while (!isStopRequested() && !io.home())
+            io.redraw();
 
         if ((drive.opticalTracker != null) &&
             ((drive.opticalTracker.getAngularUnit() != AngleUnit.RADIANS) ||
              (drive.opticalTracker.getLinearUnit() != DistanceUnit.INCH))) {
-            ui.message("The SparkFun OTOS must be present and configured for radians and inches.\n\n"
+            io.message("The SparkFun OTOS must be present and configured for radians and inches.\n\n"
                     + "Press "+A+" to quit.");
-            query.ok();
+            poll.ok();
             return; // ====>
         }
 
@@ -2741,7 +2753,7 @@ public class LoonyTune extends LinearOpMode {
         updateTunerDependencies(null);
 
         while (opModeIsActive()) {
-            ui.message(menu.update());
+            io.message(menu.update());
         }
     }
 }
