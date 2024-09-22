@@ -149,7 +149,7 @@ class Io {
     }
 
     // Button press state:
-    private final boolean[] buttonPressed = new boolean[14];
+    private final boolean[] buttonPressed = new boolean[15];
     private boolean buttonPress(boolean pressed, int index) {
         boolean press = pressed && !buttonPressed[index];
         buttonPressed[index] = pressed;
@@ -157,8 +157,10 @@ class Io {
     }
 
     // Button press status:
-    boolean ok() { return buttonPress(gamepad.a, 0); }
-    boolean cancel() { return buttonPress(gamepad.b, 1); }
+    boolean ok() { return a(); }
+    boolean cancel() { return b(); }
+    boolean a() { return buttonPress(gamepad.a, 0); }
+    boolean b() { return buttonPress(gamepad.b, 1); }
     boolean x() { return buttonPress(gamepad.b, 2); }
     boolean y() { return buttonPress(gamepad.y, 3); }
     boolean up() { return buttonPress(gamepad.dpad_up, 4); }
@@ -169,8 +171,9 @@ class Io {
     boolean rightTrigger() { return buttonPress(gamepad.right_trigger >= ANALOG_THRESHOLD, 9); }
     boolean leftBumper() { return buttonPress(gamepad.left_bumper, 10); }
     boolean rightBumper() { return buttonPress(gamepad.right_bumper, 11); }
-    boolean home() { return buttonPress(gamepad.guide, 12); }
+    boolean guide() { return buttonPress(gamepad.guide, 12); }
     boolean start() { return buttonPress(gamepad.start, 13); }
+    boolean back() { return buttonPress(gamepad.back, 14); }
 
     // Set the message to be shown constantly on the Driver Station screen (at least until they
     // press Start):
@@ -195,7 +198,7 @@ class Io {
         message = new StringBuilder();
 
         // Disable the welcome message if they've pressed the gamepad's 'start'"
-        if (start()) {
+        if (guide()) {
             welcomeMessage = null;
         }
     }
@@ -236,7 +239,7 @@ class Io {
             // There was new canvas rendering, so copy it for posterity and then use it:
             canvasOpsCopy = new ArrayList<>(canvas.getOperations());
         } else {
-            // No new canvas rendering so re-render the canvas from the previous iteration:
+            // There was no new canvas rendering so re-render the canvas from the previous iteration:
             packet.fieldOverlay().getOperations().addAll(canvasOpsCopy);
         }
 
@@ -249,6 +252,7 @@ class Io {
             telemetry.addLine(messageCopy);
         }
         telemetry.update();
+        FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
         // Prepare for the next begin():
         message = null;
@@ -517,7 +521,7 @@ class Menu {
                     output.append("\u00b7");
                 output.append(menuStack.get(i).description);
             }
-            output.append(", "+ LoonyTune.HOME+" to exit");
+            output.append(", "+LoonyTune.B+" to exit");
         }
         output.append("</big></big><br><small><small><br></small></small>"); // Leave half a line blank
 
@@ -548,7 +552,7 @@ class Menu {
         }
 
         Widget widget = menu.widgets.get(menu.current);
-        if (io.home()) {
+        if (io.cancel()) {
             if (menuStack.size() > 1) {
                 // Pop up the menu stack:
                 menuStack.remove(menuStack.size() - 1);
@@ -671,13 +675,13 @@ public class LoonyTune extends LinearOpMode {
     static final String B = "\ud83c\udd51"; // Symbol for the gamepad B button
     static final String X = "\ud83c\udd67"; // Symbol for the gamepad X button
     static final String Y = "\ud83c\udd68"; // Symbol for the gamepad Y button
-    static final String BUMPER = "<span style='background:#808080;'>bumper \u23f4\u23f5</span>";
+    static final String BUMPER = "<span style='background:#808080;'>bumper</span>";
     static final String TRIGGERS = "<span style='background:#808080;'>triggers</span>";
     static final String LEFT_TRIGGER = "<span style='background:#808080;'>left trigger</span>";
     static final String RIGHT_TRIGGER = "<span style='background:#808080;'>right trigger</span>";
     static final String DPAD_LEFT_RIGHT = "<span style='background:#808080;'>Dpad \u2194</span>";
     static final String DPAD_UP_DOWN = "<span style='background:#808080;'>Dpad \u2195</span>";
-    static final String HOME = "<span style='background:#808080;'>\u2302 Home</span>";
+    static final String START = "<span style='background:#808080;'>\u25B6 START</span>";
 
     // Menu widgets for each of the tuners:
     enum Tuner {
@@ -879,10 +883,7 @@ public class LoonyTune extends LinearOpMode {
         // Show a message, drive the robot, and wait for either an A/B button press, or an
         // A/X button press. If accept is pressed, return success. If the other button is
         // pressed, return failure. The robot CAN be driven while waiting.
-        boolean okCancelWithDriving() { return drive(false); }
-        /** @noinspection BooleanMethodIsAlwaysInverted*/
-        boolean okExitDrive() { return drive(true); }
-        boolean drive(boolean exit) {
+        boolean okCancelWithDriving() {
             boolean success = true;
             while (!io.ok()) {
                 io.redraw();
@@ -890,7 +891,7 @@ public class LoonyTune extends LinearOpMode {
                     success = false;
                     break;
                 }
-                if ((exit && io.home()) || (!exit && io.cancel())) {
+                if (io.cancel()) {
                     success = false;
                     break;
                 }
@@ -921,14 +922,14 @@ public class LoonyTune extends LinearOpMode {
         }
 
         // Show a prompt asking to save. If accept (A) is pressed, return Prompt.SAVE. If
-        // cancel (B) is pressed, return Prompt.CANCEL. If exit (Home) is pressed, return Prompt.EXIT.
+        // cancel (B) is pressed, return Prompt.CANCEL. If exit (X) is pressed, return Prompt.EXIT.
         Prompt save() {
             while (!isStopRequested()) {
-                io.message("Do you want to save your results?\n\n"
-                        + "Press "+A+" to save, "+B+" to cancel, "+HOME+" to exit without saving.");
+                io.message("\u2753 Do you want to save your results?\n\n" // Question mark emoji
+                        + "Press "+A+" to save, "+B+" to cancel, "+X+" to exit without saving.");
                 if (io.ok())
                     return Prompt.SAVE;
-                if (io.home())
+                if (io.x())
                     return Prompt.EXIT;
                 if (io.cancel())
                     return Prompt.CANCEL;
@@ -1641,7 +1642,7 @@ public class LoonyTune extends LinearOpMode {
                         if (max.x == 0) {
                             io.message("The optical tracking sensor returned only zero velocities. "
                                     + "Is it working properly?"
-                                    + "\n\nAborted, press " + A + " to continue.");
+                                    + "\n\nAborted, press "+A+" to continue.");
                             poll.ok();
                             break; // ====>
                         } else {
@@ -1675,8 +1676,6 @@ public class LoonyTune extends LinearOpMode {
                             canvas.strokeLine(0, bestFitLine.intercept * scale.y,
                                     200 * scale.x, (bestFitLine.intercept + 200 * bestFitLine.slope) * scale.y);
 
-                            io.end();
-
                             double kS = bestFitLine.intercept;
                             double kV = bestFitLine.slope * currentParameters.params.inPerTick;
 
@@ -1688,9 +1687,10 @@ public class LoonyTune extends LinearOpMode {
                             for (Point result : resultHistory) {
                                 builder.append(String.format("&ensp;kS: %.03f, kV: %.03f\n", result.x, result.y));
                             }
-                            builder.append(String.format("&ensp;<b>kS: %.03f, kV: %.03f</b> (this run)\n\n", kS, kV));
-                            builder.append("If this run looks good, press " + A + " to accept, " + B + " to discard it.");
                             io.message(builder.toString());
+                            io.add("&ensp;<b>kS: %.03f, kV: %.03f</b> (this run)\n\n", kS, kV);
+                            io.add("If this run looks good, press "+A+" to accept, "+B+" to discard it.");
+                            io.end();
                             if (poll.okCancel()) {
                                 resultHistory.add(new Point(kS, kV));
                                 acceptedSamples = combinedSamples;
@@ -1699,10 +1699,10 @@ public class LoonyTune extends LinearOpMode {
                     }
                 }
 
-                io.message("If the results look good, press "+HOME+" to exit. Otherwise, "
+                io.message("If the results look good, press "+B+" to exit. Otherwise, "
                         + "reposition the robot and press "+A+" to start another run. "
                         + "Every additional consecutive run helps the results converge.");
-                if (!poll.okExitDrive()) {
+                if (!poll.okCancelWithDriving()) {
 
                     // Don't ask if they want to save if they didn't get any new results!
                     if (resultHistory.size() == 1)
@@ -1732,14 +1732,14 @@ public class LoonyTune extends LinearOpMode {
         int motor = 0;
 
         stopMotors();
-        while (opModeIsActive() && !io.home()) {
+        while (opModeIsActive() && !io.cancel()) {
             double power = gamepad1.right_trigger - gamepad1.left_trigger;
             String description = motorDescriptions[motor];
 
             io.begin();
             io.add(String.format("This tests every motor individually, now testing <b>%s</b>.\n\n", description)
                 + String.format("&emsp;%s.setPower(%.2f)\n\n", description, power)
-                + "Press "+RIGHT_TRIGGER+" for forward, "+LEFT_TRIGGER+" for reverse, "+BUMPER+" to switch motor, "+HOME+" to exit.");
+                + "Press "+RIGHT_TRIGGER+" for forward, "+LEFT_TRIGGER+" for reverse, "+BUMPER+" to switch motor, "+B+" to exit.");
             io.end();
 
             motors[motor].setPower(power);
@@ -1779,7 +1779,7 @@ public class LoonyTune extends LinearOpMode {
         Pose2d baselinePose = null; // Position where the baseline was set
         double maxLinearSpeed = 0; // Max linear speed seen
         double maxRotationalSpeed = 0; // Max rotational speed seen, radians/s
-        while (opModeIsActive() && !io.home()) {
+        while (opModeIsActive() && !io.cancel()) {
 
             if (io.leftBumper() || io.rightBumper()) { // Debug wheels
                 wheelDebugger();
@@ -1890,7 +1890,7 @@ public class LoonyTune extends LinearOpMode {
 
             io.add(message);
             io.add("\nPress "+X+((baselinePose == null) ? " when in the golden home position, " : " to reset home, "));
-            io.add(BUMPER+" to debug the wheels, "+HOME+" to exit.");
+            io.add(BUMPER+" to debug the wheels, "+B+" to exit.");
 
             Canvas canvas = io.canvas();
             canvas.setStroke("#ffd700"); // Gold
@@ -1994,10 +1994,10 @@ public class LoonyTune extends LinearOpMode {
                     }
                 }
 
-                io.message(resultsMessage + "If the results look good, press "+HOME+" to save and exit. "
+                io.message(resultsMessage + "If the results look good, press "+B+" to save and exit. "
                         + "Otherwise drive to reposition the robot (it may go farther this time) and "
                         + "press "+A+" to start another run. ");
-                if (!poll.okExitDrive()) {
+                if (!poll.okCancelWithDriving()) {
                     Prompt prompt = poll.save();
                     if (prompt == Prompt.EXIT)
                         break; // ====>
@@ -2179,12 +2179,12 @@ public class LoonyTune extends LinearOpMode {
 
                     io.add(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
                             + "the cursor, "+BUMPER+" to switch input, "+TRIGGERS+" to change max velocity, "
-                            + A+" to run on the robot, "+HOME+" to exit.");
+                            + A+" to run on the robot, "+B+" to exit.");
                     io.end();
 
                     updateGamepadDriving();
 
-                    if (io.home()) {
+                    if (io.cancel()) {
                         Prompt prompt = poll.save();
                         if (prompt == Prompt.SAVE) {
                             // Restore the state that we zeroed to run the test:
@@ -2194,7 +2194,7 @@ public class LoonyTune extends LinearOpMode {
                             updateTunerDependencies(Tuner.FEED_FORWARD);
                             break; // ====>
                         } else if (prompt == Prompt.EXIT) {
-                            io.message("Are you sure you want to exit without saving?\n\n"
+                            io.message("\u26a0\ufe0f Are you sure you want to exit without saving?\n\n"
                                     + "Press "+A+" to exit without saving, "+B+" to cancel.");
                             if (poll.okCancel())
                                 break; // ====>
@@ -2454,19 +2454,19 @@ public class LoonyTune extends LinearOpMode {
                     io.abortCanvas();
                     io.add("Last error: " + errorString + ".\n\n");
                     io.add(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
-                        + "the cursor, "+Y+" to switch input, "+A+" to run on the robot, "+HOME+" to exit.");
+                        + "the cursor, "+BUMPER+" to switch input, "+START+" to run on the robot, "+B+" to exit.");
                     io.end();
 
                     updateGamepadDriving();
 
-                    if (io.home()) {
+                    if (io.cancel()) {
                         Prompt prompt = poll.save();
                         if (prompt == Prompt.SAVE) {
                             acceptParameters(testParameters);
                             updateTunerDependencies(tuner);
                             break; // ====>
                         } else if (prompt == Prompt.EXIT) {
-                            io.message("Are you sure you want to exit without saving?\n\n"
+                            io.message("\u26a0\ufe0f Are you sure you want to exit without saving?\n\n"
                                     + "Press "+A+" to exit without saving, "+B+" to cancel.");
                             if (poll.okCancel())
                                 break; // ====>
@@ -2689,31 +2689,32 @@ public class LoonyTune extends LinearOpMode {
         // We require the latter because enabling the gamepad on the DS after it's been booted
         // causes an A press to be sent to the app, and we don't want that to accidentally
         // invoke a menu option:
-        io.begin();
-        io.add("<big><big><big><big><big><big><big><big><b>Press \u25B6");
-        io.canvas().fillText("Loony Tune!", -32, 0, "", 0, false);
-        io.end();
 
-        waitForStart();
-        io.setWelcomeMessage("<h2>Loony Tune</h2>"
-                + "This tuner requires FTC Dashboard. Make sure you're Wi-Fi connected "
+        while (!isStarted()) {
+            io.begin();
+            io.add("<big><big><big><big><big><big><b>Loony Tune!</b>\n");
+            io.add("</big></big><b>Tap \u25B6 to begin");
+            io.canvas().fillText("Loony Tune!", -32, 32, "", 0, false);
+            io.end();
+        }
+
+        io.setWelcomeMessage("This tuner requires FTC Dashboard. Wi-Fi connect your laptop "
                 + "to the robot and go to <u>http://192.168.43.1:8080/dash</u> in your web browser. "
                 + "\n\n"
-                + "You'll need to configure FTC Dashboard to show both the <b>Field</b> and "
+                + "Configure FTC Dashboard to show both the <b>Field</b> and "
                 + "<b>Telemetry</b> views by selecting either 'Field' or 'Custom' from the dropdown "
-                + "at its top."
+                + "at its top. "
                 + "\n\n"
-                + "Follow the prompts in the FTC Dashboard Telemetry window and use the Driver "
-                + "Station's gamepad to navigate the UI."
+                + "Follow the prompts in the FTC Dashboard Telemetry window while using the Driver "
+                + "Station's gamepad to navigate the UI. "
                 + "\n\n"
                 + "<b>Don't break your robot, press "+B+" at any time to stop the robot during a "
                 + "test!</b>"
                 + "\n\n"
                 + "<small><font color='#a0a0a0'>If you really want to see the UI here on the Driver "
-                + "Station, press the gamepad's Start button.</font></small>");
-        io.message("<big><big><big><big><big>Press "+HOME+"</big></big></big></big></big>"
-            + "\n\nIt's the big button on the middle of the gamepad, also know as the Guide button.");
-        while (!isStopRequested() && !io.home())
+                + "Station, press the Guide button (in the middle of the gamepad).</font></small>");
+        io.message("<big><big><big><big><big>Press "+A+" to begin</big></big></big></big></big>");
+        while (!isStopRequested() && !io.ok())
             io.redraw();
 
         if ((drive.opticalTracker != null) &&

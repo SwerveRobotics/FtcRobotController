@@ -1,9 +1,12 @@
 package com.acmerobotics.dashboard.canvas;
 
+import com.wilyworks.simulator.framework.Field;
+
 import java.awt.AlphaComposite;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Stroke;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Path2D;
@@ -26,7 +29,6 @@ public class Canvas {
             this.stroke = stroke;
         }
     }
-
 
     class Fill extends CanvasOp {
         public String color;
@@ -410,7 +412,6 @@ public class Canvas {
                 setUserTransform(g);
             } else if (op instanceof Rotation) {
                 Rotation rotation = (Rotation) op;
-
                 // Our default is unlike FTC Dashboard's: we have the field oriented so that
                 // positive-x goes to the right, they have it so that positive-x goes up.
                 // Consequently, we add a 90 degrees rotation to any requested rotation:
@@ -494,18 +495,40 @@ public class Canvas {
                 AffineTransform originalTransform = g.getTransform();
                 Text text = (Text) op;
                 if (text.usePageFrame) {
-                    g.setTransform(defaultTransform);
-                }
-                g.translate(text.x, text.y);
-                if (!text.usePageFrame) {
+                    Field.setPageFrameTransform(g);
+                } else {
+                    g.translate(text.x, text.y);
                     g.scale(1, -1);
                 }
                 g.rotate(text.theta);
                 g.drawString(text.text, 0, 0);
                 g.setTransform(originalTransform);
             } else if (op instanceof Grid) {
+                AffineTransform originalTransform = g.getTransform();
+                java.awt.Stroke originalStroke = g.getStroke();
                 Grid grid = (Grid) op;
-                // TODO: Implement FTC Dashboard Grid
+                if (grid.usePageFrame) {
+                    Field.setPageFrameTransform(g);
+                } else {
+                    g.scale(1, -1);
+                    g.rotate(grid.theta);
+                }
+                Path2D.Double path = new Path2D.Double();
+                for (int i = 1; i < grid.numTicksX; i++) {
+                    double x = grid.x + (grid.width * i) / grid.numTicksX;
+                    path.moveTo(x, grid.y);
+                    path.lineTo(x, grid.y + grid.height);
+                }
+                for (int i = 1; i < grid.numTicksY; i++) {
+                    double y = grid.y + (grid.height * i) / grid.numTicksY;
+                    path.moveTo(grid.x, y);
+                    path.lineTo(grid.x + grid.width, y);
+                }
+                g.setStroke(new BasicStroke(1.0f)); // Narrow stroke width
+                g.setColor(new Color(0x808080));
+                g.draw(path);
+                g.setTransform(originalTransform);
+                g.setStroke(originalStroke);
             } else if (op instanceof Alpha) {
                 Alpha alpha = (Alpha) op; // Ranges from 0.0 to 1.0
                 g.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, (float) alpha.alpha));
