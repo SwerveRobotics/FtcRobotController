@@ -28,10 +28,15 @@ public class CompetitionAuto extends BaseOpMode {
         // Build the trajectory *before* the start button is pressed because Road Runner
         // can take multiple seconds for this operation. We wouldn't want to have to wait
         // as soon as the Start button is pressed!
-        Action trajectoryAction = drive.actionBuilder(beginPose)
-                            .splineTo(new Vector2d(30, 30), Math.PI / 2)
-                            .splineTo(new Vector2d(0, 60), Math.PI)
-                            .build();
+        Action trajectoryAction = drive.actionBuilder(new Pose2d(-24.00, 60.00, Math.toRadians(270.00)))
+                .splineTo(new Vector2d(-48.00, 60.00), Math.toRadians(180.00))
+                .splineTo(new Vector2d(-60.00, 48.00), Math.toRadians(90.00))
+                .splineTo(new Vector2d(-60.00, 60.00), Math.toRadians(90.00))
+                .splineTo(new Vector2d(-60.00, 48.00), Math.toRadians(90.00))
+                .splineTo(new Vector2d(-60.00, 60.00), Math.toRadians(90.00))
+                .splineTo(new Vector2d(-60.00, 48.00), Math.toRadians(90.00))
+                .splineTo(new Vector2d(-60, 60), Math.toRadians(90.00))
+                .build();
 
         // Get a preview of the trajectory's path:
         Canvas previewCanvas = new Canvas();
