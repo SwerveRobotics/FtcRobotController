@@ -370,13 +370,6 @@ public final class MecanumDrive {
         if (opticalTracker == null)
             return; // ====>
 
-        // Get the hardware and firmware version
-        SparkFunOTOS.Version hwVersion = new SparkFunOTOS.Version();
-        SparkFunOTOS.Version fwVersion = new SparkFunOTOS.Version();
-        opticalTracker.getVersionInfo(hwVersion, fwVersion);
-        System.out.printf("SparkFun OTOS hardware version: %d.%d, firmware version: %d.%d\n",
-                hwVersion.major, hwVersion.minor, fwVersion.major, fwVersion.minor);
-
         // Set the desired units for linear and angular measurements. Can be either
         // meters or inches for linear, and radians or degrees for angular. If not
         // set, the default is inches and degrees. Note that this setting is not
@@ -980,10 +973,5 @@ public final class MecanumDrive {
     // When done with an FTC Dashboard telemetry packet, send it!
     public static void sendTelemetryPacket(TelemetryPacket packet) {
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
-    }
-
-    // Remove any variables that had been 'put' to the TelemetryPacket from the Dashboard view:
-    public static void clearDashboardTelemetry() {
-        FtcDashboard.getInstance().clearTelemetry();
     }
 }

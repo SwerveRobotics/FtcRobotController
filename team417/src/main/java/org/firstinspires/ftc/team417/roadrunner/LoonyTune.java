@@ -43,6 +43,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS.Pose2D;
 import com.wilyworks.common.WilyWorks;
@@ -212,10 +213,11 @@ class Io {
     }
 
     // Shortcut for begin()/add()/end() all in one:
+    void message(String string) {
+        begin(); add(string); end();
+    }
     void message(String format, Object... args) {
-        begin();
-        add(format, args);
-        end();
+        begin(); add(format, args); end();
     }
 
     // Redraw using the previous telemetry and field canvas:
@@ -671,31 +673,39 @@ class Menu {
 @SuppressLint("DefaultLocale")
 @TeleOp(name="Loony Tune", group="Tuning")
 public class LoonyTune extends LinearOpMode {
+    static String buttonString(String button) {
+        return String.format("<span style='background:#808080'>%s</span>", button);
+    }
     static final String A = "\ud83c\udd50"; // Symbol for the gamepad A button
     static final String B = "\ud83c\udd51"; // Symbol for the gamepad B button
     static final String X = "\ud83c\udd67"; // Symbol for the gamepad X button
     static final String Y = "\ud83c\udd68"; // Symbol for the gamepad Y button
-    static final String BUMPER = "<span style='background:#808080;'>bumper</span>";
-    static final String TRIGGERS = "<span style='background:#808080;'>triggers</span>";
-    static final String LEFT_TRIGGER = "<span style='background:#808080;'>left trigger</span>";
-    static final String RIGHT_TRIGGER = "<span style='background:#808080;'>right trigger</span>";
-    static final String DPAD_LEFT_RIGHT = "<span style='background:#808080;'>Dpad \u2194</span>";
-    static final String DPAD_UP_DOWN = "<span style='background:#808080;'>Dpad \u2195</span>";
-    static final String START = "<span style='background:#808080;'>\u25B6 START</span>";
+    static final String BUMPER = buttonString("bumper");
+    static final String TRIGGERS = buttonString("triggers");
+    static final String LEFT_TRIGGER = buttonString("left trigger");
+    static final String RIGHT_TRIGGER = buttonString("right trigger");
+    static final String LEFT_BUMPER = buttonString("left bumper");
+    static final String RIGHT_BUMPER = buttonString("right bumper");
+    static final String DPAD_LEFT_RIGHT = buttonString("Dpad \u2194");
+    static final String DPAD_UP_DOWN = buttonString("Dpad \u2195");
+    static final String START = buttonString("\u25B6 START");
 
     // Menu widgets for each of the tuners:
     enum Tuner {
-        PUSH(0),
-        ACCELERATING(1),
-        FEED_FORWARD(2),
-        LATERAL(3),
-        SPIN(4),
-        AXIAL_GAIN(5),
-        LATERAL_GAIN(6),
-        HEADING_GAIN(7),
-        COMPLETION_TEST(8),
+        WHEEL(0),
+        PUSH(1),
+        ACCELERATING(2),
+        FEED_FORWARD(3),
+        LATERAL(4),
+        SPIN(5),
+        TRACKING(6),
+        TRACKING_TEST(7),
+        AXIAL_GAIN(8),
+        LATERAL_GAIN(9),
+        HEADING_GAIN(10),
+        COMPLETION_TEST(11),
 
-        COUNT(9); // Count of tuners
+        COUNT(12); // Count of tuners
 
         final int index;
         Tuner(int index) { this.index = index; }
@@ -709,6 +719,7 @@ public class LoonyTune extends LinearOpMode {
     MecanumDrive drive;
     TuneParameters currentParameters;
     TuneParameters originalParameters;
+    boolean passedWheelTest;
 
     // Constants:
     final Pose2d zeroPose = new Pose2d(0, 0, 0);
@@ -1145,6 +1156,17 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
+    // Show the SparkFun OTOS hardware and firmware version:
+    public void showOtosVersion() {
+        SparkFunOTOS.Version hwVersion = new SparkFunOTOS.Version();
+        SparkFunOTOS.Version fwVersion = new SparkFunOTOS.Version();
+        drive.opticalTracker.getVersionInfo(hwVersion, fwVersion);
+        io.message("SparkFun OTOS hardware version: %d.%d, firmware version: %d.%d\n\n"
+                + "Press "+A+" to continue.",
+                hwVersion.major, hwVersion.minor, fwVersion.major, fwVersion.minor);
+        poll.ok();
+    }
+
     // Set the hardware to the current parameters:
     public void setOtosHardware() {
         drive.initializeOpticalTracker();
@@ -1186,12 +1208,14 @@ public class LoonyTune extends LinearOpMode {
     }
 
     // Stop all motors:
-    void stopMotors() {
+    void stopMotors() { stopMotors(true); }
+    void stopMotors(boolean slowAndSure) {
         drive.rightFront.setPower(0);
         drive.rightBack.setPower(0);
         drive.leftFront.setPower(0);
         drive.leftBack.setPower(0);
-        sleep(333); // Give the robot a little time to actually stop
+        if (slowAndSure)
+            sleep(333); // Give the robot a little time to actually stop
     }
 
     // Structure to describe the center of rotation for the robot:
@@ -1758,8 +1782,109 @@ public class LoonyTune extends LinearOpMode {
         stopMotors();
     }
 
-    // Drive the robot around.
-    void driveTest() {
+    // Help for managing the various steps of the tests:
+    class Step {
+        final String[] steps;
+        int index;
+        String header = "";
+        String controls = "";
+        Step(String[] steps) {
+            this.steps = steps;
+        }
+
+        // Handle all of the loop bookkeeping for steps controlled by the bumpers. Check the
+        // gamepad input and update the status string as well as the controls string:
+        void update() {
+            int oldIndex = index;
+            if (io.leftBumper()) {
+                index = Math.max(index - 1, 0);
+            }
+            if (io.rightBumper()) {
+                index = Math.min(index + 1, steps.length - 1);
+            }
+            if (index != oldIndex) {
+                stopMotors(false);
+            }
+            header = String.format("<span style='background:#88285a'>Step %d of %d: %s</span>\n\n", index + 1, steps.length, steps[index]);
+            controls = "";
+            if (index > 0) {
+                controls = LEFT_BUMPER+" for previous step";
+            }
+            if (index < steps.length - 1) {
+                if (!controls.isEmpty())
+                    controls += ", ";
+                controls += RIGHT_BUMPER+" for next step";
+            }
+        }
+    }
+
+    // Test the wheels on the robot by driving around and testing each wheel individually.
+    void wheelTest() {
+        configureToDrive(true); // Do use MecanumDrive
+
+        String[] steps = {
+                "Test 'leftFront' wheel",       // 0
+                "Test 'leftBack' wheel",        // 1
+                "Test 'rightBack' wheel",       // 2
+                "Test 'rightFront' wheel",      // 3
+                "Test all wheels by driving",   // 4
+                "Exit" };                       // 5
+        DcMotorEx[] motors = { drive.leftFront, drive.leftBack, drive.rightBack, drive.rightFront };
+        String[] motorNames = { "leftFront", "leftBack", "rightBack", "rightFront" };
+        Step step = new Step(steps);
+
+        while (opModeIsActive()) {
+            step.update();
+            io.begin();
+            io.add(step.header);
+            if (step.index < 4) {
+                int motor = step.index;
+                double power = gamepad1.right_trigger - gamepad1.left_trigger;
+                motors[motor].setPower(power);
+                DcMotorSimple.Direction direction =  motors[motor].getDirection();
+                String motorName = motorNames[motor];
+
+                io.add("&emsp;<b>%s.setPower(%.2f)</b>", motorName, power);
+                io.add("\n\n"
+                        + "If this wheel turns in the wrong direction, double-tap the shift "
+                        + "key in Android Studio, enter 'md.configure', and ");
+                if (direction == DcMotorSimple.Direction.FORWARD) {
+                    io.add("add a call to '%s.setDirection(DcMotorEx.Direction.REVERSE)'.", motorName);
+                } else {
+                    io.add("disable the '%s.setDirection(DcMotorEx.Direction.REVERSE);'.", motorName);
+                }
+                io.add("\n\n<b>Press "+RIGHT_TRIGGER+" to rotate forward, "+LEFT_TRIGGER+" for reverse, "+step.controls + ".</b>");
+                io.end();
+            } else if (step.index == 4) {
+                updateGamepadDriving();
+                io.add("Test the robot by driving it around. Left stick controls movement, "
+                    + "right stick controls rotation."
+                    + "\n\n"
+                    + "If it strafes in the wrong direction (e.g., left when you want right), or "
+                    + "if it drives weird even though it passed the previous steps, the Mecanum "
+                    + "wheels may be mounted wrong. When looking at it from above, the direction "
+                    + "of the rollers on the 4 wheels should form an 'X'.");
+                io.add("\n\n<b>Sticks to drive, " + step.controls + ".</b>");
+                io.end();
+            } else if (step.index == 5) {
+                io.add("<b>Press "+A+" if the wheels passed every step, "+B+" to exit despite a step failing, "+step.controls+".</b>");
+                io.end();
+                if (io.ok()) {
+                    passedWheelTest = true;
+                    updateTunerDependencies(Tuner.WHEEL);
+                    break; // ====>
+                }
+                if (io.cancel()) {
+                    passedWheelTest = false;
+                    break; // ====>
+                }
+            }
+        }
+        stopMotors();
+    }
+
+    // Test tracking on the robot by driving around.
+    void trackingTest() {
         // We dedicate an unobstructed corner of the field to use as the home position for this
         // test. The robot can nestle in the corner and thereby establish a consistent physical
         // location and orientation for measuring tracking drift error. We choose the lower-right
@@ -1846,16 +1971,16 @@ public class LoonyTune extends LinearOpMode {
             if (drive.opticalTracker != null) {
                 MecanumDrive.Params.Otos otos = currentParameters.params.otos;
                 if ((otos.linearScalar == 0) || (otos.angularScalar == 0) ||
-                    (otos.offset.x == 0) || (otos.offset.y == 0)) {
+                        (otos.offset.x == 0) || (otos.offset.y == 0)) {
 
                     message += "<font color='#e84e4f'>"
-                        + "WARNING: The optical sensor's parameters haven't yet been fully "
-                        + "tuned, so the robot's pose and its location shown in FTC Dashboard "
-                        + "will be off.</font>\n\n";
+                            + "WARNING: The optical sensor's parameters haven't yet been fully "
+                            + "tuned, so the robot's pose and its location shown in FTC Dashboard "
+                            + "will be off.</font>\n\n";
                 }
             }
             message += String.format("Pose: (%.2f\", %.2f\"), %.2f\u00b0\n",
-                        pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
+                    pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
             message += String.format("Max velocities: %.1f\"/s, %.0f\u00b0/s\n",
                     maxLinearSpeed, Math.toDegrees(maxRotationalSpeed));
             if (currentStatus.isEmpty()) {
@@ -1877,7 +2002,7 @@ public class LoonyTune extends LinearOpMode {
                 double imuTheta = normalizeAngle(drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) - baselineImu);
 
                 message += "\nData that's relevant only when physically at the home position:\n\n"
-                    + String.format("&ensp;Offset: (%.2f\", %.2f\"), %.2f\u00b0, IMU: %.2f\u00b0\n",
+                        + String.format("&ensp;Offset: (%.2f\", %.2f\"), %.2f\u00b0, IMU: %.2f\u00b0\n",
                         dx, dy, Math.toDegrees(otosTheta), Math.toDegrees(imuTheta));
 
                 if ((totalDistance != 0) && (totalRotation != 0)) {
@@ -2634,6 +2759,7 @@ public class LoonyTune extends LinearOpMode {
         MecanumDrive.Params.Otos otos = params.otos;
 
         // Calculate which tests can be enabled base on their dependencies:
+        widgets[Tuner.PUSH.index].isEnabled         = otos.linearScalar != 0 || passedWheelTest;
         widgets[Tuner.ACCELERATING.index].isEnabled = otos.linearScalar != 0;
         widgets[Tuner.FEED_FORWARD.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
         widgets[Tuner.LATERAL.index].isEnabled      = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
@@ -2671,7 +2797,8 @@ public class LoonyTune extends LinearOpMode {
             }
 
             // We can un-star the current tuner because it's now completed:
-            widgets[tuner.index].isStarred = false;
+            if (widgets[tuner.index] != null) // Can happen for wheelTest
+                widgets[tuner.index].isStarred = false;
         }
     }
 
@@ -2727,14 +2854,15 @@ public class LoonyTune extends LinearOpMode {
         }
 
         // Dynamically build the list of tests:
-        menu.addRunnable("Drive test (motors)", this::driveTest);
+        menu.addRunnable("Wheel test (wheels, motors)", this::wheelTest);
         if (drive.opticalTracker != null) {
             // Basic tuners:
             widgets[Tuner.PUSH.index] = menu.addRunnable("Push tuner (OTOS offset heading, linearScalar)", this::pushTuner);
+            widgets[Tuner.SPIN.index] = menu.addRunnable("Spin tuner (trackWidthTicks, OTOS angularScalar, offset)", this::spinTuner);
+            widgets[Tuner.TRACKING_TEST.index] = menu.addRunnable("Tracking test (OTOS verification)", this::trackingTest);
             widgets[Tuner.ACCELERATING.index] = menu.addRunnable("Accelerating straight line tuner (kS and kV)", this::acceleratingStraightLineTuner);
             widgets[Tuner.FEED_FORWARD.index] = menu.addRunnable("Interactive feed forward tuner (kV and kA)", this::interactiveFeedForwardTuner);
             widgets[Tuner.LATERAL.index] = menu.addRunnable("Lateral tuner (lateralInPerTick)", this::lateralTuner);
-            widgets[Tuner.SPIN.index] = menu.addRunnable("Spin tuner (trackWidthTicks, OTOS angularScalar, offset)", this::spinTuner);
             widgets[Tuner.AXIAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (axialGain)", ()->interactivePidTuner(PidTunerType.AXIAL));
             widgets[Tuner.LATERAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (lateralGain)", ()->interactivePidTuner(PidTunerType.LATERAL));
             widgets[Tuner.HEADING_GAIN.index] = menu.addRunnable("Interactive PiD tuner (headingGain)", ()->interactivePidTuner(PidTunerType.HEADING));
@@ -2743,6 +2871,7 @@ public class LoonyTune extends LinearOpMode {
             // Extras:
             menu.addRunnable("Extras::Rotation test (verify trackWidthTicks)", this::rotationTest);
             menu.addRunnable("Extras::Show accumulated parameter changes", this::showUpdatedParameters);
+            menu.addRunnable("Extras::Show SparkFun OTOS version", this::showOtosVersion);
 
             // Examples:
             menu.addRunnable("Examples::Spline", this::splineExample);
