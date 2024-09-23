@@ -514,12 +514,12 @@ public class Canvas {
                     g.rotate(grid.theta);
                 }
                 Path2D.Double path = new Path2D.Double();
-                for (int i = 1; i < grid.numTicksX; i++) {
+                for (int i = 1; i < grid.numTicksX + 1; i++) {
                     double x = grid.x + (grid.width * i) / grid.numTicksX;
                     path.moveTo(x, grid.y);
                     path.lineTo(x, grid.y + grid.height);
                 }
-                for (int i = 1; i < grid.numTicksY; i++) {
+                for (int i = 1; i < grid.numTicksY + 1; i++) {
                     double y = grid.y + (grid.height * i) / grid.numTicksY;
                     path.moveTo(grid.x, y);
                     path.lineTo(grid.x + grid.width, y);

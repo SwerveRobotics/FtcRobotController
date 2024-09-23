@@ -47,6 +47,7 @@ public class Field {
     Image backgroundImage;
     Image compassImage;
     BufferedImage robotImage;
+    static AffineTransform defaultTransform; // Default transform supplied by the system
 
     public Field(Simulation simulation) {
         this.simulation = simulation;
@@ -155,7 +156,8 @@ public class Field {
     // Set the page frame transform, returning the old transform:
     public static AffineTransform setPageFrameTransform(Graphics2D g) {
         AffineTransform oldTransform = g.getTransform();
-        g.setTransform(new AffineTransform(
+        g.setTransform(defaultTransform);
+        g.transform(new AffineTransform(
                 FIELD_SURFACE_DIMENSION / 144.0, 0,
                 0, FIELD_SURFACE_DIMENSION / 144.0,
                 FIELD_INSET, FIELD_INSET));
@@ -167,6 +169,7 @@ public class Field {
         // Lay down the background image without needing a transform:
         g.drawImage(backgroundImage, FIELD_VIEW.x + FIELD_INSET, FIELD_VIEW.y + FIELD_INSET, null);
 
+        defaultTransform = g.getTransform();
         AffineTransform oldTransform = setFieldTransform(g);
         if (FtcDashboard.fieldOverlay != null)
             FtcDashboard.fieldOverlay.render(g);
