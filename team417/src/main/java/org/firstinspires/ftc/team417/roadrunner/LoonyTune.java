@@ -205,19 +205,19 @@ class Io {
     }
 
     // Add a string to the current UI update message. Note that this does NOT add a newline:
-    void add(String string) {
+    void out(String string) {
         message.append(string);
     }
-    void add(String format, Object... args) {
+    void out(String format, Object... args) {
         message.append(String.format(format, args));
     }
 
     // Shortcut for begin()/add()/end() all in one:
     void message(String string) {
-        begin(); add(string); end();
+        begin(); out(string); end();
     }
     void message(String format, Object... args) {
-        begin(); add(format, args); end();
+        begin(); out(format, args); end();
     }
 
     // Redraw using the previous telemetry and field canvas:
@@ -293,6 +293,15 @@ class Io {
     // Toss any rendering that was done to the canvas:
     void abortCanvas() {
         canvas = null;
+    }
+
+    // Erase everything on the field. Can't be in an active begin/end bracket:
+    void clearCanvas() {
+        begin();
+        canvas = packet.fieldOverlay();
+        canvas.setFill("#000000");
+        canvas.fillRect(-72, -72, 144, 144);
+        end();
     }
 
     // Put a sticky FTC Dashboard telemetry value:
@@ -723,10 +732,61 @@ public class LoonyTune extends LinearOpMode {
     boolean passedWheelTest;
 
     // Tests and tuners:
+    PushTuner pushTuner = new PushTuner();
     SpinTuner spinTuner = new SpinTuner();
+    AcceleratingStraightLineTuner acceleratingStraightLineTuner = new AcceleratingStraightLineTuner();
 
     // Constants:
     final Pose2d zeroPose = new Pose2d(0, 0, 0);
+
+    // Update which tuners need to be disabled and which need to be run:
+    void updateTunerDependencies(Tuner tuner) {
+        MecanumDrive.Params params = drive.PARAMS;
+        MecanumDrive.Params.Otos otos = params.otos;
+
+        // Calculate which tests can be enabled base on their dependencies:
+        widgets[Tuner.PUSH.index].isEnabled         = otos.linearScalar != 0 || passedWheelTest;
+        widgets[Tuner.ACCELERATING.index].isEnabled = otos.linearScalar != 0;
+        widgets[Tuner.FEED_FORWARD.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
+        widgets[Tuner.LATERAL.index].isEnabled      = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
+        widgets[Tuner.SPIN.index].isEnabled         = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
+        widgets[Tuner.AXIAL_GAIN.index].isEnabled   = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
+        widgets[Tuner.LATERAL_GAIN.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0 && params.lateralInPerTick != 0;
+        widgets[Tuner.HEADING_GAIN.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0 && params.trackWidthTicks != 0;
+        widgets[Tuner.COMPLETION_TEST.index].isEnabled = params.axialGain != 0 && params.lateralGain != 0 && params.headingGain != 0;
+
+        final Tuner[] PUSH_DEPENDENTS = { Tuner.ACCELERATING, Tuner.FEED_FORWARD, Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] ACCELERATING_DEPENDENTS = { Tuner.FEED_FORWARD, Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] FEED_FORWARD_DEPENDENTS = { Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] LATERAL_DEPENDENTS = { Tuner.LATERAL_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] SPIN_DEPENDENTS = { Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] GAIN_DEPENDENTS = { Tuner.COMPLETION_TEST };
+
+        // When a tuner is updated with a new value, star any other tuners that should be run:
+        if (tuner != null) {
+            Tuner[] dependents = null;
+            switch (tuner) {
+                case PUSH: dependents = PUSH_DEPENDENTS; break;
+                case ACCELERATING: dependents = ACCELERATING_DEPENDENTS; break;
+                case FEED_FORWARD: dependents = FEED_FORWARD_DEPENDENTS; break;
+                case LATERAL: dependents = LATERAL_DEPENDENTS; break;
+                case SPIN: dependents = SPIN_DEPENDENTS; break;
+                case AXIAL_GAIN:
+                case LATERAL_GAIN:
+                case HEADING_GAIN:
+                    dependents = GAIN_DEPENDENTS; break;
+            }
+            if (dependents != null) {
+                for (Tuner dependent : dependents) {
+                    widgets[dependent.index].isStarred = true;
+                }
+            }
+
+            // We can un-star the current tuner because it's now completed:
+            if (widgets[tuner.index] != null) // Can happen for wheelTest
+                widgets[tuner.index].isStarred = false;
+        }
+    }
 
     // Check if the robot code setting the MecanumDrive configuration parameters is up to date
     // with the last results from tuning:
@@ -1020,7 +1080,7 @@ public class LoonyTune extends LinearOpMode {
         drive.runParallel(action);
         while (opModeIsActive() && !io.cancel()) {
             io.begin();
-            io.add("Press "+B+" to stop");
+            io.out("Press "+B+" to stop");
             boolean more = drive.doActionsWork(io.packet);
             if (!more) {
                 // We successfully completed the Action! Abort the current canvas:
@@ -1226,7 +1286,7 @@ public class LoonyTune extends LinearOpMode {
     // Helper for acceleratingStraightLineTuner that drives an accelerating straight line
     // and samples voltage and velocity:
     /** @noinspection SameParameterValue*/
-    ArrayList<Point> acceleratingStraightLine(double targetDistance, double direction) {
+    ArrayList<Point> acceleratingStraightLine(String header, double targetDistance, double direction) {
         final double VELOCITY_EPSILON = 2.0; // Inches/s
         final double POWER_FACTOR_ADDER_PER_SECOND = 0.1;
         final double MIN_POWER_FACTOR = 0.05;
@@ -1267,8 +1327,9 @@ public class LoonyTune extends LinearOpMode {
 
             double remaining = Math.max(0, targetDistance - distance);
             io.begin();
-            io.add(String.format("Inches remaining: %.1f, power: %.1f\n\n", remaining, powerFactor));
-            io.add("Press "+B+" to abort.");
+            io.out(header);
+            io.out("Inches remaining: %.1f, power: %.1f\n\n", remaining, powerFactor);
+            io.out("Press "+B+" to cancel and stop the robot.");
             io.end();
         }
 
@@ -1294,121 +1355,6 @@ public class LoonyTune extends LinearOpMode {
             yPoints[i] = points.get(i).y * scale.y;
         }
         canvas.strokePolyline(xPoints, yPoints);
-    }
-
-    // Automatically calculate the kS and kV terms of the feed-forward approximation by
-    // ramping up the velocity in a straight line. We increase power by a fixed increment.
-    void acceleratingStraightLineTuner() {
-        final int DISTANCE = 72; // Test distance in inches
-
-        configureToDrive(true); // Set the brakes
-        Action preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, 0, 0))
-                .lineToX(DISTANCE/2.0, null, new ProfileAccelConstraint(-100, 10))
-                .lineToX(-DISTANCE/2.0, null, new ProfileAccelConstraint(-100, 20))
-                .build();
-        io.message("Tune <b>kS</b> and <b>kV</b>. "
-                + "The robot will drive forward and backward for up to " + testDistance(DISTANCE) + ". "
-                + "It will start slowly but get faster and faster in each direction. "
-                + "\n\nDrive the robot to a good spot, press "+A+" to start, "+B+" to cancel.");
-        if (poll.okCancelWithPreview(preview)) {
-
-            ArrayList<Point> resultHistory = new ArrayList<>(); // x is kS, y is kV
-            resultHistory.add(new Point(currentParameters.params.kS, currentParameters.params.kV));
-
-            ArrayList<Point> acceptedSamples = new ArrayList<>(); // x is velocity, y is power
-            Point max = new Point(0, 0); // x is velocity max, y is power max
-            while (opModeIsActive()) {
-                // Do one forward and back run:
-                ArrayList<Point> forwardSamples = acceleratingStraightLine(DISTANCE,  1.0);
-                if (forwardSamples != null) {
-                    ArrayList<Point> reverseSamples = acceleratingStraightLine(DISTANCE, -1.0);
-                    if (reverseSamples != null) {
-                        findMaxValues(max, forwardSamples);
-                        findMaxValues(max, reverseSamples);
-                        if (max.x == 0) {
-                            io.message("The optical tracking sensor returned only zero velocities. "
-                                    + "Is it working properly?"
-                                    + "\n\nAborted, press "+A+" to continue.");
-                            poll.ok();
-                            break; // ====>
-                        } else {
-                            // Draw the results to the FTC dashboard:
-                            io.begin();
-                            Canvas canvas = io.canvas();
-
-                            // Set a solid white background and an offset then draw the point samples:
-                            canvas.setFill("#ffffff");
-                            canvas.fillRect(-72, -72, 144, 144);
-                            canvas.setTranslation(-72, 72);
-
-                            // The canvas coordinates go from -72 to 72 so scale appropriately. We don't
-                            // use canvas.setScale() because that scales up the stroke widths and so makes
-                            // the lines too fat.
-                            Point scale = new Point(144 / max.x, 144 / max.y);
-                            canvas.setStroke("#00ff00");
-                            strokeSamples(canvas, scale, forwardSamples);
-                            canvas.setStroke("#0000ff");
-                            strokeSamples(canvas, scale, reverseSamples);
-
-                            // Compute and draw the best-fit line for both sets of points:
-                            ArrayList<Point> combinedSamples = new ArrayList<>();
-                            combinedSamples.addAll(acceptedSamples);
-                            combinedSamples.addAll(forwardSamples);
-                            combinedSamples.addAll(reverseSamples);
-                            BestFitLine bestFitLine = fitLine(combinedSamples);
-
-                            canvas.setStrokeWidth(1);
-                            canvas.setStroke("#ff0000");
-                            canvas.strokeLine(0, bestFitLine.intercept * scale.y,
-                                    200 * scale.x, (bestFitLine.intercept + 200 * bestFitLine.slope) * scale.y);
-
-                            double kS = bestFitLine.intercept;
-                            double kV = bestFitLine.slope * currentParameters.params.inPerTick;
-
-                            StringBuilder builder = new StringBuilder("Check out the graph on FTC Dashboard! The x axis is "
-                                    + String.format("velocity going up to %.1f\"/s. The y axis is ", max.x)
-                                    + String.format("voltage going up to %.2fV.\n\n", max.y)
-                                    + "History of results:\n\n");
-
-                            for (Point result : resultHistory) {
-                                builder.append(String.format("&ensp;kS: %.03f, kV: %.03f\n", result.x, result.y));
-                            }
-                            io.message(builder.toString());
-                            io.add("&ensp;<b>kS: %.03f, kV: %.03f</b> (this run)\n\n", kS, kV);
-                            io.add("If this run looks good, press "+A+" to accept, "+B+" to discard it.");
-                            io.end();
-                            if (poll.okCancel()) {
-                                resultHistory.add(new Point(kS, kV));
-                                acceptedSamples = combinedSamples;
-                            }
-                        }
-                    }
-                }
-
-                io.message("If the results look good, press "+B+" to exit. Otherwise, "
-                        + "reposition the robot and press "+A+" to start another run. "
-                        + "Every additional consecutive run helps the results converge.");
-                if (!poll.okCancelWithDriving()) {
-
-                    // Don't ask if they want to save if they didn't get any new results!
-                    if (resultHistory.size() == 1)
-                        break; // ====>
-                    Prompt prompt = poll.save();
-                    if (prompt == Prompt.EXIT)
-                        break; // ====>
-                    if (prompt == Prompt.SAVE) {
-                        // Save the newest result:
-                        Point result = resultHistory.get(resultHistory.size() - 1);
-                        TuneParameters newParameters = currentParameters.createClone();
-                        newParameters.params.kS = result.x;
-                        newParameters.params.kV = result.y;
-                        acceptParameters(newParameters);
-                        updateTunerDependencies(Tuner.ACCELERATING);
-                        break; // ====>
-                    }
-                }
-            }
-        }
     }
 
     // Helper for managing the various screens of the tests.
@@ -1446,182 +1392,6 @@ public class LoonyTune extends LinearOpMode {
                 buttons = RIGHT_BUMPER+"/"+LEFT_BUMPER+" for the next/previous screen";
             }
         }
-    }
-
-    // Test tracking on the robot by driving around.
-    void trackingTest() {
-        // We dedicate an unobstructed corner of the field to use as the home position for this
-        // test. The robot can nestle in the corner and thereby establish a consistent physical
-        // location and orientation for measuring tracking drift error. We choose the lower-right
-        // corner, and assume that the robot is 18 inches on each side:
-        Pose2d homePose = new Pose2d(72 - 9, -72 + 9, 0);
-
-        configureToDrive(true); // Do use MecanumDrive
-
-        drive.setPose(zeroPose);
-        Pose2d previousPose = zeroPose; // Robot's pose on the previous iteration, for measuring deltas
-        double totalDistance = 0; // Inches
-        double totalRotation = 0; // Radians
-        String lastSeenStatus = ""; // Most recently reported non-zero status from the OTOS
-        double lastSeenTime = 0; // Time at which lastSeenStatus was set
-
-        double baselineImu = 0; // IMU heading when the baseline was set
-        Pose2d baselinePose = null; // Position where the baseline was set
-        double maxLinearSpeed = 0; // Max linear speed seen
-        double maxRotationalSpeed = 0; // Max rotational speed seen, radians/s
-
-        Screen screen = new Screen(new String[]{"Free drive", "Measure error", "Detail", "Done"});
-
-        while (opModeIsActive()) {
-            screen.update();
-            io.begin();
-            io.add(screen.header);
-
-            // Update our guess for the robot location:
-            PoseVelocity2d velocity = drive.updatePoseEstimate();
-
-            // Query the OTOS for any problems:
-            SparkFunOTOS.Status status = drive.opticalTracker.getStatus();
-            String currentStatus = "";
-            if (status.errorLsm)
-                currentStatus += "errorLsm ";
-            if (status.errorPaa)
-                currentStatus += "errorPaa ";
-            if (status.warnOpticalTracking)
-                currentStatus += "warnOpticalTracking ";
-            if (status.warnTiltAngle)
-                currentStatus += "warnTileAngle ";
-            if (!currentStatus.isEmpty()) {
-                lastSeenStatus = currentStatus;
-                lastSeenTime = time();
-            }
-
-            // Calculate some statistics about the velocity:
-            double linearSpeed = Math.hypot(velocity.linearVel.x, velocity.linearVel.y);
-            double rotationalSpeed = Math.abs(velocity.angVel);
-            io.put("Linear speed", linearSpeed);
-            io.put("Rotational speed", rotationalSpeed);
-            io.putDivider();
-            maxLinearSpeed = Math.max(maxLinearSpeed, linearSpeed);
-            maxRotationalSpeed = Math.max(maxRotationalSpeed, rotationalSpeed);
-
-            // Given that updatePoseEstimate was called, get the new pose and track the distance
-            // traveled:
-            Pose2d pose = drive.pose;
-            totalDistance += Math.hypot(
-                    pose.position.x - previousPose.position.x,
-                    pose.position.y - previousPose.position.y);
-            totalRotation += Math.abs(pose.heading.toDouble() - previousPose.heading.toDouble());
-            previousPose = pose;
-
-            if (screen.index == 0) { // Free drive screen
-                updateGamepadDriving();
-
-                io.setBlankField(true); // Draw only a blank field
-                Canvas canvas = io.canvas();
-                canvas.setStroke("#3F51B5");
-                Drawing.drawRobot(canvas, pose);
-
-                io.add("At this point, pose estimation should fully work. Drive around and "
-                        + "look for two things:\n"
-                        + "\n"
-                        + "\u2022 Does the robot shown in FTC Dashboard correctly track "
-                        + "the actual movement? (The next screen will do exact error measurements "
-                        + "so just look for approximate correctness here.)\n"
-                        + "\u2022 When the robot rotates in place using only the right stick, the "
-                        + "on-screen robot shouldn't move its <i>(x, y)</i> position at all. Does it?\n"
-                        + "\n");
-                io.add("Pose: (%.2f\", %.2f\"), %.2f\u00b0\n\n",
-                    pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
-                io.add("Sticks to drive, " + screen.buttons);
-                io.end();
-            } else if (screen.index == 1) { // Measure error screen
-                updateGamepadDriving();
-
-                io.setBlankField(false); // Draw the actual field
-                Canvas canvas = io.canvas();
-                canvas.setStroke("#ffd700"); // Gold
-                Drawing.drawRobot(canvas, homePose);
-
-                if (baselinePose == null) {
-                    io.add("To start measuring error, press "+X+" when the robot is physically "
-                        + "positioned in the corner as indicated by the golden pose on FTC "
-                        + "Dashboard.\n\n");
-                    io.add("Press "+X+" to set the golden pose, "+screen.buttons+".");
-                } else {
-                    canvas.setStroke("#3F51B5"); // Blueish
-                    Drawing.drawRobot(canvas, pose); // Pose estimation
-
-                    io.add("Drive around and then physically return the robot back to the "
-                        + "golden pose corner. The following error measurements are valid <i><b>only</b></i> "
-                        + "when the robot is back in exact same physical location:\n\n");
-
-                    double dx = pose.position.x - baselinePose.position.x;
-                    double dy = pose.position.y - baselinePose.position.y;
-                    double otosTheta = normalizeAngle(pose.heading.toDouble() - baselinePose.heading.toDouble());
-                    double imuTheta = normalizeAngle(drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) - baselineImu);
-
-                    io.add("&ensp;OTOS error: (%.2f\", %.2f\"), %.2f\u00b0\n", dx, dy, Math.toDegrees(otosTheta));
-                    io.add("&ensp;Control Hub IMU error (for comparison): %.2f\u00b0\n", Math.toDegrees(imuTheta));
-
-                    if ((totalDistance != 0) && (totalRotation != 0)) {
-                        double distanceError = Math.abs(dx) / totalDistance;
-                        double rotationError = Math.abs(Math.toDegrees(otosTheta)) / totalDistance;
-                        io.add("&ensp;Error: %.2f%% (distance), %.3f\u00b0/inch (rotational)",
-                                distanceError * 100, rotationError);
-                    }
-
-                    io.add("\nPress "+X+" to reset what at the golden pose, "+screen.buttons+".");
-                }
-                io.end();
-
-                if (io.x()) { // Set baseline at home
-                    drive.setPose(homePose);
-                    previousPose = homePose;
-                    baselineImu = drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-                    baselinePose = drive.pose;
-                    totalDistance = 0;
-                    totalRotation = 0;
-                    maxLinearSpeed = 0;
-                    maxRotationalSpeed = 0;
-                }
-
-            } else if (screen.index == 2) { // Detail screen
-                io.setBlankField(true); // Draw only a blank field
-                updateGamepadDriving();
-
-                if (currentStatus.isEmpty()) {
-                    if (lastSeenStatus.isEmpty())
-                        io.add("OTOS status: Good!\n");
-                    else {
-                        double minutesAgo = (time() - lastSeenTime) / 60.0;
-                        io.add("OTOS status: Was '%s' %.1f minutes ago\n", lastSeenStatus, minutesAgo);
-                    }
-                } else {
-                    io.add("OTOS status: %s\n", currentStatus);
-                }
-
-                io.add("Max velocities: %.1f\"/s, %.0f\u00b0/s\n",
-                    maxLinearSpeed, Math.toDegrees(maxRotationalSpeed));
-
-                io.add("\nPress " + screen.buttons + ".");
-                io.end();
-
-            } else if (screen.index == 3) { // Done screen
-                io.add("Press "+A+" if everything passed, "+B+" if there was a failure, or "+screen.buttons +".");
-                io.end();
-                if (io.ok()) {
-                    passedWheelTest = true;
-                    updateTunerDependencies(Tuner.WHEEL);
-                    break; // ====>
-                }
-                if (io.cancel()) {
-                    passedWheelTest = false;
-                    break; // ====>
-                }
-            }
-        }
-        io.setBlankField(true);
     }
 
     // Compute the average of the singleton value plus the values of an array:
@@ -1793,15 +1563,15 @@ public class LoonyTune extends LinearOpMode {
             while (opModeIsActive()) {
                 // Process the gamepad numeric input:
                 io.begin();
-                io.add("Tune the feed forward constants:\n\n");
+                io.out("Tune the feed forward constants:\n\n");
                 if (inputIndex == 0) {
-                    io.add(String.format("&emsp;kV: <big><big>%s</big></big>&emsp;kA: %s\n\n", vInput.update(), aInput.get()));
-                    io.add("View the graph in FTC Dashboard and adjust "
+                    io.out(String.format("&emsp;kV: <big><big>%s</big></big>&emsp;kA: %s\n\n", vInput.update(), aInput.get()));
+                    io.out("View the graph in FTC Dashboard and adjust "
                             + "<b>kV</b> to make the horizontal lines as close as possible in height. "
                             + "<b>vTarget</b> is green, <b>vActual</b> is blue, <i>kV = vTarget / vActual</i>.\n\n");
                 } else {
-                    io.add(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n\n", vInput.get(), aInput.update()));
-                    io.add("View the graph in FTC Dashboard and adjust "
+                    io.out(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n\n", vInput.get(), aInput.update()));
+                    io.out("View the graph in FTC Dashboard and adjust "
                             + "<b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap "
                             + "where the robot accelerates. Don't worry about the deceleration portions.\n\n");
                 }
@@ -1813,7 +1583,7 @@ public class LoonyTune extends LinearOpMode {
 
                 // If there's a profile, that means we're actively moving:
                 if (profile != null) {
-                    io.add("Press "+B+" to cancel\n");
+                    io.out("Press "+B+" to cancel\n");
                     io.end();
 
                     double time = time();
@@ -1892,10 +1662,10 @@ public class LoonyTune extends LinearOpMode {
                         profile = null;
                     }
                 } else {
-                    io.add("Use "+TRIGGERS+" to change velocity to lengthen or shorten the horizontal lines. "
+                    io.out("Use "+TRIGGERS+" to change velocity to lengthen or shorten the horizontal lines. "
                             + String.format("Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0));
 
-                    io.add(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
+                    io.out(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
                             + "the cursor, "+BUMPER+" to switch input, "+TRIGGERS+" to change max velocity, "
                             + A+" to run on the robot, "+B+" to exit.");
                     io.end();
@@ -2117,16 +1887,16 @@ public class LoonyTune extends LinearOpMode {
                 boolean more = drive.doActionsWork(io.packet);
 
                 // Update the display:
-                io.add("Tune the gains:\n\n");
+                io.out("Tune the gains:\n\n");
                 if (inputIndex == 0) {
-                    io.add(String.format("&emsp;%s: <big><big>%s</big></big>&emsp;%s: %s\n\n",
+                    io.out(String.format("&emsp;%s: <big><big>%s</big></big>&emsp;%s: %s\n\n",
                             gainName, gainInput.update(), velGainName, velGainInput.get()));
                 } else {
-                    io.add(String.format("&emsp;%s: %s&emsp;%s: <big><big>%s</big></big>\n\n",
+                    io.out(String.format("&emsp;%s: %s&emsp;%s: <big><big>%s</big></big>\n\n",
                             gainName, gainInput.get(), velGainName, velGainInput.update()));
                 }
 
-                io.add("The blue circle is actual position, green is target. "
+                io.out("The blue circle is actual position, green is target. "
                         + "As the gains increase, the circles should align and the measured "
                         + String.format("error should decrease. First, increase <b>%s</b> until the robot starts ", gainName)
                         + String.format("to shake. Then switch to <b>%s</b> and increase it to minimize ", velGainName)
@@ -2157,8 +1927,8 @@ public class LoonyTune extends LinearOpMode {
                     inputIndex ^= 1; // Toggle the index
 
                 if (more) {
-                    io.add("Current error: " + errorString + ".\n\n");
-                    io.add("Press "+B+" to cancel\n");
+                    io.out("Current error: " + errorString + ".\n\n");
+                    io.out("Press "+B+" to cancel\n");
 
                     // Only send the packet if there's more to the trajectory, otherwise the
                     // field view will be erased once the trajectory terminates:
@@ -2170,8 +1940,8 @@ public class LoonyTune extends LinearOpMode {
                     }
                 } else {
                     io.abortCanvas();
-                    io.add("Last error: " + errorString + ".\n\n");
-                    io.add(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
+                    io.out("Last error: " + errorString + ".\n\n");
+                    io.out(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
                         + "the cursor, "+BUMPER+" to switch input, "+START+" to run on the robot, "+B+" to exit.");
                     io.end();
 
@@ -2313,32 +2083,64 @@ public class LoonyTune extends LinearOpMode {
     }
 
 
-    // All tuner results are derived from Result, primarily so that 'showHistory()' works on
-    // them all:
-    abstract static class Tuning {
+    // All tuner results are derived from this Result class:
+    abstract static class Result {
+        // Convert the result to a one-line descriptive string:
         abstract public String getString();
-    }
 
-    // Show a history of results. The first result will be tagged as the original, and the
-    // final result will be bolded and tagged as the newest.
-    void showHistory(List<Tuning> history) {
-        // The first entry is always the original settings:
-        if (history.size() > 1) {
-            io.add("Results:\n\n");
-            for (int i = 0; i < history.size(); i++) {
-                Tuning result = history.get(i);
-                io.add("&emsp;%s", result.toString());
-                if (i == 0) {
-                    io.add(" (starting values)");
-                } else if (i == history.size() - 1) {
-                    io.add(" (newest results)");
+        // Apply the results to the collection of tuned parameters:
+        abstract public void applyTo(TuneParameters parameters);
+
+        // Show a history of results. The first result will be tagged as the original, and the
+        // final result will be bolded and tagged as the newest.
+        static void showHistory(Io io, List<Result> history) {
+            // The first entry is always the original settings:
+            if (history.size() > 1) {
+                io.out("Results:\n\n");
+                for (int i = 0; i < history.size(); i++) {
+                    Result result = history.get(i);
+                    io.out("&emsp;%s", result.toString());
+                    if (i == 0) {
+                        io.out(" (starting values)");
+                    } else if (i == history.size() - 1) {
+                        io.out(" (newest results)");
+                    }
+                    io.out("\n\n");
+                    io.out("If you've done multiple measurements and they're consistent, go "
+                            + "to the next screen.");
+                    io.out("\n\n");
                 }
-                io.add("\n\n");
-                io.add("If you've done multiple measurements and they're consistent, go "
-                        + "to the next screen.");
-                io.add("\n\n");
             }
         }
+    }
+
+    // Returns true if the tuning is done, false if it should continue.
+    boolean resultsDoneScreen(List<Result> history, Screen screen, Tuner tunerType) {
+        if (history.size() <= 1) {
+            io.out(B + " to exit, " + screen.buttons);
+            io.end();
+        } else {
+            io.out(currentParameters.compare(originalParameters, true));
+            io.out(A + " to save these results, " + B + " to discard and exit, ");
+            io.out(screen.buttons + ".");
+            io.end();
+
+            if (io.ok()) {
+                Result finalResult = history.get(history.size() - 1);
+                TuneParameters newParameters = currentParameters.createClone();
+                finalResult.applyTo(newParameters);
+                acceptParameters(newParameters);
+                updateTunerDependencies(tunerType);
+                return true; // ====>
+            }
+        }
+        if (io.cancel()) {
+            if (history.size() <= 1)
+                return true; // ====>
+            if (dialog.areYouSure())
+                return true; // ====>
+        }
+        return false;
     }
 
     //**********************************************************************************************
@@ -2355,12 +2157,12 @@ public class LoonyTune extends LinearOpMode {
                 "Test 'rightBack' wheel",       // 2
                 "Test 'rightFront' wheel",      // 3
                 "Test all wheels by driving",   // 4
-                "Done" });                      // 5
+                "Exit" });                      // 5
 
         while (opModeIsActive()) {
             screen.update();
             io.begin();
-            io.add(screen.header);
+            io.out(screen.header);
             if (screen.index < 4) { // Individual wheel screen
                 int motor = screen.index;
                 double power = gamepad1.right_trigger - gamepad1.left_trigger;
@@ -2368,31 +2170,31 @@ public class LoonyTune extends LinearOpMode {
                 DcMotorSimple.Direction direction =  motors[motor].getDirection();
                 String motorName = motorNames[motor];
 
-                io.add("Use the triggers to power this wheel:\n\n");
-                io.add("&emsp;<b>%s.setPower(%.2f)</b>", motorName, power);
-                io.add("\n\n"
+                io.out("Use the triggers to power this wheel:\n\n");
+                io.out("&emsp;<b>%s.setPower(%.2f)</b>", motorName, power);
+                io.out("\n\n"
                         + "If this wheel turns in the wrong direction, double-tap the shift "
                         + "key in Android Studio, enter 'md.configure', and ");
                 if (direction == DcMotorSimple.Direction.FORWARD) {
-                    io.add("add a call to <b>'%s.setDirection(DcMotorEx.Direction.REVERSE)'</b>.", motorName);
+                    io.out("add a call to <b>'%s.setDirection(DcMotorEx.Direction.REVERSE)'</b>.", motorName);
                 } else {
-                    io.add("disable the line <b>'%s.setDirection(DcMotorEx.Direction.REVERSE);'</b>.", motorName);
+                    io.out("disable the line <b>'%s.setDirection(DcMotorEx.Direction.REVERSE);'</b>.", motorName);
                 }
-                io.add("\n\nPress "+RIGHT_TRIGGER+" to rotate wheel forward, "+LEFT_TRIGGER+" for reverse, "+screen.buttons + ".");
+                io.out("\n\nPress "+RIGHT_TRIGGER+" to rotate wheel forward, "+LEFT_TRIGGER+" for reverse, "+screen.buttons + ".");
                 io.end();
             } else if (screen.index == 4) { // All wheels screen
                 updateGamepadDriving();
-                io.add("Test the robot by driving it around. Left stick controls movement, "
+                io.out("Test the robot by driving it around. Left stick controls movement, "
                         + "right stick controls rotation."
                         + "\n\n"
                         + "If it strafes in the wrong direction (e.g., left when you want right), or "
                         + "if it drives weird even though it passed the previous steps, the Mecanum "
                         + "wheels may be mounted wrong. When looking from above, the direction "
                         + "of the rollers on the 4 wheels should form an 'X'.");
-                io.add("\n\nSticks to drive, " + screen.buttons + ".");
+                io.out("\n\nSticks to drive, " + screen.buttons + ".");
                 io.end();
             } else if (screen.index == 5) { // Done screen
-                io.add("Press "+A+" if everything passed, "+B+" if there was a failure, or "+screen.buttons +".");
+                io.out("Press "+A+" if everything passed, "+B+" if there was a failure, or "+screen.buttons +".");
                 io.end();
                 if (io.ok()) {
                     passedWheelTest = true;
@@ -2407,209 +2209,366 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
-    // Structure used to encapsulate a result from push tuning:
-    static class PushTuning extends Tuning {
-        double linearScalar;
-        double offsetHeading;
-        public PushTuning(double linearScalar, double offsetHeading) {
-            this.linearScalar = linearScalar; this.offsetHeading = offsetHeading;
-        }
-        @Override
-        public String getString() {
-            return String.format("linearScalar: %.3f, offset heading: %.2f",
-                    linearScalar, Math.toDegrees(offsetHeading));
-        }
-    }
+    // Test tracking on the robot by driving around.
+    void trackingTest() {
+        // We dedicate an unobstructed corner of the field to use as the home position for this
+        // test. The robot can nestle in the corner and thereby establish a consistent physical
+        // location and orientation for measuring tracking drift error. We choose the lower-right
+        // corner, and assume that the robot is 18 inches on each side:
+        Pose2d homePose = new Pose2d(72 - 9, -72 + 9, 0);
 
-    // Measure the optical linear scale and orientation.
-    void pushTuner() {
-        final int DISTANCE = 96; // Test distance in inches
-        configureToDrive(false); // Don't use MecanumDrive
+        configureToDrive(true); // Do use MecanumDrive
 
-        double oldOffsetHeading = currentParameters.params.otos.offset.h;
-        double oldLinearScalar = currentParameters.params.otos.linearScalar;
-        if (oldLinearScalar == 0)
-            oldLinearScalar = 1.0; // Can happen on the very first run, stock Road Runner sets to zero
+        drive.setPose(zeroPose);
+        Pose2d previousPose = zeroPose; // Robot's pose on the previous iteration, for measuring deltas
+        double totalDistance = 0; // Inches
+        double totalRotation = 0; // Radians
+        String lastSeenStatus = ""; // Most recently reported non-zero status from the OTOS
+        double lastSeenTime = 0; // Time at which lastSeenStatus was set
 
-        Action preview = drive.actionBuilder(new Pose2d(-DISTANCE / 2.0, -60, 0))
-                .lineToX(DISTANCE / 2.0)
-                .build();
-        TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, preview);
-        ArrayList<Tuning> history = new ArrayList<>();
-        history.add(new PushTuning(oldLinearScalar, oldOffsetHeading));
+        double baselineImu = 0; // IMU heading when the baseline was set
+        Pose2d baselinePose = null; // Position where the baseline was set
+        double maxLinearSpeed = 0; // Max linear speed seen
+        double maxRotationalSpeed = 0; // Max rotational speed seen, radians/s
 
-        Screen screen = new Screen(new String[]{"Overview", "Measure", "Done"});
+        Screen screen = new Screen(new String[]{"Free drive", "Measure error", "Detail", "Exit"});
+
         while (opModeIsActive()) {
             screen.update();
             io.begin();
-            io.add(screen.header);
-            if (screen.index == 0) { // Overview screen
+            io.out(screen.header);
 
-                previewer.update(); // Animate the trajectory preview
-                updateGamepadDriving(); // Let the user drive
-                io.add("You'll push the robot forward in a straight line along a field wall for "
-                    + "exactly " + testDistance(DISTANCE) + ". This will measure the following:\n"
-                    + "\n"
-                    + "\u2022 <b>linearScalar</b> accounts for the height of the OTOS sensor from "
-                    + "the surface of the field when measuring distance.\n"
-                    + "\u2022 <b>offset heading</b> adjusts the robot's heading to account for the "
-                    + "direction that the sensor is mounted on the robot.\n"
-                    + "\n"
-                    + "Press "+screen.buttons+".");
+            // Update our guess for the robot location:
+            PoseVelocity2d velocity = drive.updatePoseEstimate();
+
+            // Query the OTOS for any problems:
+            SparkFunOTOS.Status status = drive.opticalTracker.getStatus();
+            String currentStatus = "";
+            if (status.errorLsm)
+                currentStatus += "errorLsm ";
+            if (status.errorPaa)
+                currentStatus += "errorPaa ";
+            if (status.warnOpticalTracking)
+                currentStatus += "warnOpticalTracking ";
+            if (status.warnTiltAngle)
+                currentStatus += "warnTileAngle ";
+            if (!currentStatus.isEmpty()) {
+                lastSeenStatus = currentStatus;
+                lastSeenTime = time();
+            }
+
+            // Calculate some statistics about the velocity:
+            double linearSpeed = Math.hypot(velocity.linearVel.x, velocity.linearVel.y);
+            double rotationalSpeed = Math.abs(velocity.angVel);
+            io.put("Linear speed", linearSpeed);
+            io.put("Rotational speed", rotationalSpeed);
+            io.putDivider();
+            maxLinearSpeed = Math.max(maxLinearSpeed, linearSpeed);
+            maxRotationalSpeed = Math.max(maxRotationalSpeed, rotationalSpeed);
+
+            // Given that updatePoseEstimate was called, get the new pose and track the distance
+            // traveled:
+            Pose2d pose = drive.pose;
+            totalDistance += Math.hypot(
+                    pose.position.x - previousPose.position.x,
+                    pose.position.y - previousPose.position.y);
+            totalRotation += Math.abs(pose.heading.toDouble() - previousPose.heading.toDouble());
+            previousPose = pose;
+
+            if (screen.index == 0) { // Free drive screen
+                updateGamepadDriving();
+
+                io.setBlankField(true); // Draw only a blank field
+                Canvas canvas = io.canvas();
+                canvas.setStroke("#3F51B5");
+                Drawing.drawRobot(canvas, pose);
+
+                io.out("At this point, pose estimation should fully work. Drive around and "
+                        + "look for two things:\n"
+                        + "\n"
+                        + "\u2022 Does the robot shown in FTC Dashboard correctly track "
+                        + "the actual movement? (The next screen will do exact error measurements "
+                        + "so just look for approximate correctness here.)\n"
+                        + "\u2022 When the robot rotates in place using only the right stick, the "
+                        + "on-screen robot shouldn't move its <i>(x, y)</i> position at all. Does it?\n"
+                        + "\n");
+                io.out("Pose: (%.2f\", %.2f\"), %.2f\u00b0\n\n",
+                        pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
+                io.out("Sticks to drive, " + screen.buttons);
+                io.end();
+            } else if (screen.index == 1) { // Measure error screen
+                updateGamepadDriving();
+
+                io.setBlankField(false); // Draw the actual field
+                Canvas canvas = io.canvas();
+                canvas.setStroke("#ffd700"); // Gold
+                Drawing.drawRobot(canvas, homePose);
+
+                if (baselinePose == null) {
+                    io.out("To start measuring error, press "+X+" when the robot is physically "
+                            + "positioned in the corner as indicated by the golden pose on FTC "
+                            + "Dashboard.\n\n");
+                    io.out("Press "+X+" to set the golden pose, "+screen.buttons+".");
+                } else {
+                    canvas.setStroke("#3F51B5"); // Blueish
+                    Drawing.drawRobot(canvas, pose); // Pose estimation
+
+                    io.out("Drive around and then physically return the robot back to the "
+                            + "golden pose corner. The following error measurements are valid <i><b>only</b></i> "
+                            + "when the robot is back in exact same physical location:\n\n");
+
+                    double dx = pose.position.x - baselinePose.position.x;
+                    double dy = pose.position.y - baselinePose.position.y;
+                    double otosTheta = normalizeAngle(pose.heading.toDouble() - baselinePose.heading.toDouble());
+                    double imuTheta = normalizeAngle(drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) - baselineImu);
+
+                    io.out("&ensp;OTOS error: (%.2f\", %.2f\"), %.2f\u00b0\n", dx, dy, Math.toDegrees(otosTheta));
+                    io.out("&ensp;Control Hub IMU error (for comparison): %.2f\u00b0\n", Math.toDegrees(imuTheta));
+
+                    if ((totalDistance != 0) && (totalRotation != 0)) {
+                        double distanceError = Math.abs(dx) / totalDistance;
+                        double rotationError = Math.abs(Math.toDegrees(otosTheta)) / totalDistance;
+                        io.out("&ensp;Error: %.2f%% (distance), %.3f\u00b0/inch (rotational)",
+                                distanceError * 100, rotationError);
+                    }
+
+                    io.out("\nPress "+X+" to reset what at the golden pose, "+screen.buttons+".");
+                }
                 io.end();
 
-            } else if (screen.index == 1) { // Measure screen
-
-                previewer.update(); // Animate the trajectory preview
-                showHistory(history); // Show measurement history and advise when done
-
-                io.add("To start a measurement, align the robot by hand to its starting point "
-                        + "aligned to a field wall, with room for " + testDistance(DISTANCE) + ".");
-                io.add("\n\n");
-                io.add("Press "+A+" to start a measurement, " + screen.buttons + ".");
-                io.end();
-
-                if (io.ok()) {
-                    PushTuning result = processPush(screen.header, DISTANCE, oldLinearScalar, oldOffsetHeading);
-                    if (result != null)
-                        history.add(result);
+                if (io.x()) { // Set baseline at home
+                    drive.setPose(homePose);
+                    previousPose = homePose;
+                    baselineImu = drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+                    baselinePose = drive.pose;
+                    totalDistance = 0;
+                    totalRotation = 0;
+                    maxLinearSpeed = 0;
+                    maxRotationalSpeed = 0;
                 }
 
-            } else if (screen.index == 2) { // Done screen
-                if (history.size() <= 1) {
-                    io.add(B+" to exit, "+screen.buttons);
-                    io.end();
+            } else if (screen.index == 2) { // Detail screen
+                io.setBlankField(true); // Draw only a blank field
+                updateGamepadDriving();
+
+                if (currentStatus.isEmpty()) {
+                    if (lastSeenStatus.isEmpty())
+                        io.out("OTOS status: Good!\n");
+                    else {
+                        double minutesAgo = (time() - lastSeenTime) / 60.0;
+                        io.out("OTOS status: Was '%s' %.1f minutes ago\n", lastSeenStatus, minutesAgo);
+                    }
                 } else {
-                    io.add(currentParameters.compare(originalParameters, true));
-                    io.add(A + " to save these results, " + B + " to discard and exit, ");
-                    io.add(screen.buttons + ".");
+                    io.out("OTOS status: %s\n", currentStatus);
+                }
+
+                io.out("Max velocities: %.1f\"/s, %.0f\u00b0/s\n",
+                        maxLinearSpeed, Math.toDegrees(maxRotationalSpeed));
+
+                io.out("\nPress " + screen.buttons + ".");
+                io.end();
+
+            } else if (screen.index == 3) { // Done screen
+                io.out("Press "+A+" if everything passed, "+B+" if there was a failure, or "+screen.buttons +".");
+                io.end();
+                if (io.ok()) {
+                    passedWheelTest = true;
+                    updateTunerDependencies(Tuner.TRACKING);
+                    break; // ====>
+                }
+                if (io.cancel()) {
+                    passedWheelTest = false;
+                    break; // ====>
+                }
+            }
+        }
+        io.setBlankField(true);
+    }
+
+    /**
+     * Class to encapsulate all push-tuner logic.
+      */
+    class PushTuner {
+        // Structure used to encapsulate a result from push tuning:
+        class PushResult extends Result {
+            double linearScalar;
+            double offsetHeading;
+
+            public PushResult(double linearScalar, double offsetHeading) {
+                this.linearScalar = linearScalar;
+                this.offsetHeading = offsetHeading;
+            }
+
+            @Override
+            public String getString() {
+                return String.format("linearScalar: %.3f, offset heading: %.2f",
+                        linearScalar, Math.toDegrees(offsetHeading));
+            }
+
+            @Override
+            public void applyTo(TuneParameters parameters) {
+                parameters.params.otos.linearScalar = linearScalar;
+                parameters.params.otos.offset.h = offsetHeading;
+            }
+        }
+
+        // Do the measuring work for pushTuner. Returns the result once done; will be null if there
+        // was an apparent error.
+        PushResult measure(String header, int targetDistance, double oldLinearScalar, double oldOffsetHeading) {
+            double distance = 0;
+            double heading = 0;
+
+            // Reset the optical tracker to the origin:
+            drive.opticalTracker.resetTracking();
+
+            while (!io.ok()) {
+                // Use the optical tracker directory instead of using Road Runner's pose because we
+                // haven't calibrated enough yet for the latter to be correct!
+                Pose2D pose = drive.opticalTracker.getPosition();
+                distance = Math.hypot(pose.x, pose.y);
+                heading = -Math.atan2(pose.y, pose.x); // Rise over run
+
+                io.begin();
+                io.out(header);
+                io.out("Push forward exactly " + testDistance(targetDistance) + " along the field wall.\n\n");
+                io.out("&ensp;Sensor reading: (%.1f\", %.1f\", %.1f\u00b0)\n", pose.x, pose.y, Math.toDegrees(pose.h));
+                io.out("&ensp;Effective distance: %.2f\"\n", distance);
+
+                // The heading angle will jump wildly at the very start so don't show any values until
+                // there's enough distance that the angle becomes more reliable:
+                io.out("&ensp;Heading angle: ");
+                if (distance > 24) {
+                    io.out("%.2f\u00b0\n", Math.toDegrees(heading)); // Degree symbol
+                } else {
+                    io.out("\u2014\n"); // Em dash
+                }
+                io.out("\n");
+                io.out("Press " + A + " when you've finished pushing, " + B + " to cancel.");
+                io.end();
+
+                if (io.cancel() || isStopRequested())
+                    return null; // ====>
+            }
+
+            // Avoid divide-by-zeroes on aborts:
+            if (distance == 0)
+                distance = 0.001;
+
+            // Calculate the new settings and undo the corrections that the OTOS sensor
+            // was applying:
+            double newLinearScalar = (targetDistance / distance) * oldLinearScalar;
+            double newOffsetHeading = normalizeAngle(heading + oldOffsetHeading);
+
+            if (newLinearScalar < SparkFunOTOS.MIN_SCALAR) {
+                io.begin();
+                io.out(Dialog.WARNING_ICON + "The measured distance of %.1f\" is not close enough to the expected distance " +
+                                "of %d\". It can't measure more than %.1f\". ",
+                        distance, targetDistance, targetDistance / SparkFunOTOS.MIN_SCALAR);
+                io.out("Either you didn't push straight for " + testDistance(targetDistance) + " or " +
+                        "something is wrong with the sensor. ");
+                io.out("Maybe the distance of the sensor to the tile is less than 10.0 mm? ");
+                io.out("\n\nDiscarded results, press " + A + " to continue.");
+                io.end();
+                poll.ok();
+                return null; // ====>
+            } else if (newLinearScalar > SparkFunOTOS.MAX_SCALAR) {
+                io.begin();
+                io.out(Dialog.WARNING_ICON + "The measured distance of %.1f\" is not close enough to the expected distance " +
+                                "of %d\". It can't measure less than %.1f\". ",
+                        distance, targetDistance, targetDistance / SparkFunOTOS.MAX_SCALAR);
+                io.out("Either you didn't push straight for " + testDistance(targetDistance) + " or " +
+                        "something is wrong with the sensor. ");
+
+                // If the measured distance is close to zero, don't bother with the following
+                // suggestion:
+                if (newLinearScalar < 1.5) {
+                    io.out("Maybe the distance of the sensor to the tile is more than 10.0 mm?");
+                }
+                io.out("\n\nDiscarded results, press " + A + " to continue.");
+                io.end();
+                poll.ok();
+                return null; // ====>
+            }
+            return new PushResult(newLinearScalar, newOffsetHeading);
+        }
+
+        // Measure the optical linear scale and orientation.
+        void execute() {
+            final int DISTANCE = 96; // Test distance in inches
+            configureToDrive(false); // Don't use MecanumDrive
+
+            double oldOffsetHeading = currentParameters.params.otos.offset.h;
+            double oldLinearScalar = currentParameters.params.otos.linearScalar;
+            if (oldLinearScalar == 0)
+                oldLinearScalar = 1.0; // Can happen on the very first run, stock Road Runner sets to zero
+
+            Action preview = drive.actionBuilder(new Pose2d(-DISTANCE / 2.0, -60, 0))
+                    .lineToX(DISTANCE / 2.0)
+                    .build();
+            TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, preview);
+            ArrayList<Result> history = new ArrayList<>();
+            history.add(new PushResult(oldLinearScalar, oldOffsetHeading));
+
+            Screen screen = new Screen(new String[]{"Overview", "Measure", "Exit"});
+            while (opModeIsActive()) {
+                screen.update();
+                io.begin();
+                io.out(screen.header);
+                if (screen.index == 0) { // Overview screen
+
+                    previewer.update(); // Animate the trajectory preview
+                    updateGamepadDriving(); // Let the user drive
+                    io.out("You'll push the robot forward in a straight line along a field wall for "
+                            + "exactly " + testDistance(DISTANCE) + ". This will measure the following:\n"
+                            + "\n"
+                            + "\u2022 <b>linearScalar</b> accounts for the height of the OTOS sensor from "
+                            + "the surface of the field when measuring distance.\n"
+                            + "\u2022 <b>offset heading</b> adjusts the robot's heading to account for the "
+                            + "direction that the sensor is mounted on the robot.\n"
+                            + "\n"
+                            + "Press " + screen.buttons + ".");
+                    io.end();
+
+                } else if (screen.index == 1) { // Measure screen
+
+                    previewer.update(); // Animate the trajectory preview
+                    Result.showHistory(io, history); // Show measurement history and advise when done
+
+                    io.out("To start a measurement, align the robot by hand to its starting point "
+                            + "aligned to a field wall, with room for " + testDistance(DISTANCE) + ".");
+                    io.out("\n\n");
+                    io.out("Press " + A + " to start a measurement, " + screen.buttons + ".");
                     io.end();
 
                     if (io.ok()) {
-                        PushTuning finalResult = (PushTuning) history.get(history.size() - 1);
-                        TuneParameters newParameters = currentParameters.createClone();
-                        newParameters.params.otos.linearScalar = finalResult.linearScalar;
-                        newParameters.params.otos.offset.h = finalResult.offsetHeading;
-                        acceptParameters(newParameters);
-                        updateTunerDependencies(Tuner.PUSH);
+                        PushResult result = measure(screen.header, DISTANCE, oldLinearScalar, oldOffsetHeading);
+                        if (result != null)
+                            history.add(result);
+                    }
 
+                } else if (screen.index == 2) { // Done screen
+                    if (resultsDoneScreen(history, screen, Tuner.PUSH)) {
                         // Make sure the OTOS hardware is informed of the new parameters too:
                         setOtosHardware();
                         break; // ====>
                     }
                 }
-                if (io.cancel()) {
-                    if (history.size() <= 1)
-                        break; // ====>
-                    if (dialog.areYouSure())
-                        break; // ====>
-                }
             }
         }
-    }
-
-    // Do the processing work for pushTuner. Returns the result once done; will be null if there
-    // was an apparent error.
-    PushTuning processPush(String header, int targetDistance, double oldLinearScalar, double oldOffsetHeading) {
-        double distance = 0;
-        double heading = 0;
-
-        // Reset the optical tracker to the origin:
-        drive.opticalTracker.resetTracking();
-
-        while (!io.ok()) {
-            // Use the optical tracker directory instead of using Road Runner's pose because we
-            // haven't calibrated enough yet for the latter to be correct!
-            Pose2D pose = drive.opticalTracker.getPosition();
-            distance = Math.hypot(pose.x, pose.y);
-            heading = -Math.atan2(pose.y, pose.x); // Rise over run
-
-            io.begin();
-            io.add(header);
-            io.add("Push forward exactly "+testDistance(targetDistance)+" along the field wall.\n\n");
-            io.add("&ensp;Sensor reading: (%.1f\", %.1f\", %.1f\u00b0)\n", pose.x, pose.y, Math.toDegrees(pose.h));
-            io.add("&ensp;Effective distance: %.2f\"\n", distance);
-
-            // The heading angle will jump wildly at the very start so don't show any values until
-            // there's enough distance that the angle becomes more reliable:
-            io.add("&ensp;Heading angle: ");
-            if (distance > 24) {
-                io.add("%.2f\u00b0\n", Math.toDegrees(heading)); // Degree symbol
-            } else {
-                io.add("\u2014\n"); // Em dash
-            }
-            io.add("\n");
-            io.add("Press "+A+" when you've finished pushing, "+B+" to cancel.");
-            io.end();
-
-            if (io.cancel() || isStopRequested())
-                return null; // ====>
-        }
-
-        // Avoid divide-by-zeroes on aborts:
-        if (distance == 0)
-            distance = 0.001;
-
-        // Calculate the new settings and undo the corrections that the OTOS sensor
-        // was applying:
-        double newLinearScalar = (targetDistance / distance) * oldLinearScalar;
-        double newOffsetHeading = normalizeAngle(heading + oldOffsetHeading);
-
-        if (newLinearScalar < SparkFunOTOS.MIN_SCALAR) {
-            io.begin();
-            io.add(Dialog.WARNING_ICON + "The measured distance of %.1f\" is not close enough to the expected distance " +
-                    "of %d\". It can't measure more than %.1f\". ",
-                    distance, targetDistance, targetDistance / SparkFunOTOS.MIN_SCALAR);
-            io.add("Either you didn't push straight for "+testDistance(targetDistance)+" or " +
-                    "something is wrong with the sensor. ");
-            io.add("Maybe the distance of the sensor to the tile is less than 10.0 mm? ");
-            io.add("\n\nDiscarded results, press "+A+" to continue.");
-            io.end();
-            poll.ok();
-            return null; // ====>
-        } else if (newLinearScalar > SparkFunOTOS.MAX_SCALAR) {
-            io.begin();
-            io.add(Dialog.WARNING_ICON + "The measured distance of %.1f\" is not close enough to the expected distance " +
-                    "of %d\". It can't measure less than %.1f\". ",
-                    distance, targetDistance, targetDistance / SparkFunOTOS.MAX_SCALAR);
-            io.add("Either you didn't push straight for "+testDistance(targetDistance)+" or " +
-                    "something is wrong with the sensor. ");
-
-            // If the measured distance is close to zero, don't bother with the following
-            // suggestion:
-            if (newLinearScalar < 1.5) {
-                io.add("Maybe the distance of the sensor to the tile is more than 10.0 mm?");
-            }
-            io.add("\n\nDiscarded results, press "+A+" to continue.");
-            io.end();
-            poll.ok();
-            return null; // ====>
-        }
-        return new PushTuning(newLinearScalar, newOffsetHeading);
     }
 
     /**
-     * Class to encapsulate all the Spin Tuner logic.
+     * Class to encapsulate all Spin Tuner logic.
      */
     class SpinTuner {
-        final double REVOLUTION_COUNT = 10.0; // Number of revolutions to use
-        final double SPIN_POWER = 0.5; // Speed of the revolutions
-
-        // Detail about the most recent result:
-        String detail = "";
-
-        // Persisted state for initiateSparkFunRotation and updateSparkFunRotation:
-        double previousSparkFunHeading = 0;
-        double accumulatedSparkFunRotation = 0;
-
-        // Struct to represent Spin Tuning results:
-        class SpinTuning extends Tuning {
+        // Struct to represent Spin Tuner results:
+        class SpinResult extends Result {
             double trackWidthTicks;
             double otosAngularScalar;
             double otosOffsetX;
             double otosOffsetY;
 
-            public SpinTuning(double trackWidthTicks, double otosAngularScalar, double otosOffsetX, double otosOffsetY) {
+            public SpinResult(double trackWidthTicks, double otosAngularScalar, double otosOffsetX, double otosOffsetY) {
                 this.trackWidthTicks = trackWidthTicks;
                 this.otosAngularScalar = otosAngularScalar;
                 this.otosOffsetX = otosOffsetX;
@@ -2621,7 +2580,25 @@ public class LoonyTune extends LinearOpMode {
                 return String.format("trackWidthTicks: %.2f, angularScalar: %.4f, offset: (%.3f, %.3f)",
                         trackWidthTicks, otosAngularScalar, otosOffsetX, otosOffsetY);
             }
+
+            @Override
+            public void applyTo(TuneParameters parameters) {
+                parameters.params.trackWidthTicks = trackWidthTicks;
+                parameters.params.otos.angularScalar = otosAngularScalar;
+                parameters.params.otos.offset.x = otosOffsetX;
+                parameters.params.otos.offset.y = otosOffsetY;
+            }
         }
+
+        final double REVOLUTION_COUNT = 10.0; // Number of revolutions to use
+        final double SPIN_POWER = 0.5; // Speed of the revolutions
+
+        // Detail about the most recent result:
+        String detail = "";
+
+        // Persisted state for initiateSparkFunRotation and updateSparkFunRotation:
+        double previousSparkFunHeading = 0;
+        double accumulatedSparkFunRotation = 0;
 
         // Structure to describe the center of rotation for the robot:
         class Circle {
@@ -2728,7 +2705,7 @@ public class LoonyTune extends LinearOpMode {
         }
 
         // Process the spin results:
-        SpinTuning process(Point clusterCenter, Circle center, double totalMeasuredRotation, double distancePerRevolution, double imuYawDelta) {
+        SpinResult process(Point clusterCenter, Circle center, double totalMeasuredRotation, double distancePerRevolution, double imuYawDelta) {
             double fractionalMeasuredCircles = totalMeasuredRotation / (2 * Math.PI);
             double integerCircles = Math.round(fractionalMeasuredCircles);
             double angularScalar = integerCircles / fractionalMeasuredCircles;
@@ -2779,11 +2756,11 @@ public class LoonyTune extends LinearOpMode {
                 return null; // ====>
             }
 
-            return new SpinTuning(trackWidthTicks, angularScalar, clusterOffset.x, clusterOffset.y);
+            return new SpinResult(trackWidthTicks, angularScalar, clusterOffset.x, clusterOffset.y);
         }
 
-        // Do the actual calibration step:
-        SpinTuning calibrate(String header) {
+        // Do the Spin measurement step:
+        SpinResult measure(String header) {
             // Let the user position the robot:
             io.message("Now drive the robot far enough away from the wall (and any objects) so "
                     + "that it can freely rotate in place."
@@ -2851,9 +2828,9 @@ public class LoonyTune extends LinearOpMode {
                     double rotationsRemaining = (terminationRotation - offsetRotation) / (2 * Math.PI);
 
                     io.begin();
-                    io.add(header);
-                    io.add("%.2f rotations remaining, %d samples", rotationsRemaining, points.size());
-                    io.add("\n\nPress "+B+" to abort.");
+                    io.out(header);
+                    io.out("%.2f rotations remaining, %d samples", rotationsRemaining, points.size());
+                    io.out("\n\nPress "+B+" to abort.");
                     io.end();
 
                     // Update for next iteration of the loop:
@@ -2905,26 +2882,26 @@ public class LoonyTune extends LinearOpMode {
                     .strafeTo(new Vector2d(0, -60))
                     .build();
             TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, preview);
-            ArrayList<Tuning> history = new ArrayList<>();
-            history.add(new SpinTuning(
+            ArrayList<Result> history = new ArrayList<>();
+            history.add(new SpinResult(
                     currentParameters.params.trackWidthTicks,
                     currentParameters.params.otos.angularScalar,
                     currentParameters.params.otos.offset.x,
                     currentParameters.params.otos.offset.y));
 
-            Screen screen = new Screen(new String[]{"Overview", "Measure", "Detail", "Done"});
+            Screen screen = new Screen(new String[]{"Overview", "Measure", "Detail", "Exit"});
             while (opModeIsActive()) {
                 screen.update();
                 io.begin();
-                io.add(screen.header);
+                io.out(screen.header);
                 if (screen.index == 0) { // Overview screen
 
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
-                    io.add("You'll position the robot against a wall, then drive it out so that the robot "
+                    io.out("You'll position the robot against a wall, then drive it out so that the robot "
                             + "can rotate in place %.1f times, then drive the robot against the wall "
-                            + "again. This' will measure the following:", REVOLUTION_COUNT);
-                    io.add("\n\n"
+                            + "again. This will measure the following:", REVOLUTION_COUNT);
+                    io.out("\n\n"
                             + "\u2022 <b>trackWidthTicks</b> accounts for how far the wheels have to travel when "
                             + "rotating in place 360\u00b0.\n"
 
@@ -2940,9 +2917,9 @@ public class LoonyTune extends LinearOpMode {
                 } else if (screen.index == 1) { // Measure screen
 
                     previewer.update(); // Animate the trajectory preview
-                    showHistory(history); // Show measurement history and advise when done
+                    Result.showHistory(io, history); // Show measurement history and advise when done
 
-                    io.add("To start a measurement, carefully drive the robot to a wall and align "
+                    io.out("To start a measurement, carefully drive the robot to a wall and align "
                             + "it so that it's facing forward. This marks the start orientation for "
                             + "calibration."
                             + "\n\n"
@@ -2950,7 +2927,7 @@ public class LoonyTune extends LinearOpMode {
                     io.end();
 
                     if (io.ok()) {
-                        SpinTuning result = calibrate(screen.header);
+                        SpinResult result = measure(screen.header);
                         if (result != null)
                             history.add(result);
                     }
@@ -2958,45 +2935,20 @@ public class LoonyTune extends LinearOpMode {
                 } else if (screen.index == 2) { // Details screen
 
                     if (history.size() <= 1) {
-                        io.add("This will contain detail about the most recent result.\n\n");
+                        io.out("This will contain detail about the most recent result.\n\n");
                     } else {
-                        io.add("Here is detail about the most recent result. Feel free to ignore.\n\n");
-                        io.add(detail);
-                        io.add("\n\n");
+                        io.out("Here is detail about the most recent result. Feel free to ignore.\n\n");
+                        io.out(detail);
+                        io.out("\n\n");
                     }
-                    io.add("Press " + screen.buttons);
+                    io.out("Press " + screen.buttons);
                     io.end();
 
                 } else if (screen.index == 3) { // Done screen
-                    if (history.size() <= 1) {
-                        io.add(B + " to exit, " + screen.buttons + ".");
-                        io.end();
-                    } else {
-                        io.add(currentParameters.compare(originalParameters, true));
-                        io.add(A + " to save these results, " + B + " to discard and exit, ");
-                        io.add(screen.buttons + ".");
-                        io.end();
-
-                        if (io.ok()) {
-                            SpinTuning finalResult = (SpinTuning) history.get(history.size() - 1);
-                            TuneParameters newParameters = currentParameters.createClone();
-                            newParameters.params.trackWidthTicks = finalResult.trackWidthTicks;
-                            newParameters.params.otos.angularScalar = finalResult.otosAngularScalar;
-                            newParameters.params.otos.offset.x = finalResult.otosOffsetX;
-                            newParameters.params.otos.offset.y = finalResult.otosOffsetY;
-                            acceptParameters(newParameters);
-                            updateTunerDependencies(Tuner.SPIN);
-
-                            // Make sure the OTOS hardware is informed of the new parameters too:
-                            setOtosHardware();
-                            break; // ====>
-                        }
-                    }
-                    if (io.cancel()) {
-                        if (history.size() <= 1)
-                            break; // ====>
-                        if (dialog.areYouSure())
-                            break; // ====>
+                    if (resultsDoneScreen(history, screen, Tuner.PUSH)) {
+                        // Make sure the OTOS hardware is informed of the new parameters too:
+                        setOtosHardware();
+                        break; // ====>
                     }
                 }
             }
@@ -3006,6 +2958,165 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
+    /**
+     * Class to encapsulate all Accelerating Straight Line Tuner logic.
+     */
+    class AcceleratingStraightLineTuner {
+        class AcceleratingResult extends Result {
+            double kS;
+            double kV;
+
+            public AcceleratingResult(double kS, double kV) {
+                this.kS = kS;
+                this.kV = kV;
+            }
+
+            @Override
+            public String getString() {
+                return String.format("kS: %.3f, kV: %.3f", kS, kV);
+            }
+
+            @Override
+            public void applyTo(TuneParameters parameters) {
+                parameters.params.kS = kS;
+                parameters.params.kV = kV;
+            }
+        }
+
+        final int DISTANCE = 72; // Test distance in inches
+        String graphExplanation = ""; // Explanation of the graph
+
+        // Automatically calculate the kS and kV terms of the feed-forward approximation by
+        // ramping up the velocity in a straight line. We increase power by a fixed increment.
+        void execute() {
+            configureToDrive(true); // Set the brakes
+
+            Action preview = drive.actionBuilder(new Pose2d(-DISTANCE / 2.0, 0, 0))
+                    .lineToX(DISTANCE / 2.0, null, new ProfileAccelConstraint(-100, 10))
+                    .lineToX(-DISTANCE / 2.0, null, new ProfileAccelConstraint(-100, 20))
+                    .build();
+            TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, preview);
+            ArrayList<Result> history = new ArrayList<>();
+            history.add(new AcceleratingResult(
+                    currentParameters.params.kS,
+                    currentParameters.params.kV));
+
+            Screen screen = new Screen(new String[]{"Overview", "Measure", "Exit"});
+            while (opModeIsActive()) {
+                screen.update();
+                io.begin();
+                io.out(screen.header);
+                if (screen.index == 0) { // Overview screen
+
+                    previewer.update(); // Animate the trajectory preview
+                    updateGamepadDriving(); // Let the user drive
+                    io.out("The robot will drive forward and backward for up to "
+                            + testDistance(DISTANCE) + ". It will start slowly but get faster and "
+                            + "faster in each direction. This will measure the following:");
+                    io.out("\n\n"
+                            + "\u2022 <b>kS</b> is the motor voltage required to overcome static "
+                            + "friction and make the robot move after it's stopped. It's the "
+                            + "intercept on the velocity/voltage graph.\n"
+                            + "\u2022 A motor's velocity is proportional to the voltage applied, and "
+                            + "<b>kV</b> is the ratio of motor voltage to robot velocity. It's the "
+                            + "slope of the velocity/voltage graph.\n"
+                            + "\n"
+                            + "Press " + screen.buttons + ".");
+                    io.end();
+
+                } else if (screen.index == 1) { // Measure screen
+
+                    previewer.update(); // Animate the trajectory preview
+                    updateGamepadDriving(); // Let the user drive
+
+                    io.out(graphExplanation);
+                    Result.showHistory(io, history); // Show measurement history and advise when done
+
+                    io.out("To start a measurement, drive the robot to a spot that is clear "
+                            + "in front for " + testDistance(DISTANCE) + ".\n"
+                            + "\n"
+                            + "Press " + START + " to start the robot, " + screen.buttons + ".");
+                    io.end();
+                    if (io.start()) {
+                        AcceleratingResult result = measure(screen.header);
+                        if (result != null)
+                            history.add(result);
+                    }
+
+                } else if (screen.index == 2) { // Done screen
+                    if (resultsDoneScreen(history, screen, Tuner.ACCELERATING)) {
+                        // Make sure the OTOS hardware is informed of the new parameters too:
+                        setOtosHardware();
+                        break; // ====>
+                    }
+                }
+            }
+        }
+
+        // Do the accelerating measurement step:
+        AcceleratingResult measure(String header) {
+            io.clearCanvas();
+            ArrayList<Point> acceptedSamples = new ArrayList<>(); // x is velocity, y is power
+            Point max = new Point(0, 0); // x is velocity max, y is power max
+
+            // Do one forward and back run:
+            ArrayList<Point> forwardSamples = acceleratingStraightLine(header, DISTANCE, 1.0);
+            if (forwardSamples != null) {
+                ArrayList<Point> reverseSamples = acceleratingStraightLine(header, DISTANCE, -1.0);
+                if (reverseSamples != null) {
+                    findMaxValues(max, forwardSamples);
+                    findMaxValues(max, reverseSamples);
+                    if (max.x == 0) {
+                        io.message(Dialog.WARNING_ICON + "The optical tracking sensor returned only zero velocities. "
+                                + "Is it working properly?"
+                                + "\n\nAborted, press " + A + " to continue.");
+                        poll.ok();
+                        return null; // ====>
+                    } else {
+                        // Draw the results to the FTC dashboard:
+                        io.begin();
+                        Canvas canvas = io.canvas();
+
+                        // Set a solid white background and an offset then draw the point samples:
+                        canvas.setFill("#ffffff");
+                        canvas.fillRect(-72, -72, 144, 144);
+                        canvas.setTranslation(-72, 72);
+
+                        // The canvas coordinates go from -72 to 72 so scale appropriately. We don't
+                        // use canvas.setScale() because that scales up the stroke widths and so makes
+                        // the lines too fat.
+                        Point scale = new Point(144 / max.x, 144 / max.y);
+                        canvas.setStroke("#00ff00");
+                        strokeSamples(canvas, scale, forwardSamples);
+                        canvas.setStroke("#0000ff");
+                        strokeSamples(canvas, scale, reverseSamples);
+
+                        // Compute and draw the best-fit line for both sets of points:
+                        ArrayList<Point> combinedSamples = new ArrayList<>();
+                        combinedSamples.addAll(acceptedSamples);
+                        combinedSamples.addAll(forwardSamples);
+                        combinedSamples.addAll(reverseSamples);
+                        BestFitLine bestFitLine = fitLine(combinedSamples);
+
+                        canvas.setStrokeWidth(1);
+                        canvas.setStroke("#ff0000");
+                        canvas.strokeLine(0, bestFitLine.intercept * scale.y,
+                                200 * scale.x, (bestFitLine.intercept + 200 * bestFitLine.slope) * scale.y);
+
+                        double kS = bestFitLine.intercept;
+                        double kV = bestFitLine.slope * currentParameters.params.inPerTick;
+
+                        graphExplanation = String.format("The graph in FTC Dashboard shows "
+                            + "velocity as the <i>x</i> axis going up to %.1f\"/s, and voltage "
+                            + "as the <i>y</i> axis going up to %.2fV.\n\n", max.x, max.y);
+
+                        return new AcceleratingResult(kS, kV);
+                    }
+                }
+            }
+            return null;
+        }
+    }
 
     // Examples:
     void splineExample() {
@@ -3041,55 +3152,6 @@ public class LoonyTune extends LinearOpMode {
                 .build());
     }
 
-    // Update which tuners need to be disabled and which need to be run:
-    void updateTunerDependencies(Tuner tuner) {
-        MecanumDrive.Params params = drive.PARAMS;
-        MecanumDrive.Params.Otos otos = params.otos;
-
-        // Calculate which tests can be enabled base on their dependencies:
-        widgets[Tuner.PUSH.index].isEnabled         = otos.linearScalar != 0 || passedWheelTest;
-        widgets[Tuner.ACCELERATING.index].isEnabled = otos.linearScalar != 0;
-        widgets[Tuner.FEED_FORWARD.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
-        widgets[Tuner.LATERAL.index].isEnabled      = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
-        widgets[Tuner.SPIN.index].isEnabled         = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
-        widgets[Tuner.AXIAL_GAIN.index].isEnabled   = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
-        widgets[Tuner.LATERAL_GAIN.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0 && params.lateralInPerTick != 0;
-        widgets[Tuner.HEADING_GAIN.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0 && params.trackWidthTicks != 0;
-        widgets[Tuner.COMPLETION_TEST.index].isEnabled = params.axialGain != 0 && params.lateralGain != 0 && params.headingGain != 0;
-
-        final Tuner[] PUSH_DEPENDENTS = { Tuner.ACCELERATING, Tuner.FEED_FORWARD, Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] ACCELERATING_DEPENDENTS = { Tuner.FEED_FORWARD, Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] FEED_FORWARD_DEPENDENTS = { Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] LATERAL_DEPENDENTS = { Tuner.LATERAL_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] SPIN_DEPENDENTS = { Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] GAIN_DEPENDENTS = { Tuner.COMPLETION_TEST };
-
-        // When a tuner is updated with a new value, star any other tuners that should be run:
-        if (tuner != null) {
-            Tuner[] dependents = null;
-            switch (tuner) {
-                case PUSH: dependents = PUSH_DEPENDENTS; break;
-                case ACCELERATING: dependents = ACCELERATING_DEPENDENTS; break;
-                case FEED_FORWARD: dependents = FEED_FORWARD_DEPENDENTS; break;
-                case LATERAL: dependents = LATERAL_DEPENDENTS; break;
-                case SPIN: dependents = SPIN_DEPENDENTS; break;
-                case AXIAL_GAIN:
-                case LATERAL_GAIN:
-                case HEADING_GAIN:
-                    dependents = GAIN_DEPENDENTS; break;
-            }
-            if (dependents != null) {
-                for (Tuner dependent : dependents) {
-                    widgets[dependent.index].isStarred = true;
-                }
-            }
-
-            // We can un-star the current tuner because it's now completed:
-            if (widgets[tuner.index] != null) // Can happen for wheelTest
-                widgets[tuner.index].isStarred = false;
-        }
-    }
-
     @Override
     public void runOpMode() {
         // Initialize member fields:
@@ -3108,31 +3170,34 @@ public class LoonyTune extends LinearOpMode {
 
         while (!isStarted()) {
             io.begin();
-            io.add("<big><big><big><big><big><big><b>Loony Tune!</b></big></big></big></big></big></big>\n");
-            io.add("<big><big>By Swerve Robotics, Woodinville</big></big>\n");
-            io.add("\n\n\n\n\n\n<big><big><big><big><big><b>Tap \u25B6 to begin");
+            io.out("<big><big><big><big><big><big><b>Loony Tune!</b></big></big></big></big></big></big>\n");
+            io.out("<big><big>By Swerve Robotics, Woodinville</big></big>\n");
+            io.out("\n\n\n\n\n\n<big><big><big><big><big><b>Tap \u25B6 to begin");
             io.canvas().fillText("Loony Tune!", -32, 32, "", 0, false);
             io.end();
         }
 
-        io.setWelcomeMessage("This tuner requires FTC Dashboard. Wi-Fi connect your laptop "
-                + "to the robot and go to <u>http://192.168.43.1:8080/dash</u> in your web browser. "
-                + "\n\n"
-                + "Configure FTC Dashboard to show both the <b>Field</b> and "
-                + "<b>Telemetry</b> views by selecting either 'Field' or 'Custom' from the dropdown "
-                + "at its top. "
-                + "\n\n"
-                + "Follow the prompts in the FTC Dashboard Telemetry window while using the Driver "
-                + "Station's gamepad to navigate the UI. "
-                + "\n\n"
-                + "<b>Don't break your robot, press "+B+" at any time to stop the robot during a "
-                + "test!</b>"
-                + "\n\n"
-                + "<small><font color='#a0a0a0'>(If you really want to see the UI here on the Driver "
-                + "Station, press the Guide button in the middle of the gamepad.)</font></small>");
-        io.message("<big><big><big><big><big>Press "+A+" to begin</big></big></big></big></big>");
-        while (!isStopRequested() && !io.ok())
-            io.redraw();
+        // Skip the welcome message and initial A button press if simulating:
+        if (!WilyWorks.isSimulating) {
+            io.setWelcomeMessage("This tuner requires FTC Dashboard. Wi-Fi connect your laptop "
+                    + "to the robot and go to <u>http://192.168.43.1:8080/dash</u> in your web browser. "
+                    + "\n\n"
+                    + "Configure FTC Dashboard to show both the <b>Field</b> and "
+                    + "<b>Telemetry</b> views by selecting either 'Field' or 'Custom' from the dropdown "
+                    + "at its top. "
+                    + "\n\n"
+                    + "Follow the prompts in the FTC Dashboard Telemetry window while using the Driver "
+                    + "Station's gamepad to navigate the UI. "
+                    + "\n\n"
+                    + "<b>Don't break your robot, press " + B + " at any time to stop the robot during a "
+                    + "test!</b>"
+                    + "\n\n"
+                    + "<small><font color='#a0a0a0'>(If you really want to see the UI here on the Driver "
+                    + "Station, press the Guide button in the middle of the gamepad.)</font></small>");
+            io.message("<big><big><big><big><big>Press " + A + " to begin</big></big></big></big></big>");
+            while (!isStopRequested() && !io.ok())
+                io.redraw();
+        }
 
         if ((drive.opticalTracker != null) &&
             ((drive.opticalTracker.getAngularUnit() != AngleUnit.RADIANS) ||
@@ -3147,10 +3212,10 @@ public class LoonyTune extends LinearOpMode {
         menu.addRunnable("Wheel test (wheels, motors)", this::wheelTest);
         if (drive.opticalTracker != null) {
             // Basic tuners:
-            widgets[Tuner.PUSH.index] = menu.addRunnable("Push tuner (OTOS offset heading, linearScalar)", this::pushTuner);
+            widgets[Tuner.PUSH.index] = menu.addRunnable("Push tuner (OTOS offset heading, linearScalar)", pushTuner::execute);
             widgets[Tuner.SPIN.index] = menu.addRunnable("Spin tuner (trackWidthTicks, OTOS angularScalar, offset)", spinTuner::execute);
             widgets[Tuner.TRACKING_TEST.index] = menu.addRunnable("Tracking test (OTOS verification)", this::trackingTest);
-            widgets[Tuner.ACCELERATING.index] = menu.addRunnable("Accelerating straight line tuner (kS and kV)", this::acceleratingStraightLineTuner);
+            widgets[Tuner.ACCELERATING.index] = menu.addRunnable("Accelerating straight line tuner (kS and kV)", acceleratingStraightLineTuner::execute);
             widgets[Tuner.FEED_FORWARD.index] = menu.addRunnable("Interactive feed forward tuner (kV and kA)", this::interactiveFeedForwardTuner);
             widgets[Tuner.LATERAL.index] = menu.addRunnable("Lateral tuner (lateralInPerTick)", this::lateralTuner);
             widgets[Tuner.AXIAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (axialGain)", ()->interactivePidTuner(PidTunerType.AXIAL));

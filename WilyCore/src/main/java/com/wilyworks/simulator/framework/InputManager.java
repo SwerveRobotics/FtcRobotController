@@ -164,6 +164,7 @@ class KeyDispatcher implements KeyEventDispatcher {
 
             case KeyEvent.VK_E:
             case KeyEvent.VK_SPACE:
+            case KeyEvent.VK_ENTER:
                 button[SDL.SDL_CONTROLLER_BUTTON_A] = pressed;
                 break;
             case KeyEvent.VK_B: button[SDL.SDL_CONTROLLER_BUTTON_B] = pressed; break;
