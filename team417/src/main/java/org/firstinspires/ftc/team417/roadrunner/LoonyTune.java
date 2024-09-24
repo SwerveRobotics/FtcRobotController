@@ -735,6 +735,7 @@ public class LoonyTune extends LinearOpMode {
     PushTuner pushTuner = new PushTuner();
     SpinTuner spinTuner = new SpinTuner();
     AcceleratingStraightLineTuner acceleratingStraightLineTuner = new AcceleratingStraightLineTuner();
+    InteractiveFeedForwardTuner interactiveFeedForwardTuner = new InteractiveFeedForwardTuner();
 
     // Constants:
     final Pose2d zeroPose = new Pose2d(0, 0, 0);
@@ -1050,22 +1051,15 @@ public class LoonyTune extends LinearOpMode {
         // Returns true if the user is sure, false to cancel:
         boolean areYouSure() {
             while (!isStopRequested()) {
-                io.message(WARNING_ICON + " Are you sure you want to discard your results?");
+                io.message(WARNING_ICON + " Are you sure you want to discard your results?\n"
+                    + "\n"
+                    + A + " to discard, " + B + " to cancel.");
                 if (io.ok())
                     return true;
                 if (io.cancel())
                     return false;
             }
             return true;
-        }
-
-        // Warnin only:
-        void warning(String message) {
-            while (!isStopRequested()) {
-                io.message(WARNING_ICON + message + "\n\nPress "+A+" to continue.");
-                if (io.ok())
-                    return; // ====>
-            }
         }
     }
 
@@ -1382,7 +1376,7 @@ public class LoonyTune extends LinearOpMode {
                 stopMotors(false);
                 drive.setPose(zeroPose);
             }
-            header = String.format("<span style='background:#88285a'>Step %d of %d: %s</span>\n\n", index + 1, screens.length, screens[index]);
+            header = String.format("<span style='background:#88285a'>Screen %d of %d: %s</span>\n\n", index + 1, screens.length, screens[index]);
             if (index == 0) {
                 buttons = RIGHT_BUMPER+" (the bumper button above the right trigger) to go to the "
                     + "next screen";
@@ -1504,224 +1498,6 @@ public class LoonyTune extends LinearOpMode {
             MecanumDrive.PARAMS = currentParameters.params;
             drive.initializeKinematics();
         }
-    }
-
-    // Tune the kV and kA feed forward parameters:
-    void interactiveFeedForwardTuner() {
-        final int DISTANCE = 72; // Test distance in inches
-        configureToDrive(false); // Don't use MecanumDrive
-
-        // Disable all lateral gains so that backward and forward behavior is not affected by the
-        // PID/Ramsete algorithm. It's okay for the axial and rotation gains to be either zero
-        // or non-zero:
-        TuneParameters testParameters = currentParameters.createClone();
-        testParameters.params.lateralGain = 0;
-        testParameters.params.lateralVelGain = 0;
-        MecanumDrive.PARAMS = testParameters.params;
-
-        int inputIndex = 0; // 0 means we're inputting kV, 1 means kA
-        NumericInput vInput = new NumericInput(drive.PARAMS, "kV", -2, 3, 0.000001, 20);
-        NumericInput aInput = new NumericInput(drive.PARAMS, "kA", -3, 4, 0, 1);
-
-        Action preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, 0, 0))
-                .lineToX(DISTANCE/2.0)
-                .lineToX(-DISTANCE/2.0)
-                .build();
-        io.message("Tune <b>kV</b> and <b>kA</b> with FTC Dashboard. "
-                + "The robot will drive forwards then backwards for " + testDistance(DISTANCE) + ". "
-                + "Follow <u><a href='https://learnroadrunner.com/feedforward-tuning.html#tuning'>LearnRoadRunner's guide</a></u>.\n\n"
-                + "Press "+A+" to start, "+B+" to cancel");
-        if (poll.okCancelWithPreview(preview)) {
-
-            // Trigger a reset the first time into the loop:
-            double profileStartTime = 0; // Profile start time, in seconds
-            double cycleStartTime = 0; // Cycle start time, in second (each cycle consumes 2 profiles)
-            double maxVelocityFactor = 0.8;
-            TimeProfile profile = null;
-            boolean movingForwards = false;
-            int queuedAButtons = 0;
-            double maxVelocity = 0; // Maximum measured velocity
-            double maxDuration = 4; // Maximum graph duration, in seconds
-
-            // Allocate a repository for all of our velocity samples:
-            class Sample {
-                final double time; // Seconds
-                final double target; // Target velocity, inches/s
-                final double actual; // Actual velocity, inches/s
-
-                public Sample(double time, double target, double actual) {
-                    this.time = time; this.target = target; this.actual = actual;
-                }
-            }
-
-            final String TARGET_COLOR = "#4CAF50"; // Green
-            final String ACTUAL_COLOR = "#3F51B5"; // Blue
-            final double GRAPH_THROTTLE = 0.1; // Only update the graph every 0.1 seconds
-            double lastGraphTime = 0;
-            LinkedList<Sample> samples = new LinkedList<>();
-
-            while (opModeIsActive()) {
-                // Process the gamepad numeric input:
-                io.begin();
-                io.out("Tune the feed forward constants:\n\n");
-                if (inputIndex == 0) {
-                    io.out(String.format("&emsp;kV: <big><big>%s</big></big>&emsp;kA: %s\n\n", vInput.update(), aInput.get()));
-                    io.out("View the graph in FTC Dashboard and adjust "
-                            + "<b>kV</b> to make the horizontal lines as close as possible in height. "
-                            + "<b>vTarget</b> is green, <b>vActual</b> is blue, <i>kV = vTarget / vActual</i>.\n\n");
-                } else {
-                    io.out(String.format("&emsp;kV: %s&emsp;kA: <big><big>%s</big></big>\n\n", vInput.get(), aInput.update()));
-                    io.out("View the graph in FTC Dashboard and adjust "
-                            + "<b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap "
-                            + "where the robot accelerates. Don't worry about the deceleration portions.\n\n");
-                }
-
-                if (io.ok())
-                    queuedAButtons++; // Let the a-button be queued up even while running
-                if (io.leftBumper() || io.rightBumper())
-                    inputIndex ^= 1; // Toggle the index
-
-                // If there's a profile, that means we're actively moving:
-                if (profile != null) {
-                    io.out("Press "+B+" to cancel\n");
-                    io.end();
-
-                    double time = time();
-                    double elapsedTime = time - profileStartTime;
-                    if (elapsedTime > profile.duration) {
-                        if (movingForwards) {
-                            movingForwards = false;
-                            profileStartTime = time;
-                        } else {
-                            profile = null;
-                            continue; // ====>
-                        }
-                    }
-
-                    DualNum<Time> v = profile.get(elapsedTime).drop(1);
-                    if (!movingForwards) {
-                        v = v.unaryMinus();
-                    }
-
-                    // Calculate the new sample and log it:
-                    Pose2D velocityPose = drive.opticalTracker.getVelocity();
-                    double targetVelocity = v.get(0);
-                    double actualVelocity = Math.signum(velocityPose.x) * Math.hypot(velocityPose.x, velocityPose.y);
-                    maxVelocity = Math.max(maxVelocity, Math.max(Math.abs(targetVelocity), Math.abs(actualVelocity)));
-                    maxDuration = Math.max(maxDuration, time - cycleStartTime);
-                    samples.addLast(new Sample(time, v.get(0), actualVelocity));
-
-                    // Throttle the Dashboard updates so that it doesn't get overwhelmed as it
-                    // has very bad rate control:
-                    if (time - lastGraphTime > GRAPH_THROTTLE) {
-                        lastGraphTime = time;
-
-                        io.begin();
-                        Canvas canvas = io.canvas();
-                        canvas.setFill("#ffffff");
-                        canvas.fillRect(-72, -72, 144, 144);
-                        canvas.setTranslation(0, 72);
-                        double xScale = (maxDuration == 0) ? 1 : 144 / maxDuration;
-                        double yScale = (maxVelocity == 0) ? 1 : 72 / maxVelocity;
-
-                        int count = samples.size();
-                        double[] xPoints = new double[count];
-                        double[] yTargets = new double[count];
-                        double[] yActuals = new double[count];
-                        for (int i = 0; i < count; i++) {
-                            Sample sample = samples.get(i);
-                            xPoints[i] = (sample.time - (time - maxDuration)) * xScale;
-                            yTargets[i] = sample.target * yScale;
-                            yActuals[i] = sample.actual * yScale;
-                        }
-                        canvas.setStroke(TARGET_COLOR);
-                        canvas.strokePolyline(xPoints, yTargets);
-                        canvas.setStroke(ACTUAL_COLOR);
-                        canvas.strokePolyline(xPoints, yActuals);
-
-                        // Make the results available to FTC Dashboard so that they can be graphed
-                        // there as well:
-                        io.put("vActual", actualVelocity);
-                        io.put("vTarget", v.get(0));
-                        io.putDivider();
-                        io.end();
-                    }
-
-                    // Set the motors to the appropriate values:
-                    MotorFeedforward feedForward = new MotorFeedforward(MecanumDrive.PARAMS.kS,
-                            MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
-                            MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick);
-
-                    double power = feedForward.compute(v) / drive.voltageSensor.getVoltage();
-                    drive.setDrivePowers(new PoseVelocity2d(new Vector2d(power, 0.0), 0.0));
-
-                    if (io.cancel()) {
-                        // Cancel the current cycle but remain in this test:
-                        stopMotors();
-                        queuedAButtons = 0;
-                        profile = null;
-                    }
-                } else {
-                    io.out("Use "+TRIGGERS+" to change velocity to lengthen or shorten the horizontal lines. "
-                            + String.format("Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0));
-
-                    io.out(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
-                            + "the cursor, "+BUMPER+" to switch input, "+TRIGGERS+" to change max velocity, "
-                            + A+" to run on the robot, "+B+" to exit.");
-                    io.end();
-
-                    updateGamepadDriving();
-
-                    if (io.cancel()) {
-                        Prompt prompt = poll.save();
-                        if (prompt == Prompt.SAVE) {
-                            // Restore the state that we zeroed to run the test:
-                            testParameters.params.lateralGain = currentParameters.params.lateralGain;
-                            testParameters.params.lateralVelGain = currentParameters.params.lateralVelGain;
-                            acceptParameters(testParameters);
-                            updateTunerDependencies(Tuner.FEED_FORWARD);
-                            break; // ====>
-                        } else if (prompt == Prompt.EXIT) {
-                            io.message("\u26a0\ufe0f Are you sure you want to exit without saving?\n\n"
-                                    + "Press "+A+" to exit without saving, "+B+" to cancel.");
-                            if (poll.okCancel())
-                                break; // ====>
-                        }
-                    }
-                    if (io.leftTrigger()) {
-                        maxVelocityFactor = Math.max(maxVelocityFactor - 0.1, 0.2);
-                        maxDuration = 0; // A different speed will have a different window size
-                    }
-                    if (io.rightTrigger()) {
-                        maxVelocityFactor = Math.min(maxVelocityFactor + 0.1, 1.0);
-                        maxDuration = 0; // A different speed will have a different window size
-                    }
-                    if (queuedAButtons > 0) {
-                        queuedAButtons--;
-                        stopMotors(); // Stop the user's driving
-                        movingForwards = true;
-                        cycleStartTime = time();
-                        profileStartTime = time();
-                        profile = new TimeProfile(constantProfile(
-                                DISTANCE, 0.0,
-                                MecanumDrive.PARAMS.maxWheelVel * maxVelocityFactor,
-                                MecanumDrive.PARAMS.minProfileAccel,
-                                MecanumDrive.PARAMS.maxProfileAccel).baseProfile);
-                        samples = new LinkedList<>();
-
-                        // Reset the start position on every cycle. This ensures that getVelocity().x
-                        // is the appropriate velocity to read, and it resets after we reposition
-                        // the robot:
-                        drive.setPose(new Pose2d(-DISTANCE / 2.0, 0, 0));
-                    }
-                }
-            }
-        }
-
-        // We're done, undo any temporary state we set:
-        MecanumDrive.PARAMS = currentParameters.params;
-        stopMotors();
-        io.clearDashboardTelemetry();
     }
 
     /**
@@ -2116,26 +1892,29 @@ public class LoonyTune extends LinearOpMode {
 
     // Returns true if the tuning is done, false if it should continue.
     boolean resultsDoneScreen(List<Result> history, Screen screen, Tuner tunerType) {
-        if (history.size() <= 1) {
-            io.out(B + " to exit, " + screen.buttons);
+        Result finalResult = history.get(history.size() - 1);
+        TuneParameters newParameters = currentParameters.createClone();
+        finalResult.applyTo(newParameters);
+        String comparison = newParameters.compare(currentParameters, true);
+        if ((history.size() <= 1) || (comparison.isEmpty())) {
+            io.out(A + " to exit, " + screen.buttons);
             io.end();
+            if (io.ok())
+                return true; // ====>
         } else {
-            io.out(currentParameters.compare(originalParameters, true));
+            io.out("Resulting configuration changes:\n\n" + comparison + "\n");
             io.out(A + " to save these results, " + B + " to discard and exit, ");
             io.out(screen.buttons + ".");
             io.end();
 
             if (io.ok()) {
-                Result finalResult = history.get(history.size() - 1);
-                TuneParameters newParameters = currentParameters.createClone();
-                finalResult.applyTo(newParameters);
                 acceptParameters(newParameters);
                 updateTunerDependencies(tunerType);
                 return true; // ====>
             }
         }
         if (io.cancel()) {
-            if (history.size() <= 1)
+            if (comparison.isEmpty())
                 return true; // ====>
             if (dialog.areYouSure())
                 return true; // ====>
@@ -2157,7 +1936,7 @@ public class LoonyTune extends LinearOpMode {
                 "Test 'rightBack' wheel",       // 2
                 "Test 'rightFront' wheel",      // 3
                 "Test all wheels by driving",   // 4
-                "Exit" });                      // 5
+                "Save and exit" });                      // 5
 
         while (opModeIsActive()) {
             screen.update();
@@ -2231,7 +2010,7 @@ public class LoonyTune extends LinearOpMode {
         double maxLinearSpeed = 0; // Max linear speed seen
         double maxRotationalSpeed = 0; // Max rotational speed seen, radians/s
 
-        Screen screen = new Screen(new String[]{"Free drive", "Measure error", "Detail", "Exit"});
+        Screen screen = new Screen(new String[]{"Free drive", "Measure error", "Detail", "Save and exit"});
 
         while (opModeIsActive()) {
             screen.update();
@@ -2509,7 +2288,7 @@ public class LoonyTune extends LinearOpMode {
             ArrayList<Result> history = new ArrayList<>();
             history.add(new PushResult(oldLinearScalar, oldOffsetHeading));
 
-            Screen screen = new Screen(new String[]{"Overview", "Measure", "Exit"});
+            Screen screen = new Screen(new String[]{"Overview", "Measure", "Save and exit"});
             while (opModeIsActive()) {
                 screen.update();
                 io.begin();
@@ -2594,11 +2373,11 @@ public class LoonyTune extends LinearOpMode {
         final double SPIN_POWER = 0.5; // Speed of the revolutions
 
         // Detail about the most recent result:
-        String detail = "";
+        String detail;
 
         // Persisted state for initiateSparkFunRotation and updateSparkFunRotation:
-        double previousSparkFunHeading = 0;
-        double accumulatedSparkFunRotation = 0;
+        double previousSparkFunHeading;
+        double accumulatedSparkFunRotation;
 
         // Structure to describe the center of rotation for the robot:
         class Circle {
@@ -2889,7 +2668,7 @@ public class LoonyTune extends LinearOpMode {
                     currentParameters.params.otos.offset.x,
                     currentParameters.params.otos.offset.y));
 
-            Screen screen = new Screen(new String[]{"Overview", "Measure", "Detail", "Exit"});
+            Screen screen = new Screen(new String[]{"Overview", "Measure", "Detail", "Save and exit"});
             while (opModeIsActive()) {
                 screen.update();
                 io.begin();
@@ -2965,7 +2744,6 @@ public class LoonyTune extends LinearOpMode {
         class AcceleratingResult extends Result {
             double kS;
             double kV;
-
             public AcceleratingResult(double kS, double kV) {
                 this.kS = kS;
                 this.kV = kV;
@@ -2986,9 +2764,16 @@ public class LoonyTune extends LinearOpMode {
         final int DISTANCE = 72; // Test distance in inches
         String graphExplanation = ""; // Explanation of the graph
 
+        ArrayList<Point> acceptedSamples; // x is velocity, y is power
+        Point max; // x is velocity max, y is power max
+
         // Automatically calculate the kS and kV terms of the feed-forward approximation by
         // ramping up the velocity in a straight line. We increase power by a fixed increment.
         void execute() {
+            // Reset persisted state that we don't want preserved across different execute() calls:
+            acceptedSamples = new ArrayList<>();
+            max = new Point(0, 0);
+
             configureToDrive(true); // Set the brakes
 
             Action preview = drive.actionBuilder(new Pose2d(-DISTANCE / 2.0, 0, 0))
@@ -3001,7 +2786,7 @@ public class LoonyTune extends LinearOpMode {
                     currentParameters.params.kS,
                     currentParameters.params.kV));
 
-            Screen screen = new Screen(new String[]{"Overview", "Measure", "Exit"});
+            Screen screen = new Screen(new String[]{"Overview", "Measure", "Save and exit"});
             while (opModeIsActive()) {
                 screen.update();
                 io.begin();
@@ -3056,8 +2841,6 @@ public class LoonyTune extends LinearOpMode {
         // Do the accelerating measurement step:
         AcceleratingResult measure(String header) {
             io.clearCanvas();
-            ArrayList<Point> acceptedSamples = new ArrayList<>(); // x is velocity, y is power
-            Point max = new Point(0, 0); // x is velocity max, y is power max
 
             // Do one forward and back run:
             ArrayList<Point> forwardSamples = acceleratingStraightLine(header, DISTANCE, 1.0);
@@ -3110,11 +2893,279 @@ public class LoonyTune extends LinearOpMode {
                             + "velocity as the <i>x</i> axis going up to %.1f\"/s, and voltage "
                             + "as the <i>y</i> axis going up to %.2fV.\n\n", max.x, max.y);
 
+                        // Automatically accept the combined results. (We could ask...)
+                        acceptedSamples = combinedSamples;
                         return new AcceleratingResult(kS, kV);
                     }
                 }
             }
             return null;
+        }
+    }
+
+    /**
+     * Class to encapsulate all Interface Feed Forward Tuner logic.
+     */
+    class InteractiveFeedForwardTuner {
+        class FeedForwardResult extends Result {
+            double kV;
+            double kA;
+            public FeedForwardResult(double kV, double kA) {
+                this.kV = kV;
+                this.kA = kA;
+            }
+
+            @Override
+            public String getString() { return String.format("kV: %.3f, kA: %.4f", kV, kA); }
+
+            @Override
+            public void applyTo(TuneParameters parameters) {
+                parameters.params.kV = kV;
+                parameters.params.kA = kA;
+            }
+        }
+
+        final int DISTANCE = 72; // Test distance in inches
+
+        // Tune the kV and kA feed forward parameters:
+        void execute() {
+            configureToDrive(false); // Don't use MecanumDrive
+
+            // Trigger a reset the first time into the loop:
+            double profileStartTime = 0; // Profile start time, in seconds
+            double cycleStartTime = 0; // Cycle start time, in second (each cycle consumes 2 profiles)
+            double maxVelocityFactor = 0.8;
+            TimeProfile profile = null;
+            boolean movingForwards = false;
+            int qeuedStarts = 0;
+            double maxVelocity = 0; // Maximum measured velocity
+            double maxDuration = 4; // Maximum graph duration, in seconds
+
+            // Allocate a repository for all of our velocity samples:
+            class Sample {
+                final double time; // Seconds
+                final double target; // Target velocity, inches/s
+                final double actual; // Actual velocity, inches/s
+
+                public Sample(double time, double target, double actual) {
+                    this.time = time; this.target = target; this.actual = actual;
+                }
+            }
+
+            final String TARGET_COLOR = "#4CAF50"; // Green
+            final String ACTUAL_COLOR = "#3F51B5"; // Blue
+            final double GRAPH_THROTTLE = 0.1; // Only update the graph every 0.1 seconds
+            double lastGraphTime = 0;
+            LinkedList<Sample> samples = new LinkedList<>();
+
+            // Disable all lateral gains so that backward and forward behavior is not affected by the
+            // PID/Ramsete algorithm. It's okay for the axial and rotation gains to be either zero
+            // or non-zero:
+            TuneParameters testParameters = currentParameters.createClone();
+            testParameters.params.lateralGain = 0;
+            testParameters.params.lateralVelGain = 0;
+            MecanumDrive.PARAMS = testParameters.params;
+
+            NumericInput vInput = new NumericInput(drive.PARAMS, "kV", -2, 3, 0.000001, 20);
+            NumericInput aInput = new NumericInput(drive.PARAMS, "kA", -3, 4, 0, 1);
+
+            Action preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, 0, 0))
+                    .lineToX(DISTANCE/2.0)
+                    .lineToX(-DISTANCE/2.0)
+                    .build();
+            TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, preview);
+            ArrayList<Result> history = new ArrayList<>();
+            history.add(new FeedForwardResult(currentParameters.params.kV, currentParameters.params.kA));
+
+            Screen screen = new Screen(new String[]{"Overview", "Adjust kV", "Adjust kA", "Save and exit"});
+            while (opModeIsActive()) {
+                // Note we don't do screen.update() here because we restrict when it's called
+                io.begin();
+                io.out(screen.header);
+                if (screen.index == 0) { // Overview screen
+                    screen.update();
+                    previewer.update(); // Animate the trajectory preview
+                    updateGamepadDriving(); // Let the user drive
+                    io.out("The robot will drive forward then backward for " + testDistance(DISTANCE) + "."
+                            + "Tune the following:");
+                    io.out("\n\n"
+                            + "\u2022 <b>kV</b> is the same parameter as for the preceding tuner. "
+                            + "It's the ratio of motor voltage to robot velocity.\n"
+                            + "\u2022 <b>kA</b> defines how much additional voltage is required when "
+                            + "applying acceleration.\n");
+                    io.out("\n"
+                            + "These are used in a <i>Feed Forward</i> model (just like the <i>F</i> "
+                            + "in a <i>PIDF</i>) to determine how much voltage to apply to attain a "
+                            + "target velocity:\n"
+                            + "&emsp;<i>v<sub>approx</sub> = k<sub>v</sub> \u00b7 v + k<sub>a</sub> \u00b7 a + k<sub>static</sub></i>\n");
+
+                    // "Follow <u><a href='https://learnroadrunner.com/feedforward-tuning.html#tuning'>LearnRoadRunner's guide</a></u>.\n\n"
+
+                    io.out("\n"
+                            + "Press " + screen.buttons + ".");
+                    io.end();
+                } else if (screen.index == 3) {
+                    screen.update();
+
+                    // Create results from the current settings:
+                    FeedForwardResult result = new FeedForwardResult(drive.PARAMS.kV, MecanumDrive.PARAMS.kA);
+
+                    // Keep the history at a size of two:
+                    if (history.size() > 1)
+                        history.remove(1);
+
+                    // Make the new result the second in the history if it's different from the first:
+                    if (!result.getString().equals(history.get(0).getString()))
+                        history.add(result);
+
+                    if (resultsDoneScreen(history, screen, Tuner.FEED_FORWARD))
+                        break; // ====>
+
+                } else { // kV and kA tuning screens
+                    previewer.update(); // Animate the trajectory preview
+                    updateGamepadDriving(); // Let the user drive
+
+                    if (screen.index == 1) {
+                        io.out("&emsp;kV: <big><big>%s</big></big>\n", vInput.update());
+                        io.out("&emsp;Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0);
+                        io.out("View the graph in FTC Dashboard and adjust "
+                                + "<b>kV</b> to make the horizontal lines as close as possible in height. "
+                                + "<b>vTarget</b> is green, <b>vActual</b> is blue, <i>kV = vTarget / vActual</i>.\n\n");
+                    } else {
+                        io.out("&emsp;kA: <big><big>%s</big></big>\n", aInput.update());
+                        io.out("&emsp;Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0);
+                        io.out("View the graph in FTC Dashboard and adjust "
+                                + "<b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap "
+                                + "where the robot accelerates. Don't worry about the deceleration portions.\n\n");
+                    }
+                    if (io.start())
+                        qeuedStarts++; // Let starts be queued up even while running
+
+                    // If there's a profile, that means we're actively moving:
+                    if (profile != null) {
+                        io.out("Press " + B + " to cancel and stop the robot.\n");
+                        io.end();
+
+                        double time = time();
+                        double elapsedTime = time - profileStartTime;
+                        if (elapsedTime > profile.duration) {
+                            if (movingForwards) {
+                                movingForwards = false;
+                                profileStartTime = time;
+                            } else {
+                                profile = null;
+                                continue; // ====>
+                            }
+                        }
+
+                        DualNum<Time> v = profile.get(elapsedTime).drop(1);
+                        if (!movingForwards) {
+                            v = v.unaryMinus();
+                        }
+
+                        // Calculate the new sample and log it:
+                        Pose2D velocityPose = drive.opticalTracker.getVelocity();
+                        double targetVelocity = v.get(0);
+                        double actualVelocity = Math.signum(velocityPose.x) * Math.hypot(velocityPose.x, velocityPose.y);
+                        maxVelocity = Math.max(maxVelocity, Math.max(Math.abs(targetVelocity), Math.abs(actualVelocity)));
+                        maxDuration = Math.max(maxDuration, time - cycleStartTime);
+                        samples.addLast(new Sample(time, v.get(0), actualVelocity));
+
+                        // Throttle the Dashboard updates so that it doesn't get overwhelmed as it
+                        // has very bad rate control:
+                        if (time - lastGraphTime > GRAPH_THROTTLE) {
+                            lastGraphTime = time;
+
+                            io.begin();
+                            Canvas canvas = io.canvas();
+                            canvas.setFill("#ffffff");
+                            canvas.fillRect(-72, -72, 144, 144);
+                            canvas.setTranslation(0, 72);
+                            double xScale = (maxDuration == 0) ? 1 : 144 / maxDuration;
+                            double yScale = (maxVelocity == 0) ? 1 : 72 / maxVelocity;
+
+                            int count = samples.size();
+                            double[] xPoints = new double[count];
+                            double[] yTargets = new double[count];
+                            double[] yActuals = new double[count];
+                            for (int i = 0; i < count; i++) {
+                                Sample sample = samples.get(i);
+                                xPoints[i] = (sample.time - (time - maxDuration)) * xScale;
+                                yTargets[i] = sample.target * yScale;
+                                yActuals[i] = sample.actual * yScale;
+                            }
+                            canvas.setStroke(TARGET_COLOR);
+                            canvas.strokePolyline(xPoints, yTargets);
+                            canvas.setStroke(ACTUAL_COLOR);
+                            canvas.strokePolyline(xPoints, yActuals);
+
+                            // Make the results available to FTC Dashboard so that they can be graphed
+                            // there as well:
+                            io.put("vActual", actualVelocity);
+                            io.put("vTarget", v.get(0));
+                            io.putDivider();
+                            io.end();
+                        }
+
+                        // Set the motors to the appropriate values:
+                        MotorFeedforward feedForward = new MotorFeedforward(MecanumDrive.PARAMS.kS,
+                                MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
+                                MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick);
+
+                        double power = feedForward.compute(v) / drive.voltageSensor.getVoltage();
+                        drive.setDrivePowers(new PoseVelocity2d(new Vector2d(power, 0.0), 0.0));
+
+                        if (io.cancel()) {
+                            // Cancel the current cycle but remain in this test:
+                            stopMotors();
+                            qeuedStarts = 0;
+                            profile = null;
+                        }
+                    } else {
+                        io.out("Changing max velocity will lengthen or shorten the horizontal lines.\n"
+                            + "\n");
+                        io.out(DPAD_UP_DOWN + " to change value, " + DPAD_LEFT_RIGHT + " to move "
+                                + "the cursor, " + TRIGGERS + " to change max velocity, "
+                                + START + " to start the robot, " + screen.buttons);
+                        io.end();
+
+                        screen.update(); // Allow the screen to be changed.
+                        updateGamepadDriving();
+
+                        if (io.leftTrigger()) {
+                            maxVelocityFactor = Math.max(maxVelocityFactor - 0.1, 0.2);
+                            maxDuration = 0; // A different speed will have a different window size
+                        }
+                        if (io.rightTrigger()) {
+                            maxVelocityFactor = Math.min(maxVelocityFactor + 0.1, 1.0);
+                            maxDuration = 0; // A different speed will have a different window size
+                        }
+                        if (qeuedStarts > 0) {
+                            qeuedStarts--;
+                            stopMotors(); // Stop the user's driving
+                            movingForwards = true;
+                            cycleStartTime = time();
+                            profileStartTime = time();
+                            profile = new TimeProfile(constantProfile(
+                                    DISTANCE, 0.0,
+                                    MecanumDrive.PARAMS.maxWheelVel * maxVelocityFactor,
+                                    MecanumDrive.PARAMS.minProfileAccel,
+                                    MecanumDrive.PARAMS.maxProfileAccel).baseProfile);
+                            samples = new LinkedList<>();
+
+                            // Reset the start position on every cycle. This ensures that getVelocity().x
+                            // is the appropriate velocity to read, and it resets after we reposition
+                            // the robot:
+                            drive.setPose(new Pose2d(-DISTANCE / 2.0, 0, 0));
+                        }
+                    }
+                }
+            }
+
+            // We're done, undo any temporary state we set:
+            MecanumDrive.PARAMS = currentParameters.params;
+            stopMotors();
+            io.clearDashboardTelemetry();
         }
     }
 
@@ -3216,7 +3267,7 @@ public class LoonyTune extends LinearOpMode {
             widgets[Tuner.SPIN.index] = menu.addRunnable("Spin tuner (trackWidthTicks, OTOS angularScalar, offset)", spinTuner::execute);
             widgets[Tuner.TRACKING_TEST.index] = menu.addRunnable("Tracking test (OTOS verification)", this::trackingTest);
             widgets[Tuner.ACCELERATING.index] = menu.addRunnable("Accelerating straight line tuner (kS and kV)", acceleratingStraightLineTuner::execute);
-            widgets[Tuner.FEED_FORWARD.index] = menu.addRunnable("Interactive feed forward tuner (kV and kA)", this::interactiveFeedForwardTuner);
+            widgets[Tuner.FEED_FORWARD.index] = menu.addRunnable("Interactive feed forward tuner (kV and kA)", interactiveFeedForwardTuner::execute);
             widgets[Tuner.LATERAL.index] = menu.addRunnable("Lateral tuner (lateralInPerTick)", this::lateralTuner);
             widgets[Tuner.AXIAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (axialGain)", ()->interactivePidTuner(PidTunerType.AXIAL));
             widgets[Tuner.LATERAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (lateralGain)", ()->interactivePidTuner(PidTunerType.LATERAL));
