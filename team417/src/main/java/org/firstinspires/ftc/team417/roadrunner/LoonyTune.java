@@ -162,7 +162,7 @@ class Io {
     boolean cancel() { return b(); }
     boolean a() { return buttonPress(gamepad.a, 0); }
     boolean b() { return buttonPress(gamepad.b, 1); }
-    boolean x() { return buttonPress(gamepad.b, 2); }
+    boolean x() { return buttonPress(gamepad.x, 2); }
     boolean y() { return buttonPress(gamepad.y, 3); }
     boolean up() { return buttonPress(gamepad.dpad_up, 4); }
     boolean down() { return buttonPress(gamepad.dpad_down, 5); }
@@ -1411,39 +1411,6 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
-    // Test the robot motors.
-    void wheelDebugger() {
-        String[] motorDescriptions = { "leftFront", "leftBack", "rightBack", "rightFront" };
-        DcMotorEx[] motors = { drive.leftFront, drive.leftBack, drive.rightBack, drive.rightFront };
-        int motor = 0;
-
-        stopMotors();
-        while (opModeIsActive() && !io.cancel()) {
-            double power = gamepad1.right_trigger - gamepad1.left_trigger;
-            String description = motorDescriptions[motor];
-
-            io.begin();
-            io.add(String.format("This tests every motor individually, now testing <b>%s</b>.\n\n", description)
-                + String.format("&emsp;%s.setPower(%.2f)\n\n", description, power)
-                + "Press "+RIGHT_TRIGGER+" for forward, "+LEFT_TRIGGER+" for reverse, "+BUMPER+" to switch motor, "+B+" to exit.");
-            io.end();
-
-            motors[motor].setPower(power);
-            if (io.leftBumper()) {
-                motors[motor].setPower(0);
-                motor--;
-                if (motor < 0)
-                    motor = motors.length - 1;
-            } else if (io.rightBumper()) {
-                motors[motor].setPower(0);
-                motor++;
-                if (motor >= motors.length)
-                    motor = 0;
-            }
-        }
-        stopMotors();
-    }
-
     // Helper for managing the various screens of the tests.
     class Screen {
         public final String[] screens; // Name for each screen
@@ -1487,7 +1454,7 @@ public class LoonyTune extends LinearOpMode {
         // test. The robot can nestle in the corner and thereby establish a consistent physical
         // location and orientation for measuring tracking drift error. We choose the lower-right
         // corner, and assume that the robot is 18 inches on each side:
-        Pose2d homePose = new Pose2d(72-9, -72+9, 0);
+        Pose2d homePose = new Pose2d(72 - 9, -72 + 9, 0);
 
         configureToDrive(true); // Do use MecanumDrive
 
@@ -1502,37 +1469,16 @@ public class LoonyTune extends LinearOpMode {
         Pose2d baselinePose = null; // Position where the baseline was set
         double maxLinearSpeed = 0; // Max linear speed seen
         double maxRotationalSpeed = 0; // Max rotational speed seen, radians/s
-        while (opModeIsActive() && !io.cancel()) {
 
-            if (io.leftBumper() || io.rightBumper()) { // Debug wheels
-                wheelDebugger();
-                drive.setPose(homePose);
-                baselinePose = null;
-                previousPose = homePose;
-            }
-            if (io.x()) { // Set baseline at home
-                drive.setPose(homePose);
-                previousPose = homePose;
-                baselineImu = drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
-                baselinePose = drive.pose;
-                totalDistance = 0;
-                totalRotation = 0;
-                maxLinearSpeed = 0;
-                maxRotationalSpeed = 0;
-            }
+        Screen screen = new Screen(new String[]{"Free drive", "Measure error", "Detail", "Done"});
 
-            updateGamepadDriving();
-            PoseVelocity2d velocity = drive.updatePoseEstimate();
+        while (opModeIsActive()) {
+            screen.update();
             io.begin();
+            io.add(screen.header);
 
-            // Calculate some statistics about the velocity:
-            double linearSpeed = Math.hypot(velocity.linearVel.x, velocity.linearVel.y);
-            double rotationalSpeed = Math.abs(velocity.angVel);
-            io.put("Linear speed", linearSpeed);
-            io.put("Rotational speed", rotationalSpeed);
-            io.putDivider();
-            maxLinearSpeed = Math.max(maxLinearSpeed, linearSpeed);
-            maxRotationalSpeed = Math.max(maxRotationalSpeed, rotationalSpeed);
+            // Update our guess for the robot location:
+            PoseVelocity2d velocity = drive.updatePoseEstimate();
 
             // Query the OTOS for any problems:
             SparkFunOTOS.Status status = drive.opticalTracker.getStatus();
@@ -1550,7 +1496,16 @@ public class LoonyTune extends LinearOpMode {
                 lastSeenTime = time();
             }
 
-            // Now that updatePoseEstimate is called, get the new pose and track the distance
+            // Calculate some statistics about the velocity:
+            double linearSpeed = Math.hypot(velocity.linearVel.x, velocity.linearVel.y);
+            double rotationalSpeed = Math.abs(velocity.angVel);
+            io.put("Linear speed", linearSpeed);
+            io.put("Rotational speed", rotationalSpeed);
+            io.putDivider();
+            maxLinearSpeed = Math.max(maxLinearSpeed, linearSpeed);
+            maxRotationalSpeed = Math.max(maxRotationalSpeed, rotationalSpeed);
+
+            // Given that updatePoseEstimate was called, get the new pose and track the distance
             // traveled:
             Pose2d pose = drive.pose;
             totalDistance += Math.hypot(
@@ -1559,74 +1514,114 @@ public class LoonyTune extends LinearOpMode {
             totalRotation += Math.abs(pose.heading.toDouble() - previousPose.heading.toDouble());
             previousPose = pose;
 
-            String message = "Use the controller to drive the robot around. ";
-            if (baselinePose == null) {
-                message += "To show pose estimates, press "+Y+" when the robot is physically positioned "
-                        + "in the corner as indicated by the golden pose on FTC Dashboard.";
-            }
-            message += "\n\n";
+            if (screen.index == 0) { // Free drive screen
+                updateGamepadDriving();
 
-            if (drive.opticalTracker != null) {
-                MecanumDrive.Params.Otos otos = currentParameters.params.otos;
-                if ((otos.linearScalar == 0) || (otos.angularScalar == 0) ||
-                        (otos.offset.x == 0) || (otos.offset.y == 0)) {
-
-                    message += "<font color='#e84e4f'>"
-                            + "WARNING: The optical sensor's parameters haven't yet been fully "
-                            + "tuned, so the robot's pose and its location shown in FTC Dashboard "
-                            + "will be off.</font>\n\n";
-                }
-            }
-            message += String.format("Pose: (%.2f\", %.2f\"), %.2f\u00b0\n",
-                    pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
-            message += String.format("Max velocities: %.1f\"/s, %.0f\u00b0/s\n",
-                    maxLinearSpeed, Math.toDegrees(maxRotationalSpeed));
-            if (currentStatus.isEmpty()) {
-                if (lastSeenStatus.isEmpty())
-                    message += "OTOS status: Good!\n";
-                else {
-                    double minutesAgo = (time() - lastSeenTime) / 60.0;
-                    message += String.format("OTOS status: Was '%s' %.1f minutes ago\n",
-                            lastSeenStatus, minutesAgo);
-                }
-            } else {
-                message += String.format("OTOS status: %s\n", currentStatus);
-            }
-
-            if (baselinePose != null) {
-                double dx = pose.position.x - baselinePose.position.x;
-                double dy = pose.position.y - baselinePose.position.y;
-                double otosTheta = normalizeAngle(pose.heading.toDouble() - baselinePose.heading.toDouble());
-                double imuTheta = normalizeAngle(drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) - baselineImu);
-
-                message += "\nData that's relevant only when physically at the home position:\n\n"
-                        + String.format("&ensp;Offset: (%.2f\", %.2f\"), %.2f\u00b0, IMU: %.2f\u00b0\n",
-                        dx, dy, Math.toDegrees(otosTheta), Math.toDegrees(imuTheta));
-
-                if ((totalDistance != 0) && (totalRotation != 0)) {
-                    double distanceError = Math.abs(dx) / totalDistance;
-                    double rotationError = Math.abs(Math.toDegrees(otosTheta)) / totalDistance;
-                    message += String.format("&ensp;Error: %.2f%% (distance), ", distanceError * 100);
-                    message += String.format("%.3f\u00b0/inch (rotational)\n", rotationError);
-                }
-            }
-
-            io.add(message);
-            io.add("\nPress "+X+((baselinePose == null) ? " when in the golden home position, " : " to reset home, "));
-            io.add(BUMPER+" to debug the wheels, "+B+" to exit.");
-
-            Canvas canvas = io.canvas();
-            canvas.setStroke("#ffd700"); // Gold
-            Drawing.drawRobot(canvas, homePose);
-
-            if (baselinePose != null) {
+                io.setBlankField(true); // Draw only a blank field
+                Canvas canvas = io.canvas();
                 canvas.setStroke("#3F51B5");
                 Drawing.drawRobot(canvas, pose);
-            }
-            io.end();
 
+                io.add("At this point, pose estimation should fully work. Drive around and "
+                        + "look for two things:\n"
+                        + "\n"
+                        + "\u2022 Does the robot shown in FTC Dashboard correctly track "
+                        + "the actual movement? (The next screen will do exact error measurements "
+                        + "so just look for approximate correctness here.)\n"
+                        + "\u2022 When the robot rotates in place using only the right stick, the "
+                        + "on-screen robot shouldn't move its <i>(x, y)</i> position at all. Does it?\n"
+                        + "\n");
+                io.add("Pose: (%.2f\", %.2f\"), %.2f\u00b0\n\n",
+                    pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
+                io.add("Sticks to drive, " + screen.buttons);
+                io.end();
+            } else if (screen.index == 1) { // Measure error screen
+                updateGamepadDriving();
+
+                io.setBlankField(false); // Draw the actual field
+                Canvas canvas = io.canvas();
+                canvas.setStroke("#ffd700"); // Gold
+                Drawing.drawRobot(canvas, homePose);
+
+                if (baselinePose == null) {
+                    io.add("To start measuring error, press "+X+" when the robot is physically "
+                        + "positioned in the corner as indicated by the golden pose on FTC "
+                        + "Dashboard.\n\n");
+                    io.add("Press "+X+" to set the golden pose, "+screen.buttons+".");
+                } else {
+                    canvas.setStroke("#3F51B5"); // Blueish
+                    Drawing.drawRobot(canvas, pose); // Pose estimation
+
+                    io.add("Drive around and then physically return the robot back to the "
+                        + "golden pose corner. The following error measurements are valid <i><b>only</b></i> "
+                        + "when the robot is back in exact same physical location:\n\n");
+
+                    double dx = pose.position.x - baselinePose.position.x;
+                    double dy = pose.position.y - baselinePose.position.y;
+                    double otosTheta = normalizeAngle(pose.heading.toDouble() - baselinePose.heading.toDouble());
+                    double imuTheta = normalizeAngle(drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS) - baselineImu);
+
+                    io.add("&ensp;OTOS error: (%.2f\", %.2f\"), %.2f\u00b0\n", dx, dy, Math.toDegrees(otosTheta));
+                    io.add("&ensp;Control Hub IMU error (for comparison): %.2f\u00b0\n", Math.toDegrees(imuTheta));
+
+                    if ((totalDistance != 0) && (totalRotation != 0)) {
+                        double distanceError = Math.abs(dx) / totalDistance;
+                        double rotationError = Math.abs(Math.toDegrees(otosTheta)) / totalDistance;
+                        io.add("&ensp;Error: %.2f%% (distance), %.3f\u00b0/inch (rotational)",
+                                distanceError * 100, rotationError);
+                    }
+
+                    io.add("\nPress "+X+" to reset what at the golden pose, "+screen.buttons+".");
+                }
+                io.end();
+
+                if (io.x()) { // Set baseline at home
+                    drive.setPose(homePose);
+                    previousPose = homePose;
+                    baselineImu = drive.lazyImu.get().getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+                    baselinePose = drive.pose;
+                    totalDistance = 0;
+                    totalRotation = 0;
+                    maxLinearSpeed = 0;
+                    maxRotationalSpeed = 0;
+                }
+
+            } else if (screen.index == 2) { // Detail screen
+                io.setBlankField(true); // Draw only a blank field
+                updateGamepadDriving();
+
+                if (currentStatus.isEmpty()) {
+                    if (lastSeenStatus.isEmpty())
+                        io.add("OTOS status: Good!\n");
+                    else {
+                        double minutesAgo = (time() - lastSeenTime) / 60.0;
+                        io.add("OTOS status: Was '%s' %.1f minutes ago\n", lastSeenStatus, minutesAgo);
+                    }
+                } else {
+                    io.add("OTOS status: %s\n", currentStatus);
+                }
+
+                io.add("Max velocities: %.1f\"/s, %.0f\u00b0/s\n",
+                    maxLinearSpeed, Math.toDegrees(maxRotationalSpeed));
+
+                io.add("\nPress " + screen.buttons + ".");
+                io.end();
+
+            } else if (screen.index == 3) { // Done screen
+                io.add("Press "+A+" if everything passed, "+B+" if there was a failure, or "+screen.buttons +".");
+                io.end();
+                if (io.ok()) {
+                    passedWheelTest = true;
+                    updateTunerDependencies(Tuner.WHEEL);
+                    break; // ====>
+                }
+                if (io.cancel()) {
+                    passedWheelTest = false;
+                    break; // ====>
+                }
+            }
         }
-        stopMotors();
+        io.setBlankField(true);
     }
 
     // Compute the average of the singleton value plus the values of an array:
