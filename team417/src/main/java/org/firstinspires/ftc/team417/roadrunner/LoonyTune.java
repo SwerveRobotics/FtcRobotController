@@ -705,7 +705,7 @@ public class LoonyTune extends LinearOpMode {
         PUSH(1),
         ACCELERATING(2),
         FEED_FORWARD(3),
-        LATERAL(4),
+        LATERAL_MULTIPLIER(4),
         SPIN(5),
         TRACKING(6),
         TRACKING_TEST(7),
@@ -736,6 +736,7 @@ public class LoonyTune extends LinearOpMode {
     SpinTuner spinTuner = new SpinTuner();
     AcceleratingStraightLineTuner acceleratingStraightLineTuner = new AcceleratingStraightLineTuner();
     InteractiveFeedForwardTuner interactiveFeedForwardTuner = new InteractiveFeedForwardTuner();
+    LateralMultiplierTuner lateralMultiplierTuner = new LateralMultiplierTuner();
 
     // Constants:
     final Pose2d zeroPose = new Pose2d(0, 0, 0);
@@ -749,16 +750,16 @@ public class LoonyTune extends LinearOpMode {
         widgets[Tuner.PUSH.index].isEnabled         = otos.linearScalar != 0 || passedWheelTest;
         widgets[Tuner.ACCELERATING.index].isEnabled = otos.linearScalar != 0;
         widgets[Tuner.FEED_FORWARD.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
-        widgets[Tuner.LATERAL.index].isEnabled      = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
+        widgets[Tuner.LATERAL_MULTIPLIER.index].isEnabled      = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
         widgets[Tuner.SPIN.index].isEnabled         = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
         widgets[Tuner.AXIAL_GAIN.index].isEnabled   = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
         widgets[Tuner.LATERAL_GAIN.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0 && params.lateralInPerTick != 0;
         widgets[Tuner.HEADING_GAIN.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0 && params.trackWidthTicks != 0;
         widgets[Tuner.COMPLETION_TEST.index].isEnabled = params.axialGain != 0 && params.lateralGain != 0 && params.headingGain != 0;
 
-        final Tuner[] PUSH_DEPENDENTS = { Tuner.ACCELERATING, Tuner.FEED_FORWARD, Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] ACCELERATING_DEPENDENTS = { Tuner.FEED_FORWARD, Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] FEED_FORWARD_DEPENDENTS = { Tuner.LATERAL, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] PUSH_DEPENDENTS = { Tuner.ACCELERATING, Tuner.FEED_FORWARD, Tuner.LATERAL_MULTIPLIER, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] ACCELERATING_DEPENDENTS = { Tuner.FEED_FORWARD, Tuner.LATERAL_MULTIPLIER, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
+        final Tuner[] FEED_FORWARD_DEPENDENTS = { Tuner.LATERAL_MULTIPLIER, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
         final Tuner[] LATERAL_DEPENDENTS = { Tuner.LATERAL_GAIN, Tuner.COMPLETION_TEST };
         final Tuner[] SPIN_DEPENDENTS = { Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
         final Tuner[] GAIN_DEPENDENTS = { Tuner.COMPLETION_TEST };
@@ -770,7 +771,7 @@ public class LoonyTune extends LinearOpMode {
                 case PUSH: dependents = PUSH_DEPENDENTS; break;
                 case ACCELERATING: dependents = ACCELERATING_DEPENDENTS; break;
                 case FEED_FORWARD: dependents = FEED_FORWARD_DEPENDENTS; break;
-                case LATERAL: dependents = LATERAL_DEPENDENTS; break;
+                case LATERAL_MULTIPLIER: dependents = LATERAL_DEPENDENTS; break;
                 case SPIN: dependents = SPIN_DEPENDENTS; break;
                 case AXIAL_GAIN:
                 case LATERAL_GAIN:
@@ -1070,11 +1071,11 @@ public class LoonyTune extends LinearOpMode {
 
     // Run an Action but end it early if Cancel is pressed.
     // Returns True if it ran without cancelling, False if it was cancelled.
-    private boolean runCancelableAction(Action action) {
+    private boolean runCancelableAction(String header, Action action) {
         drive.runParallel(action);
         while (opModeIsActive() && !io.cancel()) {
             io.begin();
-            io.out("Press "+B+" to stop");
+            io.out(header + "Press "+B+" to cancel and stop the robot.");
             boolean more = drive.doActionsWork(io.packet);
             if (!more) {
                 // We successfully completed the Action! Abort the current canvas:
@@ -1388,118 +1389,6 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
-    // Compute the average of the singleton value plus the values of an array:
-    double average(double value, List<Double> values) {
-        for (double x: values) {
-            value += x;
-        }
-        return value / (values.size() + 1);
-    }
-
-    // Tuner for the lateral multiplier on Mecanum drives.
-    void lateralTuner() {
-        final int DISTANCE = 72; // Test distance in inches
-        configureToDrive(true); // Do use MecanumDrive
-
-        Action preview = drive.actionBuilder(new Pose2d(0, -DISTANCE/2.0, 0))
-                .strafeTo(new Vector2d(0, DISTANCE/2.0))
-                .strafeTo(new Vector2d(0, -DISTANCE/2.0))
-                .build();
-        io.message("Tune <b>lateralInPerTick</b>. The robot will strafe left and right for "
-                + testDistance(DISTANCE) + ". "
-                + "\n\nDrive the robot to position, press "+A+" to start, "+B+" to cancel.");
-        if (poll.okCancelWithPreview(preview)) {
-
-            double startLateralInPerTick = currentParameters.params.lateralInPerTick;
-
-            // Disable the PID gains so that the distance traveled isn't corrected:
-            TuneParameters testParameters = currentParameters.createClone();
-            testParameters.params.lateralGain = 0;
-            testParameters.params.lateralVelGain = 0;
-            MecanumDrive.PARAMS = testParameters.params;
-
-            // Now recreate the Kinematics object based on the new settings:
-            drive.initializeKinematics();
-
-            // Accelerate and decelerate slowly so we don't overshoot:
-            ProfileAccelConstraint accelConstraint = new ProfileAccelConstraint(-10, 15);
-
-            ArrayList<Double> history = new ArrayList<>();
-            String resultsMessage = "";
-            while (opModeIsActive()) {
-                // Strafe left and then right:
-                Pose2d startPose1 = new Pose2d(0, -DISTANCE/2.0, 0);
-                drive.setPose(startPose1);
-                if (runCancelableAction(drive.actionBuilder(startPose1)
-                        .strafeTo(new Vector2d(0, DISTANCE/2.0), null, accelConstraint)
-                        .build())) {
-
-                    double actualDistance1 = Math.hypot(drive.pose.position.x, drive.pose.position.y);
-
-                    Pose2d startPose2 = new Pose2d(0, DISTANCE/2.0, 0);
-                    drive.setPose(startPose2);
-                    if (runCancelableAction(drive.actionBuilder(startPose2)
-                            .strafeTo(new Vector2d(0, -DISTANCE/2.0), null, accelConstraint)
-                            .build())) {
-
-                        double actualDistance2 = Math.hypot(drive.pose.position.x, drive.pose.position.y);
-                        double multiplier1 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance1 / DISTANCE);
-                        double multiplier2 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance2 / DISTANCE);
-
-                        if (Math.min(multiplier1, multiplier2) < 0.25) {
-                            io.message("The measured distance is too low to be correct. "
-                                    + "Did it not move, or is the distance sensor not working properly?"
-                                    + "\n\nPress " + A + "to continue.");
-                            poll.ok();
-                            break; // ====>
-                        }
-
-                        double multiplier = (multiplier1 + multiplier2) / 2.0; // Compute the average
-
-                        // Compute the average of all results for the new lateralInPerTick value:
-                        double newLateralInPerTick = average(multiplier, history);
-                        history.add(newLateralInPerTick);
-
-                        StringBuilder builder = new StringBuilder(String.format(
-                                "The robot drove %.1f and %.1f inches, respectively.\n\n", actualDistance1, actualDistance2));
-                        builder.append("Test results, with the newest last:\n\n");
-                        builder.append(String.format("&ensp;lateralInPerTick: %.03f\n", startLateralInPerTick));
-                        for (Double lateralInPerTick : history) {
-                            builder.append(String.format("&ensp;lateralInPerTick: %.03f\n", lateralInPerTick));
-                        }
-                        resultsMessage = builder + "\n";
-
-                        // Adopt the new settings:
-                        testParameters.params.lateralInPerTick = newLateralInPerTick;
-                        MecanumDrive.PARAMS = testParameters.params;
-                        drive.initializeKinematics();
-                    }
-                }
-
-                io.message(resultsMessage + "If the results look good, press "+B+" to save and exit. "
-                        + "Otherwise drive to reposition the robot (it may go farther this time) and "
-                        + "press "+A+" to start another run. ");
-                if (!poll.okCancelWithDriving()) {
-                    Prompt prompt = poll.save();
-                    if (prompt == Prompt.EXIT)
-                        break; // ====>
-                    if (prompt == Prompt.SAVE) {
-                        // Don't accept 'testParameters' because that has gains set to zero!
-                        TuneParameters newParameters = currentParameters.createClone();
-                        newParameters.params.lateralInPerTick = history.get(history.size() - 1);
-                        acceptParameters(newParameters);
-                        updateTunerDependencies(Tuner.LATERAL);
-                        break; // ====>
-                    }
-                }
-            }
-
-            // Restore the kinematics:
-            MecanumDrive.PARAMS = currentParameters.params;
-            drive.initializeKinematics();
-        }
-    }
-
     /**
      * Class to handle gamepad input of decimal numbers.
      */
@@ -1778,7 +1667,7 @@ public class LoonyTune extends LinearOpMode {
                             -MecanumDrive.PARAMS.maxAngAccel,
                             MecanumDrive.PARAMS.maxAngAccel))
                     .build();
-            runCancelableAction(action);
+            runCancelableAction("", action);
 
             io.message("The robot should be facing the same direction as when it started. It it's "
                     + "not, run the spin tuner again to re-tune 'trackWidthTicks'."
@@ -1820,7 +1709,7 @@ public class LoonyTune extends LinearOpMode {
                 stopMotors();
                 drive.setPose(zeroPose);
                 if (useOdometry) {
-                    runCancelableAction(action);
+                    runCancelableAction("", action);
                 } else {
                     // Point MecanumDrive to some temporary parameters, run the action, then
                     // restore the settings:
@@ -1832,7 +1721,7 @@ public class LoonyTune extends LinearOpMode {
                     testParameters.params.headingGain = 0;
                     testParameters.params.headingVelGain = 0;
                     MecanumDrive.PARAMS = testParameters.params;
-                    runCancelableAction(action);
+                    runCancelableAction("", action);
                     MecanumDrive.PARAMS = currentParameters.params;
                 }
                 break; // ====>
@@ -1872,20 +1761,21 @@ public class LoonyTune extends LinearOpMode {
         static void showHistory(Io io, List<Result> history) {
             // The first entry is always the original settings:
             if (history.size() > 1) {
-                io.out("Results:\n\n");
+                io.out("Result history:\n\n");
                 for (int i = 0; i < history.size(); i++) {
                     Result result = history.get(i);
-                    io.out("&emsp;%s", result.toString());
+                    io.out("&emsp;%s", result.getString());
                     if (i == 0) {
-                        io.out(" (starting values)");
+                        io.out(" (starting)");
                     } else if (i == history.size() - 1) {
-                        io.out(" (newest results)");
+                        io.out(" (newest)");
                     }
-                    io.out("\n\n");
-                    io.out("If you've done multiple measurements and they're consistent, go "
-                            + "to the next screen.");
-                    io.out("\n\n");
+                    io.out("\n");
                 }
+                io.out("\n");
+                io.out("If you've done multiple measurements and they're consistent, go "
+                        + "to the next screen.\n");
+                io.out("\n");
             }
         }
     }
@@ -1936,7 +1826,7 @@ public class LoonyTune extends LinearOpMode {
                 "Test 'rightBack' wheel",       // 2
                 "Test 'rightFront' wheel",      // 3
                 "Test all wheels by driving",   // 4
-                "Save and exit" });                      // 5
+                "Save and exit" });             // 5
 
         while (opModeIsActive()) {
             screen.update();
@@ -1972,7 +1862,7 @@ public class LoonyTune extends LinearOpMode {
                         + "of the rollers on the 4 wheels should form an 'X'.");
                 io.out("\n\nSticks to drive, " + screen.buttons + ".");
                 io.end();
-            } else if (screen.index == 5) { // Done screen
+            } else if (screen.index == 5) { // Exit screen
                 io.out("Press "+A+" if everything passed, "+B+" if there was a failure, or "+screen.buttons +".");
                 io.end();
                 if (io.ok()) {
@@ -2147,7 +2037,7 @@ public class LoonyTune extends LinearOpMode {
                 io.out("\nPress " + screen.buttons + ".");
                 io.end();
 
-            } else if (screen.index == 3) { // Done screen
+            } else if (screen.index == 3) { // Exit screen
                 io.out("Press "+A+" if everything passed, "+B+" if there was a failure, or "+screen.buttons +".");
                 io.end();
                 if (io.ok()) {
@@ -2325,7 +2215,7 @@ public class LoonyTune extends LinearOpMode {
                             history.add(result);
                     }
 
-                } else if (screen.index == 2) { // Done screen
+                } else if (screen.index == 2) { // Exit screen
                     if (resultsDoneScreen(history, screen, Tuner.PUSH)) {
                         // Make sure the OTOS hardware is informed of the new parameters too:
                         setOtosHardware();
@@ -2723,7 +2613,7 @@ public class LoonyTune extends LinearOpMode {
                     io.out("Press " + screen.buttons);
                     io.end();
 
-                } else if (screen.index == 3) { // Done screen
+                } else if (screen.index == 3) { // Exit screen
                     if (resultsDoneScreen(history, screen, Tuner.PUSH)) {
                         // Make sure the OTOS hardware is informed of the new parameters too:
                         setOtosHardware();
@@ -2762,15 +2652,15 @@ public class LoonyTune extends LinearOpMode {
         }
 
         final int DISTANCE = 72; // Test distance in inches
-        String graphExplanation = ""; // Explanation of the graph
-
+        String graphExplanation; // Explanation of the graph
         ArrayList<Point> acceptedSamples; // x is velocity, y is power
         Point max; // x is velocity max, y is power max
 
         // Automatically calculate the kS and kV terms of the feed-forward approximation by
         // ramping up the velocity in a straight line. We increase power by a fixed increment.
         void execute() {
-            // Reset persisted state that we don't want preserved across different execute() calls:
+            // Reset persisted state that we don't want preserved across invocations:
+            graphExplanation = "";
             acceptedSamples = new ArrayList<>();
             max = new Point(0, 0);
 
@@ -2795,10 +2685,10 @@ public class LoonyTune extends LinearOpMode {
 
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
-                    io.out("The robot will drive forward and backward for up to "
+                    io.out("The robot will drive forward and backward for "
                             + testDistance(DISTANCE) + ". It will start slowly but get faster and "
-                            + "faster in each direction. This will measure the following:");
-                    io.out("\n\n"
+                            + "faster in each direction. This will measure the following:\n");
+                    io.out("\n"
                             + "\u2022 <b>kS</b> is the motor voltage required to overcome static "
                             + "friction and make the robot move after it's stopped. It's the "
                             + "intercept on the velocity/voltage graph.\n"
@@ -2828,7 +2718,7 @@ public class LoonyTune extends LinearOpMode {
                             history.add(result);
                     }
 
-                } else if (screen.index == 2) { // Done screen
+                } else if (screen.index == 2) { // Exit screen
                     if (resultsDoneScreen(history, screen, Tuner.ACCELERATING)) {
                         // Make sure the OTOS hardware is informed of the new parameters too:
                         setOtosHardware();
@@ -3169,6 +3059,158 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
+    /**
+     * Class to encapsulate all Lateral Tuner logic.
+     */
+    class LateralMultiplierTuner {
+        class LateralResult extends Result {
+            double lateralInPerTick;
+
+            public LateralResult(double lateralInPerTick) {
+                this.lateralInPerTick = lateralInPerTick;
+            }
+
+            @Override
+            public String getString() {
+                return String.format("lateralInPerTick: %.3f", lateralInPerTick);
+            }
+
+            @Override
+            public void applyTo(TuneParameters parameters) {
+                parameters.params.lateralInPerTick = lateralInPerTick;
+            }
+        }
+
+        final int DISTANCE = 72; // Test distance in inches
+        String latestResult; // Multiplier result from latest test
+
+        // Do the lateral multiplier measurement step:
+        LateralResult measure(String header, TuneParameters testParameters, List<Result> history) {
+            // Accelerate and decelerate slowly so we don't overshoot:
+            ProfileAccelConstraint accelConstraint = new ProfileAccelConstraint(-10, 15);
+
+            // Strafe left and then right:
+            Pose2d startPose1 = new Pose2d(0, -DISTANCE / 2.0, 0);
+            drive.setPose(startPose1);
+            if (runCancelableAction(header, drive.actionBuilder(startPose1)
+                    .strafeTo(new Vector2d(0, DISTANCE / 2.0), null, accelConstraint)
+                    .build())) {
+
+                double actualDistance1 = Math.hypot(drive.pose.position.x, drive.pose.position.y);
+
+                Pose2d startPose2 = new Pose2d(0, DISTANCE / 2.0, 0);
+                drive.setPose(startPose2);
+                if (runCancelableAction(header, drive.actionBuilder(startPose2)
+                        .strafeTo(new Vector2d(0, -DISTANCE / 2.0), null, accelConstraint)
+                        .build())) {
+
+                    double actualDistance2 = Math.hypot(drive.pose.position.x, drive.pose.position.y);
+                    double multiplier1 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance1 / DISTANCE);
+                    double multiplier2 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance2 / DISTANCE);
+
+                    if (Math.min(multiplier1, multiplier2) < 0.25) {
+                        io.message(Dialog.WARNING_ICON + "The measured distance is too low to be correct. "
+                                + "Did it not move, or is the distance sensor not working properly?"
+                                + "\n\nPress " + A + " to continue.");
+                        poll.ok();
+                        return null;
+                    }
+
+                    double newMultiplier = (multiplier1 + multiplier2) / 2.0; // Compute the average
+                    latestResult = String.format("Measured multiplier: %.3f\n\n", newMultiplier);
+
+                    // Compute the average of the history *plus* the new multiplier but skipping
+                    // the first entry:
+                    double sum = newMultiplier;
+                    for (int i = 1; i < history.size(); i++) {
+                        sum += ((LateralResult) history.get(i)).lateralInPerTick;
+                    }
+                    double newLateralInPerTick = sum / history.size();
+
+                    // Adopt the new settings:
+                    testParameters.params.lateralInPerTick = newLateralInPerTick;
+                    MecanumDrive.PARAMS = testParameters.params;
+                    drive.initializeKinematics();
+
+                    return new LateralResult(newLateralInPerTick); // ====>
+                }
+            }
+            return null; // ====>
+        }
+
+        // Tune for the lateral multiplier on Mecanum drives.
+        void execute() {
+            configureToDrive(true); // Do use MecanumDrive
+            latestResult = "";
+
+            // Disable the PID gains so that the distance traveled isn't corrected:
+            TuneParameters testParameters = currentParameters.createClone();
+            testParameters.params.lateralGain = 0;
+            testParameters.params.lateralVelGain = 0;
+            MecanumDrive.PARAMS = testParameters.params;
+
+            // Now recreate the Kinematics object based on the new settings:
+            drive.initializeKinematics();
+
+            Action preview = drive.actionBuilder(new Pose2d(0, -DISTANCE / 2.0, 0))
+                    .strafeTo(new Vector2d(0, DISTANCE / 2.0))
+                    .strafeTo(new Vector2d(0, -DISTANCE / 2.0))
+                    .build();
+            TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, preview);
+            ArrayList<Result> history = new ArrayList<>();
+            history.add(new LateralResult(currentParameters.params.lateralInPerTick));
+
+            Screen screen = new Screen(new String[]{"Overview", "Measure", "Save and exit"});
+            while (opModeIsActive()) {
+                screen.update();
+                io.begin();
+                io.out(screen.header);
+                if (screen.index == 0) { // Overview screen
+
+                    previewer.update(); // Animate the trajectory preview
+                    updateGamepadDriving(); // Let the user drive
+                    io.out("The robot will strafe left then right for up to "
+                            + testDistance(DISTANCE) + ". This will measure the following:\n");
+                    io.out("\n"
+                            + "\u2022 <b>lateralInPerTick</b> is the factor of how "
+                            + "much shorter the robot will move sideways than forward for the same "
+                            + "amount of wheel rotation. Mecanum drives are less efficient moving "
+                            + "sideways than forward or reverse.\n"
+                            + "\n"
+                            + "Press " + screen.buttons + ".");
+                    io.end();
+
+                } else if (screen.index == 1) { // Measure screen
+
+                    previewer.update(); // Animate the trajectory preview
+                    updateGamepadDriving(); // Let the user drive
+
+                    io.out(latestResult);
+                    Result.showHistory(io, history);
+
+                    io.out("If starting a measurement, ensure that " + testDistance(DISTANCE) + " "
+                            + "is clear to the robot's left.\n"
+                            + "\n"
+                            + "Press " + START + " to start the robot, " + screen.buttons + ".");
+                    io.end();
+                    if (io.start()) {
+                        LateralResult result = measure(screen.header, testParameters, history);
+                        if (result != null)
+                            history.add(result);
+                    }
+                } else if (screen.index == 2) { // Exit screen
+                    if (resultsDoneScreen(history, screen, Tuner.LATERAL_MULTIPLIER)) {
+                        break; // ====>
+                    }
+                }
+            }
+
+            // Restore the kinematics:
+            MecanumDrive.PARAMS = currentParameters.params;
+            drive.initializeKinematics();
+        }
+    }
+
     // Examples:
     void splineExample() {
         runTrajectory(drive.actionBuilder(zeroPose)
@@ -3262,13 +3304,13 @@ public class LoonyTune extends LinearOpMode {
         // Dynamically build the list of tests:
         menu.addRunnable("Wheel test (wheels, motors)", this::wheelTest);
         if (drive.opticalTracker != null) {
-            // Basic tuners:
+            // Core tests and tuners:
             widgets[Tuner.PUSH.index] = menu.addRunnable("Push tuner (OTOS offset heading, linearScalar)", pushTuner::execute);
             widgets[Tuner.SPIN.index] = menu.addRunnable("Spin tuner (trackWidthTicks, OTOS angularScalar, offset)", spinTuner::execute);
             widgets[Tuner.TRACKING_TEST.index] = menu.addRunnable("Tracking test (OTOS verification)", this::trackingTest);
             widgets[Tuner.ACCELERATING.index] = menu.addRunnable("Accelerating straight line tuner (kS and kV)", acceleratingStraightLineTuner::execute);
             widgets[Tuner.FEED_FORWARD.index] = menu.addRunnable("Interactive feed forward tuner (kV and kA)", interactiveFeedForwardTuner::execute);
-            widgets[Tuner.LATERAL.index] = menu.addRunnable("Lateral tuner (lateralInPerTick)", this::lateralTuner);
+            widgets[Tuner.LATERAL_MULTIPLIER.index] = menu.addRunnable("Lateral tuner (lateralInPerTick)", lateralMultiplierTuner::execute);
             widgets[Tuner.AXIAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (axialGain)", ()->interactivePidTuner(PidTunerType.AXIAL));
             widgets[Tuner.LATERAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (lateralGain)", ()->interactivePidTuner(PidTunerType.LATERAL));
             widgets[Tuner.HEADING_GAIN.index] = menu.addRunnable("Interactive PiD tuner (headingGain)", ()->interactivePidTuner(PidTunerType.HEADING));
