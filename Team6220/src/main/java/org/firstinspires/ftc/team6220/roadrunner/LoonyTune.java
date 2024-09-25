@@ -1728,10 +1728,8 @@ public class LoonyTune extends LinearOpMode {
             canvas.setStroke("#ffd700"); // Gold
             Drawing.drawRobot(canvas, homePose);
 
-            if (baselinePose != null) {
-                canvas.setStroke("#3F51B5");
-                Drawing.drawRobot(canvas, pose);
-            }
+            canvas.setStroke("#3F51B5");
+            Drawing.drawRobot(canvas, pose);
             MecanumDrive.sendTelemetryPacket(packet);
 
         }
@@ -1945,7 +1943,7 @@ public class LoonyTune extends LinearOpMode {
                     // Calculate the new sample and log it:
                     Pose2D velocityPose = drive.opticalTracker.getVelocity();
                     double targetVelocity = v.get(0);
-                    double actualVelocity = Math.signum(velocityPose.x) * Math.hypot(velocityPose.x, velocityPose.y);
+                    double actualVelocity = velocityPose.x; // @@@ Math.signum(velocityPose.x) * Math.hypot(velocityPose.x, velocityPose.y);
                     maxVelocity = Math.max(maxVelocity, Math.max(Math.abs(targetVelocity), Math.abs(actualVelocity)));
                     maxDuration = Math.max(maxDuration, time - cycleStartTime);
                     samples.addLast(new Sample(time, v.get(0), actualVelocity));
