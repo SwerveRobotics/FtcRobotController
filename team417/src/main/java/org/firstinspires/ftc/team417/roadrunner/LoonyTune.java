@@ -699,6 +699,8 @@ public class LoonyTune extends LinearOpMode {
     static final String DPAD_UP_DOWN = buttonString("Dpad \u2195");
     static final String START = buttonString("\u25B6 START");
 
+    enum Prompt { SAVE, EXIT, CANCEL }
+
     // Menu widgets for each of the tuners:
     enum Tuner {
         WHEEL(0),
@@ -719,6 +721,7 @@ public class LoonyTune extends LinearOpMode {
         final int index;
         Tuner(int index) { this.index = index; }
     }
+
     Menu.Widget[] widgets = new Menu.Widget[Tuner.COUNT.index];
 
     // Member fields referenced by every test:
@@ -838,8 +841,6 @@ public class LoonyTune extends LinearOpMode {
             }
         }
     }
-
-    enum Prompt { SAVE, EXIT, CANCEL }
 
     /**
      * Class for doing an animated preview of a Road Runner trajectory action.
