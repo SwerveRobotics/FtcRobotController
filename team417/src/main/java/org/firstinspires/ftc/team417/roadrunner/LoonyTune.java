@@ -1203,27 +1203,6 @@ public class LoonyTune extends LinearOpMode {
         return angle;
     }
 
-    // Ramp the motors up or down to or from the target spin speed. Turns counter-clockwise
-    // when provided a positive power value.
-    void rampMotorsSpin(MecanumDrive drive, double targetPower) {
-        final double RAMP_TIME = 0.5; // Seconds
-        double startPower = drive.rightFront.getPower();
-        double deltaPower = targetPower - startPower;
-        double startTime = time();
-        while (opModeIsActive()) {
-            double duration = Math.min(time() - startTime, RAMP_TIME);
-            double power = (duration / RAMP_TIME) * deltaPower + startPower;
-            drive.rightFront.setPower(power);
-            drive.rightBack.setPower(power);
-            drive.leftFront.setPower(-power);
-            drive.leftBack.setPower(-power);
-
-            spinTuner.updateRotation();
-            if (duration == RAMP_TIME)
-                break; // ===>
-        }
-    }
-
     // Stop all motors:
     void stopMotors() { stopMotors(true); }
     void stopMotors(boolean slowAndSure) {
@@ -1235,111 +1214,6 @@ public class LoonyTune extends LinearOpMode {
             sleep(333); // Give the robot a little time to actually stop
     }
 
-    /**
-     * Structure for describing the best-fit-line for a set of points.
-     */
-    static class BestFitLine {
-        double slope;
-        double intercept;
-
-        public BestFitLine(double slope, double intercept) {
-            this.slope = slope;
-            this.intercept = intercept;
-        }
-    }
-
-    // Find the best-fit line.
-    BestFitLine fitLine(ArrayList<Point> points) {
-        // Calculate the means of x and y
-        Point sum = new Point(0, 0);
-        for (Point point: points) {
-            sum = sum.add(point);
-        }
-        Point mean = new Point(sum.x / points.size(), sum.y / points.size());
-
-        // Calculate the sum of (xi - xMean) * (yi - yMean) and (xi - xMean)^2
-        double numerator = 0;
-        double denominator = 0;
-        for (int i = 0; i < points.size(); i++) {
-            double diffX = points.get(i).x - mean.x;
-            double diffY = points.get(i).y - mean.y;
-            numerator += diffX * diffY;
-            denominator += diffX * diffX;
-        }
-
-        if (denominator == 0)
-            // All points are coincident or in a vertical line:
-            return new BestFitLine(0, 0);
-
-        // Calculate the slope (m) and intercept (c)
-        double slope = numerator / denominator;
-        double intercept = mean.y - slope * mean.x;
-
-        return new BestFitLine(slope, intercept);
-    }
-
-    // Helper for acceleratingStraightLineTuner that drives an accelerating straight line
-    // and samples voltage and velocity:
-    /** @noinspection SameParameterValue*/
-    ArrayList<Point> acceleratingStraightLine(String header, double targetDistance, double direction) {
-        final double VELOCITY_EPSILON = 2.0; // Inches/s
-        final double POWER_FACTOR_ADDER_PER_SECOND = 0.1;
-        final double MIN_POWER_FACTOR = 0.05;
-        final double MAX_POWER_FACTOR = 0.9;
-
-        // Reset the pose every time:
-        drive.setPose(zeroPose);
-
-        ArrayList<Point> points = new ArrayList<>();
-        double startTime = time();
-        while (opModeIsActive() && !io.cancel()) {
-            // Slowly ramp up the voltage. Increase power by the specified power adder:
-            double scaledPower = (time() - startTime) * POWER_FACTOR_ADDER_PER_SECOND;
-            double powerFactor = scaledPower + MIN_POWER_FACTOR;
-
-            drive.rightFront.setPower(powerFactor * direction);
-            drive.rightBack.setPower(powerFactor * direction);
-            drive.leftFront.setPower(powerFactor * direction);
-            drive.leftBack.setPower(powerFactor * direction);
-
-            Pose2D velocityVector = drive.opticalTracker.getVelocity();
-            double velocity = Math.hypot(velocityVector.x, velocityVector.y);
-
-            // Discard zero velocities that will happen when the provided power isn't
-            // enough yet to overcome static friction:
-            if (velocity > VELOCITY_EPSILON) {
-                double power = powerFactor * drive.voltageSensor.getVoltage();
-                points.add(new Point(velocity, power));
-            }
-            Pose2D position = drive.opticalTracker.getPosition();
-            double distance = Math.hypot(position.x, position.y);
-
-            // We're done if we've reach the maximum target voltage or gone far enough:
-            if ((powerFactor > MAX_POWER_FACTOR) || (distance > targetDistance)) {
-                stopMotors();
-                return points; // ====>
-            }
-
-            double remaining = Math.max(0, targetDistance - distance);
-            io.begin();
-            io.out(header);
-            io.out("Inches remaining: %.1f, power: %.1f\n\n", remaining, powerFactor);
-            io.out("Press "+B+" to cancel and stop the robot.");
-            io.end();
-        }
-
-        // Stop the robot:
-        stopMotors();
-        return null;
-    }
-
-    // Find the independent (x, y) maximum values:
-    void findMaxValues(Point max, List<Point> points) {
-        for (Point point: points) {
-            max.x = Math.max(max.x, point.x);
-            max.y = Math.max(max.y, point.y);
-        }
-    }
 
     // Draw the points to the graph on the FTC Dashboard field:
     void strokeSamples(Canvas canvas, Point scale, List<Point> points) {
@@ -1647,38 +1521,6 @@ public class LoonyTune extends LinearOpMode {
         MecanumDrive.PARAMS = currentParameters.params;
     }
 
-    // Simple verification test for 'TrackWidth':
-    void rotationTest() {
-        configureToDrive(true); // Do use MecanumDrive
-
-        io.message("To test 'trackWidthTicks', the robot will turn in-place for two complete "
-                + "rotations.\n\nPress "+A+" to start, "+B+" to cancel.");
-        if (poll.okCancelWithDriving()) {
-            // Disable the rotational PID/Ramsete behavior so that we can test just the
-            // feed-forward rotation:
-            TuneParameters testParameters = currentParameters.createClone();
-            testParameters.params.headingGain = 0;
-            testParameters.params.headingVelGain = 0;
-            MecanumDrive.PARAMS = testParameters.params;
-
-            Action action = drive.actionBuilder(zeroPose)
-                    .turn(2 * Math.toRadians(360), new TurnConstraints(
-                            MecanumDrive.PARAMS.maxAngVel / 3,
-                            -MecanumDrive.PARAMS.maxAngAccel,
-                            MecanumDrive.PARAMS.maxAngAccel))
-                    .build();
-            runCancelableAction("", action);
-
-            io.message("The robot should be facing the same direction as when it started. It it's "
-                    + "not, run the spin tuner again to re-tune 'trackWidthTicks'."
-                    + "\n\nPress "+A+" to continue.");
-            poll.ok();
-
-            // Restore the parameters:
-            MecanumDrive.PARAMS = currentParameters.params;
-        }
-    }
-
     // Run a simple trajectory with a preview and an option to disable odometry. The message
     // can be null:
     void runTrajectory(Action action) { runTrajectory(action, null);}
@@ -1730,23 +1572,6 @@ public class LoonyTune extends LinearOpMode {
         stopMotors();
         drive.setPose(zeroPose); // Reset the pose once they stopped
     }
-
-    // Navigate a short spline as a completion test.
-    void completionTest() {
-        Action action = drive.actionBuilder(zeroPose)
-                .setTangent(Math.toRadians(60))
-                .splineToLinearHeading(new Pose2d(24, 0, Math.toRadians(90)), Math.toRadians(-60))
-                .splineToLinearHeading(new Pose2d(48, 0, Math.toRadians(180)), Math.toRadians(60))
-                .endTrajectory()
-                .setTangent(Math.toRadians(-180))
-                .splineToLinearHeading(new Pose2d(0, 0, Math.toRadians(-0.0001)), Math.toRadians(-180))
-                .build();
-        String message = "The robot will drive forward 48 inches using a spline. "
-                + "It needs half a tile clearance on either side. ";
-        runTrajectory(action, message);
-        updateTunerDependencies(Tuner.COMPLETION_TEST);
-    }
-
 
     // All tuner results are derived from this Result class:
     abstract static class Result {
@@ -2166,17 +1991,19 @@ public class LoonyTune extends LinearOpMode {
             final int DISTANCE = 96; // Test distance in inches
             configureToDrive(false); // Don't use MecanumDrive
 
-            double oldOffsetHeading = currentParameters.params.otos.offset.h;
             double oldLinearScalar = currentParameters.params.otos.linearScalar;
             if (oldLinearScalar == 0)
                 oldLinearScalar = 1.0; // Can happen on the very first run, stock Road Runner sets to zero
+            double oldOffsetHeading = currentParameters.params.otos.offset.h;
 
             Action preview = drive.actionBuilder(new Pose2d(-DISTANCE / 2.0, -60, 0))
                     .lineToX(DISTANCE / 2.0)
                     .build();
             TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, preview);
             ArrayList<Result> history = new ArrayList<>();
-            history.add(new PushResult(oldLinearScalar, oldOffsetHeading));
+            history.add(new PushResult(
+                    currentParameters.params.otos.linearScalar,
+                    currentParameters.params.otos.offset.h));
 
             Screen screen = new Screen(new String[]{"Overview", "Measure", "Save and exit"});
             while (opModeIsActive()) {
@@ -2192,7 +2019,7 @@ public class LoonyTune extends LinearOpMode {
                             + "\n"
                             + "\u2022 <b>linearScalar</b> accounts for the height of the OTOS sensor from "
                             + "the surface of the field when measuring distance.\n"
-                            + "\u2022 <b>offset heading</b> adjusts the robot's heading to account for the "
+                            + "\u2022 <b>offset heading</b> corrects the robot's heading to account for the "
                             + "direction that the sensor is mounted on the robot.\n"
                             + "\n"
                             + "Press " + screen.buttons + ".");
@@ -2373,6 +2200,27 @@ public class LoonyTune extends LinearOpMode {
             io.end();
         }
 
+        // Ramp the motors up or down to or from the target spin speed. Turns counter-clockwise
+        // when provided a positive power value.
+        void rampMotorsSpin(MecanumDrive drive, double targetPower) {
+            final double RAMP_TIME = 0.5; // Seconds
+            double startPower = drive.rightFront.getPower();
+            double deltaPower = targetPower - startPower;
+            double startTime = time();
+            while (opModeIsActive()) {
+                double duration = Math.min(time() - startTime, RAMP_TIME);
+                double power = (duration / RAMP_TIME) * deltaPower + startPower;
+                drive.rightFront.setPower(power);
+                drive.rightBack.setPower(power);
+                drive.leftFront.setPower(-power);
+                drive.leftBack.setPower(-power);
+
+                spinTuner.updateRotation();
+                if (duration == RAMP_TIME)
+                    break; // ===>
+            }
+        }
+
         // Process the spin results:
         SpinResult process(Point clusterCenter, Circle center, double totalMeasuredRotation, double distancePerRevolution, double imuYawDelta) {
             double fractionalMeasuredCircles = totalMeasuredRotation / (2 * Math.PI);
@@ -2514,8 +2362,8 @@ public class LoonyTune extends LinearOpMode {
                 // Stop the rotation:
                 rampMotorsSpin(drive, 0);
 
-                io.message("Now drive the robot to align it at the wall in the same "
-                        + "place and orientation as it started."
+                io.message("Now drive the robot to align it in the same orientation at the "
+                        + "same wall as it started."
                         + "\n\nDrive the robot to its wall position, press " + A + " when done, " + B + " to cancel");
                 if ((success) && poll.okCancelWithDriving()) {
                     Point clusterCenter = clusterCenter(points);
@@ -2656,6 +2504,175 @@ public class LoonyTune extends LinearOpMode {
         ArrayList<Point> acceptedSamples; // x is velocity, y is power
         Point max; // x is velocity max, y is power max
 
+        /**
+         * Structure for describing the best-fit-line for a set of points.
+         */
+        class BestFitLine {
+            double slope;
+            double intercept;
+
+            public BestFitLine(double slope, double intercept) {
+                this.slope = slope;
+                this.intercept = intercept;
+            }
+        }
+
+        // Find the best-fit line.
+        BestFitLine fitLine(ArrayList<Point> points) {
+            // Calculate the means of x and y
+            Point sum = new Point(0, 0);
+            for (Point point: points) {
+                sum = sum.add(point);
+            }
+            Point mean = new Point(sum.x / points.size(), sum.y / points.size());
+
+            // Calculate the sum of (xi - xMean) * (yi - yMean) and (xi - xMean)^2
+            double numerator = 0;
+            double denominator = 0;
+            for (int i = 0; i < points.size(); i++) {
+                double diffX = points.get(i).x - mean.x;
+                double diffY = points.get(i).y - mean.y;
+                numerator += diffX * diffY;
+                denominator += diffX * diffX;
+            }
+
+            if (denominator == 0)
+                // All points are coincident or in a vertical line:
+                return new BestFitLine(0, 0);
+
+            // Calculate the slope (m) and intercept (c)
+            double slope = numerator / denominator;
+            double intercept = mean.y - slope * mean.x;
+
+            return new BestFitLine(slope, intercept);
+        }
+
+        // Helper that drives an accelerating straight line and samples voltage and velocity:
+        /** @noinspection SameParameterValue*/
+        ArrayList<Point> driveLine(String header, double targetDistance, double direction) {
+            final double VELOCITY_EPSILON = 2.0; // Inches/s
+            final double POWER_FACTOR_ADDER_PER_SECOND = 0.1;
+            final double MIN_POWER_FACTOR = 0.05;
+            final double MAX_POWER_FACTOR = 0.9;
+
+            // Reset the pose every time:
+            drive.setPose(zeroPose);
+
+            ArrayList<Point> points = new ArrayList<>();
+            double startTime = time();
+            while (opModeIsActive() && !io.cancel()) {
+                // Slowly ramp up the voltage. Increase power by the specified power adder:
+                double scaledPower = (time() - startTime) * POWER_FACTOR_ADDER_PER_SECOND;
+                double powerFactor = scaledPower + MIN_POWER_FACTOR;
+
+                drive.rightFront.setPower(powerFactor * direction);
+                drive.rightBack.setPower(powerFactor * direction);
+                drive.leftFront.setPower(powerFactor * direction);
+                drive.leftBack.setPower(powerFactor * direction);
+
+                Pose2D velocityVector = drive.opticalTracker.getVelocity();
+                double velocity = Math.hypot(velocityVector.x, velocityVector.y);
+
+                // Discard zero velocities that will happen when the provided power isn't
+                // enough yet to overcome static friction:
+                if (velocity > VELOCITY_EPSILON) {
+                    double power = powerFactor * drive.voltageSensor.getVoltage();
+                    points.add(new Point(velocity, power));
+                }
+                Pose2D position = drive.opticalTracker.getPosition();
+                double distance = Math.hypot(position.x, position.y);
+
+                // We're done if we've reach the maximum target voltage or gone far enough:
+                if ((powerFactor > MAX_POWER_FACTOR) || (distance > targetDistance)) {
+                    stopMotors();
+                    return points; // ====>
+                }
+
+                double remaining = Math.max(0, targetDistance - distance);
+                io.begin();
+                io.out(header);
+                io.out("Inches remaining: %.1f, power: %.1f\n\n", remaining, powerFactor);
+                io.out("Press "+B+" to cancel and stop the robot.");
+                io.end();
+            }
+
+            // Stop the robot:
+            stopMotors();
+            return null;
+        }
+
+        // Find the independent (x, y) maximum values:
+        void findMaxValues(Point max, List<Point> points) {
+            for (Point point: points) {
+                max.x = Math.max(max.x, point.x);
+                max.y = Math.max(max.y, point.y);
+            }
+        }
+
+        // Do the accelerating measurement step:
+        AcceleratingResult measure(String header) {
+            io.clearCanvas();
+
+            // Do one forward and back run:
+            ArrayList<Point> forwardSamples = driveLine(header, DISTANCE, 1.0);
+            if (forwardSamples != null) {
+                ArrayList<Point> reverseSamples = driveLine(header, DISTANCE, -1.0);
+                if (reverseSamples != null) {
+                    findMaxValues(max, forwardSamples);
+                    findMaxValues(max, reverseSamples);
+                    if (max.x == 0) {
+                        io.message(Dialog.WARNING_ICON + "The optical tracking sensor returned only zero velocities. "
+                                + "Is it working properly?"
+                                + "\n\nAborted, press " + A + " to continue.");
+                        poll.ok();
+                        return null; // ====>
+                    } else {
+                        // Draw the results to the FTC dashboard:
+                        io.begin();
+                        Canvas canvas = io.canvas();
+
+                        // Set a solid white background and an offset then draw the point samples:
+                        canvas.setFill("#ffffff");
+                        canvas.fillRect(-72, -72, 144, 144);
+                        canvas.setTranslation(-72, 72);
+
+                        // The canvas coordinates go from -72 to 72 so scale appropriately. We don't
+                        // use canvas.setScale() because that scales up the stroke widths and so makes
+                        // the lines too fat.
+                        Point scale = new Point(144 / max.x, 144 / max.y);
+                        canvas.setStroke("#00ff00");
+                        strokeSamples(canvas, scale, forwardSamples);
+                        canvas.setStroke("#0000ff");
+                        strokeSamples(canvas, scale, reverseSamples);
+
+                        // Compute and draw the best-fit line for both sets of points:
+                        ArrayList<Point> combinedSamples = new ArrayList<>();
+                        combinedSamples.addAll(acceptedSamples);
+                        combinedSamples.addAll(forwardSamples);
+                        combinedSamples.addAll(reverseSamples);
+                        BestFitLine bestFitLine = fitLine(combinedSamples);
+
+                        canvas.setStrokeWidth(1);
+                        canvas.setStroke("#ff0000");
+                        canvas.strokeLine(0, bestFitLine.intercept * scale.y,
+                                200 * scale.x, (bestFitLine.intercept + 200 * bestFitLine.slope) * scale.y);
+
+                        double kS = bestFitLine.intercept;
+                        double kV = bestFitLine.slope * currentParameters.params.inPerTick;
+
+                        graphExplanation = String.format("The graph in FTC Dashboard shows "
+                                + "velocity as the <i>x</i> axis going up to %.1f\"/s, and voltage "
+                                + "as the <i>y</i> axis going up to %.2fV.\n\n", max.x, max.y);
+
+                        // Automatically accept the combined results. (We could ask...)
+                        acceptedSamples = combinedSamples;
+                        return new AcceleratingResult(kS, kV);
+                    }
+                }
+            }
+            return null;
+        }
+
         // Automatically calculate the kS and kV terms of the feed-forward approximation by
         // ramping up the velocity in a straight line. We increase power by a fixed increment.
         void execute() {
@@ -2726,70 +2743,6 @@ public class LoonyTune extends LinearOpMode {
                     }
                 }
             }
-        }
-
-        // Do the accelerating measurement step:
-        AcceleratingResult measure(String header) {
-            io.clearCanvas();
-
-            // Do one forward and back run:
-            ArrayList<Point> forwardSamples = acceleratingStraightLine(header, DISTANCE, 1.0);
-            if (forwardSamples != null) {
-                ArrayList<Point> reverseSamples = acceleratingStraightLine(header, DISTANCE, -1.0);
-                if (reverseSamples != null) {
-                    findMaxValues(max, forwardSamples);
-                    findMaxValues(max, reverseSamples);
-                    if (max.x == 0) {
-                        io.message(Dialog.WARNING_ICON + "The optical tracking sensor returned only zero velocities. "
-                                + "Is it working properly?"
-                                + "\n\nAborted, press " + A + " to continue.");
-                        poll.ok();
-                        return null; // ====>
-                    } else {
-                        // Draw the results to the FTC dashboard:
-                        io.begin();
-                        Canvas canvas = io.canvas();
-
-                        // Set a solid white background and an offset then draw the point samples:
-                        canvas.setFill("#ffffff");
-                        canvas.fillRect(-72, -72, 144, 144);
-                        canvas.setTranslation(-72, 72);
-
-                        // The canvas coordinates go from -72 to 72 so scale appropriately. We don't
-                        // use canvas.setScale() because that scales up the stroke widths and so makes
-                        // the lines too fat.
-                        Point scale = new Point(144 / max.x, 144 / max.y);
-                        canvas.setStroke("#00ff00");
-                        strokeSamples(canvas, scale, forwardSamples);
-                        canvas.setStroke("#0000ff");
-                        strokeSamples(canvas, scale, reverseSamples);
-
-                        // Compute and draw the best-fit line for both sets of points:
-                        ArrayList<Point> combinedSamples = new ArrayList<>();
-                        combinedSamples.addAll(acceptedSamples);
-                        combinedSamples.addAll(forwardSamples);
-                        combinedSamples.addAll(reverseSamples);
-                        BestFitLine bestFitLine = fitLine(combinedSamples);
-
-                        canvas.setStrokeWidth(1);
-                        canvas.setStroke("#ff0000");
-                        canvas.strokeLine(0, bestFitLine.intercept * scale.y,
-                                200 * scale.x, (bestFitLine.intercept + 200 * bestFitLine.slope) * scale.y);
-
-                        double kS = bestFitLine.intercept;
-                        double kV = bestFitLine.slope * currentParameters.params.inPerTick;
-
-                        graphExplanation = String.format("The graph in FTC Dashboard shows "
-                            + "velocity as the <i>x</i> axis going up to %.1f\"/s, and voltage "
-                            + "as the <i>y</i> axis going up to %.2fV.\n\n", max.x, max.y);
-
-                        // Automatically accept the combined results. (We could ask...)
-                        acceptedSamples = combinedSamples;
-                        return new AcceleratingResult(kS, kV);
-                    }
-                }
-            }
-            return null;
         }
     }
 
@@ -3211,6 +3164,54 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
+    // Navigate a short spline as a completion test.
+    void completionTest() {
+        Action action = drive.actionBuilder(zeroPose)
+                .setTangent(Math.toRadians(60))
+                .splineToLinearHeading(new Pose2d(24, 0, Math.toRadians(90)), Math.toRadians(-60))
+                .splineToLinearHeading(new Pose2d(48, 0, Math.toRadians(180)), Math.toRadians(60))
+                .endTrajectory()
+                .setTangent(Math.toRadians(-180))
+                .splineToLinearHeading(new Pose2d(0, 0, Math.toRadians(-0.0001)), Math.toRadians(-180))
+                .build();
+        String message = "The robot will drive forward 48 inches using a spline. "
+                + "It needs half a tile clearance on either side. ";
+        runTrajectory(action, message);
+        updateTunerDependencies(Tuner.COMPLETION_TEST);
+    }
+
+    // Simple verification test for 'TrackWidth':
+    void rotationTest() {
+        configureToDrive(true); // Do use MecanumDrive
+
+        io.message("To test 'trackWidthTicks', the robot will turn in-place for two complete "
+                + "rotations.\n\nPress "+A+" to start, "+B+" to cancel.");
+        if (poll.okCancelWithDriving()) {
+            // Disable the rotational PID/Ramsete behavior so that we can test just the
+            // feed-forward rotation:
+            TuneParameters testParameters = currentParameters.createClone();
+            testParameters.params.headingGain = 0;
+            testParameters.params.headingVelGain = 0;
+            MecanumDrive.PARAMS = testParameters.params;
+
+            Action action = drive.actionBuilder(zeroPose)
+                    .turn(2 * Math.toRadians(360), new TurnConstraints(
+                            MecanumDrive.PARAMS.maxAngVel / 3,
+                            -MecanumDrive.PARAMS.maxAngAccel,
+                            MecanumDrive.PARAMS.maxAngAccel))
+                    .build();
+            runCancelableAction("", action);
+
+            io.message("The robot should be facing the same direction as when it started. It it's "
+                    + "not, run the spin tuner again to re-tune 'trackWidthTicks'."
+                    + "\n\nPress "+A+" to continue.");
+            poll.ok();
+
+            // Restore the parameters:
+            MecanumDrive.PARAMS = currentParameters.params;
+        }
+    }
+
     // Examples:
     void splineExample() {
         runTrajectory(drive.actionBuilder(zeroPose)
@@ -3256,11 +3257,6 @@ public class LoonyTune extends LinearOpMode {
         currentParameters = new TuneParameters(drive);
         originalParameters = currentParameters.createClone();
 
-        // Remind the user to press Start on the Driver Station, then press A on the gamepad.
-        // We require the latter because enabling the gamepad on the DS after it's been booted
-        // causes an A press to be sent to the app, and we don't want that to accidentally
-        // invoke a menu option:
-
         while (!isStarted()) {
             io.begin();
             io.out("<big><big><big><big><big><big><b>Loony Tune!</b></big></big></big></big></big></big>\n");
@@ -3270,7 +3266,11 @@ public class LoonyTune extends LinearOpMode {
             io.end();
         }
 
-        // Skip the welcome message and initial A button press if simulating:
+        // Require that a button be pressed on the gamepad to continue. We require this
+        // because enabling the gamepad on the DS after it's been booted causes an A press to
+        // be sent to the app, and we don't want that to accidentally invoke a menu option.
+        //
+        // Skip the welcome message and initial button press if simulating:
         if (!WilyWorks.isSimulating) {
             io.setWelcomeMessage("This tuner requires FTC Dashboard. Wi-Fi connect your laptop "
                     + "to the robot and go to <u>http://192.168.43.1:8080/dash</u> in your web browser. "
@@ -3325,12 +3325,10 @@ public class LoonyTune extends LinearOpMode {
             menu.addRunnable("More::Rotation test (verify trackWidthTicks)", this::rotationTest);
             menu.addRunnable("More::Show accumulated parameter changes", this::showUpdatedParameters);
             menu.addRunnable("More::Show SparkFun OTOS version", this::showOtosVersion);
-
         }
 
-        // Set the initial enable/disable status:
+        // Set the initial enable/disable status and then run the main menu update loop:
         updateTunerDependencies(null);
-
         while (opModeIsActive()) {
             io.message(menu.update());
         }
