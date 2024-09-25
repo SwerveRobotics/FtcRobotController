@@ -10,4 +10,7 @@ import org.firstinspires.ftc.team417.roadrunner.KinematicType;
  */
 abstract public class BaseOpMode extends LinearOpMode {
     public static final KinematicType kinematicType = KinematicType.MECANUM;
+
+    public static void useConfigMenu() {
+    }
 }

@@ -16,6 +16,9 @@ buildscript {
         maven {
             url = 'https://www.matthewo.tech/maven/'
         }
+        maven {
+            url 'https://jitpack.io'
+        }
     }
     dependencies {
         classpath 'org.team11260:fast-load-plugin:0.1.2'
@@ -50,4 +53,5 @@ dependencies {
     implementation "com.acmerobotics.roadrunner:actions:1.0.0"
     implementation "com.acmerobotics.dashboard:dashboard:0.4.16"
     implementation 'org.team11260:fast-load:0.1.2'
+    implementation 'com.github.valsei:java-text-menu:3.1.0'
 }
