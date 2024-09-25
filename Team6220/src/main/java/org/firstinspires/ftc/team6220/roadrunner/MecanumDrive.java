@@ -89,24 +89,24 @@ public final class MecanumDrive {
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
                 inPerTick = 1.0;
-                lateralInPerTick = 1.0;
-                trackWidthTicks = 0;
+                lateralInPerTick = 0.812;
+                trackWidthTicks = 15.99;
 
-                kS = 0;
-                kV = 0;
-                kA = 0;
+                kS = 0.695;
+                kV = 0.185;
+                kA = 0.0100;
 
-                axialGain      = 0;
-                axialVelGain   = 0;
-                lateralGain    = 0;
-                lateralVelGain = 0;
-                headingGain    = 0;
+                axialGain      = 9.00;
+                axialVelGain   = 1.80;
+                lateralGain    = 7.50;
+                lateralVelGain = 1.00;
+                headingGain    = 2.0;
                 headingVelGain = 0;
 
-                otos.offset.x = 0;
-                otos.offset.y = 0;
-                otos.offset.h = Math.toRadians(0);
-                otos.linearScalar = 0;
+                otos.offset.x = -0.029;
+                otos.offset.y = 0.600;
+                otos.offset.h = Math.toRadians(89.72);
+                otos.linearScalar = 0.9998;
                 otos.angularScalar = 0;
 
             } else {
@@ -180,7 +180,7 @@ public final class MecanumDrive {
         Log.d("roadrunner", String.format("Device name:" + inspection.deviceName));
         return inspection.deviceName;
     }
-    public static boolean isDevBot = getBotName().equals("DevBot");
+    public static boolean isDevBot = getBotName().equals("8923-RC-sw");
 
     public static Params PARAMS = new Params();
 
@@ -334,8 +334,8 @@ public final class MecanumDrive {
             rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
             rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
-            leftFront.setDirection(DcMotorEx.Direction.REVERSE);
-            leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+            rightFront.setDirection(DcMotorEx.Direction.REVERSE);
+            rightBack.setDirection(DcMotorEx.Direction.REVERSE);
         } else {
             // TODO: Create the optical tracking object:
             //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
@@ -397,6 +397,9 @@ public final class MecanumDrive {
         // would be {-5, 10, -90}. These can be any value, even the angle can be
         // tweaked slightly to compensate for imperfect mounting (eg. 1.3 degrees).
         opticalTracker.setOffset(PARAMS.otos.offset);
+
+System.out.printf("initializeOpticalTracker() PARAMS.otos.offset.h: %.3f°\n",
+        Math.toDegrees(PARAMS.otos.offset.h));
 
         // Here we can set the linear and angular scalars, which can compensate for
         // scaling issues with the sensor measurements. Note that as of firmware
