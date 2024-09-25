@@ -398,6 +398,9 @@ public final class MecanumDrive {
         // tweaked slightly to compensate for imperfect mounting (eg. 1.3 degrees).
         opticalTracker.setOffset(PARAMS.otos.offset);
 
+System.out.printf("initializeOpticalTracker() PARAMS.otos.offset.h: %.3f°\n",
+        Math.toDegrees(PARAMS.otos.offset.h));
+
         // Here we can set the linear and angular scalars, which can compensate for
         // scaling issues with the sensor measurements. Note that as of firmware
         // version 1.0, these values will be lost after a power cycle, so you will
