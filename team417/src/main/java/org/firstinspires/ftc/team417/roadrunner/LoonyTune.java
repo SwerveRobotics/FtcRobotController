@@ -1217,7 +1217,8 @@ public class LoonyTune extends LinearOpMode {
                 index = Math.min(index + 1, screens.length - 1);
             }
             if (index != oldIndex) {
-                runnable.run();
+                if (runnable != null)
+                    runnable.run();
                 stopMotors(false);
                 drive.setPose(zeroPose);
             }
@@ -3045,8 +3046,6 @@ public class LoonyTune extends LinearOpMode {
                 double headingError = normalizeAngle(drive.pose.heading.toDouble()
                         - drive.targetPose.heading.toDouble());
 
-                System.out.printf("Axial error: %.2f, lateral: %.2f, heading: %.2f\n", axialError, lateralError, headingError);
-
                 maxAxialError = Math.max(maxAxialError, axialError);
                 maxLateralError = Math.max(maxLateralError, lateralError);
                 maxHeadingError = Math.max(maxHeadingError, headingError);
@@ -3064,7 +3063,7 @@ public class LoonyTune extends LinearOpMode {
 
                 if (!more) {
                     errorSummary += (type == PidTunerType.ALL) ? "\n" : ", ";
-                    errorSummary += "Ending error: ";
+                    errorSummary += "End error: ";
                     if (type == PidTunerType.AXIAL)
                         errorSummary += String.format("%.2f\"", axialError);
                     else if (type == PidTunerType.LATERAL)
@@ -3096,10 +3095,10 @@ public class LoonyTune extends LinearOpMode {
             String adjective;
             if (type == PidTunerType.AXIAL) {
                 overview = "The robot will drive forward then backward " + testDistance(DISTANCE) + ". "
-                    + "Tune the following:\n"
+                    + "Tune these to reduce the forward/backward error between target and actual position:\n"
                     + "\n"
-                    + "\u2022 <b>axialGain</b> sets the magnitude of response to forward/reverse error. "
-                    + "A higher value more aggressively fixes error but can cause overshoot.\n"
+                    + "\u2022 <b>axialGain</b> sets the magnitude of response to the error. "
+                    + "A higher value more aggressively corrects but can cause overshoot.\n"
                     + "\u2022 <b>axialVelGain</b> is a damper and can reduce overshoot and oscillation.\n";
                 clearance = "ensure "+  clearanceDistance(DISTANCE) + " forward clearance";
                 adjective = "axially ";
@@ -3113,10 +3112,10 @@ public class LoonyTune extends LinearOpMode {
 
             } else if (type == PidTunerType.LATERAL) {
                 overview = "The robot will strafe left and then right " + testDistance(DISTANCE) + ". "
-                        + "Tune the following:\n"
+                        + "Tune these to reduce the lateral error between target and actual positions:\n"
                         + "\n"
-                        + "\u2022 <b>lateralGain</b> sets the magnitude of response to sideways error. "
-                        + "A higher value more aggressively fixes error but can cause overshoot.\n"
+                        + "\u2022 <b>lateralGain</b> sets the magnitude of response to the error. "
+                        + "A higher value more aggressively corrects but can cause overshoot.\n"
                         + "\u2022 <b>lateralVelGain</b> is a damper and can reduce overshoot and oscillation.\n";
                 clearance = "ensure " + clearanceDistance(DISTANCE) + " to the left";
                 adjective = "laterally ";
@@ -3129,10 +3128,11 @@ public class LoonyTune extends LinearOpMode {
                         .build();
 
             } else if (type == PidTunerType.HEADING) {
-                overview = "The robot will rotate in place 180\u00b0. Tune the following:\n"
+                overview = "The robot will rotate in place 180\u00b0. Tune these to reduce the "
+                        + "error between target and actual headings:"
                         + "\n"
-                        + "\u2022 <b>headingGain</b> sets the magnitude of response to heading error. "
-                        + "A higher value more aggressively fixes error but can cause overshoot.\n"
+                        + "\u2022 <b>headingGain</b> sets the magnitude of response to the error. "
+                        + "A higher value more aggressively corrects but can cause overshoot.\n"
                         + "\u2022 <b>headingVelGain</b> is a damper and can reduce overshoot and oscillation.\n";
                 clearance = "ensure enough clearance to spin";
                 adjective = "rotationally ";
@@ -3182,8 +3182,7 @@ public class LoonyTune extends LinearOpMode {
                     io.out(overview);
                     io.out("\n"
                             + "These are essentially the <b>P</b> and <b>D</b> (<i>proportional</i> and "
-                            + "<i>differential</i>) terms for a PID control system. The <i>error</i> "
-                            + "is the difference target and actual.\n"
+                            + "<i>differential</i>) terms for a PID control system.\n"
                             + "\n"
                             + "Press " + screen.buttons + ".");
                     io.end();
@@ -3217,7 +3216,7 @@ public class LoonyTune extends LinearOpMode {
                         io.out("(A small amount can be corrected by adjusting the corresponding "
                             + "velocity gain.) ");
                     } else { // Tuning a derivative gain
-                        io.out("&emsp;Don't exceed %.3f (one third the other gain)\n",
+                        io.out("&emsp;Don't exceed %.3f (\u2153 the other gain)\n", // One third
                                 0.33 * inputs.get(index ^1).value);
                         io.out("\n<b>"+ errorSummary + "</b>");
                         io.out("Increase the velocity gain to dampen oscillation "
