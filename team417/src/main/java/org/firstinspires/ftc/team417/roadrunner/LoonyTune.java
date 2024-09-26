@@ -157,6 +157,21 @@ class Io {
         return press;
     }
 
+    double nextAdvanceTime;
+    static final double INITIAL_DELAY = 0.6; // Seconds after initial press before starting to repeat
+    static final double REPEAT_DELAY = 0.1; // Seconds after any repeat to repeat again
+    private boolean repeatableButtonPress(boolean pressed, int index) {
+        boolean press = pressed && !buttonPressed[index];
+        buttonPressed[index] = pressed;
+        if (press) {
+            nextAdvanceTime = LoonyTune.time() + INITIAL_DELAY;
+        } else if ((pressed) && (LoonyTune.time() > nextAdvanceTime)) {
+            nextAdvanceTime = LoonyTune.time() + REPEAT_DELAY;
+            press = true;
+        }
+        return press;
+    }
+
     // Button press status:
     boolean ok() { return a(); }
     boolean cancel() { return b(); }
@@ -170,8 +185,8 @@ class Io {
     boolean right() { return buttonPress(gamepad.dpad_right, 7); }
     boolean leftTrigger() { return buttonPress(gamepad.left_trigger >= ANALOG_THRESHOLD, 8); }
     boolean rightTrigger() { return buttonPress(gamepad.right_trigger >= ANALOG_THRESHOLD, 9); }
-    boolean leftBumper() { return buttonPress(gamepad.left_bumper, 10); }
-    boolean rightBumper() { return buttonPress(gamepad.right_bumper, 11); }
+    boolean leftBumper() { return repeatableButtonPress(gamepad.left_bumper, 10); }
+    boolean rightBumper() { return repeatableButtonPress(gamepad.right_bumper, 11); }
     boolean guide() { return buttonPress(gamepad.guide, 12); }
     boolean start() { return buttonPress(gamepad.start, 13); }
     boolean back() { return buttonPress(gamepad.back, 14); }
@@ -330,6 +345,9 @@ class Io {
  */
 class TuneParameters {
     MecanumDrive.Params params;
+    boolean passedWheelTest;
+    boolean passedTrackingTest;
+    boolean passedCompletionTest;
 
     // Get the settings from the current MecanumDrive object:
     public TuneParameters(MecanumDrive drive) {
@@ -428,7 +446,7 @@ class Menu {
     static final double ANALOG_THRESHOLD = 0.5; // Threshold to consider an analog button pressed
     static private final String DESCRIPTOR_SEPARATOR = "::";
     static final double INITIAL_DELAY = 0.6; // Seconds after initial press before starting to repeat
-    static final double ADVANCE_DELAY = 0.1; // Seconds after any repeat to repeat again
+    static final double REPEAT_DELAY = 0.1; // Seconds after any repeat to repeat again
     private static Menu menu; // Points to our own singleton object
     Io io; // Use this for user input and output
     ArrayList<Widget> menuStack = new ArrayList<>(); // Stack of menus, the last is the current
@@ -544,7 +562,7 @@ class Menu {
             lastInput = input;
             menu.current += lastInput;
         } else if (time() > nextAdvanceTime) {
-            nextAdvanceTime = time() + ADVANCE_DELAY;
+            nextAdvanceTime = time() + REPEAT_DELAY;
             menu.current += lastInput;
         }
         menu.current = Math.max(0, Math.min(menu.widgets.size() - 1, menu.current));
@@ -695,8 +713,8 @@ public class LoonyTune extends LinearOpMode {
     static final String RIGHT_TRIGGER = buttonString("RT");
     static final String LEFT_BUMPER = buttonString("LB");
     static final String RIGHT_BUMPER = buttonString("RB");
-    static final String DPAD_LEFT_RIGHT = buttonString("Dpad \u2194");
-    static final String DPAD_UP_DOWN = buttonString("Dpad \u2195");
+    static final String DPAD_LEFT_RIGHT = buttonString("DPAD \u2194");
+    static final String DPAD_UP_DOWN = buttonString("DPAD \u2195");
     static final String START = buttonString("\u25B6 START");
 
     // Types of interactive PiD tuners:
@@ -706,18 +724,18 @@ public class LoonyTune extends LinearOpMode {
     enum Tuner {
         NONE(0),
 
-        WHEEL(1),
+        WHEEL_TEST(1),
         PUSH(2),
-        ACCELERATING(3),
-        FEED_FORWARD(4),
-        LATERAL_MULTIPLIER(5),
-        SPIN(6),
-        TRACKING(7),
-        TRACKING_TEST(8),
-        AXIAL_GAIN(9),
-        LATERAL_GAIN(10),
-        HEADING_GAIN(11),
-        COMPLETION_TEST(12),
+        SPIN(3),
+        TRACKING_TEST(4),
+        ACCELERATING(5),
+        FEED_FORWARD(6),
+        LATERAL_MULTIPLIER(7),
+        AXIAL_GAIN(8),
+        LATERAL_GAIN(9),
+        HEADING_GAIN(10),
+        COMPLETION_TEST(11),
+        RETUNE(12),
 
         COUNT(13); // Count of tuners
 
@@ -735,7 +753,7 @@ public class LoonyTune extends LinearOpMode {
     MecanumDrive drive;
     TuneParameters currentParameters;
     TuneParameters originalParameters;
-    boolean passedWheelTest;
+    int nextRetuneIndex = Tuner.COUNT.index; // Next tuner to run when re-tuning
 
     // Tests and tuners:
     PushTuner pushTuner = new PushTuner();
@@ -749,54 +767,47 @@ public class LoonyTune extends LinearOpMode {
     final Pose2d zeroPose = new Pose2d(0, 0, 0);
 
     // Update which tuners need to be disabled and which need to be run:
-    void updateTunerDependencies(Tuner tuner) {
-        if (tuner == Tuner.NONE) // This handles the 'all' case for gain tuning
-            return; // ====>
+    void updateTunerDependencies(Tuner completedTuner) {
 
-        MecanumDrive.Params params = drive.PARAMS;
+        MecanumDrive.Params params = currentParameters.params;
         MecanumDrive.Params.Otos otos = params.otos;
 
-        // Calculate which tests can be enabled base on their dependencies:
-        widgets[Tuner.PUSH.index].isEnabled         = otos.linearScalar != 0 || passedWheelTest;
-        widgets[Tuner.ACCELERATING.index].isEnabled = otos.linearScalar != 0;
-        widgets[Tuner.FEED_FORWARD.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
-        widgets[Tuner.LATERAL_MULTIPLIER.index].isEnabled      = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
-        widgets[Tuner.SPIN.index].isEnabled         = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
-        widgets[Tuner.AXIAL_GAIN.index].isEnabled   = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0;
-        widgets[Tuner.LATERAL_GAIN.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0 && params.lateralInPerTick != 0;
-        widgets[Tuner.HEADING_GAIN.index].isEnabled = otos.linearScalar != 0 && params.kS != 0 && params.kV != 0 && params.trackWidthTicks != 0;
-        widgets[Tuner.COMPLETION_TEST.index].isEnabled = params.axialGain != 0 && params.lateralGain != 0 && params.headingGain != 0;
+        // @@@ Make zero an impossibility from any test (and maybe 1.0?)
 
-        final Tuner[] PUSH_DEPENDENTS = { Tuner.ACCELERATING, Tuner.FEED_FORWARD, Tuner.LATERAL_MULTIPLIER, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] ACCELERATING_DEPENDENTS = { Tuner.FEED_FORWARD, Tuner.LATERAL_MULTIPLIER, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] FEED_FORWARD_DEPENDENTS = { Tuner.LATERAL_MULTIPLIER, Tuner.SPIN, Tuner.AXIAL_GAIN, Tuner.LATERAL_GAIN, Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] LATERAL_DEPENDENTS = { Tuner.LATERAL_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] SPIN_DEPENDENTS = { Tuner.HEADING_GAIN, Tuner.COMPLETION_TEST };
-        final Tuner[] GAIN_DEPENDENTS = { Tuner.COMPLETION_TEST };
+        Tuner firstFailure;
+        if (!currentParameters.passedWheelTest)
+            firstFailure = Tuner.WHEEL_TEST;
+        else if (otos.linearScalar == 0 || otos.offset.h == 0)
+            firstFailure = Tuner.PUSH;
+        else if (params.trackWidthTicks == 0 || otos.angularScalar == 0 ||otos.offset.x == 0 || otos.offset.y == 0)
+            firstFailure = Tuner.SPIN;
+        else if (!currentParameters.passedTrackingTest)
+            firstFailure = Tuner.TRACKING_TEST;
+        else if (params.kS == 0 || params.kV == 0)
+            firstFailure = Tuner.ACCELERATING;
+        else if (params.kA == 0)
+            firstFailure = Tuner.FEED_FORWARD;
+        else if (params.lateralInPerTick == 0 || params.lateralInPerTick == 1)
+            firstFailure = Tuner.LATERAL_MULTIPLIER;
+        else if (params.axialGain == 0)
+            firstFailure = Tuner.AXIAL_GAIN;
+        else if (params.lateralGain == 0)
+            firstFailure = Tuner.LATERAL_GAIN;
+        else if (params.headingGain == 0)
+            firstFailure = Tuner.HEADING_GAIN;
+        else if (currentParameters.passedCompletionTest)
+            firstFailure = Tuner.COMPLETION_TEST;
+        else
+            firstFailure = Tuner.COUNT; // Don't star the completion test if it already passed
 
-        // When a tuner is updated with a new value, star any other tuners that should be run:
-        if (tuner != null) {
-            Tuner[] dependents = null;
-            switch (tuner) {
-                case PUSH: dependents = PUSH_DEPENDENTS; break;
-                case ACCELERATING: dependents = ACCELERATING_DEPENDENTS; break;
-                case FEED_FORWARD: dependents = FEED_FORWARD_DEPENDENTS; break;
-                case LATERAL_MULTIPLIER: dependents = LATERAL_DEPENDENTS; break;
-                case SPIN: dependents = SPIN_DEPENDENTS; break;
-                case AXIAL_GAIN:
-                case LATERAL_GAIN:
-                case HEADING_GAIN:
-                    dependents = GAIN_DEPENDENTS; break;
-            }
-            if (dependents != null) {
-                for (Tuner dependent : dependents) {
-                    widgets[dependent.index].isStarred = true;
-                }
-            }
+        // When retuning, advance one-at-a-time based on the furthest tuners completed to now:
+        nextRetuneIndex = Math.max(nextRetuneIndex, completedTuner.index + 1);
 
-            // We can un-star the current tuner because it's now completed:
-            if (widgets[tuner.index] != null) // Can happen for wheelTest
-                widgets[tuner.index].isStarred = false;
+        // Mark the next tuner to be run:
+        int nextIndex = Math.min(firstFailure.index, nextRetuneIndex);
+        for (int i = 1; i < Tuner.COUNT.index; i++) { // 0 is reserved for 'NONE'
+            widgets[i].isEnabled = (i <= nextIndex);
+            widgets[i].isStarred = (i == nextIndex);
         }
     }
 
@@ -999,6 +1010,15 @@ public class LoonyTune extends LinearOpMode {
             while (!isStopRequested() && !io.ok())
                 io.redraw();
         }
+
+        // Return 'true' if A was pressed, 'false' otherwise:
+        boolean okCancel() {
+            while (!isStopRequested() && !io.cancel()) {
+                if (io.ok())
+                    return true;
+            }
+            return false;
+        }
     }
 
     /**
@@ -1007,7 +1027,7 @@ public class LoonyTune extends LinearOpMode {
      */
     class Dialog {
         static final String QUESTION_ICON = "<big>\u2753</big>";
-        static final String INFORMATION_ICON = "<big>\u2139\ufe0e</big>";
+        static final String INFORMATION_ICON = "<big><big>\ud83d\udec8</big></big>";
         static final String CRITICAL_ICON = "<big>\u274c</big>";
         static final String WARNING_ICON = "<big>\u26a0\ufe0f</big>";
 
@@ -1125,33 +1145,6 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
-    // Show all of the parameters that have been updated in this run:
-    public void showUpdatedParameters() {
-        String comparison = currentParameters.compare(originalParameters, true);
-        if (comparison.isEmpty()) {
-            io.message("There are no changes from your current settings.\n\nPress "+A+" to continue.");
-            poll.ok();
-        } else {
-            io.message("Here are all of the parameter updates from your current run. "
-                    + "Double-tap the shift key in Android Studio, enter 'md.params' to jump to the "
-                    + "MecanumDrive Params constructor, then update as follows:\n\n"
-                    + comparison
-                    + "\nPress "+A+" to continue.");
-            poll.ok();
-        }
-    }
-
-    // Show the SparkFun OTOS hardware and firmware version:
-    public void showOtosVersion() {
-        SparkFunOTOS.Version hwVersion = new SparkFunOTOS.Version();
-        SparkFunOTOS.Version fwVersion = new SparkFunOTOS.Version();
-        drive.opticalTracker.getVersionInfo(hwVersion, fwVersion);
-        io.message("SparkFun OTOS hardware version: %d.%d, firmware version: %d.%d\n\n"
-                + "Press "+A+" to continue.",
-                hwVersion.major, hwVersion.minor, fwVersion.major, fwVersion.minor);
-        poll.ok();
-    }
-
     // Set the hardware to the current parameters:
     public void setOtosHardware() {
         drive.initializeOpticalTracker();
@@ -1242,7 +1235,7 @@ public class LoonyTune extends LinearOpMode {
      */
     class NumericInput {
         final double INITIAL_DELAY = 0.6; // Seconds after initial press before starting to repeat
-        final double ADVANCE_DELAY = 0.15; // Seconds after any repeat to repeat again
+        final double REPEAT_DELAY = 0.15; // Seconds after any repeat to repeat again
 
         Object object; // Object being modified
         String fieldName; // Name of the field in the object being modified
@@ -1298,7 +1291,7 @@ public class LoonyTune extends LinearOpMode {
                 lastInput = input;
                 value += lastInput * Math.pow(10, digit);
             } else if (time() > nextAdvanceTime) {
-                nextAdvanceTime = time() + ADVANCE_DELAY;
+                nextAdvanceTime = time() + REPEAT_DELAY;
                 value += lastInput * Math.pow(10, digit);
             }
 
@@ -1503,12 +1496,13 @@ public class LoonyTune extends LinearOpMode {
                 io.out("Press "+A+" if everything passed, "+B+" if there was a failure, or "+screen.buttons +".");
                 io.end();
                 if (io.ok()) {
-                    passedWheelTest = true;
-                    updateTunerDependencies(Tuner.WHEEL);
+                    currentParameters.passedWheelTest = true;
+                    updateTunerDependencies(Tuner.WHEEL_TEST);
                     break; // ====>
                 }
                 if (io.cancel()) {
-                    passedWheelTest = false;
+                    currentParameters.passedWheelTest = false;
+                    updateTunerDependencies(Tuner.WHEEL_TEST);
                     break; // ====>
                 }
             }
@@ -1678,12 +1672,13 @@ public class LoonyTune extends LinearOpMode {
                 io.out("Press "+A+" if everything passed, "+B+" if there was a failure, or "+screen.buttons +".");
                 io.end();
                 if (io.ok()) {
-                    passedWheelTest = true;
-                    updateTunerDependencies(Tuner.TRACKING);
+                    currentParameters.passedTrackingTest = true;
+                    updateTunerDependencies(Tuner.TRACKING_TEST);
                     break; // ====>
                 }
                 if (io.cancel()) {
-                    passedWheelTest = false;
+                    currentParameters.passedTrackingTest = false;
+                    updateTunerDependencies(Tuner.TRACKING_TEST);
                     break; // ====>
                 }
             }
@@ -3144,16 +3139,18 @@ public class LoonyTune extends LinearOpMode {
                         .turn(-Math.PI)
                         .build();
             } else {
-                overview = "Tune all gains. The robot will @@@ PLACEHOLDER";
+                overview = "The robot will drive forward then backward " + testDistance(DISTANCE)
+                    + " while turning. Tune the gains as appropriate.\n";
                 clearance = "ensure sufficient clearance";
                 adjective = "";
                 gainNames = new String[] { "axialGain", "axialVelGain", "lateralGain", "lateralVelGain", "headingGain", "headingVelGain" };
                 tuner = Tuner.NONE;
-                trajectory = trajectory.lineToX(DISTANCE).lineToX(0);
-                preview = drive.actionBuilder(zeroPose)
-                        .turn(Math.PI)
-                        .turn(-Math.PI)
-                        .build();
+                trajectory = trajectory
+                    .lineToXLinearHeading(DISTANCE, Math.PI)
+                    .endTrajectory() // Stop at the end of the line
+                    .setTangent(Math.PI) // When we start again, go in the direction of 180 degrees
+                    .lineToXLinearHeading(0, 0);
+                preview = trajectory.build();
             }
 
             ArrayList<NumericInput> inputs = new ArrayList<>();
@@ -3216,7 +3213,7 @@ public class LoonyTune extends LinearOpMode {
                         io.out("(A small amount can be corrected by adjusting the corresponding "
                             + "velocity gain.) ");
                     } else { // Tuning a derivative gain
-                        io.out("&emsp;Don't exceed %.3f (\u2153 the other gain)\n", // One third
+                        io.out("&emsp;Don't exceed %.2f (\u2153 the other gain)\n", // One third
                                 0.33 * inputs.get(index ^1).value);
                         io.out("\n<b>"+ errorSummary + "</b>");
                         io.out("Increase the velocity gain to dampen oscillation "
@@ -3282,6 +3279,8 @@ public class LoonyTune extends LinearOpMode {
         String message = "The robot will drive forward 48 inches using a spline. "
                 + "It needs half a tile clearance on either side. ";
         runTrajectory(action, message);
+
+        currentParameters.passedCompletionTest = true;
         updateTunerDependencies(Tuner.COMPLETION_TEST);
     }
 
@@ -3351,6 +3350,45 @@ public class LoonyTune extends LinearOpMode {
                 .build());
     }
 
+    // Show all of the parameters that have been updated in this run:
+    public void updatedParametersDialog() {
+        String comparison = currentParameters.compare(originalParameters, true);
+        if (comparison.isEmpty()) {
+            io.message("There are no changes from your current settings.\n\nPress "+A+" to continue.");
+            poll.ok();
+        } else {
+            io.message("Here are all of the parameter updates from your current run. "
+                    + "Double-tap the shift key in Android Studio, enter 'md.params' to jump to the "
+                    + "MecanumDrive Params constructor, then update as follows:\n\n"
+                    + comparison
+                    + "\nPress "+A+" to continue.");
+            poll.ok();
+        }
+    }
+
+    // Show the SparkFun OTOS hardware and firmware version:
+    public void otosVersionDialog() {
+        SparkFunOTOS.Version hwVersion = new SparkFunOTOS.Version();
+        SparkFunOTOS.Version fwVersion = new SparkFunOTOS.Version();
+        drive.opticalTracker.getVersionInfo(hwVersion, fwVersion);
+        io.message("SparkFun OTOS hardware version: %d.%d, firmware version: %d.%d\n\n"
+                        + "Press "+A+" to continue.",
+                hwVersion.major, hwVersion.minor, fwVersion.major, fwVersion.minor);
+        poll.ok();
+    }
+
+    public void retuneDialog() {
+        io.message(Dialog.QUESTION_ICON + " Do you want to re-tune your robot "
+            + "after a big hardware change? "
+            + "This will walk you through the re-tuning step-by-step.\n"
+            + "\n"
+            + "Press "+A+" if yes, "+B+" to cancel.");
+        if (poll.okCancel()) {
+            nextRetuneIndex = Tuner.PUSH.index; // Assume wheels are fine so start with PUSH
+            updateTunerDependencies(Tuner.RETUNE);
+        }
+    }
+
     @Override
     public void runOpMode() {
         // Initialize member fields:
@@ -3407,11 +3445,11 @@ public class LoonyTune extends LinearOpMode {
         }
 
         // Dynamically build the list of tests:
-        menu.addRunnable("Wheel test (wheels, motors)", this::wheelTest);
+        widgets[Tuner.WHEEL_TEST.index] = menu.addRunnable("Wheel test (wheels, motors)", this::wheelTest);
         if (drive.opticalTracker != null) {
             // Core tests and tuners:
             widgets[Tuner.PUSH.index] = menu.addRunnable("Push tuner (OTOS offset heading, linearScalar)", pushTuner::execute);
-            widgets[Tuner.SPIN.index] = menu.addRunnable("Spin tuner (trackWidthTicks, OTOS angularScalar, offset)", spinTuner::execute);
+            widgets[Tuner.SPIN.index] = menu.addRunnable("Spin tuner (trackWidthTicks, OTOS angularScalar, offset x, y)", spinTuner::execute);
             widgets[Tuner.TRACKING_TEST.index] = menu.addRunnable("Tracking test (OTOS verification)", this::trackingTest);
             widgets[Tuner.ACCELERATING.index] = menu.addRunnable("Accelerating straight line tuner (kS and kV)", acceleratingStraightLineTuner::execute);
             widgets[Tuner.FEED_FORWARD.index] = menu.addRunnable("Interactive feed forward tuner (kV and kA)", interactiveFeedForwardTuner::execute);
@@ -3420,6 +3458,7 @@ public class LoonyTune extends LinearOpMode {
             widgets[Tuner.LATERAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (lateralGain)", ()->interactivePidTuner.execute(PidTunerType.LATERAL));
             widgets[Tuner.HEADING_GAIN.index] = menu.addRunnable("Interactive PiD tuner (headingGain)", ()->interactivePidTuner.execute(PidTunerType.HEADING));
             widgets[Tuner.COMPLETION_TEST.index] = menu.addRunnable("Completion test (overall verification)", this::completionTest);
+            widgets[Tuner.RETUNE.index] = menu.addRunnable("Re-tune", this::retuneDialog);
 
             // Examples:
             menu.addRunnable("Examples::Spline", this::splineExample);
@@ -3429,12 +3468,12 @@ public class LoonyTune extends LinearOpMode {
             // Extras:
             menu.addRunnable("More::Interactive PiD tuner (all gains)", ()->interactivePidTuner.execute(PidTunerType.ALL));
             menu.addRunnable("More::Rotation test (verify trackWidthTicks)", this::rotationTest);
-            menu.addRunnable("More::Show accumulated parameter changes", this::showUpdatedParameters);
-            menu.addRunnable("More::Show SparkFun OTOS version", this::showOtosVersion);
+            menu.addRunnable("More::Show accumulated parameter changes", this::updatedParametersDialog);
+            menu.addRunnable("More::Show SparkFun OTOS version", this::otosVersionDialog);
         }
 
         // Set the initial enable/disable status and then run the main menu update loop:
-        updateTunerDependencies(null);
+        updateTunerDependencies(Tuner.NONE);
         while (opModeIsActive()) {
             io.message(menu.update());
         }
