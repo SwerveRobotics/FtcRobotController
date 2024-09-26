@@ -699,24 +699,27 @@ public class LoonyTune extends LinearOpMode {
     static final String DPAD_UP_DOWN = buttonString("Dpad \u2195");
     static final String START = buttonString("\u25B6 START");
 
-    enum Prompt { SAVE, EXIT, CANCEL }
+    // Types of interactive PiD tuners:
+    enum PidTunerType { AXIAL, LATERAL, HEADING, ALL }
 
     // Menu widgets for each of the tuners:
     enum Tuner {
-        WHEEL(0),
-        PUSH(1),
-        ACCELERATING(2),
-        FEED_FORWARD(3),
-        LATERAL_MULTIPLIER(4),
-        SPIN(5),
-        TRACKING(6),
-        TRACKING_TEST(7),
-        AXIAL_GAIN(8),
-        LATERAL_GAIN(9),
-        HEADING_GAIN(10),
-        COMPLETION_TEST(11),
+        NONE(0),
 
-        COUNT(12); // Count of tuners
+        WHEEL(1),
+        PUSH(2),
+        ACCELERATING(3),
+        FEED_FORWARD(4),
+        LATERAL_MULTIPLIER(5),
+        SPIN(6),
+        TRACKING(7),
+        TRACKING_TEST(8),
+        AXIAL_GAIN(9),
+        LATERAL_GAIN(10),
+        HEADING_GAIN(11),
+        COMPLETION_TEST(12),
+
+        COUNT(13); // Count of tuners
 
         final int index;
         Tuner(int index) { this.index = index; }
@@ -740,12 +743,16 @@ public class LoonyTune extends LinearOpMode {
     AcceleratingStraightLineTuner acceleratingStraightLineTuner = new AcceleratingStraightLineTuner();
     InteractiveFeedForwardTuner interactiveFeedForwardTuner = new InteractiveFeedForwardTuner();
     LateralMultiplierTuner lateralMultiplierTuner = new LateralMultiplierTuner();
+    InteractivePidTuner interactivePidTuner = new InteractivePidTuner();
 
     // Constants:
     final Pose2d zeroPose = new Pose2d(0, 0, 0);
 
     // Update which tuners need to be disabled and which need to be run:
     void updateTunerDependencies(Tuner tuner) {
+        if (tuner == Tuner.NONE) // This handles the 'all' case for gain tuning
+            return; // ====>
+
         MecanumDrive.Params params = drive.PARAMS;
         MecanumDrive.Params.Otos otos = params.otos;
 
@@ -944,25 +951,6 @@ public class LoonyTune extends LinearOpMode {
      * Class that encapsulates user queries.
      */
     class Poll {
-        // Animate a trajectory while driving the robot and waiting for
-        // an A or B button pressed. If accept (A) is pressed, return success. If cancel (B) is
-        // pressed, return failure.
-        boolean okCancelWithPreview(Action previewTrajectory) {
-            TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, previewTrajectory);
-            boolean success = false;
-            while (!isStopRequested() && !io.cancel()) {
-                previewer.updateNotInBeginEnd();
-                if (io.ok()) {
-                    success = true;
-                    break;
-                }
-                updateGamepadDriving();
-            }
-            stopMotors();
-            drive.setPose(zeroPose); // Reset the pose once they stopped
-            return success;
-        }
-
         // Show a message, drive the robot, and wait for either an A/B button press, or an
         // A/X button press. If accept is pressed, return success. If the other button is
         // pressed, return failure. The robot CAN be driven while waiting.
@@ -1006,43 +994,16 @@ public class LoonyTune extends LinearOpMode {
             return success;
         }
 
-        // Show a message and wait for an A or B button press. If accept (A) is pressed, return
-        // success. If cancel (B) is pressed, return failure. The robot CANNOT be driven while
-        // waiting.
-        boolean okCancel() {
-            while (!isStopRequested() && !io.cancel()) {
-                io.redraw();
-                if (io.ok())
-                    return true;
-            }
-            return false;
-        }
-
         // Wait for an A button press:
         void ok() {
             while (!isStopRequested() && !io.ok())
                 io.redraw();
         }
-
-        // Show a prompt asking to save. If accept (A) is pressed, return Prompt.SAVE. If
-        // cancel (B) is pressed, return Prompt.CANCEL. If exit (X) is pressed, return Prompt.EXIT.
-        Prompt save() {
-            while (!isStopRequested()) {
-                io.message("\u2753 Do you want to save your results?\n\n" // Question mark emoji
-                        + "Press "+A+" to save, "+B+" to cancel, "+X+" to discard and exit;.");
-                if (io.ok())
-                    return Prompt.SAVE;
-                if (io.x())
-                    return Prompt.EXIT;
-                if (io.cancel())
-                    return Prompt.CANCEL;
-            }
-            return Prompt.EXIT;
-        }
     }
 
     /**
      * Class for dialog boxes.
+     * @noinspection unused
      */
     class Dialog {
         static final String QUESTION_ICON = "<big>\u2753</big>";
@@ -1068,6 +1029,12 @@ public class LoonyTune extends LinearOpMode {
     // Return a string that represents the distance the test will run:
     String testDistance(int distance) {
         return String.format("%d inches (%.1f tiles)", distance, distance / 24.0);
+    }
+
+    // Return a string that represents the amount of clearance needed:
+    /** @noinspection SameParameterValue*/
+    String clearanceDistance(int distance) {
+        return String.format("%.0f tiles", Math.ceil(distance / 24.0));
     }
 
     // Run an Action but end it early if Cancel is pressed.
@@ -1145,7 +1112,7 @@ public class LoonyTune extends LinearOpMode {
         String comparison = newParameters.compare(currentParameters, true);
         if (comparison.isEmpty()) {
             io.message("The new results match your current settings.\n\nPress "+A+" to continue.");
-            poll.okCancel();
+            poll.ok();
         } else {
             MecanumDrive.PARAMS = newParameters.params;
             currentParameters = newParameters;
@@ -1233,6 +1200,7 @@ public class LoonyTune extends LinearOpMode {
         public int index; // Currently active screen
         public String header = ""; // Header to be drawn at the top of the screen
         public String buttons = ""; // Buttons message describing what the bumper buttons do
+        Runnable runnable; // Runnable to execute when the user switches screens
 
         Screen(String[] screens) {
             this.screens = screens;
@@ -1249,6 +1217,7 @@ public class LoonyTune extends LinearOpMode {
                 index = Math.min(index + 1, screens.length - 1);
             }
             if (index != oldIndex) {
+                runnable.run();
                 stopMotors(false);
                 drive.setPose(zeroPose);
             }
@@ -1262,6 +1231,9 @@ public class LoonyTune extends LinearOpMode {
                 buttons = RIGHT_BUMPER+"/"+LEFT_BUMPER+" for the next/previous screen";
             }
         }
+
+        // Register a callback to be executed when the user switches screens:
+        void onScreenSwitch(Runnable runnable) { this.runnable = runnable; }
     }
 
     /**
@@ -1358,168 +1330,6 @@ public class LoonyTune extends LinearOpMode {
 
             return prefix + middle + suffix;
         }
-
-        // Get the current value without updating:
-        String get() {
-            return String.format(showFormat, value);
-        }
-    }
-
-    // Types of interactive PiD tuners:
-    enum PidTunerType { AXIAL, LATERAL, HEADING }
-
-    // Adjust the Ramsete/PID values:
-    void interactivePidTuner(PidTunerType type) {
-        final int DISTANCE = 48; // Test distance in inches
-        configureToDrive(true); // Do use MecanumDrive
-
-        TuneParameters testParameters = currentParameters.createClone();
-        MecanumDrive.PARAMS = testParameters.params;
-        String description, gainName, velGainName;
-        Tuner tuner;
-
-        TrajectoryActionBuilder trajectory = drive.actionBuilder(zeroPose);
-        Action preview;
-        if (type == PidTunerType.AXIAL) {
-            description = "Tune the <b>axial gains</b>. The robot will drive forwards and then backwards " + testDistance(DISTANCE) + ". ";
-            trajectory = trajectory.lineToX(DISTANCE).lineToX(0);
-            gainName = "axialGain";
-            velGainName = "axialVelGain";
-            tuner = Tuner.AXIAL_GAIN;
-            preview = drive.actionBuilder(new Pose2d(-DISTANCE/2.0, 0, 0))
-                    .lineToX(DISTANCE/2.0)
-                    .lineToX(-DISTANCE/2.0)
-                    .build();
-
-        } else if (type == PidTunerType.LATERAL) {
-            description = "Tune the <b>lateral gains</b>. The robot will strafe left and then right " + testDistance(DISTANCE) + ". ";
-            trajectory = trajectory.strafeTo(new Vector2d(0, DISTANCE)).strafeTo(new Vector2d(0, 0));
-            gainName = "lateralGain";
-            velGainName = "lateralVelGain";
-            tuner = Tuner.LATERAL_GAIN;
-            preview = drive.actionBuilder(new Pose2d(0, -DISTANCE/2.0, 0))
-                    .strafeTo(new Vector2d(0, DISTANCE/2.0))
-                    .strafeTo(new Vector2d(0, -DISTANCE/2.0))
-                    .build();
-
-        } else {
-            description = "Tune the <b>heading gains</b>. The robot will rotate in place 180\u00b0 counterclockwise and then clockwise. "; // Degree symbol
-            trajectory = trajectory.turn(Math.PI).turn(-Math.PI);
-            gainName = "headingGain";
-            velGainName = "headingVelGain";
-            tuner = Tuner.HEADING_GAIN;
-            preview = drive.actionBuilder(zeroPose)
-                    .turn(Math.PI)
-                    .turn(-Math.PI)
-                    .build();
-        }
-        io.message(description + "\n\nPress "+A+" to start, "+B+" to cancel");
-        if (poll.okCancelWithPreview(preview)) {
-
-            int inputIndex = 0;
-            int queuedAButtons = 0;
-            NumericInput gainInput = new NumericInput(drive.PARAMS, gainName, -1, 2, 0, 20);
-            NumericInput velGainInput = new NumericInput(drive.PARAMS, velGainName, -1, 2, 0, 20);
-
-            while (opModeIsActive()) {
-                // Drive:
-                io.begin();
-                boolean more = drive.doActionsWork(io.packet);
-
-                // Update the display:
-                io.out("Tune the gains:\n\n");
-                if (inputIndex == 0) {
-                    io.out(String.format("&emsp;%s: <big><big>%s</big></big>&emsp;%s: %s\n\n",
-                            gainName, gainInput.update(), velGainName, velGainInput.get()));
-                } else {
-                    io.out(String.format("&emsp;%s: %s&emsp;%s: <big><big>%s</big></big>\n\n",
-                            gainName, gainInput.get(), velGainName, velGainInput.update()));
-                }
-
-                io.out("The blue circle is actual position, green is target. "
-                        + "As the gains increase, the circles should align and the measured "
-                        + String.format("error should decrease. First, increase <b>%s</b> until the robot starts ", gainName)
-                        + String.format("to shake. Then switch to <b>%s</b> and increase it to minimize ", velGainName)
-                        + "shaking but don't overdo it. "
-                        + String.format("Then switch back to <b>%s</b> and try to increase it even more.\n\n", gainName));
-
-                // Compute the relevant error:
-                double error;
-                String errorString;
-                if (type == PidTunerType.AXIAL) {
-                    error = drive.pose.position.x - drive.targetPose.position.x;
-                    errorString = String.format("%.2f\"", error);
-                } else if (type == PidTunerType.LATERAL) {
-                    error = drive.pose.position.y - drive.targetPose.position.y;
-                    errorString = String.format("%.2f\"", error);
-                } else {
-                    error = Math.toDegrees(normalizeAngle(drive.pose.heading.toDouble()
-                                                        - drive.targetPose.heading.toDouble()));
-                    errorString = String.format("%.2f\u00b0", error);
-                }
-
-                io.put("Error", error); // Make the error graphable
-                io.putDivider();
-
-                if (io.ok())
-                    queuedAButtons++; // Let the x-button be queued up even while running
-                if (io.y())
-                    inputIndex ^= 1; // Toggle the index
-
-                if (more) {
-                    io.out("Current error: " + errorString + ".\n\n");
-                    io.out("Press "+B+" to cancel\n");
-
-                    // Only send the packet if there's more to the trajectory, otherwise the
-                    // field view will be erased once the trajectory terminates:
-                    io.end();
-                    if (io.cancel()) {
-                        // Cancel the current cycle but remain in this test:
-                        drive.abortActions();
-                        queuedAButtons = 0;
-                    }
-                } else {
-                    io.abortCanvas();
-                    io.out("Last error: " + errorString + ".\n\n");
-                    io.out(DPAD_UP_DOWN+" to change the value, "+DPAD_LEFT_RIGHT+" to move "
-                        + "the cursor, "+BUMPER+" to switch input, "+START+" to run on the robot, "+B+" to exit.");
-                    io.end();
-
-                    updateGamepadDriving();
-
-                    if (io.cancel()) {
-                        Prompt prompt = poll.save();
-                        if (prompt == Prompt.SAVE) {
-                            acceptParameters(testParameters);
-                            updateTunerDependencies(tuner);
-                            break; // ====>
-                        } else if (prompt == Prompt.EXIT) {
-                            io.message("\u26a0\ufe0f Are you sure you want to exit without saving?\n\n"
-                                    + "Press "+A+" to exit without saving, "+B+" to cancel.");
-                            if (poll.okCancel())
-                                break; // ====>
-                        }
-                    }
-
-                    // If there is no more actions, let the A button start a new one.
-                    if (queuedAButtons > 0) {
-                        queuedAButtons--;
-                        stopMotors(); // Stop the user's driving
-                        drive.setPose(zeroPose);
-                        if (type == PidTunerType.HEADING) {
-                            // An apparent Road Runner bug prevents a turn trajectory from being reused:
-                            drive.runParallel(drive.actionBuilder(zeroPose).turn(Math.PI).turn(-Math.PI).build());
-                        } else {
-                            drive.runParallel(trajectory.build());
-                        }
-                    }
-                }
-            }
-            drive.abortActions();
-            stopMotors();
-
-        }
-        MecanumDrive.PARAMS = currentParameters.params;
     }
 
     // Run a simple trajectory with a preview and an option to disable odometry. The message
@@ -1632,8 +1442,8 @@ public class LoonyTune extends LinearOpMode {
         if (io.cancel()) {
             if (comparison.isEmpty())
                 return true; // ====>
-            if (dialog.areYouSure())
-                return true; // ====>
+
+            return dialog.areYouSure(); // ====>
         }
         return false;
     }
@@ -1909,6 +1719,7 @@ public class LoonyTune extends LinearOpMode {
 
         // Do the measuring work for pushTuner. Returns the result once done; will be null if there
         // was an apparent error.
+        /** @noinspection SameParameterValue*/
         PushResult measure(String header, int targetDistance, double oldLinearScalar, double oldOffsetHeading) {
             double distance = 0;
             double heading = 0;
@@ -2848,7 +2659,7 @@ public class LoonyTune extends LinearOpMode {
                     io.out("\n"
                             + "Press " + screen.buttons + ".");
                     io.end();
-                } else if (screen.index == 3) {
+                } else if (screen.index == 3) { // Exit screen
                     screen.update();
 
                     // Create results from the current settings:
@@ -3165,6 +2976,300 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
+    class InteractivePidTuner {
+        class PidResult extends Result {
+            PidTunerType type;
+            double axialGain;
+            double axialVelGain;
+            double lateralGain;
+            double lateralVelGain;
+            double headingGain;
+            double headingVelGain;
+
+            public PidResult(PidTunerType type, MecanumDrive.Params params) {
+                this.type = type;
+                this.axialGain = params.axialGain;
+                this.axialVelGain = params.axialVelGain;
+                this.lateralGain = params.lateralGain;
+                this.lateralVelGain = params.lateralVelGain;
+                this.headingGain = params.headingGain;
+                this.headingVelGain = params.headingVelGain;
+            }
+
+            @Override
+            public String getString() {
+                if (type == PidTunerType.AXIAL) {
+                    return String.format("axialGain: %.3f, axialVelGain: %.3f", axialGain, axialVelGain);
+                } else if (type == PidTunerType.LATERAL) {
+                    return String.format("lateralGain: %.3f, lateralVelGain: %.3f", lateralGain, lateralVelGain);
+                } else if (type == PidTunerType.HEADING) {
+                    return String.format("headingGain: %.3f, headingVelGain: %.3f", headingGain, headingVelGain);
+                } else {
+                    return String.format("Gains: %.3f, %.3f, %.3f, VelGains: %.3f, %.3f, %.3f",
+                            axialGain, lateralGain, headingGain, axialVelGain, lateralVelGain, headingVelGain);
+                }
+            }
+
+            @Override
+            public void applyTo(TuneParameters parameters) {
+                parameters.params.axialGain = axialGain;
+                parameters.params.axialVelGain = axialVelGain;
+                parameters.params.lateralGain = lateralGain;
+                parameters.params.lateralVelGain = lateralVelGain;
+                parameters.params.headingGain = headingGain;
+                parameters.params.headingVelGain = headingVelGain;
+            }
+        }
+
+        final int DISTANCE = 48; // Test distance in inches
+        String errorSummary; // String describing the current amount of error
+        double maxAxialError; // Maximum error accumulated over the current robot run
+        double maxLateralError;
+        double maxHeadingError;
+
+        // Run the tuning update:
+        boolean updateTuning(PidTunerType type) {
+            // Execute the trajectory:
+            boolean more = drive.doActionsWork(io.packet);
+
+            // Update the error summary if we're actively running a trajectory, or if it's
+            // previously been updated:
+            if ((more) || !errorSummary.isEmpty()) {
+                // Compute the errors:
+                Point errorVector = new Point(drive.pose.position.x, drive.pose.position.y).subtract(
+                        new Point(drive.targetPose.position.x, drive.targetPose.position.y));
+                double errorTheta = errorVector.atan2() - drive.targetPose.heading.toDouble();
+                double errorLength = errorVector.length();
+                double axialError = errorLength * Math.cos(errorTheta);
+                double lateralError = errorLength * Math.sin(errorTheta);
+                double headingError = normalizeAngle(drive.pose.heading.toDouble()
+                        - drive.targetPose.heading.toDouble());
+
+                System.out.printf("Axial error: %.2f, lateral: %.2f, heading: %.2f\n", axialError, lateralError, headingError);
+
+                maxAxialError = Math.max(maxAxialError, axialError);
+                maxLateralError = Math.max(maxLateralError, lateralError);
+                maxHeadingError = Math.max(maxHeadingError, headingError);
+
+                errorSummary = "Max error: ";
+                if (type == PidTunerType.AXIAL)
+                    errorSummary += String.format("%.2f\"", maxAxialError);
+                else if (type == PidTunerType.LATERAL)
+                    errorSummary += String.format("%.2f\"", maxLateralError);
+                else if (type == PidTunerType.HEADING)
+                    errorSummary += String.format("%.2f\u00b0", Math.toDegrees(maxHeadingError));
+                else
+                    errorSummary += String.format("%.2f\", %.2f\", %.2f\u00b0",
+                            maxAxialError, maxLateralError, Math.toDegrees(maxHeadingError));
+
+                if (!more) {
+                    errorSummary += (type == PidTunerType.ALL) ? "\n" : ", ";
+                    errorSummary += "Ending error: ";
+                    if (type == PidTunerType.AXIAL)
+                        errorSummary += String.format("%.2f\"", axialError);
+                    else if (type == PidTunerType.LATERAL)
+                        errorSummary += String.format("%.2f\"", lateralError);
+                    else if (type == PidTunerType.HEADING)
+                        errorSummary += String.format("%.2f\u00b0", Math.toDegrees(headingError));
+                    else
+                        errorSummary += String.format("%.2f\", %.2f\", %.2f\u00b0",
+                                axialError, lateralError, Math.toDegrees(headingError));
+                }
+                errorSummary += "\n\n";
+            }
+            return more;
+        }
+
+        void execute(PidTunerType type) {
+            configureToDrive(true); // Do use MecanumDrive
+            errorSummary = "";
+
+            TuneParameters testParameters = currentParameters.createClone();
+            MecanumDrive.PARAMS = testParameters.params;
+            String overview;
+            String clearance;
+            String[] gainNames;
+            Tuner tuner;
+
+            TrajectoryActionBuilder trajectory = drive.actionBuilder(zeroPose);
+            Action preview;
+            String adjective;
+            if (type == PidTunerType.AXIAL) {
+                overview = "The robot will drive forward then backward " + testDistance(DISTANCE) + ". "
+                    + "Tune the following:\n"
+                    + "\n"
+                    + "\u2022 <b>axialGain</b> sets the magnitude of response to forward/reverse error. "
+                    + "A higher value more aggressively fixes error but can cause overshoot.\n"
+                    + "\u2022 <b>axialVelGain</b> is a damper and can reduce overshoot and oscillation.\n";
+                clearance = "ensure "+  clearanceDistance(DISTANCE) + " forward clearance";
+                adjective = "axially ";
+                gainNames = new String[] { "axialGain", "axialVelGain" };
+                tuner = Tuner.AXIAL_GAIN;
+                trajectory = trajectory.lineToX(DISTANCE).lineToX(0);
+                preview = drive.actionBuilder(new Pose2d(-DISTANCE / 2.0, 0, 0))
+                        .lineToX(DISTANCE / 2.0)
+                        .lineToX(-DISTANCE / 2.0)
+                        .build();
+
+            } else if (type == PidTunerType.LATERAL) {
+                overview = "The robot will strafe left and then right " + testDistance(DISTANCE) + ". "
+                        + "Tune the following:\n"
+                        + "\n"
+                        + "\u2022 <b>lateralGain</b> sets the magnitude of response to sideways error. "
+                        + "A higher value more aggressively fixes error but can cause overshoot.\n"
+                        + "\u2022 <b>lateralVelGain</b> is a damper and can reduce overshoot and oscillation.\n";
+                clearance = "ensure " + clearanceDistance(DISTANCE) + " to the left";
+                adjective = "laterally ";
+                gainNames = new String[] { "lateralGain", "lateralVelGain" };
+                tuner = Tuner.LATERAL_GAIN;
+                trajectory = trajectory.strafeTo(new Vector2d(0, DISTANCE)).strafeTo(new Vector2d(0, 0));
+                preview = drive.actionBuilder(new Pose2d(0, -DISTANCE / 2.0, 0))
+                        .strafeTo(new Vector2d(0, DISTANCE / 2.0))
+                        .strafeTo(new Vector2d(0, -DISTANCE / 2.0))
+                        .build();
+
+            } else if (type == PidTunerType.HEADING) {
+                overview = "The robot will rotate in place 180\u00b0. Tune the following:\n"
+                        + "\n"
+                        + "\u2022 <b>headingGain</b> sets the magnitude of response to heading error. "
+                        + "A higher value more aggressively fixes error but can cause overshoot.\n"
+                        + "\u2022 <b>headingVelGain</b> is a damper and can reduce overshoot and oscillation.\n";
+                clearance = "ensure enough clearance to spin";
+                adjective = "rotationally ";
+                gainNames = new String[] { "headingGain", "headingVelGain" };
+                tuner = Tuner.HEADING_GAIN;
+                trajectory = trajectory.turn(Math.PI).turn(-Math.PI);
+                preview = drive.actionBuilder(zeroPose)
+                        .turn(Math.PI)
+                        .turn(-Math.PI)
+                        .build();
+            } else {
+                overview = "Tune all gains. The robot will @@@ PLACEHOLDER";
+                clearance = "ensure sufficient clearance";
+                adjective = "";
+                gainNames = new String[] { "axialGain", "axialVelGain", "lateralGain", "lateralVelGain", "headingGain", "headingVelGain" };
+                tuner = Tuner.NONE;
+                trajectory = trajectory.lineToX(DISTANCE).lineToX(0);
+                preview = drive.actionBuilder(zeroPose)
+                        .turn(Math.PI)
+                        .turn(-Math.PI)
+                        .build();
+            }
+
+            ArrayList<NumericInput> inputs = new ArrayList<>();
+            ArrayList<String> screenNames = new ArrayList<>();
+            screenNames.add("Overview");
+            for (String gainName: gainNames) {
+                screenNames.add(String.format("Tune %s", gainName));
+                inputs.add(new NumericInput(drive.PARAMS, gainName, -1, 2, 0, 20));
+            }
+            screenNames.add("Save and exit");
+
+            TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, preview);
+            ArrayList<Result> history = new ArrayList<>();
+            history.add(new PidResult(type, currentParameters.params));
+
+            int queuedStarts = 0;
+            Screen screen = new Screen(screenNames.toArray(new String[0]));
+            screen.onScreenSwitch(()-> errorSummary = ""); // Clear summary on screen changes
+            while (opModeIsActive()) {
+                screen.update();
+                io.begin();
+                io.out(screen.header);
+                if (screen.index == 0) { // Overview screen
+                    previewer.update(); // Animate the trajectory preview
+                    updateGamepadDriving(); // Let the user drive
+                    io.out(overview);
+                    io.out("\n"
+                            + "These are essentially the <b>P</b> and <b>D</b> (<i>proportional</i> and "
+                            + "<i>differential</i>) terms for a PID control system. The <i>error</i> "
+                            + "is the difference target and actual.\n"
+                            + "\n"
+                            + "Press " + screen.buttons + ".");
+                    io.end();
+                } else if (screen.index == screenNames.size() - 1) { // Exit screen
+                    screen.update();
+
+                    // Create results from the current settings:
+                    PidResult result = new PidResult(type, drive.PARAMS);
+
+                    // Keep the history at a size of two:
+                    if (history.size() > 1)
+                        history.remove(1);
+
+                    // Make the new result the second in the history if it's different from the first:
+                    if (!result.getString().equals(history.get(0).getString()))
+                        history.add(result);
+
+                    if (resultsDoneScreen(history, screen, tuner))
+                        break; // ====>
+                } else { // Tune screens
+                    int index = screen.index - 1;
+                    NumericInput input = inputs.get(index);
+                    io.out("&emsp;%s: <big><big>%s</big></big>\n", input.fieldName, input.update());
+
+                    if ((index & 1) == 0) { // Tuning a proportional gain
+                        io.out("\n<b>"+ errorSummary + "</b>");
+                        io.out("Increase the gain to make the circles %scoincident and to minimize "
+                            + "the maximum and final error. ", adjective);
+                        io.out("Don't increase so much that the robot has "
+                            + "significant shaking or oscillation. ");
+                        io.out("(A small amount can be corrected by adjusting the corresponding "
+                            + "velocity gain.) ");
+                    } else { // Tuning a derivative gain
+                        io.out("&emsp;Don't exceed %.3f (one third the other gain)\n",
+                                0.33 * inputs.get(index ^1).value);
+                        io.out("\n<b>"+ errorSummary + "</b>");
+                        io.out("Increase the velocity gain to dampen oscillation "
+                            + "and shaking, but not so much that it makes it worse. ");
+                    }
+                    io.out("Press "+ DPAD_UP_DOWN + " to change the value, " + DPAD_LEFT_RIGHT
+                                    + " to move the cursor\n\n");
+
+                    if (io.start())
+                        queuedStarts++;
+
+                    // Continue the trajectory, if any:
+                    if (updateTuning(type)) {
+                        io.out("Press " + B + " to cancel and stop the robot.");
+                        io.end();
+                        if (io.cancel()) {
+                            // Cancel the current cycle but remain in this test:
+                            drive.abortActions();
+                            queuedStarts = 0;
+                        }
+                    } else {
+                        updateGamepadDriving(); // Let the user drive
+
+                        io.out("Press "+ START + " to start the robot (%s), %s.",
+                            clearance, screen.buttons);
+                        io.end();
+
+                        if (io.start())
+                            queuedStarts++;
+
+                        if (queuedStarts > 0) {
+                            // Kick off a new run:
+                            queuedStarts--;
+                            stopMotors(); // Stop the user's driving
+                            drive.setPose(zeroPose);
+                            if (type == PidTunerType.HEADING) {
+                                // An apparent Road Runner bug prevents a turn trajectory from being reused:
+                                drive.runParallel(drive.actionBuilder(zeroPose).turn(Math.PI).turn(-Math.PI).build());
+                            } else {
+                                drive.runParallel(trajectory.build());
+                            }
+                            maxAxialError = 0;
+                            maxHeadingError = 0;
+                            maxLateralError = 0;
+                        }
+                    }
+                }
+            }
+            MecanumDrive.PARAMS = currentParameters.params;
+        }
+    }
+
     // Navigate a short spline as a completion test.
     void completionTest() {
         Action action = drive.actionBuilder(zeroPose)
@@ -3312,9 +3417,9 @@ public class LoonyTune extends LinearOpMode {
             widgets[Tuner.ACCELERATING.index] = menu.addRunnable("Accelerating straight line tuner (kS and kV)", acceleratingStraightLineTuner::execute);
             widgets[Tuner.FEED_FORWARD.index] = menu.addRunnable("Interactive feed forward tuner (kV and kA)", interactiveFeedForwardTuner::execute);
             widgets[Tuner.LATERAL_MULTIPLIER.index] = menu.addRunnable("Lateral tuner (lateralInPerTick)", lateralMultiplierTuner::execute);
-            widgets[Tuner.AXIAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (axialGain)", ()->interactivePidTuner(PidTunerType.AXIAL));
-            widgets[Tuner.LATERAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (lateralGain)", ()->interactivePidTuner(PidTunerType.LATERAL));
-            widgets[Tuner.HEADING_GAIN.index] = menu.addRunnable("Interactive PiD tuner (headingGain)", ()->interactivePidTuner(PidTunerType.HEADING));
+            widgets[Tuner.AXIAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (axialGain)", ()->interactivePidTuner.execute(PidTunerType.AXIAL));
+            widgets[Tuner.LATERAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (lateralGain)", ()->interactivePidTuner.execute(PidTunerType.LATERAL));
+            widgets[Tuner.HEADING_GAIN.index] = menu.addRunnable("Interactive PiD tuner (headingGain)", ()->interactivePidTuner.execute(PidTunerType.HEADING));
             widgets[Tuner.COMPLETION_TEST.index] = menu.addRunnable("Completion test (overall verification)", this::completionTest);
 
             // Examples:
@@ -3323,6 +3428,7 @@ public class LoonyTune extends LinearOpMode {
             menu.addRunnable("Examples::Line with rotation", this::lineWithRotationExample);
 
             // Extras:
+            menu.addRunnable("More::Interactive PiD tuner (all gains)", ()->interactivePidTuner.execute(PidTunerType.ALL));
             menu.addRunnable("More::Rotation test (verify trackWidthTicks)", this::rotationTest);
             menu.addRunnable("More::Show accumulated parameter changes", this::showUpdatedParameters);
             menu.addRunnable("More::Show SparkFun OTOS version", this::showOtosVersion);
