@@ -369,12 +369,23 @@ class TuneParameters {
     }
 
     // Compare the saved and current values for a configuration parameter. If they're different,
-    // return a string that tells the user
+    // return a string that tells the user the new value and the old one:
     boolean useHtml = false;
     String comparison = "";
     void compare(String parameter, String format, double oldValue, double newValue) {
         String oldString = String.format(format, oldValue);
         String newString = String.format(format, newValue);
+
+        // Never let String.format() round fractional values to 0.0 or 1.0; we want the
+        // ceiling in those cases instead. We do this so that we can detect settings values
+        // that haven't been tuned yet and are initialized to default values.
+        if (((Double.parseDouble(newString) == 0.0) && (newValue != 0.0)) ||
+            ((Double.parseDouble(newString) == 1.0) && (newValue != 1.0))) {
+
+            // Change the least significant digit in the string to a "1":
+            newString = newString.substring(0, newString.length() - 1) + "1";
+        }
+
         if (!oldString.equals(newString)) {
             comparison += (useHtml) ? "&ensp;" : "    ";
             comparison += String.format("%s = %s; // Was %s\n", parameter, newString, oldString);
@@ -758,21 +769,24 @@ public class LoonyTune extends LinearOpMode {
     // Tests and tuners:
     PushTuner pushTuner = new PushTuner();
     SpinTuner spinTuner = new SpinTuner();
-    AcceleratingStraightLineTuner acceleratingStraightLineTuner = new AcceleratingStraightLineTuner();
-    InteractiveFeedForwardTuner interactiveFeedForwardTuner = new InteractiveFeedForwardTuner();
+    AcceleratingStraightLineTuner acceleratingTuner = new AcceleratingStraightLineTuner();
+    InteractiveFeedForwardTuner feedForwardTuner = new InteractiveFeedForwardTuner();
     LateralMultiplierTuner lateralMultiplierTuner = new LateralMultiplierTuner();
-    InteractivePidTuner interactivePidTuner = new InteractivePidTuner();
+    InteractivePidTuner pidTuner = new InteractivePidTuner();
 
     // Constants:
     final Pose2d zeroPose = new Pose2d(0, 0, 0);
+
+    // Add tuners to the menu:
+    void addTuner(Tuner tuner, Runnable runnable, String description) {
+        widgets[tuner.index] = menu.addRunnable(description, runnable);
+    }
 
     // Update which tuners need to be disabled and which need to be run:
     void updateTunerDependencies(Tuner completedTuner) {
 
         MecanumDrive.Params params = currentParameters.params;
         MecanumDrive.Params.Otos otos = params.otos;
-
-        // @@@ Make zero an impossibility from any test (and maybe 1.0?)
 
         Tuner firstFailure;
         if (!currentParameters.passedWheelTest)
@@ -3435,7 +3449,7 @@ public class LoonyTune extends LinearOpMode {
                 io.redraw();
         }
 
-        if ((drive.opticalTracker != null) &&
+        if ((drive.opticalTracker == null) ||
             ((drive.opticalTracker.getAngularUnit() != AngleUnit.RADIANS) ||
              (drive.opticalTracker.getLinearUnit() != DistanceUnit.INCH))) {
             io.message("The SparkFun OTOS must be present and configured for radians and inches.\n\n"
@@ -3445,35 +3459,36 @@ public class LoonyTune extends LinearOpMode {
         }
 
         // Dynamically build the list of tests:
-        widgets[Tuner.WHEEL_TEST.index] = menu.addRunnable("Wheel test (wheels, motors)", this::wheelTest);
-        if (drive.opticalTracker != null) {
-            // Core tests and tuners:
-            widgets[Tuner.PUSH.index] = menu.addRunnable("Push tuner (OTOS offset heading, linearScalar)", pushTuner::execute);
-            widgets[Tuner.SPIN.index] = menu.addRunnable("Spin tuner (trackWidthTicks, OTOS angularScalar, offset x, y)", spinTuner::execute);
-            widgets[Tuner.TRACKING_TEST.index] = menu.addRunnable("Tracking test (OTOS verification)", this::trackingTest);
-            widgets[Tuner.ACCELERATING.index] = menu.addRunnable("Accelerating straight line tuner (kS and kV)", acceleratingStraightLineTuner::execute);
-            widgets[Tuner.FEED_FORWARD.index] = menu.addRunnable("Interactive feed forward tuner (kV and kA)", interactiveFeedForwardTuner::execute);
-            widgets[Tuner.LATERAL_MULTIPLIER.index] = menu.addRunnable("Lateral tuner (lateralInPerTick)", lateralMultiplierTuner::execute);
-            widgets[Tuner.AXIAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (axialGain)", ()->interactivePidTuner.execute(PidTunerType.AXIAL));
-            widgets[Tuner.LATERAL_GAIN.index] = menu.addRunnable("Interactive PiD tuner (lateralGain)", ()->interactivePidTuner.execute(PidTunerType.LATERAL));
-            widgets[Tuner.HEADING_GAIN.index] = menu.addRunnable("Interactive PiD tuner (headingGain)", ()->interactivePidTuner.execute(PidTunerType.HEADING));
-            widgets[Tuner.COMPLETION_TEST.index] = menu.addRunnable("Completion test (overall verification)", this::completionTest);
-            widgets[Tuner.RETUNE.index] = menu.addRunnable("Re-tune", this::retuneDialog);
+        addTuner(Tuner.WHEEL_TEST,          this::wheelTest,                             "Wheel test (wheels, motors)");
+        addTuner(Tuner.PUSH,                pushTuner::execute,                          "Push tuner (OTOS offset heading, linearScalar)");
+        addTuner(Tuner.SPIN,                spinTuner::execute,                          "Spin tuner (trackWidthTicks, OTOS angularScalar, offset x, y)");
+        addTuner(Tuner.TRACKING_TEST,       this::trackingTest,                          "Tracking test (OTOS verification)");
+        addTuner(Tuner.ACCELERATING,        acceleratingTuner::execute,                  "Accelerating straight line tuner (kS and kV)");
+        addTuner(Tuner.FEED_FORWARD,        feedForwardTuner::execute,                   "Interactive feed forward tuner (kV and kA)");
+        addTuner(Tuner.LATERAL_MULTIPLIER,  lateralMultiplierTuner::execute,             "Lateral tuner (lateralInPerTick)");
+        addTuner(Tuner.AXIAL_GAIN,          ()-> pidTuner.execute(PidTunerType.AXIAL),   "Interactive PiD tuner (axialGain)");
+        addTuner(Tuner.LATERAL_GAIN,        ()-> pidTuner.execute(PidTunerType.LATERAL), "Interactive PiD tuner (lateralGain)");
+        addTuner(Tuner.HEADING_GAIN,        ()-> pidTuner.execute(PidTunerType.HEADING), "Interactive PiD tuner (headingGain)");
+        addTuner(Tuner.COMPLETION_TEST,     this::completionTest,                        "Completion test (overall verification)");
+        addTuner(Tuner.RETUNE,              this::retuneDialog,                          "Re-tune");
 
-            // Examples:
+        menu.addRunnable("More::Show accumulated parameter changes", this::updatedParametersDialog);
+        menu.addRunnable("More::Show SparkFun OTOS version", this::otosVersionDialog);
+
+        // Set the initial enable/disable status for the core widgets:
+        updateTunerDependencies(Tuner.NONE);
+
+        // Add more options if tuning is complete:
+        if (widgets[Tuner.COMPLETION_TEST.index].isEnabled) {
+            menu.addRunnable("More::Interactive PiD tuner (all gains)", () -> pidTuner.execute(PidTunerType.ALL));
+            menu.addRunnable("More::Rotation test (verify trackWidthTicks)", this::rotationTest);
+
             menu.addRunnable("Examples::Spline", this::splineExample);
             menu.addRunnable("Examples::LineTo/Turn example", this::lineToTurnExample);
             menu.addRunnable("Examples::Line with rotation", this::lineWithRotationExample);
-
-            // Extras:
-            menu.addRunnable("More::Interactive PiD tuner (all gains)", ()->interactivePidTuner.execute(PidTunerType.ALL));
-            menu.addRunnable("More::Rotation test (verify trackWidthTicks)", this::rotationTest);
-            menu.addRunnable("More::Show accumulated parameter changes", this::updatedParametersDialog);
-            menu.addRunnable("More::Show SparkFun OTOS version", this::otosVersionDialog);
         }
 
-        // Set the initial enable/disable status and then run the main menu update loop:
-        updateTunerDependencies(Tuner.NONE);
+        // Run the menu loop:
         while (opModeIsActive()) {
             io.message(menu.update());
         }
