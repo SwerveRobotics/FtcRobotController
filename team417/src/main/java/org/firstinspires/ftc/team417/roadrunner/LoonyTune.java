@@ -2,13 +2,6 @@
  * Loony Tune is a parameters tuner for robots using Road Runner.
  */
 
-// Short-term:
-//
-// Long-term:
-// @@@ Add LED support
-// @@@ Add max-velocity/max-acceleration testing for both linear and angular
-// @@@ Draw acceleration portion of feedback test in different color
-
 package org.firstinspires.ftc.team417.roadrunner;
 
 import static com.acmerobotics.roadrunner.Profiles.constantProfile;
@@ -314,7 +307,7 @@ class Io {
     void clearCanvas() {
         begin();
         canvas = packet.fieldOverlay();
-        canvas.setFill("#000000");
+        canvas.setFill("#ffffff");
         canvas.fillRect(-72, -72, 144, 144);
         end();
     }
@@ -352,6 +345,16 @@ class TuneParameters {
     // Get the settings from the current MecanumDrive object:
     public TuneParameters(MecanumDrive drive) {
         params = drive.PARAMS;
+    }
+
+    // Load the passed test state from the saved state:
+    public void loadPassedState() {
+        TuneParameters savedParameters = getSavedParameters();
+        if (savedParameters != null) {
+            passedWheelTest = savedParameters.passedWheelTest;
+            passedTrackingTest = savedParameters.passedTrackingTest;
+            passedCompletionTest = savedParameters.passedCompletionTest;
+        }
     }
 
     // Return a deep-copy clone of the current Settings object:
@@ -946,21 +949,12 @@ public class LoonyTune extends LinearOpMode {
             }
         }
 
-        // Update the preview
-        void updateNotInBeginEnd() { // @@@ Deprecate
-            if (currentAction != null) {
-                io.begin();
-                update();
-                io.end();
-            }
-        }
-
         // Update the preview. Must be in an active io.begin/end bracket.
         void update() {
             Canvas canvas = io.canvas();
             canvas.fillText("Preview", -19, 5, "", 0, false);
             sequentialAction.preview(canvas);
-            canvas.setStroke("#c0c0c0"); // Gray
+            canvas.setStroke("#000000"); // Black
             double time = time();
             if (time > startTime) {
                 Pose2d pose = getTargetPose();
@@ -1228,6 +1222,7 @@ public class LoonyTune extends LinearOpMode {
                     runnable.run();
                 stopMotors(false);
                 drive.setPose(zeroPose);
+                io.clearDashboardTelemetry();
             }
             header = String.format("<span style='background:#88285a'>Screen %d of %d: %s</span>\n\n", index + 1, screens.length, screens[index]);
             if (index == 0) {
@@ -1241,7 +1236,7 @@ public class LoonyTune extends LinearOpMode {
         }
 
         // Register a callback to be executed when the user switches screens:
-        void onScreenSwitch(Runnable runnable) { this.runnable = runnable; }
+        void onSwitch(Runnable runnable) { this.runnable = runnable; }
     }
 
     /**
@@ -1361,7 +1356,9 @@ public class LoonyTune extends LinearOpMode {
 
             io.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, "+BUMPER+" to toggle odometry.");
             updateGamepadDriving();
-            preview.updateNotInBeginEnd();
+            io.begin();
+            preview.update();
+            io.end();
 
             if (io.leftBumper() || io.rightBumper()) {
                 useOdometry = !useOdometry;
@@ -1511,11 +1508,13 @@ public class LoonyTune extends LinearOpMode {
                 io.end();
                 if (io.ok()) {
                     currentParameters.passedWheelTest = true;
+                    currentParameters.save();
                     updateTunerDependencies(Tuner.WHEEL_TEST);
                     break; // ====>
                 }
                 if (io.cancel()) {
                     currentParameters.passedWheelTest = false;
+                    currentParameters.save();
                     updateTunerDependencies(Tuner.WHEEL_TEST);
                     break; // ====>
                 }
@@ -1542,11 +1541,12 @@ public class LoonyTune extends LinearOpMode {
 
         double baselineImu = 0; // IMU heading when the baseline was set
         Pose2d baselinePose = null; // Position where the baseline was set
-        double maxLinearSpeed = 0; // Max linear speed seen
+        double maxLinearSpeed = 0; // Max linear speed seen, inches/s
+        double maxLinearAcceleration = 0; // Max linear acceleration seen, inches/s/s
         double maxRotationalSpeed = 0; // Max rotational speed seen, radians/s
+        double maxRotationalAcceleration = 0; // Max rotation acceleration seen, radians/s/s
 
         Screen screen = new Screen(new String[]{"Free drive", "Measure error", "Detail", "Save and exit"});
-
         while (opModeIsActive()) {
             screen.update();
             io.begin();
@@ -1554,6 +1554,15 @@ public class LoonyTune extends LinearOpMode {
 
             // Update our guess for the robot location:
             PoseVelocity2d velocity = drive.updatePoseEstimate();
+
+            Pose2D otosPosition = new Pose2D(0, 0, 0);
+            Pose2D otosVelocity = new Pose2D(0, 0, 0);
+            Pose2D otosAcceleration = new Pose2D(0, 0, 0);
+
+            // Calling getPosVelAcc() again is expensive performance-wise so don't do it when
+            // taking measurements:
+            if (screen.index != 1)
+                drive.opticalTracker.getPosVelAcc(otosPosition, otosVelocity, otosAcceleration);
 
             // Query the OTOS for any problems:
             SparkFunOTOS.Status status = drive.opticalTracker.getStatus();
@@ -1571,14 +1580,16 @@ public class LoonyTune extends LinearOpMode {
                 lastSeenTime = time();
             }
 
-            // Calculate some statistics about the velocity:
+            // Calculate some statistics about the pose results:
             double linearSpeed = Math.hypot(velocity.linearVel.x, velocity.linearVel.y);
             double rotationalSpeed = Math.abs(velocity.angVel);
-            io.put("Linear speed", linearSpeed);
-            io.put("Rotational speed", rotationalSpeed);
-            io.putDivider();
             maxLinearSpeed = Math.max(maxLinearSpeed, linearSpeed);
             maxRotationalSpeed = Math.max(maxRotationalSpeed, rotationalSpeed);
+
+            double linearAcceleration = Math.hypot(otosAcceleration.x, otosAcceleration.y);
+            double rotationalAcceleration = Math.abs(otosAcceleration.h);
+            maxLinearAcceleration = Math.max(maxLinearAcceleration, linearAcceleration);
+            maxRotationalAcceleration = Math.max(maxRotationalAcceleration, rotationalAcceleration);
 
             // Given that updatePoseEstimate was called, get the new pose and track the distance
             // traveled:
@@ -1646,7 +1657,8 @@ public class LoonyTune extends LinearOpMode {
                                 distanceError * 100, rotationError);
                     }
 
-                    io.out("\nPress "+X+" to reset what at the golden pose, "+screen.buttons+".");
+                    io.out("\nPress "+X+" to restart when back at the golden pose, "
+                        + Y + " to forget the golden pose, " + screen.buttons + ".");
                 }
                 io.end();
 
@@ -1660,10 +1672,19 @@ public class LoonyTune extends LinearOpMode {
                     maxLinearSpeed = 0;
                     maxRotationalSpeed = 0;
                 }
+                if (io.y()) { // Clear the baseline
+                    baselinePose = null;
+                }
 
             } else if (screen.index == 2) { // Detail screen
                 io.setBlankField(true); // Draw only a blank field
                 updateGamepadDriving();
+
+                io.put("Linear speed", linearSpeed);
+                io.put("Rotational speed", Math.toDegrees(rotationalSpeed));
+                io.put("Linear acceleration", linearAcceleration);
+                io.put("Rotational acceleration", Math.toDegrees(rotationalAcceleration));
+                io.putDivider();
 
                 if (currentStatus.isEmpty()) {
                     if (lastSeenStatus.isEmpty())
@@ -1678,6 +1699,8 @@ public class LoonyTune extends LinearOpMode {
 
                 io.out("Max velocities: %.1f\"/s, %.0f\u00b0/s\n",
                         maxLinearSpeed, Math.toDegrees(maxRotationalSpeed));
+                io.out("Max accelerations: %.2f\"/s/s, %.1f\u00b0/s/s\n",
+                    maxLinearAcceleration, Math.toDegrees(maxRotationalAcceleration));
 
                 io.out("\nPress " + screen.buttons + ".");
                 io.end();
@@ -1687,11 +1710,13 @@ public class LoonyTune extends LinearOpMode {
                 io.end();
                 if (io.ok()) {
                     currentParameters.passedTrackingTest = true;
+                    currentParameters.save();
                     updateTunerDependencies(Tuner.TRACKING_TEST);
                     break; // ====>
                 }
                 if (io.cancel()) {
                     currentParameters.passedTrackingTest = false;
+                    currentParameters.save();
                     updateTunerDependencies(Tuner.TRACKING_TEST);
                     break; // ====>
                 }
@@ -1859,6 +1884,7 @@ public class LoonyTune extends LinearOpMode {
                     io.end();
 
                     if (io.ok()) {
+                        io.clearCanvas();
                         PushResult result = measure(screen.header, DISTANCE, oldLinearScalar, oldOffsetHeading);
                         if (result != null)
                             history.add(result);
@@ -2266,6 +2292,7 @@ public class LoonyTune extends LinearOpMode {
                     io.end();
 
                     if (io.ok()) {
+                        io.clearCanvas();
                         SpinResult result = measure(screen.header);
                         if (result != null)
                             history.add(result);
@@ -2552,6 +2579,7 @@ public class LoonyTune extends LinearOpMode {
                             + "Press " + START + " to start the robot, " + screen.buttons + ".");
                     io.end();
                     if (io.start()) {
+                        io.clearCanvas();
                         AcceleratingResult result = measure(screen.header);
                         if (result != null)
                             history.add(result);
@@ -2687,7 +2715,6 @@ public class LoonyTune extends LinearOpMode {
                         break; // ====>
 
                 } else { // kV and kA tuning screens
-                    previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
 
                     if (screen.index == 1) {
@@ -2969,6 +2996,7 @@ public class LoonyTune extends LinearOpMode {
                             + "Press " + START + " to start the robot, " + screen.buttons + ".");
                     io.end();
                     if (io.start()) {
+                        io.clearCanvas();
                         LateralResult result = measure(screen.header, testParameters, history);
                         if (result != null)
                             history.add(result);
@@ -3182,7 +3210,7 @@ public class LoonyTune extends LinearOpMode {
 
             int queuedStarts = 0;
             Screen screen = new Screen(screenNames.toArray(new String[0]));
-            screen.onScreenSwitch(()-> errorSummary = ""); // Clear summary on screen changes
+            screen.onSwitch(()-> errorSummary = ""); // Clear summary on screen changes
             while (opModeIsActive()) {
                 screen.update();
                 io.begin();
@@ -3295,6 +3323,7 @@ public class LoonyTune extends LinearOpMode {
         runTrajectory(action, message);
 
         currentParameters.passedCompletionTest = true;
+        currentParameters.save();
         updateTunerDependencies(Tuner.COMPLETION_TEST);
     }
 
@@ -3398,8 +3427,8 @@ public class LoonyTune extends LinearOpMode {
             + "\n"
             + "Press "+A+" if yes, "+B+" to cancel.");
         if (poll.okCancel()) {
-            nextRetuneIndex = Tuner.PUSH.index; // Assume wheels are fine so start with PUSH
-            updateTunerDependencies(Tuner.RETUNE);
+            nextRetuneIndex = 0; // Reset to the beginning
+            updateTunerDependencies(Tuner.WHEEL_TEST); // Pretend we just finished the wheel test
         }
     }
 
@@ -3412,6 +3441,7 @@ public class LoonyTune extends LinearOpMode {
         dialog = new Dialog();
         drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, zeroPose);
         currentParameters = new TuneParameters(drive);
+        currentParameters.loadPassedState();
         originalParameters = currentParameters.createClone();
 
         while (!isStarted()) {
@@ -3459,16 +3489,16 @@ public class LoonyTune extends LinearOpMode {
         }
 
         // Dynamically build the list of tests:
-        addTuner(Tuner.WHEEL_TEST,          this::wheelTest,                             "Wheel test (wheels, motors)");
+        addTuner(Tuner.WHEEL_TEST,          this::wheelTest,                             "Wheel test (wheels, motors verification)");
         addTuner(Tuner.PUSH,                pushTuner::execute,                          "Push tuner (OTOS offset heading, linearScalar)");
-        addTuner(Tuner.SPIN,                spinTuner::execute,                          "Spin tuner (trackWidthTicks, OTOS angularScalar, offset x, y)");
+        addTuner(Tuner.SPIN,                spinTuner::execute,                          "Spin tuner (trackWidthTicks, OTOS angularScalar, x/y offset)");
         addTuner(Tuner.TRACKING_TEST,       this::trackingTest,                          "Tracking test (OTOS verification)");
-        addTuner(Tuner.ACCELERATING,        acceleratingTuner::execute,                  "Accelerating straight line tuner (kS and kV)");
-        addTuner(Tuner.FEED_FORWARD,        feedForwardTuner::execute,                   "Interactive feed forward tuner (kV and kA)");
+        addTuner(Tuner.ACCELERATING,        acceleratingTuner::execute,                  "Accelerating straight line tuner (kS, kV)");
+        addTuner(Tuner.FEED_FORWARD,        feedForwardTuner::execute,                   "Interactive feed forward tuner (kV, kA)");
         addTuner(Tuner.LATERAL_MULTIPLIER,  lateralMultiplierTuner::execute,             "Lateral tuner (lateralInPerTick)");
-        addTuner(Tuner.AXIAL_GAIN,          ()-> pidTuner.execute(PidTunerType.AXIAL),   "Interactive PiD tuner (axialGain)");
-        addTuner(Tuner.LATERAL_GAIN,        ()-> pidTuner.execute(PidTunerType.LATERAL), "Interactive PiD tuner (lateralGain)");
-        addTuner(Tuner.HEADING_GAIN,        ()-> pidTuner.execute(PidTunerType.HEADING), "Interactive PiD tuner (headingGain)");
+        addTuner(Tuner.AXIAL_GAIN,          ()-> pidTuner.execute(PidTunerType.AXIAL),   "Interactive PiD tuner (axial gains)");
+        addTuner(Tuner.LATERAL_GAIN,        ()-> pidTuner.execute(PidTunerType.LATERAL), "Interactive PiD tuner (lateral gains)");
+        addTuner(Tuner.HEADING_GAIN,        ()-> pidTuner.execute(PidTunerType.HEADING), "Interactive PiD tuner (heading gains)");
         addTuner(Tuner.COMPLETION_TEST,     this::completionTest,                        "Completion test (overall verification)");
         addTuner(Tuner.RETUNE,              this::retuneDialog,                          "Re-tune");
 
