@@ -17,9 +17,11 @@ import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.HolonomicController;
+import com.acmerobotics.roadrunner.IdentityPoseMap;
 import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.MotorFeedforward;
+import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Pose2dDual;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
@@ -841,7 +843,14 @@ public final class MecanumDrive {
         c.strokePolyline(xPoints, yPoints);
     }
 
+    // Build a trajectory without any transformations:
     public TrajectoryActionBuilder actionBuilder(Pose2d beginPose) {
+        return actionBuilder(beginPose, new IdentityPoseMap());
+    }
+
+    // The poseMap is a handy option for transformations (such as mirroring) on all
+    // coordinates in the trajectory:
+    public TrajectoryActionBuilder actionBuilder(Pose2d beginPose, PoseMap poseMap) {
         return new TrajectoryActionBuilder(
                 TurnAction::new,
                 FollowTrajectoryAction::new,
@@ -853,7 +862,8 @@ public final class MecanumDrive {
                 ),
                 beginPose, 0.0,
                 defaultTurnConstraints,
-                defaultVelConstraint, defaultAccelConstraint
+                defaultVelConstraint, defaultAccelConstraint,
+                poseMap
         );
     }
 

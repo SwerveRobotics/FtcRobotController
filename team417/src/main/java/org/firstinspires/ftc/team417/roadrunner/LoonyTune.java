@@ -342,14 +342,10 @@ class TuneParameters {
     boolean passedTrackingTest;
     boolean passedCompletionTest;
 
-    // Get the settings from the current MecanumDrive object:
-    public TuneParameters(MecanumDrive drive) {
+    // Get the tuning parameters from the current MecanumDrive object but the 'passed' state
+    // from the saved state, if any:
+    public TuneParameters(MecanumDrive drive, TuneParameters savedParameters) {
         params = drive.PARAMS;
-    }
-
-    // Load the passed test state from the saved state:
-    public void loadPassedState() {
-        TuneParameters savedParameters = getSavedParameters();
         if (savedParameters != null) {
             passedWheelTest = savedParameters.passedWheelTest;
             passedTrackingTest = savedParameters.passedTrackingTest;
@@ -407,7 +403,7 @@ class TuneParameters {
     }
 
     // Validate that the settings are valid and apply to the current robot:
-    TuneParameters getSavedParameters() {
+    static TuneParameters getSavedParameters() {
         // Load the saved settings from the preferences database:
         Preferences preferences = Preferences.userNodeForPackage(TuneParameters.class);
         Gson gson = new Gson();
@@ -836,7 +832,7 @@ public class LoonyTune extends LinearOpMode {
         if (WilyWorks.isSimulating)
             return; // ====>
 
-        TuneParameters currentSettings = new TuneParameters(drive);
+        TuneParameters currentSettings = new TuneParameters(drive, null);
         TuneParameters savedSettings = currentSettings.getSavedParameters();
         if (savedSettings != null) {
             String comparison = savedSettings.compare(currentSettings, false);
@@ -1354,7 +1350,7 @@ public class LoonyTune extends LinearOpMode {
             else
                 message += "\n\nRunning <b>without</b> odometry correction. Press "+BUMPER+" to re-enable.";
 
-            io.message(message + "\n\nPress "+A+" to start, "+B+" to cancel, "+BUMPER+" to toggle odometry.");
+            io.message(message + "\n\nPress "+START+" to start the robot, "+B+" to cancel, "+BUMPER+" to toggle odometry.");
             updateGamepadDriving();
             io.begin();
             preview.update();
@@ -1363,7 +1359,7 @@ public class LoonyTune extends LinearOpMode {
             if (io.leftBumper() || io.rightBumper()) {
                 useOdometry = !useOdometry;
             }
-            if (io.ok()) {
+            if (io.start()) {
                 stopMotors();
                 drive.setPose(zeroPose);
                 if (useOdometry) {
@@ -3423,7 +3419,8 @@ public class LoonyTune extends LinearOpMode {
     public void retuneDialog() {
         io.message(Dialog.QUESTION_ICON + " Do you want to re-tune your robot "
             + "after a big hardware change? "
-            + "This will walk you through the re-tuning step-by-step.\n"
+            + "This will walk you through the re-tuning step-by-step. It will also show your "
+            + "new tuning results compared to your previous results.\n"
             + "\n"
             + "Press "+A+" if yes, "+B+" to cancel.");
         if (poll.okCancel()) {
@@ -3440,8 +3437,7 @@ public class LoonyTune extends LinearOpMode {
         poll = new Poll();
         dialog = new Dialog();
         drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, zeroPose);
-        currentParameters = new TuneParameters(drive);
-        currentParameters.loadPassedState();
+        currentParameters = new TuneParameters(drive, TuneParameters.getSavedParameters());
         originalParameters = currentParameters.createClone();
 
         while (!isStarted()) {
