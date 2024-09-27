@@ -91,25 +91,25 @@ public final class MecanumDrive {
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
                 inPerTick = 1.0;
-                lateralInPerTick = 1.0;
-                trackWidthTicks = 0;
+                lateralInPerTick=0.834;
+                trackWidthTicks=16.11;
 
-                kS = 0;
-                kV = 0;
-                kA = 0;
+                kS=0.584;
+                kV=0.181;
+                kA=0.0101;
 
-                axialGain      = 0;
-                axialVelGain   = 0;
-                lateralGain    = 0;
-                lateralVelGain = 0;
-                headingGain    = 0;
-                headingVelGain = 0;
+                axialGain=10.10;
+                axialVelGain=1.2;
+                lateralGain=9.1;
+                lateralVelGain=0;
+                headingGain=3.8;
+                headingVelGain=0;
 
-                otos.offset.x = 0;
-                otos.offset.y = 0;
-                otos.offset.h = Math.toRadians(0);
-                otos.linearScalar = 0;
-                otos.angularScalar = 0;
+                otos.offset.x=6.715;
+                otos.offset.y=3.152;
+                otos.offset.h=Math.toRadians(-88.397);
+                otos.linearScalar=1.064;
+                otos.angularScalar=1.0011;
 
             } else {
                 // Your competition robot Loony Tune configuration is here:
