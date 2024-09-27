@@ -202,7 +202,8 @@ public final class MecanumDrive {
     public Localizer localizer;
     public Pose2d pose; // Current actual pose
     public Pose2d targetPose; // Target pose when actively traversing a trajectory
-    public SparkFunOTOS opticalTracker = null; // Can be null which means no optical tracking sensor
+    public SparkFunOTOS opticalTracker; // Can be null which means no OTOS
+    public SparkFunOTOS.Pose2D opticalAcceleration; // Most recent acceleration from the OTOS
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -793,6 +794,7 @@ public final class MecanumDrive {
 
             // This single call is faster than separate calls to getPosition() and getVelocity():
             opticalTracker.getPosVelAcc(position, velocity, acceleration);
+            opticalAcceleration = acceleration;
 
             // Road Runner requires the pose to be field-relative while the velocity has to be
             // robot-relative, but the optical tracking sensor reports everything as field-

@@ -1547,15 +1547,6 @@ public class LoonyTune extends LinearOpMode {
             // Update our guess for the robot location:
             PoseVelocity2d velocity = drive.updatePoseEstimate();
 
-            Pose2D otosPosition = new Pose2D(0, 0, 0);
-            Pose2D otosVelocity = new Pose2D(0, 0, 0);
-            Pose2D otosAcceleration = new Pose2D(0, 0, 0);
-
-            // Calling getPosVelAcc() again is expensive performance-wise so don't do it when
-            // taking measurements:
-            if (screens.index != 1)
-                drive.opticalTracker.getPosVelAcc(otosPosition, otosVelocity, otosAcceleration);
-
             // Query the OTOS for any problems:
             SparkFunOTOS.Status status = drive.opticalTracker.getStatus();
             String currentStatus = "";
@@ -1578,8 +1569,8 @@ public class LoonyTune extends LinearOpMode {
             maxLinearSpeed = Math.max(maxLinearSpeed, linearSpeed);
             maxRotationalSpeed = Math.max(maxRotationalSpeed, rotationalSpeed);
 
-            double linearAcceleration = Math.hypot(otosAcceleration.x, otosAcceleration.y);
-            double rotationalAcceleration = Math.abs(otosAcceleration.h);
+            double linearAcceleration = Math.hypot(drive.opticalAcceleration.x, drive.opticalAcceleration.y);
+            double rotationalAcceleration = Math.abs(drive.opticalAcceleration.h);
             maxLinearAcceleration = Math.max(maxLinearAcceleration, linearAcceleration);
             maxRotationalAcceleration = Math.max(maxRotationalAcceleration, rotationalAcceleration);
 
