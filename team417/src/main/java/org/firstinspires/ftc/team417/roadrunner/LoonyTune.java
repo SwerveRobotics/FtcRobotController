@@ -996,17 +996,17 @@ public class LoonyTune extends LinearOpMode {
      * @noinspection unused
      */
     class Dialog {
-        static final String QUESTION_ICON = "<big>\u2753</big>";
-        static final String INFORMATION_ICON = "<big><big>\ud83d\udec8</big></big>";
-        static final String CRITICAL_ICON = "<big>\u274c</big>";
-        static final String WARNING_ICON = "<big>\u26a0\ufe0f</big>";
+        static final String QUESTION_ICON = "<big>\u2753</big> ";
+        static final String INFORMATION_ICON = "<big><big>\ud83d\udec8</big></big> ";
+        static final String CRITICAL_ICON = "<big>\u274c</big> ";
+        static final String WARNING_ICON = "<big>\u26a0\ufe0f</big> ";
 
         void warning(String format, Object... args) {
-            io.message(WARNING_ICON + format, args);
+            io.message(WARNING_ICON + format + "\n\nPress " + A + " to continue.", args);
             poll.ok();
         }
         void warning(String message) {
-            io.message(WARNING_ICON + " " + message);
+            io.message(WARNING_ICON + message + "\n\nPress " + A + " to continue.");
             poll.ok();
         }
     }
@@ -1429,7 +1429,7 @@ public class LoonyTune extends LinearOpMode {
             if (comparison.isEmpty())
                 return true; // ====>
 
-            dialog.warning("Are you sure you want to discard your results?\n"
+            io.message(Dialog.WARNING_ICON + "Are you sure you want to discard your results?\n"
                     + "\n"
                     + A + " to discard, " + B + " to cancel.");
             return poll.okCancel();
@@ -1618,7 +1618,7 @@ public class LoonyTune extends LinearOpMode {
             } else if (screens.index == 2) { // Measure error screen
                 updateGamepadDriving();
 
-                Canvas canvas = io.canvas(Io.Background.GRID);
+                Canvas canvas = io.canvas(Io.Background.FIELD); // Draw the real actual field
                 canvas.setStroke("#ffd700"); // Gold
                 Drawing.drawRobot(canvas, homePose);
 
@@ -2103,15 +2103,12 @@ public class LoonyTune extends LinearOpMode {
             // Do some sanity checking on the results:
             if ((Math.abs(offset.x) > 12) || (Math.abs(offset.y) > 12)) {
                 dialog.warning("The calculated OTOS offset to the center of rotation "
-                    + "is (%.2f, %.2f) and is clearly bogus. "
-                    + "\n\n"
-                    + "Discarded results, press "+A+" to continue.", offset.x, offset.y);
+                    + "is (%.2f, %.2f) and is clearly bogus.", offset.x, offset.y);
                 return null; // ====>
             } else if ((angularScalar < SparkFunOTOS.MIN_SCALAR) || (angularScalar > SparkFunOTOS.MAX_SCALAR)) {
                 dialog.warning("The calculated OTOS angular sclar of %.4f and "
                     + "out of valid range. Did you properly align the robot on the wall the same "
-                    + "way at both the start and end of this test?\n\n"
-                    + "Aborted, press "+A+" to continue.", angularScalar);
+                    + "way at both the start and end of this test?", angularScalar);
                 poll.ok();
                 return null; // ====>
             }
@@ -2391,7 +2388,7 @@ public class LoonyTune extends LinearOpMode {
 
         // Helper that drives an accelerating straight line and samples voltage and velocity:
         /** @noinspection SameParameterValue*/
-        ArrayList<Point> driveLine(String header, double targetDistance, double direction) {
+        ArrayList<Point> driveLine(String header, double direction) {
             final double VELOCITY_EPSILON = 2.0; // Inches/s
             final double POWER_FACTOR_ADDER_PER_SECOND = 0.1;
             final double MIN_POWER_FACTOR = 0.05;
@@ -2425,12 +2422,18 @@ public class LoonyTune extends LinearOpMode {
                 double distance = Math.hypot(position.x, position.y);
 
                 // We're done if we've reach the maximum target voltage or gone far enough:
-                if ((powerFactor > MAX_POWER_FACTOR) || (distance > targetDistance)) {
+                if ((powerFactor > MAX_POWER_FACTOR) || (distance > DISTANCE)) {
+                    if (Math.abs(position.x) < 0.9 * DISTANCE) {
+                        dialog.warning("Odometry is inconsistent with movement direction. "
+                            + "Rerun first tuners.");
+                        return null; // ====>
+                    }
+
                     stopMotors();
                     return points; // ====>
                 }
 
-                double remaining = Math.max(0, targetDistance - distance);
+                double remaining = Math.max(0, DISTANCE - distance);
                 io.begin();
                 io.out(header);
                 io.out("Inches remaining: %.1f, power: %.1f\n\n", remaining, powerFactor);
@@ -2454,16 +2457,15 @@ public class LoonyTune extends LinearOpMode {
         // Do the accelerating measurement step:
         AcceleratingResult measure(String header) {
             // Do one forward and back run:
-            ArrayList<Point> forwardSamples = driveLine(header, DISTANCE, 1.0);
+            ArrayList<Point> forwardSamples = driveLine(header, 1.0);
             if (forwardSamples != null) {
-                ArrayList<Point> reverseSamples = driveLine(header, DISTANCE, -1.0);
+                ArrayList<Point> reverseSamples = driveLine(header, -1.0);
                 if (reverseSamples != null) {
                     findMaxValues(max, forwardSamples);
                     findMaxValues(max, reverseSamples);
                     if (max.x == 0) {
                         dialog.warning("The optical tracking sensor returned only zero velocities. "
-                                + "Is it working properly?"
-                                + "\n\nAborted, press " + A + " to continue.");
+                                + "Is it working properly?");
                         return null; // ====>
                     } else {
                         // Draw the results to the FTC dashboard:
@@ -2625,38 +2627,37 @@ public class LoonyTune extends LinearOpMode {
 
         double runStartTime; // Start time of the run
         double profileStartTime; // Start time of the profile cycle, there are two in every run
-        TimeProfile profile; // The current Road Runner velocity profile
-        double maxTargetVelocity; // Maximum target velocity
+        double maxTargetVelocity; // Maximum target velocity, known ahead of time
+        double maxActualVelocity; // Maximum actual velocity, accumulated from measurements
         boolean movingForwards;
         double maxDuration; // Max run duration, accumulated across runs
         double lastGraphTime; // Last time the graph was updated, in seconds
         LinkedList<Sample> samples; // The accumulated samples
 
         // Start a run of the robot:
-        void startRun(double maxVelocityFactor) {
+        TimeProfile startRun(double maxVelocityFactor) {
             stopMotors(); // Stop the user's driving
             movingForwards = true;
             runStartTime = time();
             profileStartTime = time();
             maxTargetVelocity = MecanumDrive.PARAMS.maxWheelVel * maxVelocityFactor;
-            profile = new TimeProfile(constantProfile(
-                    DISTANCE, 0.0,
-                    maxTargetVelocity,
-                    MecanumDrive.PARAMS.minProfileAccel,
-                    MecanumDrive.PARAMS.maxProfileAccel).baseProfile);
+            maxActualVelocity = 0;
             samples = new LinkedList<>();
 
             // Reset the start position on every cycle. This ensures that getVelocity().x
             // is the appropriate velocity to read, and it resets after we reposition
             // the robot:
             drive.setPose(new Pose2d(-DISTANCE / 2.0, 0, 0));
+            return new TimeProfile(constantProfile(
+                    DISTANCE, 0.0,
+                    maxTargetVelocity,
+                    MecanumDrive.PARAMS.minProfileAccel,
+                    MecanumDrive.PARAMS.maxProfileAccel).baseProfile);
         }
 
-        // Execute a loop of the run logic. Returns true if successful; false if it
-        // should be called again.
-        boolean run(boolean highlightKv) {
-            double maxVelocity = maxTargetVelocity; // Will update to maximum measured velocity
-
+        // Execute one iteration of the run logic. Returns the TimeProfile if it's still active,
+        // or null if the profile is complete.
+        TimeProfile run(TimeProfile profile, boolean highlightKv) {
             double time = time();
             double elapsedTime = time - profileStartTime;
             if (elapsedTime > profile.duration) {
@@ -2664,8 +2665,11 @@ public class LoonyTune extends LinearOpMode {
                     movingForwards = false;
                     profileStartTime = time;
                 } else {
-                    profile = null;
-                    return false; // ====>
+                    if (maxActualVelocity < 0.5 * maxTargetVelocity) {
+                        dialog.warning("Unexpectedly low robot velocity. Examine robot or redo "
+                            + "first tuners.");
+                    }
+                    return null; // ====> All done!
                 }
             }
 
@@ -2679,8 +2683,16 @@ public class LoonyTune extends LinearOpMode {
             double targetVelocity = dualVelocity.get(0);
             double targetAcceleration = dualVelocity.get(1);
             double actualVelocity = Math.signum(velocityPose.x) * Math.hypot(velocityPose.x, velocityPose.y);
-            maxVelocity = Math.max(maxVelocity, Math.abs(actualVelocity));
+            maxActualVelocity = Math.max(maxActualVelocity, Math.abs(actualVelocity));
             maxDuration = Math.max(maxDuration, time - runStartTime);
+
+            // Do some sanity checking:
+            if (Math.abs(velocityPose.y) > 0.1 * maxTargetVelocity) {
+                dialog.warning("Odometry results are inconsistent with movement. "
+                    + "Re-run first tuners.");
+                stopMotors();
+                return null; // ====>
+            }
 
             // Highlight the flat tops and bottoms if tuning kV, and the acceleration and
             // deceleration (but not regenerative) portions if tuning kA:
@@ -2703,9 +2715,9 @@ public class LoonyTune extends LinearOpMode {
                 canvas.setFill("#ffffff");
                 canvas.fillRect(-72, -72, 144, 144);
                 canvas.setTranslation(0, 72);
+                double maxGraphVelocity = Math.max(maxActualVelocity, maxTargetVelocity);
                 double xScale = (maxDuration == 0) ? 1 : 144 / maxDuration;
-                double yScale = (maxVelocity == 0) ? 1 : 72 / maxVelocity;
-
+                double yScale = (maxGraphVelocity == 0) ? 1 : 72 / maxGraphVelocity;
 
                 // For efficiency, do a first pass to find the length of every sequence of
                 // highlight/no-highlight samples:
@@ -2755,8 +2767,7 @@ public class LoonyTune extends LinearOpMode {
 
             double power = feedForward.compute(dualVelocity) / drive.voltageSensor.getVoltage();
             drive.setDrivePowers(new PoseVelocity2d(new Vector2d(power, 0.0), 0.0));
-
-            return true;
+            return profile;
         }
 
         // Tune the kV and kA feed forward parameters:
@@ -2764,7 +2775,6 @@ public class LoonyTune extends LinearOpMode {
             configureToDrive(false); // Don't use MecanumDrive
 
             // Trigger a reset the first time into the loop:
-            profile = null;
             profileStartTime = 0; // Profile start time, in seconds
             runStartTime = 0; // Cycle start time, in second (each cycle consumes 2 profiles)
             movingForwards = false;
@@ -2774,6 +2784,7 @@ public class LoonyTune extends LinearOpMode {
 
             double maxVelocityFactor = 0.8;
             int qeuedStarts = 0;
+            TimeProfile profile = null;
 
             // Disable all lateral gains so that backward and forward behavior is not affected by the
             // PID/Ramsete algorithm. It's okay for the axial and rotation gains to be either zero
@@ -2823,7 +2834,6 @@ public class LoonyTune extends LinearOpMode {
                     io.end();
                 } else if (screens.index == 3) { // Exit screen
                     screens.update();
-                    io.canvas(Io.Background.BLANK); // Clear the field
 
                     // Create results from the current settings:
                     FeedForwardResult result = new FeedForwardResult(drive.PARAMS.kV, MecanumDrive.PARAMS.kA);
@@ -2840,6 +2850,7 @@ public class LoonyTune extends LinearOpMode {
                         break; // ====>
 
                 } else { // kV and kA tuning screens
+                    io.canvas(Io.Background.BLANK); // Clear the field
                     updateGamepadDriving(); // Let the user drive
 
                     if (screens.index == 1) {
@@ -2867,9 +2878,7 @@ public class LoonyTune extends LinearOpMode {
                         io.end();
 
                         // Run the processing logic for this tuner:
-                        if (!run(screens.index == 1))
-                            continue; // ===>
-
+                        profile = run(profile, screens.index == 1);
                         if (io.cancel()) {
                             // Cancel the current cycle but remain in this test:
                             stopMotors();
@@ -2895,7 +2904,7 @@ public class LoonyTune extends LinearOpMode {
                         }
                         if (qeuedStarts > 0) {
                             qeuedStarts--;
-                            startRun(maxVelocityFactor);
+                            profile = startRun(maxVelocityFactor);
                         }
                     }
                 }
@@ -2959,8 +2968,7 @@ public class LoonyTune extends LinearOpMode {
 
                     if (Math.min(multiplier1, multiplier2) < 0.25) {
                         dialog.warning("The measured distance is too low to be correct. "
-                                + "Is the odometry sensor not working properly?"
-                                + "\n\nPress " + A + " to continue.");
+                                + "Is the odometry sensor not working properly?");
                         return null;
                     }
 
@@ -3468,7 +3476,7 @@ public class LoonyTune extends LinearOpMode {
     }
 
     public void retuneDialog() {
-        io.message(Dialog.QUESTION_ICON + " Do you want to re-tune your robot "
+        io.message(Dialog.QUESTION_ICON + "Do you want to re-tune your robot "
             + "after a big hardware change? "
             + "This will walk you through the re-tuning step-by-step. It will also show your "
             + "new tuning results compared to your previous results.\n"
