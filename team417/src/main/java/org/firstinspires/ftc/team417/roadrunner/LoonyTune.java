@@ -59,6 +59,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.prefs.Preferences;
 
+// @@@ Debug if not hooked up
+// @@@ Add displacement verification
+// @@@ Remove @@@'s
+
 /**
  * Math helper for points and vectors:
  * @noinspection unused
@@ -1451,7 +1455,7 @@ public class LoonyTune extends LinearOpMode {
 
     //**********************************************************************************************
 
-    // Test the wheels on the robot by driving around and testing each wheel individually.
+    // Verify wheel correctness on the robot by driving around and testing each wheel individually.
     void wheelTest() {
         configureToDrive(true); // Do use MecanumDrive
 
@@ -1830,7 +1834,7 @@ public class LoonyTune extends LinearOpMode {
         }
 
         // Measure the optical linear scale and orientation.
-        void execute() {
+        void tune() {
             final int DISTANCE = 96; // Test distance in inches
             configureToDrive(false); // Don't use MecanumDrive
 
@@ -2230,7 +2234,7 @@ public class LoonyTune extends LinearOpMode {
         }
 
         // This is the robot spin test for calibrating the optical sensor angular scale and offset:
-        void execute() {
+        void tune() {
             configureToDrive(true); // Use MecanumDrive
 
             // Zero these settings for the purpose of this test:
@@ -2520,7 +2524,7 @@ public class LoonyTune extends LinearOpMode {
 
         // Automatically calculate the kS and kV terms of the feed-forward approximation by
         // ramping up the velocity in a straight line. We increase power by a fixed increment.
-        void execute() {
+        void tune() {
             // Reset persisted state that we don't want preserved across invocations:
             graphExplanation = "";
             acceptedSamples = new ArrayList<>();
@@ -2617,7 +2621,7 @@ public class LoonyTune extends LinearOpMode {
         final int DISTANCE = 72; // Test distance in inches
 
         // Tune the kV and kA feed forward parameters:
-        void execute() {
+        void tune() {
             configureToDrive(false); // Don't use MecanumDrive
 
             // Trigger a reset the first time into the loop:
@@ -2937,7 +2941,7 @@ public class LoonyTune extends LinearOpMode {
         }
 
         // Tune for the lateral multiplier on Mecanum drives.
-        void execute() {
+        void tune() {
             configureToDrive(true); // Do use MecanumDrive
             latestResult = "";
 
@@ -3062,7 +3066,7 @@ public class LoonyTune extends LinearOpMode {
         double maxHeadingError;
 
         // Run the tuning update:
-        boolean updateTuning(PidTunerType type) {
+        boolean run(PidTunerType type) {
             // Execute the trajectory:
             boolean more = drive.doActionsWork(io.packet);
 
@@ -3112,7 +3116,7 @@ public class LoonyTune extends LinearOpMode {
             return more;
         }
 
-        void execute(PidTunerType type) {
+        void tune(PidTunerType type) {
             configureToDrive(true); // Do use MecanumDrive
             errorSummary = "";
 
@@ -3264,7 +3268,7 @@ public class LoonyTune extends LinearOpMode {
                         queuedStarts++;
 
                     // Continue the trajectory, if any:
-                    if (updateTuning(type)) {
+                    if (run(type)) {
                         io.out("Press " + B + " to cancel and stop the robot.");
                         io.end();
                         if (io.cancel()) {
@@ -3440,6 +3444,7 @@ public class LoonyTune extends LinearOpMode {
         currentParameters = new TuneParameters(drive, TuneParameters.getSavedParameters());
         originalParameters = currentParameters.createClone();
 
+        // Wait for the start button to be pressed:
         while (!isStarted()) {
             io.begin();
             io.out("<big><big><big><big><big><big><b>Loony Tune!</b></big></big></big></big></big></big>\n");
@@ -3485,18 +3490,18 @@ public class LoonyTune extends LinearOpMode {
         }
 
         // Dynamically build the list of tests:
-        addTuner(Tuner.WHEEL_TEST,          this::wheelTest,                             "Wheel test (wheels, motors verification)");
-        addTuner(Tuner.PUSH,                pushTuner::execute,                          "Push tuner (OTOS offset heading, linearScalar)");
-        addTuner(Tuner.SPIN,                spinTuner::execute,                          "Spin tuner (trackWidthTicks, OTOS angularScalar, x/y offset)");
-        addTuner(Tuner.TRACKING_TEST,       this::trackingTest,                          "Tracking test (OTOS verification)");
-        addTuner(Tuner.ACCELERATING,        acceleratingTuner::execute,                  "Accelerating straight line tuner (kS, kV)");
-        addTuner(Tuner.FEED_FORWARD,        feedForwardTuner::execute,                   "Interactive feed forward tuner (kV, kA)");
-        addTuner(Tuner.LATERAL_MULTIPLIER,  lateralMultiplierTuner::execute,             "Lateral tuner (lateralInPerTick)");
-        addTuner(Tuner.AXIAL_GAIN,          ()-> pidTuner.execute(PidTunerType.AXIAL),   "Interactive PiD tuner (axial gains)");
-        addTuner(Tuner.LATERAL_GAIN,        ()-> pidTuner.execute(PidTunerType.LATERAL), "Interactive PiD tuner (lateral gains)");
-        addTuner(Tuner.HEADING_GAIN,        ()-> pidTuner.execute(PidTunerType.HEADING), "Interactive PiD tuner (heading gains)");
-        addTuner(Tuner.COMPLETION_TEST,     this::completionTest,                        "Completion test (overall verification)");
-        addTuner(Tuner.RETUNE,              this::retuneDialog,                          "Re-tune");
+        addTuner(Tuner.WHEEL_TEST,          this::wheelTest,                          "Wheel test (wheels, motors verification)");
+        addTuner(Tuner.PUSH,                pushTuner::tune,                          "Push tuner (OTOS offset heading, linearScalar)");
+        addTuner(Tuner.SPIN,                spinTuner::tune,                          "Spin tuner (trackWidthTicks, OTOS angularScalar, x/y offset)");
+        addTuner(Tuner.TRACKING_TEST,       this::trackingTest,                       "Tracking test (OTOS verification)");
+        addTuner(Tuner.ACCELERATING,        acceleratingTuner::tune,                  "Accelerating straight line tuner (kS, kV)");
+        addTuner(Tuner.FEED_FORWARD,        feedForwardTuner::tune,                   "Interactive feed forward tuner (kV, kA)");
+        addTuner(Tuner.LATERAL_MULTIPLIER,  lateralMultiplierTuner::tune,             "Lateral tuner (lateralInPerTick)");
+        addTuner(Tuner.AXIAL_GAIN,          ()-> pidTuner.tune(PidTunerType.AXIAL),   "Interactive PiD tuner (axial gains)");
+        addTuner(Tuner.LATERAL_GAIN,        ()-> pidTuner.tune(PidTunerType.LATERAL), "Interactive PiD tuner (lateral gains)");
+        addTuner(Tuner.HEADING_GAIN,        ()-> pidTuner.tune(PidTunerType.HEADING), "Interactive PiD tuner (heading gains)");
+        addTuner(Tuner.COMPLETION_TEST,     this::completionTest,                     "Completion test (overall verification)");
+        addTuner(Tuner.RETUNE,              this::retuneDialog,                       "Re-tune");
 
         menu.addRunnable("More::Show accumulated parameter changes", this::updatedParametersDialog);
         menu.addRunnable("More::Show SparkFun OTOS version", this::otosVersionDialog);
@@ -3506,7 +3511,7 @@ public class LoonyTune extends LinearOpMode {
 
         // Add more options if tuning is complete:
         if (widgets[Tuner.COMPLETION_TEST.index].isEnabled) {
-            menu.addRunnable("More::Interactive PiD tuner (all gains)", () -> pidTuner.execute(PidTunerType.ALL));
+            menu.addRunnable("More::Interactive PiD tuner (all gains)", () -> pidTuner.tune(PidTunerType.ALL));
             menu.addRunnable("More::Rotation test (verify trackWidthTicks)", this::rotationTest);
 
             menu.addRunnable("Examples::Spline", this::splineExample);
