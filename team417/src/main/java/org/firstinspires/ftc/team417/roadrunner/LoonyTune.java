@@ -117,18 +117,18 @@ class Point { // Can't derive from vector2d because it's marked as final (by def
  * @noinspection unused
  */
 class Io {
-    static final double ANALOG_THRESHOLD = 0.5; // Threshold to consider an analog button pressed
+    public enum Background { BLANK, GRID, FIELD } // Rendering options
 
+    static final double ANALOG_THRESHOLD = 0.5; // Threshold to consider an analog button pressed
     final private Telemetry telemetry; // Driver Station telemetry object
     private String welcomeMessage; // Welcome message to show only on Driver Station, if any
     public Gamepad gamepad; // Gamepad reference
-    private boolean blankField = true; // True if the field should be blank, false if to show this year's game
     private String messageCopy = ""; // Copy of the most recently shown message
     private List<CanvasOp> canvasOpsCopy; // Copy of the most recently shown field canvas
 
     // The following are null when not in an active begin/end bracket:
     private StringBuilder message; // Message that is begin built
-    private Canvas canvas; // Current FTC Dashboard field canvas
+    private Canvas canvas; // Canvas to render
     public TelemetryPacket packet; // Current FTC Dashboard telemetry object
 
     Io(Gamepad gamepad, Telemetry telemetry) {
@@ -142,7 +142,7 @@ class Io {
 
         // Initialize the field view:
         begin();
-        canvas(); // Draws the field
+        canvas(Background.BLANK); // Draws the field
         end();
     }
 
@@ -195,11 +195,6 @@ class Io {
         welcomeMessage = message;
     }
 
-    // Show a blank field if true, this year's game field if false:
-    void setBlankField(boolean blankField) {
-        this.blankField = blankField;
-    }
-
     // Begin a UI update. The optional 'showField' parameter dictates whether draw the field or
     // show blank when updating the field:
     void begin() {
@@ -232,6 +227,38 @@ class Io {
         begin(); out(format, args); end();
     }
 
+    // Render the specified canvas
+    Canvas canvas(Background background) {
+        assert(packet != null);
+
+        canvas = new Canvas();
+        canvas.setRotation(Math.toRadians(-90));
+        if (background == Background.BLANK) {
+            canvas.setFill("#c0c0c0");
+            canvas.fillRect(-72, -72, 144, 144);
+        } else if (background == Background.GRID) {
+            canvas.setFill("#c0c0c0");
+            canvas.fillRect(-72, -72, 144, 144);
+            canvas.drawGrid(0, 0, 144, 144, 6, 6);
+        } else {
+            canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144,
+                    Math.toRadians(90), 0, 144, true);
+            canvas.drawGrid(0, 0, 144, 144, 6, 6);
+
+            // Fade field and grid to white by drawing transparent white over it:
+            canvas.setAlpha(0.8);
+            canvas.setFill("#ffffff");
+            canvas.fillRect(-72, -72, 144, 144);
+            canvas.setAlpha(1.0);
+        }
+        return canvas;
+    }
+
+    // Discard the current canvas:
+    void abortCanvas() {
+        canvas = null;
+    }
+
     // Redraw using the previous telemetry and field canvas:
     void redraw() {
         begin();
@@ -252,10 +279,10 @@ class Io {
         if (canvas != null) {
             // There was new canvas rendering, so copy it for posterity and then use it:
             canvasOpsCopy = new ArrayList<>(canvas.getOperations());
-        } else {
-            // There was no new canvas rendering so re-render the canvas from the previous iteration:
-            packet.fieldOverlay().getOperations().addAll(canvasOpsCopy);
         }
+
+        // There was no new canvas rendering so re-render the canvas from the previous iteration:
+        packet.fieldOverlay().getOperations().addAll(canvasOpsCopy);
 
         // Send the completed message to the FTC Dashboard telemetry (remembering that it doesn't
         // like newlines) and to the Driver Station (if enabled):
@@ -272,55 +299,6 @@ class Io {
         message = null;
         packet = null;
         canvas = null;
-    }
-
-    // Get a canvas for drawing on the field. Callable only when in a begin/end bracket:
-    Canvas canvas() {
-        if (canvas == null) {
-            // By default, Road Runner draws the field so positive y goes left, positive x
-            // goes up. Rotate the field clockwise so that positive positive y goes up, positive x
-            // goes right. This rotation is 90 (rather than -90) degrees in page-frame space.
-            // Then draw the grid on top and finally set the transform to rotate all subsequent
-            // rendering.
-            canvas = packet.fieldOverlay();
-            if (blankField) {
-                canvas.setFill("#000000");
-                canvas.fillRect(-72, -72, 144, 144);
-            } else {
-                canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144,
-                        Math.toRadians(90), 0, 144, true);
-            }
-            canvas.drawGrid(0, 0, 144, 144, 6, 6);
-
-            canvas.setRotation(Math.toRadians(-90));
-            // Fade field and grid to white by drawing transparent white over it:
-            canvas.setAlpha(0.8);
-            canvas.setFill("#ffffff");
-            canvas.fillRect(-72, -72, 144, 144);
-            canvas.setAlpha(1.0);
-        }
-        return canvas;
-    }
-
-    // Toss any rendering that was done to the canvas:
-    void abortCanvas() {
-        canvas = null;
-    }
-
-    // Erase everything on the field. This must be in an active begin/end bracket:
-    // @@@@ Make an option on canvas()?
-    void clearField() {
-        canvas = packet.fieldOverlay();
-        canvas.setFill("#c0c0c0");
-        canvas.fillRect(-72, -72, 144, 144);
-    }
-
-    // Erase everything on the field. Can't be in an active begin/end bracket:
-    void clearCanvas() { // @@@@@@@@@@@@ Deprecate?
-        begin();
-        canvas = packet.fieldOverlay();
-        clearField();
-        end();
     }
 
     // Put a sticky FTC Dashboard telemetry value:
@@ -957,7 +935,7 @@ public class LoonyTune extends LinearOpMode {
 
         // Update the preview. Must be in an active io.begin/end bracket.
         void update() {
-            Canvas canvas = io.canvas();
+            Canvas canvas = io.canvas(Io.Background.GRID);
             canvas.fillText("Preview", -19, 5, "", 0, false);
             sequentialAction.preview(canvas);
             canvas.setStroke("#000000"); // Black
@@ -1081,7 +1059,7 @@ public class LoonyTune extends LinearOpMode {
         drive.runParallel(action);
         while (opModeIsActive() && !io.cancel()) {
             io.begin();
-            io.canvas().getOperations().addAll(previewCanvas.getOperations());
+            io.canvas(Io.Background.GRID).getOperations().addAll(previewCanvas.getOperations());
             io.out(header + "Press "+B+" to cancel and stop the robot.");
             boolean more = drive.doActionsWork(io.packet);
             if (!more) {
@@ -1371,7 +1349,7 @@ public class LoonyTune extends LinearOpMode {
                 io.out("Press " + screens.buttons + ".");
                 io.end();
             } else if (screens.index == 1) {
-                io.clearField();
+                io.canvas(Io.Background.GRID);
                 if (!useOdometry) {
                     io.out("Running with odometry correction enabled, as usual.\n");
                     io.out("\n");
@@ -1639,6 +1617,7 @@ public class LoonyTune extends LinearOpMode {
             previousPose = pose;
 
             if (screens.index == 0) { // Overview
+                io.canvas(Io.Background.BLANK); // Clear the field
                 io.out("At this point, pose estimation should be fully working. This test "
                     + "verifies its correctness."
                     + "\n\n"
@@ -1653,8 +1632,7 @@ public class LoonyTune extends LinearOpMode {
             } else if (screens.index == 1) { // Free drive screen
                 updateGamepadDriving();
 
-                io.setBlankField(true); // Draw only a blank field
-                Canvas canvas = io.canvas();
+                Canvas canvas = io.canvas(Io.Background.GRID);
                 canvas.setStroke("#3F51B5");
                 Drawing.drawRobot(canvas, pose);
 
@@ -1673,8 +1651,7 @@ public class LoonyTune extends LinearOpMode {
             } else if (screens.index == 2) { // Measure error screen
                 updateGamepadDriving();
 
-                io.setBlankField(false); // Draw the actual field
-                Canvas canvas = io.canvas();
+                Canvas canvas = io.canvas(Io.Background.GRID);
                 canvas.setStroke("#ffd700"); // Gold
                 Drawing.drawRobot(canvas, homePose);
 
@@ -1727,7 +1704,7 @@ public class LoonyTune extends LinearOpMode {
                 }
 
             } else if (screens.index == 3) { // Stats screen
-                io.setBlankField(true); // Draw only a blank field
+                io.canvas(Io.Background.GRID); // Clear the field
                 updateGamepadDriving();
 
                 io.put("Linear speed", linearSpeed);
@@ -1779,7 +1756,6 @@ public class LoonyTune extends LinearOpMode {
                 }
             }
         }
-        io.setBlankField(true);
     }
 
     /**
@@ -1915,7 +1891,6 @@ public class LoonyTune extends LinearOpMode {
                 io.begin();
                 io.out(screens.header);
                 if (screens.index == 0) { // Overview screen
-
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
                     io.out("You'll push the robot forward in a straight line along a field wall for "
@@ -1928,10 +1903,8 @@ public class LoonyTune extends LinearOpMode {
                             + "\n"
                             + "Press " + screens.buttons + ".");
                     io.end();
-
                 } else if (screens.index == 1) { // Measure screen
-
-                    previewer.update(); // Animate the trajectory preview
+                    io.canvas(Io.Background.BLANK); // Clear the field
                     Result.showHistory(io, history); // Show measurement history and advise when done
 
                     io.out("To start a measurement, align the robot by hand to its starting point "
@@ -1941,7 +1914,6 @@ public class LoonyTune extends LinearOpMode {
                     io.end();
 
                     if (io.ok()) {
-                        io.clearCanvas();
                         PushResult result = measure(screens.header, DISTANCE, oldLinearScalar, oldOffsetHeading);
                         if (result != null)
                             history.add(result);
@@ -2085,7 +2057,7 @@ public class LoonyTune extends LinearOpMode {
         // Draw the spin sample points, plus the optional best-fit circle, on FTC Dashboard:
         void drawSpinPoints(ArrayList<Point> points, Circle circle) {
             io.begin();
-            Canvas canvas = io.canvas();
+            Canvas canvas = io.canvas(Io.Background.BLANK);
             double[] xPoints = new double[points.size()];
             double[] yPoints = new double[points.size()];
             for (int i = 0; i < points.size(); i++) {
@@ -2317,7 +2289,6 @@ public class LoonyTune extends LinearOpMode {
                 io.begin();
                 io.out(screens.header);
                 if (screens.index == 0) { // Overview screen
-
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
                     io.out("You'll position the robot against a wall, then drive it out so that the robot "
@@ -2335,10 +2306,8 @@ public class LoonyTune extends LinearOpMode {
                             + "\n"
                             + "Press "+ screens.buttons+".");
                     io.end();
-
                 } else if (screens.index == 1) { // Measure screen
-
-                    previewer.update(); // Animate the trajectory preview
+                    io.canvas(Io.Background.BLANK); // Clear the field
                     Result.showHistory(io, history); // Show measurement history and advise when done
 
                     io.out("To start a measurement, carefully drive the robot to a wall and align "
@@ -2349,7 +2318,6 @@ public class LoonyTune extends LinearOpMode {
                     io.end();
 
                     if (io.ok()) {
-                        io.clearCanvas();
                         SpinResult result = measure(screens.header);
                         if (result != null)
                             history.add(result);
@@ -2517,8 +2485,6 @@ public class LoonyTune extends LinearOpMode {
 
         // Do the accelerating measurement step:
         AcceleratingResult measure(String header) {
-            io.clearCanvas();
-
             // Do one forward and back run:
             ArrayList<Point> forwardSamples = driveLine(header, DISTANCE, 1.0);
             if (forwardSamples != null) {
@@ -2535,7 +2501,7 @@ public class LoonyTune extends LinearOpMode {
                     } else {
                         // Draw the results to the FTC dashboard:
                         io.begin();
-                        Canvas canvas = io.canvas();
+                        Canvas canvas = io.canvas(Io.Background.BLANK);
 
                         // Set a solid white background and an offset then draw the point samples:
                         canvas.setFill("#ffffff");
@@ -2623,8 +2589,7 @@ public class LoonyTune extends LinearOpMode {
                     io.end();
 
                 } else if (screens.index == 1) { // Measure screen
-
-                    previewer.update(); // Animate the trajectory preview
+                    io.canvas(Io.Background.BLANK); // Clear the field
                     updateGamepadDriving(); // Let the user drive
 
                     io.out(graphExplanation);
@@ -2636,12 +2601,10 @@ public class LoonyTune extends LinearOpMode {
                             + "Press " + START + " to start the robot, " + screens.buttons + ".");
                     io.end();
                     if (io.start()) {
-                        io.clearCanvas();
                         AcceleratingResult result = measure(screens.header);
                         if (result != null)
                             history.add(result);
                     }
-
                 } else if (screens.index == 2) { // Exit screen
                     if (resultsDoneScreen(history, screens, Tuner.ACCELERATING)) {
                         // Make sure the OTOS hardware is informed of the new parameters too:
@@ -2769,7 +2732,7 @@ public class LoonyTune extends LinearOpMode {
                 lastGraphTime = time;
 
                 io.begin(); // Canvas update
-                Canvas canvas = io.canvas();
+                Canvas canvas = io.canvas(Io.Background.BLANK);
                 canvas.setFill("#ffffff");
                 canvas.fillRect(-72, -72, 144, 144);
                 canvas.setTranslation(0, 72);
@@ -2893,6 +2856,7 @@ public class LoonyTune extends LinearOpMode {
                     io.end();
                 } else if (screens.index == 3) { // Exit screen
                     screens.update();
+                    io.canvas(Io.Background.BLANK); // Clear the field
 
                     // Create results from the current settings:
                     FeedForwardResult result = new FeedForwardResult(drive.PARAMS.kV, MecanumDrive.PARAMS.kA);
@@ -3099,8 +3063,7 @@ public class LoonyTune extends LinearOpMode {
                     io.end();
 
                 } else if (screens.index == 1) { // Measure screen
-
-                    previewer.update(); // Animate the trajectory preview
+                    io.canvas(Io.Background.BLANK); // Clear the field
                     updateGamepadDriving(); // Let the user drive
 
                     io.out(latestResult);
@@ -3112,7 +3075,6 @@ public class LoonyTune extends LinearOpMode {
                             + "Press " + START + " to start the robot, " + screens.buttons + ".");
                     io.end();
                     if (io.start()) {
-                        io.clearCanvas();
                         LateralResult result = measure(screens.header, testParameters, history);
                         if (result != null)
                             history.add(result);
@@ -3343,6 +3305,7 @@ public class LoonyTune extends LinearOpMode {
                     io.end();
                 } else if (screens.index == screenNames.size() - 1) { // Exit screen
                     screens.update();
+                    io.canvas(Io.Background.BLANK); // Clear the field
 
                     // Create results from the current settings:
                     PidResult result = new PidResult(type, drive.PARAMS);
@@ -3566,7 +3529,7 @@ public class LoonyTune extends LinearOpMode {
             io.out("<big><big><big><big><big><big><b>Loony Tune!</b></big></big></big></big></big></big>\n");
             io.out("<big><big>By Swerve Robotics, Woodinville</big></big>\n");
             io.out("\n\n\n\n\n\n<big><big><big><big><big><b>Tap \u25B6 to begin");
-            io.canvas().fillText("Loony Tune!", -32, 32, "", 0, false);
+            io.canvas(Io.Background.BLANK).fillText("Loony Tune!", -32, 32, "", 0, false);
             io.end();
         }
 
