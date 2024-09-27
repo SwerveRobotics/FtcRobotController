@@ -1207,14 +1207,14 @@ public class LoonyTune extends LinearOpMode {
     }
 
     // Helper for managing the various screens of the tests.
-    class Screen {
+    class Screens {
         public final String[] screens; // Name for each screen
         public int index; // Currently active screen
         public String header = ""; // Header to be drawn at the top of the screen
         public String buttons = ""; // Buttons message describing what the bumper buttons do
         Runnable runnable; // Runnable to execute when the user switches screens
 
-        Screen(String[] screens) {
+        Screens(String[] screens) {
             this.screens = screens;
         }
 
@@ -1347,19 +1347,20 @@ public class LoonyTune extends LinearOpMode {
     }
 
     // Run a simple trajectory with a preview and an option to disable odometry. The description
-    // can be null:
-    void runTrajectory(Action action) { runTrajectory(action, null);}
-    void runTrajectory(Action action, String description) {
+    // can be null. We take a lambda Action supplier rather than a simple Action because we
+    // need to invoke the Action multiple times, and Road Runner can't do that.
+    void runTrajectory(Supplier<Action> action) { runTrajectory(null, action);}
+    void runTrajectory(String description, Supplier<Action> action) {
         configureToDrive(true); // Do use MecanumDrive
-        TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, action);
-        Screen screen = new Screen(new String[] {"Overview", "Run", "Exit"});
+        TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, action.get());
+        Screens screens = new Screens(new String[] {"Overview", "Run", "Exit"});
 
         boolean useOdometry = true;
         while (opModeIsActive()) {
-            screen.update();
+            screens.update();
             io.begin();
-            io.out(screen.header);
-            if (screen.index == 0) {
+            io.out(screens.header);
+            if (screens.index == 0) {
                 previewer.update();
                 updateGamepadDriving();
                 if (description == null) {
@@ -1367,9 +1368,9 @@ public class LoonyTune extends LinearOpMode {
                 } else {
                     io.out(description + "\n\n");
                 }
-                io.out("Press " + screen.buttons + ".");
+                io.out("Press " + screens.buttons + ".");
                 io.end();
-            } else if (screen.index == 1) {
+            } else if (screens.index == 1) {
                 io.clearField();
                 if (!useOdometry) {
                     io.out("Running with odometry correction enabled, as usual.\n");
@@ -1382,7 +1383,7 @@ public class LoonyTune extends LinearOpMode {
                     io.out("Running with odometry correction disabled, in test mode. ");
                     io.out("Press " + X + " to re-enable.\n");
                 }
-                io.out("\nPress " + START + "to start the robot, " + screen.buttons + ".");
+                io.out("\nPress " + START + " to start the robot, " + screens.buttons + ".");
                 io.end();
 
                 if (io.x()) {
@@ -1392,7 +1393,7 @@ public class LoonyTune extends LinearOpMode {
                     stopMotors();
                     drive.setPose(zeroPose);
                     if (useOdometry) {
-                        runCancelableAction(screen.header, action);
+                        runCancelableAction(screens.header, action.get());
                     } else {
                         // Point MecanumDrive to some temporary parameters, run the action, then
                         // restore the settings:
@@ -1404,12 +1405,12 @@ public class LoonyTune extends LinearOpMode {
                         testParameters.params.headingGain = 0;
                         testParameters.params.headingVelGain = 0;
                         MecanumDrive.PARAMS = testParameters.params;
-                        runCancelableAction("", action);
+                        runCancelableAction("", action.get());
                         MecanumDrive.PARAMS = currentParameters.params;
                     }
                 }
             } else {
-                io.out("Press " + A + " to exit, " + screen.buttons + ".");
+                io.out("Press " + A + " to exit, " + screens.buttons + ".");
                 io.end();
                 if (io.a()) {
                     break; // ====>
@@ -1451,20 +1452,20 @@ public class LoonyTune extends LinearOpMode {
     }
 
     // Returns true if the tuning is done, false if it should continue.
-    boolean resultsDoneScreen(List<Result> history, Screen screen, Tuner tunerType) {
+    boolean resultsDoneScreen(List<Result> history, Screens screens, Tuner tunerType) {
         Result finalResult = history.get(history.size() - 1);
         TuneParameters newParameters = currentParameters.createClone();
         finalResult.applyTo(newParameters);
         String comparison = newParameters.compare(currentParameters, true);
         if ((history.size() <= 1) || (comparison.isEmpty())) {
-            io.out("No configuration has changed, press " + A + " to exit, " + screen.buttons);
+            io.out("No configuration has changed, press " + A + " to exit, " + screens.buttons);
             io.end();
             if (io.ok())
                 return true; // ====>
         } else {
             io.out("Current configuration changes:\n\n" + comparison + "\n");
             io.out(A + " to save these results, " + B + " to discard and exit, ");
-            io.out(screen.buttons + ".");
+            io.out(screens.buttons + ".");
             io.end();
 
             if (io.ok()) {
@@ -1490,7 +1491,7 @@ public class LoonyTune extends LinearOpMode {
 
         DcMotorEx[] motors = { drive.leftFront, drive.leftBack, drive.rightBack, drive.rightFront };
         String[] motorNames = { "leftFront", "leftBack", "rightBack", "rightFront" };
-        Screen screen = new Screen(new String[] {
+        Screens screens = new Screens(new String[] {
                 "Overview",                     // 0
                 "Test 'leftFront' wheel",       // 1
                 "Test 'leftBack' wheel",        // 2
@@ -1500,18 +1501,18 @@ public class LoonyTune extends LinearOpMode {
                 "Save and exit" });             // 6
 
         while (opModeIsActive()) {
-            screen.update();
+            screens.update();
             io.begin();
-            io.out(screen.header);
-            if (screen.index == 0) {
+            io.out(screens.header);
+            if (screens.index == 0) {
                 io.out("This test validates that every wheel is configured correctly. "
                     + "In the next screens, you'll test every wheel individually, then drive "
                     + "the robot.\n"
                     + "\n"
-                    + screen.buttons + ".");
+                    + screens.buttons + ".");
                 io.end();
-            } else if (screen.index < 5) { // Individual wheel screen
-                int motor = screen.index - 1;
+            } else if (screens.index < 5) { // Individual wheel screen
+                int motor = screens.index - 1;
                 double power = gamepad1.right_trigger - gamepad1.left_trigger;
                 motors[motor].setPower(power);
                 DcMotorSimple.Direction direction =  motors[motor].getDirection();
@@ -1527,9 +1528,9 @@ public class LoonyTune extends LinearOpMode {
                 } else {
                     io.out("disable the line <b>'%s.setDirection(DcMotorEx.Direction.REVERSE);'</b>.", motorName);
                 }
-                io.out("\n\nPress "+RIGHT_TRIGGER+" to rotate wheel forward, "+LEFT_TRIGGER+" for reverse, "+screen.buttons + ".");
+                io.out("\n\nPress "+RIGHT_TRIGGER+" to rotate wheel forward, "+LEFT_TRIGGER+" for reverse, "+ screens.buttons + ".");
                 io.end();
-            } else if (screen.index == 5) { // All wheels screen
+            } else if (screens.index == 5) { // All wheels screen
                 updateGamepadDriving();
                 io.out("Test the robot by driving it around. Left stick controls movement, "
                         + "right stick controls rotation."
@@ -1538,10 +1539,10 @@ public class LoonyTune extends LinearOpMode {
                         + "if it drives weird even though it passed the previous steps, the Mecanum "
                         + "wheels may be mounted wrong. When looking from above, the direction "
                         + "of the rollers on the 4 wheels should form an 'X'.");
-                io.out("\n\nSticks to drive, " + screen.buttons + ".");
+                io.out("\n\nSticks to drive, " + screens.buttons + ".");
                 io.end();
-            } else if (screen.index == 6) { // Exit screen
-                io.out("Press "+A+" if everything passed, "+B+" if there was a failure, or "+screen.buttons +".");
+            } else if (screens.index == 6) { // Exit screen
+                io.out("Press "+A+" if everything passed, "+B+" if there was a failure, or "+ screens.buttons +".");
                 io.end();
                 if (io.ok()) {
                     currentParameters.passedWheelTest = true;
@@ -1583,11 +1584,11 @@ public class LoonyTune extends LinearOpMode {
         double maxRotationalSpeed = 0; // Max rotational speed seen, radians/s
         double maxRotationalAcceleration = 0; // Max rotation acceleration seen, radians/s/s
 
-        Screen screen = new Screen(new String[]{"Overview", "Free drive", "Measure error", "Stats", "Save and exit"});
+        Screens screens = new Screens(new String[]{"Overview", "Free drive", "Measure error", "Stats", "Save and exit"});
         while (opModeIsActive()) {
-            screen.update();
+            screens.update();
             io.begin();
-            io.out(screen.header);
+            io.out(screens.header);
 
             // Update our guess for the robot location:
             PoseVelocity2d velocity = drive.updatePoseEstimate();
@@ -1598,7 +1599,7 @@ public class LoonyTune extends LinearOpMode {
 
             // Calling getPosVelAcc() again is expensive performance-wise so don't do it when
             // taking measurements:
-            if (screen.index != 1)
+            if (screens.index != 1)
                 drive.opticalTracker.getPosVelAcc(otosPosition, otosVelocity, otosAcceleration);
 
             // Query the OTOS for any problems:
@@ -1637,7 +1638,7 @@ public class LoonyTune extends LinearOpMode {
             totalRotation += Math.abs(pose.heading.toDouble() - previousPose.heading.toDouble());
             previousPose = pose;
 
-            if (screen.index == 0) { // Overview
+            if (screens.index == 0) { // Overview
                 io.out("At this point, pose estimation should be fully working. This test "
                     + "verifies its correctness."
                     + "\n\n"
@@ -1647,9 +1648,9 @@ public class LoonyTune extends LinearOpMode {
                     + "The Stats screen has statistics on the performance of the tracking "
                     + "and the robot."
                     + "\n\n"
-                    + "Press " + screen.buttons);
+                    + "Press " + screens.buttons);
                 io.end();
-            } else if (screen.index == 1) { // Free drive screen
+            } else if (screens.index == 1) { // Free drive screen
                 updateGamepadDriving();
 
                 io.setBlankField(true); // Draw only a blank field
@@ -1667,9 +1668,9 @@ public class LoonyTune extends LinearOpMode {
                         + "\n");
                 io.out("Pose: (%.2f\", %.2f\"), %.2f\u00b0\n\n",
                         pose.position.x, pose.position.y, Math.toDegrees(pose.heading.toDouble()));
-                io.out("Sticks to drive, " + screen.buttons);
+                io.out("Sticks to drive, " + screens.buttons);
                 io.end();
-            } else if (screen.index == 2) { // Measure error screen
+            } else if (screens.index == 2) { // Measure error screen
                 updateGamepadDriving();
 
                 io.setBlankField(false); // Draw the actual field
@@ -1681,7 +1682,7 @@ public class LoonyTune extends LinearOpMode {
                     io.out("To start measuring error, press "+X+" when the robot is physically "
                             + "positioned in the corner as indicated by the golden pose on FTC "
                             + "Dashboard.\n\n");
-                    io.out("Press "+X+" when at the golden pose, "+screen.buttons+".");
+                    io.out("Press "+X+" when at the golden pose, "+ screens.buttons+".");
                 } else {
                     canvas.setStroke("#3F51B5"); // Blueish
                     Drawing.drawRobot(canvas, pose); // Pose estimation
@@ -1707,7 +1708,7 @@ public class LoonyTune extends LinearOpMode {
                     io.out("\nA good result for error is less than 1%.\n");
 
                     io.out("\nPress "+X+" to restart when back at the golden pose, "
-                        + Y + " to forget the golden pose, " + screen.buttons + ".");
+                        + Y + " to forget the golden pose, " + screens.buttons + ".");
                 }
                 io.end();
 
@@ -1725,7 +1726,7 @@ public class LoonyTune extends LinearOpMode {
                     baselinePose = null;
                 }
 
-            } else if (screen.index == 3) { // Stats screen
+            } else if (screens.index == 3) { // Stats screen
                 io.setBlankField(true); // Draw only a blank field
                 updateGamepadDriving();
 
@@ -1751,7 +1752,7 @@ public class LoonyTune extends LinearOpMode {
                 io.out("Max accelerations: %.2f \"/s<sup>2</sup>, %.1f \u00b0/s<sup>2</sup>\n",
                     maxLinearAcceleration, Math.toDegrees(maxRotationalAcceleration));
 
-                io.out("\nPress " + Y + " to reset, " + screen.buttons + ".");
+                io.out("\nPress " + Y + " to reset, " + screens.buttons + ".");
                 io.end();
 
                 if (io.y()) {
@@ -1761,8 +1762,8 @@ public class LoonyTune extends LinearOpMode {
                     maxRotationalAcceleration = 0;
                 }
 
-            } else if (screen.index == 4) { // Exit screen
-                io.out("Press "+A+" if everything passed, "+B+" if there was a failure, or "+screen.buttons +".");
+            } else if (screens.index == 4) { // Exit screen
+                io.out("Press "+A+" if everything passed, "+B+" if there was a failure, or "+ screens.buttons +".");
                 io.end();
                 if (io.ok()) {
                     currentParameters.passedTrackingTest = true;
@@ -1908,12 +1909,12 @@ public class LoonyTune extends LinearOpMode {
                     currentParameters.params.otos.linearScalar,
                     currentParameters.params.otos.offset.h));
 
-            Screen screen = new Screen(new String[]{"Overview", "Measure", "Save and exit"});
+            Screens screens = new Screens(new String[]{"Overview", "Measure", "Save and exit"});
             while (opModeIsActive()) {
-                screen.update();
+                screens.update();
                 io.begin();
-                io.out(screen.header);
-                if (screen.index == 0) { // Overview screen
+                io.out(screens.header);
+                if (screens.index == 0) { // Overview screen
 
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
@@ -1925,10 +1926,10 @@ public class LoonyTune extends LinearOpMode {
                             + "\u2022 <b>offset heading</b> corrects the robot's heading to account for the "
                             + "direction that the sensor is mounted on the robot.\n"
                             + "\n"
-                            + "Press " + screen.buttons + ".");
+                            + "Press " + screens.buttons + ".");
                     io.end();
 
-                } else if (screen.index == 1) { // Measure screen
+                } else if (screens.index == 1) { // Measure screen
 
                     previewer.update(); // Animate the trajectory preview
                     Result.showHistory(io, history); // Show measurement history and advise when done
@@ -1936,18 +1937,18 @@ public class LoonyTune extends LinearOpMode {
                     io.out("To start a measurement, align the robot by hand to its starting point "
                             + "aligned to a field wall, with room for " + testDistance(DISTANCE) + ".");
                     io.out("\n\n");
-                    io.out("Press " + A + " to start a measurement, " + screen.buttons + ".");
+                    io.out("Press " + A + " to start a measurement, " + screens.buttons + ".");
                     io.end();
 
                     if (io.ok()) {
                         io.clearCanvas();
-                        PushResult result = measure(screen.header, DISTANCE, oldLinearScalar, oldOffsetHeading);
+                        PushResult result = measure(screens.header, DISTANCE, oldLinearScalar, oldOffsetHeading);
                         if (result != null)
                             history.add(result);
                     }
 
-                } else if (screen.index == 2) { // Exit screen
-                    if (resultsDoneScreen(history, screen, Tuner.PUSH)) {
+                } else if (screens.index == 2) { // Exit screen
+                    if (resultsDoneScreen(history, screens, Tuner.PUSH)) {
                         // Make sure the OTOS hardware is informed of the new parameters too:
                         setOtosHardware();
                         break; // ====>
@@ -2310,12 +2311,12 @@ public class LoonyTune extends LinearOpMode {
                     currentParameters.params.otos.offset.x,
                     currentParameters.params.otos.offset.y));
 
-            Screen screen = new Screen(new String[]{"Overview", "Measure", "Detail", "Save and exit"});
+            Screens screens = new Screens(new String[]{"Overview", "Measure", "Detail", "Save and exit"});
             while (opModeIsActive()) {
-                screen.update();
+                screens.update();
                 io.begin();
-                io.out(screen.header);
-                if (screen.index == 0) { // Overview screen
+                io.out(screens.header);
+                if (screens.index == 0) { // Overview screen
 
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
@@ -2332,10 +2333,10 @@ public class LoonyTune extends LinearOpMode {
                             + "\u2022 <b>otos.offset position</b> is the location on the robot where the "
                             + "OTOS sensor is mounted, relative to the center of rotation.\n"
                             + "\n"
-                            + "Press "+screen.buttons+".");
+                            + "Press "+ screens.buttons+".");
                     io.end();
 
-                } else if (screen.index == 1) { // Measure screen
+                } else if (screens.index == 1) { // Measure screen
 
                     previewer.update(); // Animate the trajectory preview
                     Result.showHistory(io, history); // Show measurement history and advise when done
@@ -2344,17 +2345,17 @@ public class LoonyTune extends LinearOpMode {
                             + "it so that it's facing forward. This marks the start orientation for "
                             + "calibration."
                             + "\n\n"
-                            + "Press "+A+" to start a measurement, "+screen.buttons+".");
+                            + "Press "+A+" to start a measurement, "+ screens.buttons+".");
                     io.end();
 
                     if (io.ok()) {
                         io.clearCanvas();
-                        SpinResult result = measure(screen.header);
+                        SpinResult result = measure(screens.header);
                         if (result != null)
                             history.add(result);
                     }
 
-                } else if (screen.index == 2) { // Details screen
+                } else if (screens.index == 2) { // Details screen
 
                     if (history.size() <= 1) {
                         io.out("This will contain detail about the most recent result.\n\n");
@@ -2363,11 +2364,11 @@ public class LoonyTune extends LinearOpMode {
                         io.out(detail);
                         io.out("\n\n");
                     }
-                    io.out("Press " + screen.buttons);
+                    io.out("Press " + screens.buttons);
                     io.end();
 
-                } else if (screen.index == 3) { // Exit screen
-                    if (resultsDoneScreen(history, screen, Tuner.PUSH)) {
+                } else if (screens.index == 3) { // Exit screen
+                    if (resultsDoneScreen(history, screens, Tuner.PUSH)) {
                         // Make sure the OTOS hardware is informed of the new parameters too:
                         setOtosHardware();
                         break; // ====>
@@ -2598,12 +2599,12 @@ public class LoonyTune extends LinearOpMode {
                     currentParameters.params.kS,
                     currentParameters.params.kV));
 
-            Screen screen = new Screen(new String[]{"Overview", "Measure", "Save and exit"});
+            Screens screens = new Screens(new String[]{"Overview", "Measure", "Save and exit"});
             while (opModeIsActive()) {
-                screen.update();
+                screens.update();
                 io.begin();
-                io.out(screen.header);
-                if (screen.index == 0) { // Overview screen
+                io.out(screens.header);
+                if (screens.index == 0) { // Overview screen
 
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
@@ -2618,10 +2619,10 @@ public class LoonyTune extends LinearOpMode {
                             + "<b>kV</b> is the ratio of motor voltage to robot velocity. It's the "
                             + "slope of the velocity/voltage graph.\n"
                             + "\n"
-                            + "Press " + screen.buttons + ".");
+                            + "Press " + screens.buttons + ".");
                     io.end();
 
-                } else if (screen.index == 1) { // Measure screen
+                } else if (screens.index == 1) { // Measure screen
 
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
@@ -2632,17 +2633,17 @@ public class LoonyTune extends LinearOpMode {
                     io.out("To start a measurement, drive the robot to a spot that is clear "
                             + "in front for " + testDistance(DISTANCE) + ".\n"
                             + "\n"
-                            + "Press " + START + " to start the robot, " + screen.buttons + ".");
+                            + "Press " + START + " to start the robot, " + screens.buttons + ".");
                     io.end();
                     if (io.start()) {
                         io.clearCanvas();
-                        AcceleratingResult result = measure(screen.header);
+                        AcceleratingResult result = measure(screens.header);
                         if (result != null)
                             history.add(result);
                     }
 
-                } else if (screen.index == 2) { // Exit screen
-                    if (resultsDoneScreen(history, screen, Tuner.ACCELERATING)) {
+                } else if (screens.index == 2) { // Exit screen
+                    if (resultsDoneScreen(history, screens, Tuner.ACCELERATING)) {
                         // Make sure the OTOS hardware is informed of the new parameters too:
                         setOtosHardware();
                         break; // ====>
@@ -2863,13 +2864,13 @@ public class LoonyTune extends LinearOpMode {
             ArrayList<Result> history = new ArrayList<>();
             history.add(new FeedForwardResult(currentParameters.params.kV, currentParameters.params.kA));
 
-            Screen screen = new Screen(new String[]{"Overview", "Adjust kV", "Adjust kA", "Save and exit"});
+            Screens screens = new Screens(new String[]{"Overview", "Adjust kV", "Adjust kA", "Save and exit"});
             while (opModeIsActive()) {
                 // Note we don't do screen.update() here because we restrict when it's called
                 io.begin();
-                io.out(screen.header);
-                if (screen.index == 0) { // Overview screen
-                    screen.update();
+                io.out(screens.header);
+                if (screens.index == 0) { // Overview screen
+                    screens.update();
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
                     io.out("The robot will drive forward then backward for " + testDistance(DISTANCE) + "."
@@ -2888,10 +2889,10 @@ public class LoonyTune extends LinearOpMode {
                     // "Follow <u><a href='https://learnroadrunner.com/feedforward-tuning.html#tuning'>LearnRoadRunner's guide</a></u>.\n\n"
 
                     io.out("\n"
-                            + "Press " + screen.buttons + ".");
+                            + "Press " + screens.buttons + ".");
                     io.end();
-                } else if (screen.index == 3) { // Exit screen
-                    screen.update();
+                } else if (screens.index == 3) { // Exit screen
+                    screens.update();
 
                     // Create results from the current settings:
                     FeedForwardResult result = new FeedForwardResult(drive.PARAMS.kV, MecanumDrive.PARAMS.kA);
@@ -2904,13 +2905,13 @@ public class LoonyTune extends LinearOpMode {
                     if (!result.getString().equals(history.get(0).getString()))
                         history.add(result);
 
-                    if (resultsDoneScreen(history, screen, Tuner.FEED_FORWARD))
+                    if (resultsDoneScreen(history, screens, Tuner.FEED_FORWARD))
                         break; // ====>
 
                 } else { // kV and kA tuning screens
                     updateGamepadDriving(); // Let the user drive
 
-                    if (screen.index == 1) {
+                    if (screens.index == 1) {
                         io.out("&emsp;kV: <big><big>%s</big></big>\n", vInput.update());
                         io.out("&emsp;Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0);
                         io.out("View the graph in FTC Dashboard and adjust "
@@ -2935,7 +2936,7 @@ public class LoonyTune extends LinearOpMode {
                         io.end();
 
                         // Run the processing logic for this tuner:
-                        if (!run(screen.index == 1))
+                        if (!run(screens.index == 1))
                             continue; // ===>
 
                         if (io.cancel()) {
@@ -2947,10 +2948,10 @@ public class LoonyTune extends LinearOpMode {
                     } else {
                         io.out("Changing max velocity via " + TRIGGERS + " will lengthen or "
                             + "shorten the horizontal lines.\n\n");
-                        io.out(START + " to start the robot, " + screen.buttons + ".");
+                        io.out(START + " to start the robot, " + screens.buttons + ".");
                         io.end();
 
-                        screen.update(); // Allow the screen to be changed.
+                        screens.update(); // Allow the screen to be changed.
                         updateGamepadDriving();
 
                         if (io.leftTrigger()) {
@@ -3077,12 +3078,12 @@ public class LoonyTune extends LinearOpMode {
             ArrayList<Result> history = new ArrayList<>();
             history.add(new LateralResult(currentParameters.params.lateralInPerTick));
 
-            Screen screen = new Screen(new String[]{"Overview", "Measure", "Save and exit"});
+            Screens screens = new Screens(new String[]{"Overview", "Measure", "Save and exit"});
             while (opModeIsActive()) {
-                screen.update();
+                screens.update();
                 io.begin();
-                io.out(screen.header);
-                if (screen.index == 0) { // Overview screen
+                io.out(screens.header);
+                if (screens.index == 0) { // Overview screen
 
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
@@ -3094,10 +3095,10 @@ public class LoonyTune extends LinearOpMode {
                             + "amount of wheel rotation. Mecanum drives are less efficient moving "
                             + "sideways than forward or reverse.\n"
                             + "\n"
-                            + "Press " + screen.buttons + ".");
+                            + "Press " + screens.buttons + ".");
                     io.end();
 
-                } else if (screen.index == 1) { // Measure screen
+                } else if (screens.index == 1) { // Measure screen
 
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
@@ -3108,16 +3109,16 @@ public class LoonyTune extends LinearOpMode {
                     io.out("If starting a measurement, ensure that " + testDistance(DISTANCE) + " "
                             + "is clear to the robot's left.\n"
                             + "\n"
-                            + "Press " + START + " to start the robot, " + screen.buttons + ".");
+                            + "Press " + START + " to start the robot, " + screens.buttons + ".");
                     io.end();
                     if (io.start()) {
                         io.clearCanvas();
-                        LateralResult result = measure(screen.header, testParameters, history);
+                        LateralResult result = measure(screens.header, testParameters, history);
                         if (result != null)
                             history.add(result);
                     }
-                } else if (screen.index == 2) { // Exit screen
-                    if (resultsDoneScreen(history, screen, Tuner.LATERAL_MULTIPLIER)) {
+                } else if (screens.index == 2) { // Exit screen
+                    if (resultsDoneScreen(history, screens, Tuner.LATERAL_MULTIPLIER)) {
                         break; // ====>
                     }
                 }
@@ -3324,13 +3325,13 @@ public class LoonyTune extends LinearOpMode {
             history.add(new PidResult(type, currentParameters.params));
 
             int queuedStarts = 0;
-            Screen screen = new Screen(screenNames.toArray(new String[0]));
-            screen.onSwitch(()-> errorSummary = ""); // Clear summary on screen changes
+            Screens screens = new Screens(screenNames.toArray(new String[0]));
+            screens.onSwitch(()-> errorSummary = ""); // Clear summary on screen changes
             while (opModeIsActive()) {
-                screen.update();
+                screens.update();
                 io.begin();
-                io.out(screen.header);
-                if (screen.index == 0) { // Overview screen
+                io.out(screens.header);
+                if (screens.index == 0) { // Overview screen
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
                     io.out(overview);
@@ -3338,10 +3339,10 @@ public class LoonyTune extends LinearOpMode {
                             + "These are essentially the <b>P</b> and <b>D</b> (<i>proportional</i> and "
                             + "<i>differential</i>) terms for a PID control system.\n"
                             + "\n"
-                            + "Press " + screen.buttons + ".");
+                            + "Press " + screens.buttons + ".");
                     io.end();
-                } else if (screen.index == screenNames.size() - 1) { // Exit screen
-                    screen.update();
+                } else if (screens.index == screenNames.size() - 1) { // Exit screen
+                    screens.update();
 
                     // Create results from the current settings:
                     PidResult result = new PidResult(type, drive.PARAMS);
@@ -3354,10 +3355,10 @@ public class LoonyTune extends LinearOpMode {
                     if (!result.getString().equals(history.get(0).getString()))
                         history.add(result);
 
-                    if (resultsDoneScreen(history, screen, tuner))
+                    if (resultsDoneScreen(history, screens, tuner))
                         break; // ====>
                 } else { // Tune screens
-                    int index = screen.index - 1;
+                    int index = screens.index - 1;
                     NumericInput input = inputs.get(index);
                     io.out("&emsp;%s: <big><big>%s</big></big>\n", input.fieldName, input.update());
 
@@ -3395,7 +3396,7 @@ public class LoonyTune extends LinearOpMode {
                         updateGamepadDriving(); // Let the user drive
 
                         io.out("Press "+ START + " to start the robot (%s), %s.",
-                            clearance, screen.buttons);
+                            clearance, screens.buttons);
                         io.end();
 
                         if (io.start())
@@ -3425,18 +3426,17 @@ public class LoonyTune extends LinearOpMode {
 
     // Navigate a short spline as a completion test.
     void completionTest() {
-        Action action = drive.actionBuilder(zeroPose)
-                .setTangent(Math.toRadians(60))
-                .splineToLinearHeading(new Pose2d(24, 0, Math.toRadians(90)), Math.toRadians(-60))
-                .splineToLinearHeading(new Pose2d(48, 0, Math.toRadians(180)), Math.toRadians(60))
-                .endTrajectory()
-                .setTangent(Math.toRadians(-180))
-                .splineToLinearHeading(new Pose2d(0, 0, Math.toRadians(-0.0001)), Math.toRadians(-180))
-                .build();
         String message = "The robot will drive forward 48 inches using a spline as previewed "
                 + "in FTC Dashboard. "
                 + "It needs half a tile clearance on either side. ";
-        runTrajectory(action, message);
+        runTrajectory(message, ()->drive.actionBuilder(zeroPose)
+            .setTangent(Math.toRadians(60))
+            .splineToLinearHeading(new Pose2d(24, 0, Math.toRadians(90)), Math.toRadians(-60))
+            .splineToLinearHeading(new Pose2d(48, 0, Math.toRadians(180)), Math.toRadians(60))
+            .endTrajectory()
+            .setTangent(Math.toRadians(-180))
+            .splineToLinearHeading(new Pose2d(0, 0, Math.toRadians(-0.0001)), Math.toRadians(-180))
+            .build());
 
         currentParameters.passedCompletionTest = true;
         currentParameters.save();
@@ -3477,13 +3477,13 @@ public class LoonyTune extends LinearOpMode {
 
     // Examples:
     void splineExample() {
-        runTrajectory(drive.actionBuilder(zeroPose)
+        runTrajectory(()->drive.actionBuilder(zeroPose)
                 .splineTo(new Vector2d(30, 30), Math.PI / 2)
                 .splineTo(new Vector2d(0, 60), Math.PI)
                 .build());
     }
     void lineToTurnExample() {
-        runTrajectory(drive.actionBuilder(zeroPose)
+        runTrajectory(()->drive.actionBuilder(zeroPose)
                 .lineToX(24)
                 .turn(Math.PI/2)
                 .lineToY(24)
@@ -3496,7 +3496,7 @@ public class LoonyTune extends LinearOpMode {
     }
     void lineWithRotationExample() {
         final double DISTANCE = 60.0;
-        runTrajectory(drive.actionBuilder(zeroPose)
+        runTrajectory(()->drive.actionBuilder(zeroPose)
                 // To simply turn 180 degrees while traveling down a line, do this:
                 //   .lineToXLinearHeading(DISTANCE, Math.PI)
                 // But we want to turn a complete 360 degrees, and then return, so it's complicated:
