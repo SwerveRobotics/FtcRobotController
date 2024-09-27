@@ -1428,12 +1428,12 @@ public class LoonyTune extends LinearOpMode {
         finalResult.applyTo(newParameters);
         String comparison = newParameters.compare(currentParameters, true);
         if ((history.size() <= 1) || (comparison.isEmpty())) {
-            io.out(A + " to exit, " + screen.buttons);
+            io.out("No configuration has changed, press " + A + " to exit, " + screen.buttons);
             io.end();
             if (io.ok())
                 return true; // ====>
         } else {
-            io.out("Resulting configuration changes:\n\n" + comparison + "\n");
+            io.out("Current configuration changes:\n\n" + comparison + "\n");
             io.out(A + " to save these results, " + B + " to discard and exit, ");
             io.out(screen.buttons + ".");
             io.end();
@@ -2619,37 +2619,134 @@ public class LoonyTune extends LinearOpMode {
         }
 
         final int DISTANCE = 72; // Test distance in inches
+        final String TARGET_COLOR = "#4CAF50"; // Green
+        final String ACTUAL_COLOR = "#3F51B5"; // Blue
+        final double GRAPH_THROTTLE = 0.1; // Only update the graph every 0.1 seconds
+
+        // Allocate a repository for all of our velocity samples:
+        class Sample {
+            final double time; // Seconds
+            final double target; // Target velocity, inches/s
+            final double actual; // Actual velocity, inches/s
+
+            public Sample(double time, double target, double actual) {
+                this.time = time; this.target = target; this.actual = actual;
+            }
+        }
+
+        double runStartTime; // Start time of the run
+        double profileStartTime; // Start time of the profile cycle, there are two in every run
+        TimeProfile profile; // The current Road Runner velocity profile
+        boolean movingForwards;
+        double maxDuration; // Max run duration, accumulated across runs
+        double lastGraphTime; // Last time the graph was updated, in seconds
+        LinkedList<Sample> samples; // The accumulated samples
+
+        // Start a run of the robot:
+        void startRun(double maxVelocityFactor) {
+            stopMotors(); // Stop the user's driving
+            movingForwards = true;
+            runStartTime = time();
+            profileStartTime = time();
+            profile = new TimeProfile(constantProfile(
+                    DISTANCE, 0.0,
+                    MecanumDrive.PARAMS.maxWheelVel * maxVelocityFactor,
+                    MecanumDrive.PARAMS.minProfileAccel,
+                    MecanumDrive.PARAMS.maxProfileAccel).baseProfile);
+            samples = new LinkedList<>();
+
+            // Reset the start position on every cycle. This ensures that getVelocity().x
+            // is the appropriate velocity to read, and it resets after we reposition
+            // the robot:
+            drive.setPose(new Pose2d(-DISTANCE / 2.0, 0, 0));
+        }
+
+        // Execute a loop of the run logic. Returns true if successful; false if it
+        // should be called again.
+        boolean run() {
+            double maxVelocity = 0; // Maximum measured velocity
+
+            double time = time();
+            double elapsedTime = time - profileStartTime;
+            if (elapsedTime > profile.duration) {
+                if (movingForwards) {
+                    movingForwards = false;
+                    profileStartTime = time;
+                } else {
+                    profile = null;
+                    return false; // ====>
+                }
+            }
+
+            DualNum<Time> v = profile.get(elapsedTime).drop(1);
+            if (!movingForwards) {
+                v = v.unaryMinus();
+            }
+
+            // Calculate the new sample and log it:
+            Pose2D velocityPose = drive.opticalTracker.getVelocity();
+            double targetVelocity = v.get(0);
+            double actualVelocity = Math.signum(velocityPose.x) * Math.hypot(velocityPose.x, velocityPose.y);
+            maxVelocity = Math.max(maxVelocity, Math.max(Math.abs(targetVelocity), Math.abs(actualVelocity)));
+            maxDuration = Math.max(maxDuration, time - runStartTime);
+            samples.addLast(new Sample(time, v.get(0), actualVelocity));
+
+            // Throttle the Dashboard updates so that it doesn't get overwhelmed as it
+            // has very bad rate control:
+            if (time - lastGraphTime > GRAPH_THROTTLE) {
+                lastGraphTime = time;
+
+                io.begin(); // Canvas update
+                Canvas canvas = io.canvas();
+                canvas.setFill("#ffffff");
+                canvas.fillRect(-72, -72, 144, 144);
+                canvas.setTranslation(0, 72);
+                double xScale = (maxDuration == 0) ? 1 : 144 / maxDuration;
+                double yScale = (maxVelocity == 0) ? 1 : 72 / maxVelocity;
+
+                int count = samples.size();
+                double[] xPoints = new double[count];
+                double[] yTargets = new double[count];
+                double[] yActuals = new double[count];
+                for (int i = 0; i < count; i++) {
+                    Sample sample = samples.get(i);
+                    xPoints[i] = (sample.time - (time - maxDuration)) * xScale;
+                    yTargets[i] = sample.target * yScale;
+                    yActuals[i] = sample.actual * yScale;
+                }
+                canvas.setStroke(TARGET_COLOR);
+                canvas.strokePolyline(xPoints, yTargets);
+                canvas.setStroke(ACTUAL_COLOR);
+                canvas.strokePolyline(xPoints, yActuals);
+                io.end();
+            }
+
+            // Set the motors to the appropriate values:
+            MotorFeedforward feedForward = new MotorFeedforward(MecanumDrive.PARAMS.kS,
+                    MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
+                    MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick);
+
+            double power = feedForward.compute(v) / drive.voltageSensor.getVoltage();
+            drive.setDrivePowers(new PoseVelocity2d(new Vector2d(power, 0.0), 0.0));
+
+            return true;
+        }
 
         // Tune the kV and kA feed forward parameters:
         void tune() {
             configureToDrive(false); // Don't use MecanumDrive
 
             // Trigger a reset the first time into the loop:
-            double profileStartTime = 0; // Profile start time, in seconds
-            double cycleStartTime = 0; // Cycle start time, in second (each cycle consumes 2 profiles)
+            profile = null;
+            profileStartTime = 0; // Profile start time, in seconds
+            runStartTime = 0; // Cycle start time, in second (each cycle consumes 2 profiles)
+            movingForwards = false;
+            maxDuration = 4; // Maximum graph duration, in seconds
+            lastGraphTime = 0;
+            samples = new LinkedList<>();
+
             double maxVelocityFactor = 0.8;
-            TimeProfile profile = null;
-            boolean movingForwards = false;
             int qeuedStarts = 0;
-            double maxVelocity = 0; // Maximum measured velocity
-            double maxDuration = 4; // Maximum graph duration, in seconds
-
-            // Allocate a repository for all of our velocity samples:
-            class Sample {
-                final double time; // Seconds
-                final double target; // Target velocity, inches/s
-                final double actual; // Actual velocity, inches/s
-
-                public Sample(double time, double target, double actual) {
-                    this.time = time; this.target = target; this.actual = actual;
-                }
-            }
-
-            final String TARGET_COLOR = "#4CAF50"; // Green
-            final String ACTUAL_COLOR = "#3F51B5"; // Blue
-            final double GRAPH_THROTTLE = 0.1; // Only update the graph every 0.1 seconds
-            double lastGraphTime = 0;
-            LinkedList<Sample> samples = new LinkedList<>();
 
             // Disable all lateral gains so that backward and forward behavior is not affected by the
             // PID/Ramsete algorithm. It's okay for the axial and rotation gains to be either zero
@@ -2722,14 +2819,17 @@ public class LoonyTune extends LinearOpMode {
                         io.out("&emsp;Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0);
                         io.out("View the graph in FTC Dashboard and adjust "
                                 + "<b>kV</b> to make the horizontal lines as close as possible in height. "
-                                + "<b>vTarget</b> is green, <b>vActual</b> is blue, <i>kV = vTarget / vActual</i>.\n\n");
+                                + "<b>vTarget</b> is green, <b>vActual</b> is blue, <i>kV = vTarget / vActual</i>. ");
                     } else {
                         io.out("&emsp;kA: <big><big>%s</big></big>\n", aInput.update());
                         io.out("&emsp;Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0);
                         io.out("View the graph in FTC Dashboard and adjust "
                                 + "<b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap "
-                                + "where the robot accelerates. Don't worry about the deceleration portions.\n\n");
+                                + "where the robot accelerates. Don't worry about the deceleration portions. ");
                     }
+                    io.out(DPAD_UP_DOWN + " to change value, " + DPAD_LEFT_RIGHT + " to move "
+                            + "the cursor.\n\n");
+
                     if (io.start())
                         qeuedStarts++; // Let starts be queued up even while running
 
@@ -2738,74 +2838,9 @@ public class LoonyTune extends LinearOpMode {
                         io.out("Press " + B + " to cancel and stop the robot.\n");
                         io.end();
 
-                        double time = time();
-                        double elapsedTime = time - profileStartTime;
-                        if (elapsedTime > profile.duration) {
-                            if (movingForwards) {
-                                movingForwards = false;
-                                profileStartTime = time;
-                            } else {
-                                profile = null;
-                                continue; // ====>
-                            }
-                        }
-
-                        DualNum<Time> v = profile.get(elapsedTime).drop(1);
-                        if (!movingForwards) {
-                            v = v.unaryMinus();
-                        }
-
-                        // Calculate the new sample and log it:
-                        Pose2D velocityPose = drive.opticalTracker.getVelocity();
-                        double targetVelocity = v.get(0);
-                        double actualVelocity = Math.signum(velocityPose.x) * Math.hypot(velocityPose.x, velocityPose.y);
-                        maxVelocity = Math.max(maxVelocity, Math.max(Math.abs(targetVelocity), Math.abs(actualVelocity)));
-                        maxDuration = Math.max(maxDuration, time - cycleStartTime);
-                        samples.addLast(new Sample(time, v.get(0), actualVelocity));
-
-                        // Throttle the Dashboard updates so that it doesn't get overwhelmed as it
-                        // has very bad rate control:
-                        if (time - lastGraphTime > GRAPH_THROTTLE) {
-                            lastGraphTime = time;
-
-                            io.begin();
-                            Canvas canvas = io.canvas();
-                            canvas.setFill("#ffffff");
-                            canvas.fillRect(-72, -72, 144, 144);
-                            canvas.setTranslation(0, 72);
-                            double xScale = (maxDuration == 0) ? 1 : 144 / maxDuration;
-                            double yScale = (maxVelocity == 0) ? 1 : 72 / maxVelocity;
-
-                            int count = samples.size();
-                            double[] xPoints = new double[count];
-                            double[] yTargets = new double[count];
-                            double[] yActuals = new double[count];
-                            for (int i = 0; i < count; i++) {
-                                Sample sample = samples.get(i);
-                                xPoints[i] = (sample.time - (time - maxDuration)) * xScale;
-                                yTargets[i] = sample.target * yScale;
-                                yActuals[i] = sample.actual * yScale;
-                            }
-                            canvas.setStroke(TARGET_COLOR);
-                            canvas.strokePolyline(xPoints, yTargets);
-                            canvas.setStroke(ACTUAL_COLOR);
-                            canvas.strokePolyline(xPoints, yActuals);
-
-                            // Make the results available to FTC Dashboard so that they can be graphed
-                            // there as well:
-                            io.put("vActual", actualVelocity);
-                            io.put("vTarget", v.get(0));
-                            io.putDivider();
-                            io.end();
-                        }
-
-                        // Set the motors to the appropriate values:
-                        MotorFeedforward feedForward = new MotorFeedforward(MecanumDrive.PARAMS.kS,
-                                MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
-                                MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick);
-
-                        double power = feedForward.compute(v) / drive.voltageSensor.getVoltage();
-                        drive.setDrivePowers(new PoseVelocity2d(new Vector2d(power, 0.0), 0.0));
+                        // Run the processing logic for this tuner:
+                        if (!run())
+                            continue; // ===>
 
                         if (io.cancel()) {
                             // Cancel the current cycle but remain in this test:
@@ -2814,11 +2849,9 @@ public class LoonyTune extends LinearOpMode {
                             profile = null;
                         }
                     } else {
-                        io.out("Changing max velocity will lengthen or shorten the horizontal lines.\n"
-                            + "\n");
-                        io.out(DPAD_UP_DOWN + " to change value, " + DPAD_LEFT_RIGHT + " to move "
-                                + "the cursor, " + TRIGGERS + " to change max velocity, "
-                                + START + " to start the robot, " + screen.buttons);
+                        io.out("Changing max velocity via " + TRIGGERS + " will lengthen or "
+                            + "shorten the horizontal lines.\n\n");
+                        io.out(START + " to start the robot, " + screen.buttons + ".");
                         io.end();
 
                         screen.update(); // Allow the screen to be changed.
@@ -2834,21 +2867,7 @@ public class LoonyTune extends LinearOpMode {
                         }
                         if (qeuedStarts > 0) {
                             qeuedStarts--;
-                            stopMotors(); // Stop the user's driving
-                            movingForwards = true;
-                            cycleStartTime = time();
-                            profileStartTime = time();
-                            profile = new TimeProfile(constantProfile(
-                                    DISTANCE, 0.0,
-                                    MecanumDrive.PARAMS.maxWheelVel * maxVelocityFactor,
-                                    MecanumDrive.PARAMS.minProfileAccel,
-                                    MecanumDrive.PARAMS.maxProfileAccel).baseProfile);
-                            samples = new LinkedList<>();
-
-                            // Reset the start position on every cycle. This ensures that getVelocity().x
-                            // is the appropriate velocity to read, and it resets after we reposition
-                            // the robot:
-                            drive.setPose(new Pose2d(-DISTANCE / 2.0, 0, 0));
+                            startRun(maxVelocityFactor);
                         }
                     }
                 }

@@ -27,7 +27,7 @@ if (team != null) {
     println(team + " rules!\n")
     include team
 } else {
-    println("Hi there Swerve person, please create the 'my.properties' file and add your team!\n")
+    println("Hi there Swerve person, please create the 'my.properties' file to enable fast loads!\n")
     include ':Team417'
     include ':Team6220'
     include ':TeamMentor'
