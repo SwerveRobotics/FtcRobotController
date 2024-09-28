@@ -67,6 +67,7 @@ import java.util.prefs.Preferences;
 
 /**
  * Class for debugging assistance.
+ * @noinspection unused
  */
 class Debug {
     // Code assertions are very valuable in software development but Java's built-in Debug.assertion()
@@ -237,7 +238,7 @@ class Io {
         Debug.assertion(message == null);
         Debug.assertion(canvas == null);
 
-        packet = new TelemetryPacket();
+        packet = new TelemetryPacket(false); // We'll draw our own field, thank you
         message = new StringBuilder();
 
         // Disable the welcome message if they've pressed the gamepad's 'start'"
@@ -267,7 +268,7 @@ class Io {
         Debug.assertion(canvas == null);
         Debug.assertion(packet != null);
 
-        canvas = new Canvas();
+        canvas = packet.fieldOverlay();
         canvas.setRotation(Math.toRadians(-90));
         if (background == Background.BLANK) {
             canvas.setFill("#c0c0c0");
@@ -1400,7 +1401,6 @@ public class LoonyTune extends LinearOpMode {
                 io.out("Press " + screens.buttons + ".");
                 io.end();
             } else if (screens.index == 1) { // Run screen
-                io.canvas(Io.Background.GRID);
                 if (runCount > 0) {
                     io.out("Max gain error: %.2f\", %.2f\u00b0\n"
                                     + "End gain error: %.2f\", %.2f\u00b0\n\n",
@@ -3284,6 +3284,8 @@ public class LoonyTune extends LinearOpMode {
         boolean run(PidTunerType type) {
             // Execute the trajectory:
             boolean more = drive.doActionsWork(io.packet);
+            if (!more)
+                io.abortCanvas(); // Do this to keep the last frame shown
 
             // Update the error summary if we're actively running a trajectory, or if it's
             // previously been updated:
