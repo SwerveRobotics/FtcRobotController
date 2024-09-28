@@ -9,6 +9,7 @@ import static com.acmerobotics.roadrunner.Profiles.constantProfile;
 import static java.lang.System.nanoTime;
 
 import android.annotation.SuppressLint;
+import android.util.Log;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -39,6 +40,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS.Pose2D;
+import com.qualcomm.robotcore.util.RobotLog;
 import com.wilyworks.common.WilyWorks;
 
 import static java.lang.System.out;
@@ -48,6 +50,8 @@ import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -59,7 +63,32 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.prefs.Preferences;
 
-// @@@ Check grid column count
+// @@@ Fix grid column count
+
+/**
+ * Class for debugging assistance.
+ */
+class Debug {
+    // Code assertions are very valuable in software development but Java's built-in Debug.assertion()
+    // causes FTC robots to immediately reboot when the assertion fires. Logcat will show
+    // the assertion, but that's very rude behavior. This version, in contrast, spews a message
+    // to
+    public static void assertion(boolean assertion) {
+        if (!assertion) {
+            String stackTraceString;
+            try {
+                throw new Exception("Assertion");
+            } catch (Exception e) {
+                StringWriter sw = new StringWriter();
+                PrintWriter pw = new PrintWriter(sw);
+                e.printStackTrace(pw);
+                stackTraceString = sw.toString();
+            }
+            RobotLog.addGlobalWarningMessage("Debug.assertion failure, check logCat!");
+            Log.e("System.out", "Failure:\n" + stackTraceString);
+        }
+    }
+}
 
 /**
  * Math helper for points and vectors:
@@ -198,9 +227,9 @@ class Io {
     // Begin a UI update. The optional 'showField' parameter dictates whether draw the field or
     // show blank when updating the field:
     void begin() {
-        assert(packet == null);
-        assert(message == null);
-        assert(canvas == null);
+        Debug.assertion(packet == null);
+        Debug.assertion(message == null);
+        Debug.assertion(canvas == null);
 
         packet = new TelemetryPacket();
         message = new StringBuilder();
@@ -229,7 +258,8 @@ class Io {
 
     // Get a canvas to render on, initialized to the specified background:
     Canvas canvas(Background background) {
-        assert(packet != null);
+        Debug.assertion(canvas == null);
+        Debug.assertion(packet != null);
 
         canvas = new Canvas();
         canvas.setRotation(Math.toRadians(-90));
@@ -252,6 +282,14 @@ class Io {
             canvas.setAlpha(1.0);
         }
         return canvas;
+    }
+
+    // Clear the field outside of a begin/end bracket:
+    /** @noinspection SameParameterValue*/
+    void clearField(Background background) {
+        begin();
+        canvas(background);
+        end();
     }
 
     // Discard the current canvas:
@@ -1437,7 +1475,7 @@ public class LoonyTune extends LinearOpMode {
                 io.out("Result history for %s:\n\n", history.get(0).getHeader());
                 for (int i = 0; i < history.size(); i++) {
                     Result result = history.get(i);
-                    io.out("&ensp;%d: %s", i, result.getValues());
+                    io.out("&ensp;<b>%d:</b> %s", i, result.getValues());
                     if (i == 0) {
                         io.out(" (original)");
                     } else if (i == history.size() - 1) {
@@ -2462,6 +2500,26 @@ public class LoonyTune extends LinearOpMode {
             return new BestFitLine(slope, intercept);
         }
 
+        // Ramp the motors up or down to or from the target spin speed. Turns counter-clockwise
+        // when provided a positive power value.
+        /** @noinspection SameParameterValue*/
+        void rampMotors(MecanumDrive drive, double targetPower) {
+            final double RAMP_TIME = 0.25; // Seconds
+            double startPower = drive.rightFront.getPower();
+            double deltaPower = targetPower - startPower;
+            double startTime = time();
+            while (opModeIsActive()) {
+                double duration = Math.min(time() - startTime, RAMP_TIME);
+                double power = (duration / RAMP_TIME) * deltaPower + startPower;
+                drive.rightFront.setPower(power);
+                drive.rightBack.setPower(power);
+                drive.leftFront.setPower(power);
+                drive.leftBack.setPower(power);
+                if (duration == RAMP_TIME)
+                    break; // ===>
+            }
+        }
+
         // Helper that drives an accelerating straight line and samples voltage and velocity:
         /** @noinspection SameParameterValue*/
         ArrayList<Point> driveLine(String header, double direction) {
@@ -2504,8 +2562,8 @@ public class LoonyTune extends LinearOpMode {
                             + "Rerun first tuners.");
                         return null; // ====>
                     }
-
-                    // @@@ Ramp here
+                    rampMotors(drive, 0);
+                    sleep(500); // Sleep a bit to quiesce
                     return points; // ====>
                 }
 
@@ -2573,6 +2631,7 @@ public class LoonyTune extends LinearOpMode {
                         canvas.setStroke("#ff0000");
                         canvas.strokeLine(0, bestFitLine.intercept * scale.y,
                                 200 * scale.x, (bestFitLine.intercept + 200 * bestFitLine.slope) * scale.y);
+                        io.end(); // Send the canvas results
 
                         double kS = bestFitLine.intercept;
                         double kV = bestFitLine.slope * currentParameters.params.inPerTick;
@@ -2611,6 +2670,7 @@ public class LoonyTune extends LinearOpMode {
                     currentParameters.params.kV));
 
             Screens screens = new Screens(new String[]{"Overview", "Measure", "Save and exit"});
+            screens.onSwitch(()->io.clearField(Io.Background.BLANK)); // Clear the field on screen switches
             while (opModeIsActive()) {
                 screens.update();
                 io.begin();
@@ -2634,7 +2694,6 @@ public class LoonyTune extends LinearOpMode {
                     io.end();
 
                 } else if (screens.index == 1) { // Measure screen
-                    io.canvas(Io.Background.BLANK); // Clear the field
                     updateGamepadDriving(); // Let the user drive
 
                     io.out(graphExplanation);
