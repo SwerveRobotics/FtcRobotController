@@ -63,8 +63,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.prefs.Preferences;
 
-// @@@ Fix grid column count
-
 /**
  * Class for debugging assistance.
  * @noinspection unused
@@ -271,10 +269,10 @@ class Io {
         canvas = packet.fieldOverlay();
         canvas.setRotation(Math.toRadians(-90));
         if (background == Background.BLANK) {
-            canvas.setFill("#c0c0c0");
+            canvas.setFill("#e0e0e0");
             canvas.fillRect(-72, -72, 144, 144);
         } else if (background == Background.GRID) {
-            canvas.setFill("#c0c0c0");
+            canvas.setFill("#e0e0e0");
             canvas.fillRect(-72, -72, 144, 144);
             canvas.drawGrid(0, 0, 144, 144, 7, 7);
         } else {
@@ -324,10 +322,10 @@ class Io {
         if (canvas != null) {
             // There was new canvas rendering, so copy it for posterity and then use it:
             canvasOpsCopy = new ArrayList<>(canvas.getOperations());
+        } else {
+            // There was no new canvas rendering so re-render the canvas from the previous iteration:
+            packet.fieldOverlay().getOperations().addAll(canvasOpsCopy);
         }
-
-        // There was no new canvas rendering so re-render the canvas from the previous iteration:
-        packet.fieldOverlay().getOperations().addAll(canvasOpsCopy);
 
         // Send the completed message to the FTC Dashboard telemetry (remembering that it doesn't
         // like newlines) and to the Driver Station (if enabled):
@@ -403,6 +401,9 @@ class TuneParameters {
         Preferences preferences = Preferences.userNodeForPackage(TuneParameters.class);
         Gson gson = new Gson();
         String json = gson.toJson(this);
+
+out.printf("Putting this Json: '%s'\n", json); // @@@
+
         preferences.put("settings", json);
     }
 
@@ -447,6 +448,9 @@ class TuneParameters {
         Preferences preferences = Preferences.userNodeForPackage(TuneParameters.class);
         Gson gson = new Gson();
         String json = preferences.get("settings", "");
+
+System.out.printf("Got Json: '%s'\n", json);
+
         TuneParameters savedParameters = gson.fromJson(json, TuneParameters.class);
 
         if ((savedParameters == null) || (savedParameters.params == null)) {
@@ -1147,7 +1151,7 @@ public class LoonyTune extends LinearOpMode {
         // Output spew when weird compiler bug hits because result should never be more than
         // stickValue:
         if (Math.abs(result) > Math.abs(stickValue))
-            out.printf("LooneyTuner: raw stick: %.2f, shaped: %.2f, power: %.2f, signum: %.2f\n", stickValue, result, power, Math.signum(stickValue));
+            out.printf("LoonyTune: raw stick: %.2f, shaped: %.2f, power: %.2f, signum: %.2f\n", stickValue, result, power, Math.signum(stickValue));
         return result;
     }
 
@@ -1239,6 +1243,7 @@ public class LoonyTune extends LinearOpMode {
     class Screens {
         public final String[] screens; // Name for each screen
         public int index; // Currently active screen
+        public boolean switched; // True if the screen was just switched, false if not
         public String header = ""; // Header to be drawn at the top of the screen
         public String buttons = ""; // Buttons message describing what the bumper buttons do
         Runnable runnable; // Runnable to execute when the user switches screens
@@ -1257,7 +1262,8 @@ public class LoonyTune extends LinearOpMode {
             if (io.rightBumper()) {
                 index = Math.min(index + 1, screens.length - 1);
             }
-            if (index != oldIndex) {
+            switched = (index != oldIndex);
+            if (switched) {
                 if (runnable != null)
                     runnable.run();
                 stopMotors(false);
@@ -2830,7 +2836,7 @@ public class LoonyTune extends LinearOpMode {
             maxDuration = Math.max(maxDuration, time - runStartTime);
 
             // Do some sanity checking:
-            if (Math.abs(velocityPose.y) > 0.1 * maxTargetVelocity) {
+            if (Math.abs(velocityPose.y) > 0.2 * maxTargetVelocity) {
                 dialog.warning("Odometry results are inconsistent with movement. "
                     + "Re-run first tuners.");
                 stopMotors();
@@ -2843,8 +2849,9 @@ public class LoonyTune extends LinearOpMode {
             if (highlightKv) {
                 highlight = Math.abs(targetVelocity) == maxTargetVelocity;
             } else {
-                highlight = ((targetAcceleration >= 0) && (targetVelocity >= 0))
-                         || ((targetAcceleration <= 0) && (targetVelocity <= 0));
+                highlight = (((targetAcceleration >= 0) && (targetVelocity >= 0))
+                          || ((targetAcceleration <= 0) && (targetVelocity <= 0)))
+                         && (Math.abs(targetVelocity) < maxTargetVelocity);
             }
             samples.addLast(new Sample(time, targetVelocity, actualVelocity, highlight));
 
@@ -2854,9 +2861,7 @@ public class LoonyTune extends LinearOpMode {
                 lastGraphTime = time;
 
                 io.begin(); // Canvas update
-                Canvas canvas = io.canvas(Io.Background.BLANK);
-                canvas.setFill("#ffffff");
-                canvas.fillRect(-72, -72, 144, 144);
+                Canvas canvas = io.canvas(Io.Background.GRID);
                 canvas.setTranslation(0, 72);
                 double maxGraphVelocity = Math.max(maxActualVelocity, maxTargetVelocity);
                 double xScale = (maxDuration == 0) ? 1 : 144 / maxDuration;
@@ -2925,7 +2930,7 @@ public class LoonyTune extends LinearOpMode {
             lastGraphTime = 0;
             samples = new LinkedList<>();
 
-            double maxVelocityFactor = 0.8;
+            double maxVelocityFactor = 0.7;
             int qeuedStarts = 0;
             TimeProfile profile = null;
 
@@ -2993,7 +2998,9 @@ public class LoonyTune extends LinearOpMode {
                         break; // ====>
 
                 } else { // kV and kA tuning screens
-                    io.canvas(Io.Background.BLANK); // Clear the field
+                    if (screens.switched) {
+                        io.canvas(Io.Background.BLANK); // Clear the field
+                    }
                     updateGamepadDriving(); // Let the user drive
 
                     if (screens.index == 1) {
@@ -3031,7 +3038,8 @@ public class LoonyTune extends LinearOpMode {
                     } else {
                         io.out("Changing max velocity via " + TRIGGERS + " will lengthen or "
                             + "shorten the horizontal lines.\n\n");
-                        io.out(START + " to start the robot, " + screens.buttons + ".");
+                        io.out(START + " to start the robot (ensure " + clearanceDistance(DISTANCE)
+                            + " of forward clearance), " + screens.buttons + ".");
                         io.end();
 
                         screens.update(); // Allow the screen to be changed.
@@ -3667,11 +3675,11 @@ public class LoonyTune extends LinearOpMode {
         // Wait for the start button to be pressed:
         while (!isStarted()) {
             io.begin();
-            io.out("<big><big><big><big><big><big><b><font color='#a0a0a0'>Loony Tune!</font></b></big></big></big></big></big></big>\n");
+            io.out("<big><big><big><big><big><big><b><font color='%s'>Loony Tune!</font></b></big></big></big></big></big></big>\n", HIGHLIGHT_COLOR);
             io.out("<big><big>By Swerve Robotics, Woodinville</big></big>\n");
-            io.out("<big><big><big><b><font color='#a0a0a0'>Tap \u25B6 to begin");
+            io.out("<big><big><big><b><font color='%s'>Tap \u25B6 to begin", HIGHLIGHT_COLOR);
             Canvas canvas = io.canvas(Io.Background.BLANK);
-            canvas.setFill("#2020a0");
+            canvas.setFill(HIGHLIGHT_COLOR);
             canvas.fillText("Loony Tune!", -30, 8, "", 0, false);
             io.end();
         }
@@ -3710,8 +3718,8 @@ public class LoonyTune extends LinearOpMode {
                     + "\n\n"
                     + "<small><font color='#a0a0a0'>(If you really want to see the UI here on the Driver "
                     + "Station, press the Guide button in the middle of the gamepad.)</font></small>");
-            io.message("<big><big><big>Press " + A + " to begin tuning</big></big></big>\n"
-                + "<big>Make sure you can see the field view in FTC Dashboard.");
+            io.message("<big><big><big><font color='%s'>Press %s to begin tuning</font></big></big></big>\n"
+                + "<big>Make sure you can see the field view in FTC Dashboard.", HIGHLIGHT_COLOR, A);
             while (!isStopRequested() && !io.ok())
                 io.redraw();
         }
