@@ -59,6 +59,8 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.prefs.Preferences;
 
+// @@@ Columns for results history
+
 /**
  * Math helper for points and vectors:
  * @noinspection unused
@@ -113,6 +115,7 @@ class Point { // Can't derive from vector2d because it's marked as final (by def
  * @noinspection unused
  */
 class Io {
+    final double TELEMETRY_PACKET_THROTTLE = 0.1; // Update Road Runner at this interval, in seconds
     public enum Background { BLANK, GRID, FIELD } // Rendering options
 
     static final double ANALOG_THRESHOLD = 0.5; // Threshold to consider an analog button pressed
@@ -121,6 +124,7 @@ class Io {
     public Gamepad gamepad; // Gamepad reference
     private String messageCopy = ""; // Copy of the most recently shown message
     private List<CanvasOp> canvasOpsCopy; // Copy of the most recently shown field canvas
+    double lastTelemetryPacketTime; // Time of sending the last telemetry packet
 
     // The following are null when not in an active begin/end bracket:
     private StringBuilder message; // Message that is begin built
@@ -289,7 +293,12 @@ class Io {
             telemetry.addLine(messageCopy);
         }
         telemetry.update();
-        FtcDashboard.getInstance().sendTelemetryPacket(packet);
+
+        // Throttle telemetry packets because FTC Dashboard has lousy rate control:
+        if (LoonyTune.time() - lastTelemetryPacketTime > TELEMETRY_PACKET_THROTTLE) {
+            lastTelemetryPacketTime = LoonyTune.time();
+            FtcDashboard.getInstance().sendTelemetryPacket(packet);
+        }
 
         // Prepare for the next begin():
         message = null;
@@ -531,14 +540,14 @@ class Menu {
         return nanoTime() * 1e-9;
     }
 
-    // Update loop for the Gui.
+    // Update loop for the menu.
     String update() {
         StringBuilder output = new StringBuilder();
 
         // Add a header with submenu names:
         output.append("<big><big>");
         if (menuStack.size() <= 1) {
-            output.append("Dpad to navigate, "+ LoonyTune.A+" to select");
+            output.append("Dpad to navigate, "+LoonyTune.A+" to select");
         } else {
             for (int i = 1; i < menuStack.size(); i++) {
                 if (i > 1)
@@ -571,7 +580,8 @@ class Menu {
             } else {
                 // Highlight current item:
                 String bullet = (widget.isStarred) ? "\u2605" : "\u25c6"; // Solid star or circle
-                output.append("<span style='background: #88285a'>" + bullet + " " + widget.string() + "</span>\n");
+                output.append("<span style='background: " + LoonyTune.HIGHLIGHT_COLOR
+                        + "'>" + bullet + " " + widget.string() + "</span>\n");
             }
         }
 
@@ -695,6 +705,7 @@ class Menu {
 @SuppressLint("DefaultLocale")
 @TeleOp(name="Loony Tune", group="Tuning")
 public class LoonyTune extends LinearOpMode {
+    static final String HIGHLIGHT_COLOR = "#a0a0c0"; // Used to be #88285a
     static String buttonString(String button) {
         return String.format("<span style='background:#808080'>%s</span>", button);
     }
@@ -776,7 +787,7 @@ public class LoonyTune extends LinearOpMode {
             firstFailure = Tuner.WHEEL_TEST;
         else if (otos.linearScalar == 0 || otos.offset.h == 0)
             firstFailure = Tuner.PUSH;
-        else if (params.trackWidthTicks == 0 || otos.angularScalar == 0 ||otos.offset.x == 0 || otos.offset.y == 0)
+        else if (params.trackWidthTicks == 0 || otos.angularScalar == 0 || otos.offset.x == 0 || otos.offset.y == 0)
             firstFailure = Tuner.SPIN;
         else if (!currentParameters.passedTrackingTest)
             firstFailure = Tuner.TRACKING_TEST;
@@ -806,6 +817,9 @@ public class LoonyTune extends LinearOpMode {
             widgets[i].isEnabled = (i <= nextIndex);
             widgets[i].isStarred = (i == nextIndex);
         }
+
+        // Enable re-tuning after even one passed tuner:
+        widgets[Tuner.RETUNE.index].isEnabled = firstFailure.index > Tuner.PUSH.index;
     }
 
     // Check if the robot code setting the MecanumDrive configuration parameters is up to date
@@ -982,6 +996,7 @@ public class LoonyTune extends LinearOpMode {
         // Return 'true' if A was pressed, 'false' otherwise:
         boolean okCancel() {
             while (!isStopRequested() && !io.cancel()) {
+                io.redraw();
                 if (io.ok())
                     return true;
             }
@@ -1198,7 +1213,8 @@ public class LoonyTune extends LinearOpMode {
                 drive.setPose(zeroPose);
                 io.clearDashboardTelemetry();
             }
-            header = String.format("<span style='background:#88285a'>Screen %d of %d: %s</span>\n\n", index + 1, screens.length, screens[index]);
+            header = String.format("<span style='background:%s'>Screen %d of %d: %s</span>\n\n",
+                    HIGHLIGHT_COLOR, index + 1, screens.length, screens[index]);
             if (index == 0) {
                 buttons = RIGHT_BUMPER+" (the bumper button above the right trigger) to go to the "
                     + "next screen";
@@ -1298,7 +1314,7 @@ public class LoonyTune extends LinearOpMode {
             String suffix = showValue.substring(digitIndex + 1);
 
             // Highlight the focus digit:
-            middle = "<span style='background: #88285a'>" + middle + "</span>";
+            middle = "<span style='background: " + HIGHLIGHT_COLOR + "'>" + middle + "</span>";
 
             // Blink the underline every half second:
             if ((((int) (time() * 2)) & 1) != 0) {
@@ -1504,9 +1520,9 @@ public class LoonyTune extends LinearOpMode {
                         + "If this wheel turns in the wrong direction, double-tap the shift "
                         + "key in Android Studio, enter 'md.configure', and ");
                 if (direction == DcMotorSimple.Direction.FORWARD) {
-                    io.out("add a call to <b>'%s.setDirection(DcMotorEx.Direction.REVERSE)'</b>.", motorName);
+                    io.out("add a call to <b>'%s.setDirection( DcMotorEx.Direction.REVERSE)'</b>.", motorName);
                 } else {
-                    io.out("disable the line <b>'%s.setDirection(DcMotorEx.Direction.REVERSE);'</b>.", motorName);
+                    io.out("disable the line <b>'%s.setDirection( DcMotorEx.Direction.REVERSE);'</b>.", motorName);
                 }
                 io.out("\n\nPress "+RIGHT_TRIGGER+" to rotate wheel forward, "+LEFT_TRIGGER+" for reverse, "+ screens.buttons + ".");
                 io.end();
@@ -1805,7 +1821,8 @@ public class LoonyTune extends LinearOpMode {
                 // there's enough distance that the angle becomes more reliable:
                 io.out("&ensp;Heading angle: ");
                 if (distance > 24) {
-                    io.out("%.2f\u00b0\n", Math.toDegrees(heading)); // Degree symbol
+                    double currentHeading = normalizeAngle(heading + oldOffsetHeading);
+                    io.out("%.2f\u00b0\n", Math.toDegrees(currentHeading)); // Degree symbol
                 } else {
                     io.out("\u2014\n"); // Em dash
                 }
@@ -1897,11 +1914,12 @@ public class LoonyTune extends LinearOpMode {
                             + "Press " + screens.buttons + ".");
                     io.end();
                 } else if (screens.index == 1) { // Measure screen
+                    updateGamepadDriving();
                     io.canvas(Io.Background.BLANK); // Clear the field
                     Result.showHistory(io, history); // Show measurement history and advise when done
 
                     io.out("To start a measurement, align the robot by hand to its starting point "
-                            + "aligned to a field wall, with room for " + testDistance(DISTANCE) + ".");
+                            + "aligned to a field wall, with room ahead for " + testDistance(DISTANCE) + ".");
                     io.out("\n\n");
                     io.out("Press " + A + " to start a measurement, " + screens.buttons + ".");
                     io.end();
@@ -2298,7 +2316,7 @@ public class LoonyTune extends LinearOpMode {
 
                 } else if (screens.index == 1) { // Measure screen
 
-                    io.canvas(Io.Background.BLANK); // Clear the field
+                    io.canvas(Io.Background.GRID); // Clear the field
                     Result.showHistory(io, history); // Show measurement history and advise when done
                     io.out("To start a measurement, carefully drive the robot to a wall and align "
                             + "it so that it's facing forward. This marks the start orientation for "
@@ -2319,7 +2337,6 @@ public class LoonyTune extends LinearOpMode {
                     } else {
                         io.out("Here is detail about the most recent result. Feel free to ignore.\n\n");
                         io.out(detail);
-                        io.out("\n\n");
                     }
                     io.out("Press " + screens.buttons);
                     io.end();
@@ -3532,7 +3549,7 @@ public class LoonyTune extends LinearOpMode {
             io.begin();
             io.out("<big><big><big><big><big><big><b>Loony Tune!</b></big></big></big></big></big></big>\n");
             io.out("<big><big>By Swerve Robotics, Woodinville</big></big>\n");
-            io.out("\n\n\n\n\n\n<big><big><big><big><big><b>Tap \u25B6 to begin");
+            io.out("<big><big><big><b>Tap \u25B6 to begin");
             io.canvas(Io.Background.BLANK).fillText("Loony Tune!", -32, 32, "", 0, false);
             io.end();
         }
@@ -3571,7 +3588,7 @@ public class LoonyTune extends LinearOpMode {
                     + "\n\n"
                     + "<small><font color='#a0a0a0'>(If you really want to see the UI here on the Driver "
                     + "Station, press the Guide button in the middle of the gamepad.)</font></small>");
-            io.message("<big><big><big><big><big>Press " + A + " to begin</big></big></big></big></big>");
+            io.message("<big><big><big><big><big>Press " + A + " to begin Loony Tune</big></big></big></big></big>");
             while (!isStopRequested() && !io.ok())
                 io.redraw();
         }

@@ -92,7 +92,7 @@ public final class MecanumDrive {
 
                 inPerTick = 1.0;
                 lateralInPerTick=0.834;
-                trackWidthTicks=16.11;
+                trackWidthTicks=15.91;
 
                 kS=0.584;
                 kV=0.181;
@@ -105,11 +105,11 @@ public final class MecanumDrive {
                 headingGain=3.8;
                 headingVelGain=0;
 
-                otos.offset.x=6.715;
-                otos.offset.y=3.152;
-                otos.offset.h=Math.toRadians(-88.397);
-                otos.linearScalar=1.064;
-                otos.angularScalar=1.0011;
+                otos.offset.x=6.098;
+                otos.offset.y=2.993;
+                otos.offset.h=Math.toRadians(-87.36);
+                otos.linearScalar=1.032;
+                otos.angularScalar=0.9991;
 
             } else {
                 // Your competition robot Loony Tune configuration is here:
