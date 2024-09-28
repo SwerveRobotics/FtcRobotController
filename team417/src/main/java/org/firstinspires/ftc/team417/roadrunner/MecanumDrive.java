@@ -204,6 +204,10 @@ public final class MecanumDrive {
     public Pose2d targetPose; // Target pose when actively traversing a trajectory
     public SparkFunOTOS opticalTracker; // Can be null which means no OTOS
     public SparkFunOTOS.Pose2D opticalAcceleration; // Most recent acceleration from the OTOS
+    public double lastLinearGainError = 0; // Most recent gain error in inches and radians
+    public double lastHeadingGainError = 0;
+    public double maxLinearGainError = 0; // Max gain error to date in inches and radians
+    public double maxHeadingGainError = 0;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -645,16 +649,13 @@ public final class MecanumDrive {
             rightBack.setPower(rightBackPower);
             rightFront.setPower(rightFrontPower);
 
+            // Update some statistics:
             updateLoopTimeStatistic(p);
-
-            // p.put("x", pose.position.x);
-            // p.put("y", pose.position.y);
-            // p.put("heading (deg)", Math.toDegrees(pose.heading.toDouble()));
-
-            // Pose2d error = txWorldTarget.value().minusExp(pose);
-            // p.put("xError", error.position.x);
-            // p.put("yError", error.position.y);
-            // p.put("headingError (deg)", Math.toDegrees(error.heading.toDouble()));
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+            lastLinearGainError = error.position.norm();
+            lastHeadingGainError = error.heading.toDouble();
+            maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
+            maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
 
             // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();
@@ -730,7 +731,6 @@ public final class MecanumDrive {
 
             MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
 
-            updateLoopTimeStatistic(p);
             double voltage = getVoltage();
 
             final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS,
@@ -747,6 +747,14 @@ public final class MecanumDrive {
             leftBack.setPower(feedforward.compute(wheelVels.leftBack) / voltage);
             rightBack.setPower(feedforward.compute(wheelVels.rightBack) / voltage);
             rightFront.setPower(feedforward.compute(wheelVels.rightFront) / voltage);
+
+            // Update some statistics:
+            updateLoopTimeStatistic(p);
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+            lastLinearGainError = error.position.norm();
+            lastHeadingGainError = error.heading.toDouble();
+            maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
+            maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
 
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);

@@ -794,7 +794,7 @@ public class LoonyTune extends LinearOpMode {
             firstFailure = Tuner.LATERAL_GAIN;
         else if (params.headingGain == 0)
             firstFailure = Tuner.HEADING_GAIN;
-        else if (currentParameters.passedCompletionTest)
+        else if (!currentParameters.passedCompletionTest)
             firstFailure = Tuner.COMPLETION_TEST;
         else
             firstFailure = Tuner.COUNT; // Don't star the completion test if it already passed
@@ -1304,9 +1304,9 @@ public class LoonyTune extends LinearOpMode {
     void runTrajectory(String description, Supplier<Action> action) {
         configureToDrive(true); // Do use MecanumDrive
         TrajectoryPreviewer previewer = new TrajectoryPreviewer(io, action.get());
-        Screens screens = new Screens(new String[] {"Overview", "Run", "Exit"});
+        Screens screens = new Screens(new String[] {"Overview", "Test", "Optional experiment", "Exit"});
 
-        boolean useOdometry = true;
+        int runCount = 0;
         while (opModeIsActive()) {
             screens.update();
             io.begin();
@@ -1321,46 +1321,60 @@ public class LoonyTune extends LinearOpMode {
                 }
                 io.out("Press " + screens.buttons + ".");
                 io.end();
-            } else if (screens.index == 1) {
+            } else if (screens.index == 1) { // Run screen
                 io.canvas(Io.Background.GRID);
-                if (!useOdometry) {
-                    io.out("Running with odometry correction enabled, as usual.\n");
-                    io.out("\n");
-                    io.out("For test purposes, the robot can be run without normal "
-                        + "odometry correction to test how well the non-odometry settings "
-                        + "have been tuned. If well tuned, the robot should drive close to the "
-                        + "intended path. Press " + X + " to disable.\n");
-                } else {
-                    io.out("Running with odometry correction disabled, in test mode. ");
-                    io.out("Press " + X + " to re-enable.\n");
+                if (runCount > 0) {
+                    io.out("Max gain error: %.2f\", %.2f\u00b0\n"
+                                    + "End gain error: %.2f\", %.2f\u00b0\n\n",
+                            drive.maxLinearGainError, Math.toDegrees(drive.maxHeadingGainError),
+                            drive.lastLinearGainError, Math.toDegrees(drive.lastHeadingGainError));
                 }
-                io.out("\nPress " + START + " to start the robot, " + screens.buttons + ".");
+                io.out("Press " + START + " to start the robot, " + screens.buttons + ".");
                 io.end();
 
-                if (io.x()) {
-                    useOdometry = !useOdometry;
-                }
                 if (io.start()) {
+                    runCount++;
                     stopMotors();
                     drive.setPose(zeroPose);
-                    if (useOdometry) {
-                        runCancelableAction(screens.header, action.get());
-                    } else {
-                        // Point MecanumDrive to some temporary parameters, run the action, then
-                        // restore the settings:
-                        TuneParameters testParameters = currentParameters.createClone();
-                        testParameters.params.axialGain = 0;
-                        testParameters.params.axialVelGain = 0;
-                        testParameters.params.lateralGain = 0;
-                        testParameters.params.lateralVelGain = 0;
-                        testParameters.params.headingGain = 0;
-                        testParameters.params.headingVelGain = 0;
-                        MecanumDrive.PARAMS = testParameters.params;
-                        runCancelableAction("", action.get());
-                        MecanumDrive.PARAMS = currentParameters.params;
-                    }
+                    drive.maxLinearGainError = 0; // Reset for our new run
+                    drive.maxHeadingGainError = 0;
+                    runCancelableAction(screens.header, action.get());
                 }
-            } else {
+            } else if (screens.index == 2) { // Experiment screen
+                io.out("This screen is optional, feel free to skip.\n\n");
+                io.out("This runs the trajectory with normal odometry correction disabled. "
+                    + "This tests how well the non-odometry settings have been tuned. If well "
+                    + "tuned, the robot should drive close to the intended path.\n\n");
+                if (runCount > 0) {
+                    io.out("Max gain error: %.2f\", %.2f\u00b0\n"
+                                    + "End gain error: %.2f\", %.2f\u00b0\n\n",
+                            drive.maxLinearGainError, Math.toDegrees(drive.maxHeadingGainError),
+                            drive.lastLinearGainError, Math.toDegrees(drive.lastHeadingGainError));
+                }
+                io.out("Press " + START + " to start the robot, " + screens.buttons + ".");
+                io.end();
+
+                if (io.start()) {
+                    runCount++;
+                    stopMotors();
+                    drive.setPose(zeroPose);
+                    drive.maxLinearGainError = 0; // Reset for our new run
+                    drive.maxHeadingGainError = 0;
+
+                    // Point MecanumDrive to some temporary parameters, run the action, then
+                    // restore the settings:
+                    TuneParameters testParameters = currentParameters.createClone();
+                    testParameters.params.axialGain = 0;
+                    testParameters.params.axialVelGain = 0;
+                    testParameters.params.lateralGain = 0;
+                    testParameters.params.lateralVelGain = 0;
+                    testParameters.params.headingGain = 0;
+                    testParameters.params.headingVelGain = 0;
+                    MecanumDrive.PARAMS = testParameters.params;
+                    runCancelableAction("", action.get());
+                    MecanumDrive.PARAMS = currentParameters.params;
+                }
+            } else { // Exit screen
                 io.out("Press " + A + " to exit, " + screens.buttons + ".");
                 io.end();
                 if (io.a()) {
@@ -3141,7 +3155,7 @@ public class LoonyTune extends LinearOpMode {
                 maxLateralError = Math.max(maxLateralError, lateralError);
                 maxHeadingError = Math.max(maxHeadingError, headingError);
 
-                errorSummary = "Max error: ";
+                errorSummary = "Max gain error: ";
                 if (type == PidTunerType.AXIAL)
                     errorSummary += String.format("%.2f\"", maxAxialError);
                 else if (type == PidTunerType.LATERAL)
@@ -3296,7 +3310,7 @@ public class LoonyTune extends LinearOpMode {
                     if (resultsDoneScreen(history, screens, tuner))
                         break; // ====>
                 } else { // Tune screens
-                    io.canvas(Io.Background.BLANK); // Clear the field
+                    io.canvas(Io.Background.GRID); // Clear the field
                     int index = screens.index - 1;
                     NumericInput input = inputs.get(index);
                     io.out("&emsp;%s: <big><big>%s</big></big>\n", input.fieldName, input.update());
@@ -3421,6 +3435,7 @@ public class LoonyTune extends LinearOpMode {
                 .splineTo(new Vector2d(0, 60), Math.PI)
                 .build());
     }
+
     void lineToTurnExample() {
         runTrajectory(()->drive.actionBuilder(zeroPose)
                 .lineToX(24)
@@ -3433,6 +3448,7 @@ public class LoonyTune extends LinearOpMode {
                 .turn(Math.PI/2)
                 .build());
     }
+
     void lineWithRotationExample() {
         final double DISTANCE = 60.0;
         runTrajectory(()->drive.actionBuilder(zeroPose)
@@ -3476,8 +3492,8 @@ public class LoonyTune extends LinearOpMode {
     }
 
     public void retuneDialog() {
-        io.message(Dialog.QUESTION_ICON + "Do you want to re-tune your robot "
-            + "after a big hardware change? "
+        io.message(Dialog.QUESTION_ICON + "Do you want to re-tune your robot ("
+            + "maybe you did a big hardware change)? "
             + "This will walk you through the re-tuning step-by-step. It will also show your "
             + "new tuning results compared to your previous results.\n"
             + "\n"
