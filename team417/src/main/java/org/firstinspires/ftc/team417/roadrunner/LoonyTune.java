@@ -59,8 +59,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.prefs.Preferences;
 
-// @@@ Debug if not hooked up
-
 /**
  * Math helper for points and vectors:
  * @noinspection unused
@@ -1118,6 +1116,20 @@ public class LoonyTune extends LinearOpMode {
     // Set the hardware to the current parameters:
     public void setOtosHardware() {
         drive.initializeOpticalTracker();
+    }
+
+    // Return true if the optical tracker hardware is responding:
+    boolean isOpticalTrackerResponsive() {
+        // Send a new offset to the hardware:
+        drive.opticalTracker.setPosition(new Pose2D(12, 34, 0));
+
+        // We need to wait for at least an entire OTOS quantum (2.4ms) before reading back:
+        sleep(5);
+        Pose2D read = drive.opticalTracker.getPosition();
+
+        // Return success if we read back about the same as what we wrote in (accounting for
+        // slight jitter movement on the robot):
+        return Math.round(read.x) == 12 && Math.round(read.y) == 34;
     }
 
     // Return a high resolution time count, in seconds:
@@ -3525,6 +3537,19 @@ public class LoonyTune extends LinearOpMode {
             io.end();
         }
 
+        if ((drive.opticalTracker == null) ||
+                (drive.opticalTracker.getAngularUnit() != AngleUnit.RADIANS) ||
+                (drive.opticalTracker.getLinearUnit() != DistanceUnit.INCH)) {
+            dialog.warning("The SparkFun OTOS must be present and configured for radians and inches.\n\n"
+                    + "Press "+A+" to quit.");
+            return; // ====>
+        }
+
+        if (!isOpticalTrackerResponsive()) {
+            dialog.warning("The SparkFun OTOS sensor is not responding. Check your wiring.");
+            return; // ====>
+        }
+
         // Require that a button be pressed on the gamepad to continue. We require this
         // because enabling the gamepad on the DS after it's been booted causes an A press to
         // be sent to the app, and we don't want that to accidentally invoke a menu option.
@@ -3549,15 +3574,6 @@ public class LoonyTune extends LinearOpMode {
             io.message("<big><big><big><big><big>Press " + A + " to begin</big></big></big></big></big>");
             while (!isStopRequested() && !io.ok())
                 io.redraw();
-        }
-
-        if ((drive.opticalTracker == null) ||
-            ((drive.opticalTracker.getAngularUnit() != AngleUnit.RADIANS) ||
-             (drive.opticalTracker.getLinearUnit() != DistanceUnit.INCH))) {
-            io.message("The SparkFun OTOS must be present and configured for radians and inches.\n\n"
-                    + "Press "+A+" to quit.");
-            poll.ok();
-            return; // ====>
         }
 
         // Dynamically build the list of tests:
