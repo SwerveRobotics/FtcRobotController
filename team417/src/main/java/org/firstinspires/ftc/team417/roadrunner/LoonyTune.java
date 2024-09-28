@@ -1407,6 +1407,7 @@ public class LoonyTune extends LinearOpMode {
                 io.out("Press " + screens.buttons + ".");
                 io.end();
             } else if (screens.index == 1) { // Run screen
+                updateGamepadDriving();
                 if (runCount > 0) {
                     io.out("Max gain error: %.2f\", %.2f\u00b0\n"
                                     + "End gain error: %.2f\", %.2f\u00b0\n\n",
@@ -1425,6 +1426,7 @@ public class LoonyTune extends LinearOpMode {
                     runCancelableAction(screens.header, action.get());
                 }
             } else if (screens.index == 2) { // Experiment screen
+                updateGamepadDriving();
                 io.out("This screen is optional, feel free to skip.\n\n");
                 io.out("This runs the trajectory with the usual odometry correction disabled. "
                     + "This tests how well the non-odometry settings have been tuned. If well "
@@ -1852,7 +1854,7 @@ public class LoonyTune extends LinearOpMode {
 
             @Override
             public String getHeader() {
-                return ("linearScalar, offset heading");
+                return ("<b>linearScalar</b>, <b>offset heading</b>");
             }
 
             @Override
@@ -2034,7 +2036,7 @@ public class LoonyTune extends LinearOpMode {
 
             @Override
             public String getHeader() {
-                return "trackWidthTicks, angularScalar, offset";
+                return "<b>trackWidthTicks</b>, <b>angularScalar</b>, <b>offset</b>";
             }
 
             @Override
@@ -2449,7 +2451,7 @@ public class LoonyTune extends LinearOpMode {
 
             @Override
             public String getHeader() {
-                return "kS, kV";
+                return "<b>kS</b>, <b>kV</b>";
             }
 
             @Override
@@ -2744,7 +2746,7 @@ public class LoonyTune extends LinearOpMode {
                 this.kA = kA;
             }
             @Override
-            public String getHeader() { return ("kV, kA"); }
+            public String getHeader() { return ("<b>kV</b>, <b>kA</b>"); }
 
             @Override
             public String getValues() { return String.format("%.3f, %.4f", kV, kA); }
@@ -3081,7 +3083,7 @@ public class LoonyTune extends LinearOpMode {
 
             @Override
             public String getHeader() {
-                return "lateralInPerTick";
+                return "<b>lateralInPerTick</b>";
             }
 
             @Override
@@ -3101,7 +3103,7 @@ public class LoonyTune extends LinearOpMode {
         // Do the lateral multiplier measurement step:
         LateralResult measure(String header, TuneParameters testParameters, List<Result> history) {
             // Accelerate and decelerate slowly so we don't overshoot:
-            ProfileAccelConstraint accelConstraint = new ProfileAccelConstraint(-10, 15);
+            ProfileAccelConstraint accelConstraint = new ProfileAccelConstraint(-3, 3);
 
             // Strafe left and then right:
             Pose2d startPose1 = new Pose2d(0, -DISTANCE / 2.0, 0);
@@ -3110,7 +3112,10 @@ public class LoonyTune extends LinearOpMode {
                     .strafeTo(new Vector2d(0, DISTANCE / 2.0), null, accelConstraint)
                     .build())) {
 
-                double actualDistance1 = Math.hypot(drive.pose.position.x, drive.pose.position.y);
+                sleep(500); // Quiesce between runs
+
+                double actualDistance1 = drive.pose.position.y - startPose1.position.y;
+                double error1 = Math.abs(drive.pose.position.x - startPose1.position.x);
 
                 Pose2d startPose2 = new Pose2d(0, DISTANCE / 2.0, 0);
                 drive.setPose(startPose2);
@@ -3118,14 +3123,22 @@ public class LoonyTune extends LinearOpMode {
                         .strafeTo(new Vector2d(0, -DISTANCE / 2.0), null, accelConstraint)
                         .build())) {
 
-                    double actualDistance2 = Math.hypot(drive.pose.position.x, drive.pose.position.y);
+                    double actualDistance2 = startPose2.position.y - drive.pose.position.y;
+                    double error2 = Math.abs(startPose2.position.x - drive.pose.position.x);
+
                     double multiplier1 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance1 / DISTANCE);
                     double multiplier2 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance2 / DISTANCE);
+
+                    if ((error1 > 0.1 * DISTANCE) || (error2 > 0.1 * DISTANCE)) {
+                        dialog.warning("Odometry results are inconsistent with movement. "
+                            + "Re-run first tuners");
+                        return null; // ====>
+                    }
 
                     if (Math.min(multiplier1, multiplier2) < 0.25) {
                         dialog.warning("The measured distance is too low to be correct. "
                                 + "Is the odometry sensor not working properly?");
-                        return null;
+                        return null; // ====>
                     }
 
                     double newMultiplier = (multiplier1 + multiplier2) / 2.0; // Compute the average
@@ -3194,16 +3207,14 @@ public class LoonyTune extends LinearOpMode {
 
                 } else if (screens.index == 1) { // Measure screen
 
-                    io.canvas(Io.Background.BLANK); // Clear the field
+                    if (screens.switched)
+                        io.canvas(Io.Background.BLANK); // Clear the field
                     updateGamepadDriving(); // Let the user drive
 
-                    io.out(latestResult);
+                    // io.out(latestResult);
                     Result.showHistory(io, history);
 
-                    io.out("If starting a measurement, ensure that " + testDistance(DISTANCE) + " "
-                            + "is clear to the robot's left.\n"
-                            + "\n"
-                            + "Press " + START + " to start the robot, " + screens.buttons + ".");
+                    io.out("Press " + START + " to start the robot (ensure " + clearanceDistance(DISTANCE) + " of clearance to the left), " + screens.buttons + ".");
                     io.end();
                     if (io.start()) {
                         LateralResult result = measure(screens.header, testParameters, history);
@@ -3247,13 +3258,13 @@ public class LoonyTune extends LinearOpMode {
             @Override
             public String getHeader() {
                 if (type == PidTunerType.AXIAL) {
-                    return "axialGain, axialVelGain";
+                    return "<b>axialGain</b>, <b>axialVelGain</b>";
                 } else if (type == PidTunerType.LATERAL) {
-                    return "lateralGain, lateralVelGain";
+                    return "<b>lateralGain</b>, <b>lateralVelGain</b>";
                 } else if (type == PidTunerType.HEADING) {
-                    return "headingGain, headingVelGain";
+                    return "<b>headingGain</b>, <b>headingVelGain</b>";
                 } else {
-                    return "axial / lateral / heading gains";
+                    return "<b>axial, lateral, heading gains</b>";
                 }
             }
 
@@ -3266,7 +3277,7 @@ public class LoonyTune extends LinearOpMode {
                 } else if (type == PidTunerType.HEADING) {
                     return String.format("%.3f, %.3f", headingGain, headingVelGain);
                 } else {
-                    return String.format("%.3f, %.3f / %.3f, %.3f / %.3f, %.3f",
+                    return String.format("%.3f/%.3f, %.3f/%.3f, %.3f/%.3f",
                             axialGain, axialVelGain, lateralGain, lateralVelGain, headingGain, headingVelGain);
                 }
             }
