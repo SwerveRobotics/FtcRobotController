@@ -999,6 +999,7 @@ public class LoonyTune extends LinearOpMode {
         // Update the preview. Must be in an active io.begin/end bracket.
         void update() {
             Canvas canvas = io.canvas(Io.Background.GRID);
+            canvas.setFill("#a0a0a0");
             canvas.fillText("Preview", -19, 5, "", 0, false);
             sequentialAction.preview(canvas);
             canvas.setStroke("#000000"); // Black

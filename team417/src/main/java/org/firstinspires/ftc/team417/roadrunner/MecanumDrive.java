@@ -102,8 +102,8 @@ public final class MecanumDrive {
                 axialVelGain=1.2;
                 lateralGain=9.1;
                 lateralVelGain=0;
-                headingGain=3.8;
-                headingVelGain=0;
+                headingGain=14.8;
+                headingVelGain=0.20;
 
                 otos.offset.x=6.098;
                 otos.offset.y=2.993;
