@@ -71,8 +71,8 @@ import java.util.prefs.Preferences;
 class Debug {
     // Code assertions are very valuable in software development but Java's built-in Debug.assertion()
     // causes FTC robots to immediately reboot when the assertion fires. Logcat will show
-    // the assertion, but that's very rude behavior. This version, in contrast, spews a message
-    // to
+    // the assertion, but that's very rude behavior. This version, in contrast, spews a sticky
+    // red message to the Driver Station in addition to logging the error on LogCat.
     public static void assertion(boolean assertion) {
         if (!assertion) {
             String stackTraceString;
@@ -87,6 +87,12 @@ class Debug {
             RobotLog.addGlobalWarningMessage("Debug.assertion failure, check logCat!");
             Log.e("System.out", "Failure:\n" + stackTraceString);
         }
+    }
+
+    // Send a sticky red error message to the Driver Station:
+    public static void error(String message) {
+        RobotLog.addGlobalWarningMessage("Debug.error: " + message);
+        Log.e("System.out", "Error: " + message);
     }
 }
 
@@ -273,7 +279,7 @@ class Io {
         } else {
             canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144,
                     Math.toRadians(90), 0, 144, true);
-            canvas.drawGrid(0, 0, 144, 144, 6, 6);
+            canvas.drawGrid(0, 0, 144, 144, 7, 7);
 
             // Fade field and grid to white by drawing transparent white over it:
             canvas.setAlpha(0.8);
