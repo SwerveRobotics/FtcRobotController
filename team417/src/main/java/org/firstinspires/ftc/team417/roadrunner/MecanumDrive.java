@@ -140,6 +140,33 @@ public final class MecanumDrive {
                     otos.angularScalar = 0;
                     break;
 
+                case FASTBOT_MECANUM:
+                    // Your DevBot Looney Tune configuration is here:
+                    logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
+                    usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+
+                    inPerTick = 1.0;
+                    lateralInPerTick = 0.700; // Was 1.00
+                    trackWidthTicks = 22.29; // Was 0.00
+
+                    kS = 0.608; // Was 0
+                    kV = 0.188; // Was 0
+                    kA = 0;
+
+                    axialGain = 6.00; // Was 0
+                    axialVelGain = 0.70; // Was 0
+                    lateralGain = 4.00; // Was 0.00
+                    lateralVelGain = 3.00; // Was 0.00
+                    headingGain = 9.0; // Was 0.0
+                    headingVelGain = 0;
+
+                    otos.offset.x = 6.115; // Was 0.00
+                    otos.offset.y = 3.031; // Was 0.00
+                    otos.offset.h = Math.toRadians(-89.71); // Was Math.toRadians(0)
+                    otos.linearScalar = 1.000; // Was 0.000
+                    otos.angularScalar = 1.0005;
+                    break;
+
                 case COMPETITION_ROBOT:
                     // Your competition robot Looney Tune configuration is here:
                     logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
@@ -215,10 +242,12 @@ public final class MecanumDrive {
 
     private static DriveParameters getDriveParameters() {
         switch (getBotName()) {
-            case "DevBot":
+            case "Something":
                 return DriveParameters.DEVBOT_MECANUM;
             case "DevBotX":
                 return DriveParameters.DEVBOT_X;
+            case "DevBot":
+                return DriveParameters.FASTBOT_MECANUM;
             case "417-RC":
                 return DriveParameters.COMPETITION_ROBOT;
         }
@@ -400,6 +429,19 @@ public final class MecanumDrive {
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
                 rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
                 rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+                leftFront.setDirection(DcMotorEx.Direction.REVERSE);
+                leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+                break;
+
+            case FASTBOT_MECANUM:
+                opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+                initializeOpticalTracker();
+
+                leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+                leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+                rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+                rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+
                 leftFront.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
