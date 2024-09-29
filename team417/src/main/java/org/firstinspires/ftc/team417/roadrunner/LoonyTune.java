@@ -62,6 +62,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.prefs.Preferences;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Class for debugging assistance.
@@ -83,8 +85,20 @@ class Debug {
                 e.printStackTrace(pw);
                 stackTraceString = sw.toString();
             }
-            RobotLog.addGlobalWarningMessage("Debug.assertion failure, check logCat!");
-            Log.e("System.out", "Failure:\n" + stackTraceString);
+
+            // Use regex to get the line number and file name of the code that fired the assertion:
+            Pattern pattern = Pattern.compile("\\(.*\\).*\\n.*\\((.*):(.*)\\)");
+            Matcher matcher = pattern.matcher(stackTraceString);
+            String message;
+            if (matcher.find()) {
+                message = String.format("Debug.assertion: %s, line %s", matcher.group(1), matcher.group(2));
+            } else {
+                message = "Debug.assertion, check Logcat!";
+            }
+            RobotLog.addGlobalWarningMessage(message);
+
+            // Log as an error to Logcat too:
+            Log.e("System.out", "Assertion failure:\n" + stackTraceString);
         }
     }
 
