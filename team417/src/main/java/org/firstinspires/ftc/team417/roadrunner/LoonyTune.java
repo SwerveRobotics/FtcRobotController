@@ -12,8 +12,8 @@
 package org.firstinspires.ftc.team417.roadrunner;
 
 import static com.acmerobotics.roadrunner.Profiles.constantProfile;
-
 import static java.lang.System.nanoTime;
+import static java.lang.System.out;
 
 import android.annotation.SuppressLint;
 
@@ -39,20 +39,19 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.google.gson.Gson;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
+import com.qualcomm.hardware.sparkfun.SparkFunOTOS.Pose2D;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.qualcomm.hardware.sparkfun.SparkFunOTOS.Pose2D;
 import com.wilyworks.common.WilyWorks;
-
-import static java.lang.System.out;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.team417.BaseOpMode;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -2513,7 +2512,7 @@ public class LoonyTune extends LinearOpMode {
         // Initialize member fields:
         gui = new Gui(gamepad1);
         dialogs = new Dialogs();
-        drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, zeroPose);
+        drive = new MecanumDrive(BaseOpMode.kinematicType, hardwareMap, telemetry, gamepad1, zeroPose);
         currentParameters = new TuneParameters(drive);
         originalParameters = currentParameters.createClone();
 
