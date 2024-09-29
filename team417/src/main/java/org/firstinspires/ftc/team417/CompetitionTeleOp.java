@@ -23,13 +23,14 @@ public class CompetitionTeleOp extends BaseOpMode {
     DcMotor armMotor;
     DcMotor bootWheelServo;
     Servo rotationServo;
+    MecanumDrive drive;
 
     @Override
     public void runOpMode() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
-        MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
+        drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
         armMotor = hardwareMap.get(DcMotor.class, "ArmMotor");
         bootWheelServo = hardwareMap.get(DcMotor.class, "BootWheelServo");
         rotationServo = hardwareMap.get(Servo.class, "RotationServo");
@@ -81,8 +82,40 @@ public class CompetitionTeleOp extends BaseOpMode {
     }
 
     public void controlArm() {
-        armMotor.getCurrentPosition();
-        armMotor.setPower(gamepad2.right_stick_y);
+
+        // Original code in method before switch statements
+            // armMotor.getCurrentPosition();
+            // armMotor.setPower(gamepad2.right_stick_y);
+
+        // These switch statements will make sure the arm only moves if the robot
+        // is the competition robot and not the mecanum or x drive robot
+        switch (MecanumDrive.driveParameters) {
+
+            // If the robot is the competition robot then the arm motors will engage
+            case COMPETITION_ROBOT:
+                armMotor.getCurrentPosition();
+                armMotor.setPower(gamepad2.right_stick_y);
+                break;
+
+            // If the robot is not the competition robot it will not engage the 'arm motor'
+            // also updates telemetry data
+            
+            case DEVBOT_MECANUM:
+                telemetry.addData("Arm Control", "Disabled");
+                break;
+
+            case DEVBOT_X:
+                telemetry.addData("Arm Control", "Disabled");
+                break;
+
+            // Default values will just add a warning into the telemetry object and won't engage arm
+            default:
+                telemetry.addData("Warning", "Unknown drive parameters: " + MecanumDrive.driveParameters);
+                telemetry.addData("Arm Control", "Disabled");
+                break;
+
+        }
+
     }
 
     public final double leftRotationServo = 0;
