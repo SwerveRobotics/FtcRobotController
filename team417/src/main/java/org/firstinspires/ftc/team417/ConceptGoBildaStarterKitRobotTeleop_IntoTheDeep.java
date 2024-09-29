@@ -124,23 +124,14 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
     /* A number in degrees that the triggers can adjust the arm position by */
     final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
+    /** @noinspection ConstantValue*/
     /* Variables that are used to set the arm to a specific position */
-    double armPosition = (int)ARM_COLLAPSED_INTO_ROBOT;
+    double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
 
 
     @Override
     public void runOpMode() {
-        /*
-        These variables are private to the OpMode, and are used to control the drivetrain.
-         */
-        double left;
-        double right;
-        double forward;
-        double rotate;
-        double max;
-
-
         /* Define and Initialize Motors */
         leftFront  = hardwareMap.get(DcMotor.class, "leftFront"); //the left drivetrain motor
         rightFront = hardwareMap.get(DcMotor.class, "rightFront"); //the right drivetrain motor
@@ -148,7 +139,7 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
         leftBack  = hardwareMap.get(DcMotor.class, "leftBack"); //the left drivetrain motor
         rightBack = hardwareMap.get(DcMotor.class, "rightBack"); //the right drivetrain motor
 
-        armMotor   = hardwareMap.get(DcMotor.class, "left_arm"); //the arm motor
+        armMotor   = hardwareMap.get(DcMotor.class, "arm"); //the arm motor
 
 
         /* Most skid-steer/differential drive robots require reversing one motor to drive forward.
