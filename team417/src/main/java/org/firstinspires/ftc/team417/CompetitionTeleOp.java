@@ -99,7 +99,6 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             // If the robot is not the competition robot it will not engage the 'arm motor'
             // also updates telemetry data
-            
             case DEVBOT_MECANUM:
                 telemetry.addData("Arm Control", "Disabled");
                 break;
