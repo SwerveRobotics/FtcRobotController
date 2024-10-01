@@ -1,5 +1,6 @@
 /**
- * Loony Tune is a parameters tuner for robots using Road Runner.
+ * Loony Tune is a parameters tuner for robots using Road Runner with Mecanum drives and the
+ * SparkFun Optical Tracking Odometry Sensor.
  */
 
 package org.firstinspires.ftc.team417.roadrunner;
@@ -1267,9 +1268,9 @@ public class LoonyTune extends LinearOpMode {
         /** @noinspection FieldMayBeFinal*/
         private TuneParameters testParameters = currentParameters.createClone();
 
-        // This class handles the saving of results on behalf of the caller. There are
-        // 4 types of results supported. All but the last will automatically save the updated
-        // state if the user requests it on exit:
+        // This class handles the saving of results on behalf of the caller when the user exits
+        // the set of screens. There are 4 types of results supported. All will automatically
+        // save the state if it's changed and the user requests to save on exit:
         //
         //   1. Tuning results supplied as Result objects from caller via registerResult().
         //   2. Tuning of the active params relative to the official current settings. For this,
@@ -3272,6 +3273,9 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
+    /**
+     * Class to encapsulate all interactive PID tuning logic.
+     */
     class InteractivePidTuner {
         final int DISTANCE = 48; // Test distance in inches
         String errorSummary; // String describing the current amount of error
