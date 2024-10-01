@@ -254,7 +254,7 @@ class Io {
         message = new StringBuilder();
 
         // Disable the welcome message if they've pressed the gamepad's 'start'"
-        if (home()) {
+        if (start()) {
             welcomeMessage = null;
         }
     }
@@ -783,7 +783,6 @@ public class LoonyTune extends LinearOpMode {
     static final String RIGHT_BUMPER = buttonString("RB");
     static final String DPAD_LEFT_RIGHT = buttonString("\u2194 DPAD");
     static final String DPAD_UP_DOWN = buttonString("\u2195 DPAD");
-    static final String START = buttonString("\u25B6 START");
     static final String GUIDE = buttonString("<small>\u2302 HOME</small>");
 
     // Types of interactive PiD tuners:
@@ -1029,17 +1028,17 @@ public class LoonyTune extends LinearOpMode {
      * Class that encapsulates waiting on a user response.
      */
     class Poll {
-        // Show a message, drive the robot, and wait for either an A/B button press, or an
-        // A/X button press. If accept is pressed, return success. If the other button is
+        // Show a message, drive the robot, and wait for either an A/B button press.
+        // If ok (A) is pressed, return success. If cancel (B) is
         // pressed, return failure. The robot CAN be driven while waiting.
-        private boolean cancelWithDriving(boolean startButton) {
+        boolean okCancelWithDriving() {
             boolean success = false;
             while (!isStopRequested() && !io.cancel()) {
                 io.redraw();
                 updateGamepadDriving();
                 spinTuner.updateRotation();
 
-                if ((startButton && io.start()) || (!startButton && io.ok())) {
+                if (io.ok()) {
                     success = true;
                     break;
                 }
@@ -1048,9 +1047,6 @@ public class LoonyTune extends LinearOpMode {
             drive.setPose(zeroPose); // Reset the pose once they stopped
             return success;
         }
-
-        boolean okCancelWithDriving() { return cancelWithDriving(false); }
-        boolean startCancelWithDriving() { return cancelWithDriving(true); }
 
         // Wait for an A button press:
         void ok() {
@@ -1586,13 +1582,13 @@ public class LoonyTune extends LinearOpMode {
                             drive.maxLinearGainError, Math.toDegrees(drive.maxHeadingGainError),
                             drive.lastLinearGainError, Math.toDegrees(drive.lastHeadingGainError));
                 }
-                io.out("Press " + START + " to start the robot");
+                io.out("Press " + A + " to start the robot");
                 if (clearance != null)
                     io.out(" " + clearance);
                 io.out(", " + screens.buttons + ".");
                 io.end();
 
-                if (io.start()) {
+                if (io.ok()) {
                     runCount++;
                     stopMotors();
                     drive.setPose(zeroPose);
@@ -1612,10 +1608,10 @@ public class LoonyTune extends LinearOpMode {
                             drive.maxLinearGainError, Math.toDegrees(drive.maxHeadingGainError),
                             drive.lastLinearGainError, Math.toDegrees(drive.lastHeadingGainError));
                 }
-                io.out("Press " + START + " to start the robot, " + screens.buttons + ".");
+                io.out("Press " + A + " to start the robot, " + screens.buttons + ".");
                 io.end();
 
-                if (io.start()) {
+                if (io.ok()) {
                     runCount++;
                     stopMotors();
                     drive.setPose(zeroPose);
@@ -2324,9 +2320,9 @@ public class LoonyTune extends LinearOpMode {
             // Let the user position the robot:
             io.message("Now drive the robot far enough away from the wall (and any objects) so "
                     + "that it can freely rotate in place."
-                    + "\n\nPress "+START+" when ready for the robot to rotate, "+B+" to cancel.");
+                    + "\n\nPress "+A+" when ready for the robot to rotate, "+B+" to cancel.");
 
-            if (poll.startCancelWithDriving()) {
+            if (poll.okCancelWithDriving()) {
                 ArrayList<Point> points = new ArrayList<>();
 
                 // Spin-up the robot, starting to measure rotation for the 'scalar' computation at
@@ -2789,10 +2785,10 @@ public class LoonyTune extends LinearOpMode {
                     io.out("To start a measurement, drive the robot to a spot that is clear "
                             + "in front for " + testDistance(DISTANCE) + ".\n"
                             + "\n"
-                            + "Press " + START + " to start the robot (ensure " + clearanceDistance(DISTANCE)
+                            + "Press " + A + " to start the robot (ensure " + clearanceDistance(DISTANCE)
                             + " of clearance ahead), " + screens.buttons + ".");
                     io.end();
-                    if (io.start()) {
+                    if (io.ok()) {
                         AcceleratingResult result = measure(screens.header);
                         if (result != null)
                             screens.registerResult(result);
@@ -3062,7 +3058,7 @@ public class LoonyTune extends LinearOpMode {
                     io.out(DPAD_UP_DOWN + " to change value, " + DPAD_LEFT_RIGHT + " to move "
                             + "the cursor.\n\n");
 
-                    if (io.start())
+                    if (io.ok())
                         qeuedStarts++; // Let starts be queued up even while running
 
                     // If there's a profile, that means we're actively moving:
@@ -3081,7 +3077,7 @@ public class LoonyTune extends LinearOpMode {
                     } else {
                         io.out("Changing max velocity via " + TRIGGERS + " will lengthen or "
                             + "shorten the horizontal lines.\n\n");
-                        io.out(START + " to start the robot (ensure " + clearanceDistance(DISTANCE)
+                        io.out(A + " to start the robot (ensure " + clearanceDistance(DISTANCE)
                             + " of forward clearance), " + screens.buttons + ".");
                         io.end();
 
@@ -3258,9 +3254,10 @@ public class LoonyTune extends LinearOpMode {
                     // io.out(latestResult);
                     screens.showHistory(io);
 
-                    io.out("Press " + START + " to start the robot (ensure " + clearanceDistance(DISTANCE) + " of clearance to the left), " + screens.buttons + ".");
+                    io.out("Press " + A + " to start the robot (ensure " + clearanceDistance(DISTANCE)
+                        + " of clearance to the left), " + screens.buttons + ".");
                     io.end();
-                    if (io.start()) {
+                    if (io.ok()) {
                         LateralResult result = measure(screens.header, testParameters, screens.history);
                         if (result != null)
                             screens.registerResult(result);
@@ -3505,11 +3502,10 @@ public class LoonyTune extends LinearOpMode {
                     } else {
                         updateGamepadDriving(); // Let the user drive
 
-                        io.out("Press "+ START + " to start the robot (%s), %s.",
-                            clearance, screens.buttons);
+                        io.out("Press "+ A + " to start the robot (%s), %s.", clearance, screens.buttons);
                         io.end();
 
-                        if (io.start())
+                        if (io.ok())
                             queuedStarts++;
 
                         if (queuedStarts > 0) {
@@ -3560,8 +3556,8 @@ public class LoonyTune extends LinearOpMode {
         configureToDrive(true); // Do use MecanumDrive
 
         io.message("To test <b>trackWidthTicks</b>, the robot will turn in-place for two complete "
-                + "rotations.\n\nPress "+START+" to start the robot, "+B+" to cancel.");
-        if (poll.startCancelWithDriving()) {
+                + "rotations.\n\nPress "+A+" to start the robot, "+B+" to cancel.");
+        if (poll.okCancelWithDriving()) {
             // Disable the rotational PID/Ramsete behavior so that we can test just the
             // feed-forward rotation:
             TuneParameters testParameters = currentParameters.createClone();
@@ -3719,7 +3715,7 @@ public class LoonyTune extends LinearOpMode {
                     + "test!</b>"
                     + "\n\n"
                     + "<small><font color='#a0a0a0'>(If you really want to see the UI here on the Driver "
-                    + "Station, press the Guide button in the middle of the gamepad.)</font></small>");
+                    + "Station, press the Start button to the left of " + X + ".)</font></small>");
             io.message("<big><big><big><font color='%s'>Press %s to begin tuning</font></big></big></big>\n"
                 + "<big>Make sure you can see the field view in FTC Dashboard.", HIGHLIGHT_COLOR, A);
             while (!isStopRequested() && !io.ok())
