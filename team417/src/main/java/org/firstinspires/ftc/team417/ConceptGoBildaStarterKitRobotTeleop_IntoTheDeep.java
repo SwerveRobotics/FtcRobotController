@@ -22,6 +22,7 @@
 
 package org.firstinspires.ftc.team417;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -68,8 +69,8 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 
 @TeleOp(name = "FTC Starter Kit Example Robot (INTO THE DEEP)", group = "Robot")
 //@Disabled
+@Config
 public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMode {
-
     /* Declare OpMode members. */
     public DcMotor leftFront = null; //the left drivetrain motor
     public DcMotor rightFront = null; //the right drivetrain motor
@@ -121,14 +122,13 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
     final double WRIST_FOLDED_IN = 0.8333;
     final double WRIST_FOLDED_OUT = 0.5;
 
+    public static double wristPosition = 0;
+
     /* A number in degrees that the triggers can adjust the arm position by */
     final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
-    /**
-     * @noinspection ConstantValue
-     */
     /* Variables that are used to set the arm to a specific position */
-    double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
+    public static double armPosition = 0; //(int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
 
 
@@ -179,7 +179,7 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
 
         /* Make sure that the intake is off, and the wrist is folded in. */
         intake.setPower(INTAKE_OFF);
-        wrist.setPosition(WRIST_FOLDED_IN);
+        setPosition(WRIST_FOLDED_IN);
 
         /* Send telemetry message to signify robot waiting */
         telemetry.addLine("Robot Ready.");
@@ -256,7 +256,7 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             if (gamepad1.right_bumper) {
                 /* This is the intaking/collecting arm position */
                 armPosition = ARM_COLLECT;
-                wrist.setPosition(WRIST_FOLDED_OUT);
+                setPosition(WRIST_FOLDED_OUT);
                 intake.setPower(INTAKE_COLLECT);
             } else if (gamepad1.left_bumper) {
                     /* This is about 20° up from the collecting position to clear the barrier
@@ -272,29 +272,32 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
                     back to folded inside the robot. This is also the starting configuration */
                 armPosition = ARM_COLLAPSED_INTO_ROBOT;
                 intake.setPower(INTAKE_OFF);
-                wrist.setPosition(WRIST_FOLDED_IN);
+                setPosition(WRIST_FOLDED_IN);
             } else if (gamepad1.dpad_right) {
                 /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
                 armPosition = ARM_SCORE_SPECIMEN;
-                wrist.setPosition(WRIST_FOLDED_IN);
+                setPosition(WRIST_FOLDED_IN);
             } else if (gamepad1.dpad_up) {
                 /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
                 armPosition = ARM_ATTACH_HANGING_HOOK;
                 intake.setPower(INTAKE_OFF);
-                wrist.setPosition(WRIST_FOLDED_IN);
+                setPosition(WRIST_FOLDED_IN);
             } else if (gamepad1.dpad_down) {
                 /* this moves the arm down to lift the robot up once it has been hooked */
                 armPosition = ARM_WINCH_ROBOT;
                 intake.setPower(INTAKE_OFF);
-                wrist.setPosition(WRIST_FOLDED_IN);
+                setPosition(WRIST_FOLDED_IN);
             }
+
+            // Here we set the servo position.
+            wrist.setPosition(wristPosition);
 
             /* Here we set the target position of our arm to match the variable that was selected
             by the driver.
             We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
 //            armMotor.setTargetPosition((int) (armPosition + armPositionFudgeFactor));
 //
-//            ((DcMotorEx) armMotor).setVelocity(2100);
+//            ((DcMotorEx) armMotor).setVelocity(1000); //2100);
 //            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             armMotor.setPower(gamepad1.right_trigger - gamepad1.left_trigger);
@@ -329,7 +332,10 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             telemetry.addData("armTarget: ", armMotor.getTargetPosition());
             telemetry.addData("arm Encoder: ", armMotor.getCurrentPosition());
             telemetry.update();
-
         }
+    }
+
+    public void setPosition(double position) {
+        wristPosition = position;
     }
 }

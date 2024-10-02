@@ -7,6 +7,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
@@ -21,9 +22,12 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 public class CompetitionTeleOp extends BaseOpMode {
     private double speedMultiplier = 1;
     DcMotor armMotor;
-    DcMotor bootWheelServo;
-    Servo rotationServo;
+    CRServo intake;
+    Servo wrist;
     MecanumDrive drive;
+
+    public boolean hasMechanisms = MecanumDrive.driveParameters == DriveParameters.COMPETITION_ROBOT
+        || MecanumDrive.driveParameters == DriveParameters.FASTBOT_MECANUM;
 
     @Override
     public void runOpMode() {
@@ -32,8 +36,14 @@ public class CompetitionTeleOp extends BaseOpMode {
         Pose2d beginPose = new Pose2d(0, 0, 0);
         drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
         armMotor = hardwareMap.get(DcMotor.class, "ArmMotor");
-        bootWheelServo = hardwareMap.get(DcMotor.class, "BootWheelServo");
-        rotationServo = hardwareMap.get(Servo.class, "RotationServo");
+        intake = hardwareMap.get(CRServo.class, "BootWheelServo");
+        wrist = hardwareMap.get(Servo.class, "RotationServo");
+
+        if (hasMechanisms) {
+            armMotor = hardwareMap.get(DcMotor.class, "arm");
+            intake = hardwareMap.get(CRServo.class, "intake");
+            wrist = hardwareMap.get(Servo.class, "wrist");
+        }
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
@@ -60,8 +70,6 @@ public class CompetitionTeleOp extends BaseOpMode {
             drive.updatePoseEstimate();
 
             controlArm();
-            controlRotation();
-            controlBootWheel();
 
             telemetry.addLine("Running TeleOp!");
             telemetry.addData("Kinematic Type", kinematicType);
@@ -84,8 +92,8 @@ public class CompetitionTeleOp extends BaseOpMode {
     public void controlArm() {
 
         // Original code in method before switch statements
-            // armMotor.getCurrentPosition();
-            // armMotor.setPower(gamepad2.right_stick_y);
+        // armMotor.getCurrentPosition();
+        // armMotor.setPower(gamepad2.right_stick_y);
 
         // These switch statements will make sure the arm only moves if the robot
         // is the competition robot and not the mecanum or x drive robot
@@ -120,19 +128,4 @@ public class CompetitionTeleOp extends BaseOpMode {
     public final double leftRotationServo = 0;
     public final double middleRotationServo = 0.5;
     public final double rightRotationServo = 1;
-
-    public void controlRotation() {
-        if (gamepad2.dpad_up) {
-            rotationServo.setPosition(middleRotationServo);
-        } else if (gamepad2.dpad_left) {
-            rotationServo.setPosition(leftRotationServo);
-        } else if (gamepad2.dpad_right) {
-            rotationServo.setPosition(rightRotationServo);
-        }
-    }
-
-    public void controlBootWheel() {
-        double servoInput = gamepad2.right_trigger - gamepad2.left_trigger;
-        bootWheelServo.setPower(servoInput);
-    }
 }
