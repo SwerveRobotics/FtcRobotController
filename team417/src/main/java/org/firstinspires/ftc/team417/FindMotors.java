@@ -30,8 +30,7 @@ public class FindMotors extends BaseOpMode {
             wrist = hardwareMap.get(Servo.class, "wrist");
         }
 
-        leftFront.setDirection(DcMotorEx.Direction.REVERSE);
-        leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+        rightBack.setDirection(DcMotorEx.Direction.REVERSE);
 
         waitForStart();
         while (opModeIsActive()) {
