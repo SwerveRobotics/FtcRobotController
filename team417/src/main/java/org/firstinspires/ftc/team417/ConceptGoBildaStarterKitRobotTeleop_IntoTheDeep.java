@@ -91,7 +91,7 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
     We can multiply these two ratios together to get our final reduction of ~254.47:1.
     The motor's encoder counts 28 times per rotation. So in total you should see about 7125.16
     counts per rotation of the arm. We divide that by 360 to get the counts per degree. */
-    final double ARM_TICKS_PER_DEGREE = 5.54189700794; // was 19.7924893140647 //exact fraction is (194481/9826)
+    public static double ARM_TICKS_PER_DEGREE = 5.54189700794; // was 19.7924893140647 //exact fraction is (194481/9826)
 
 
     /* These constants hold the position that the arm is commanded to run to.
@@ -105,27 +105,27 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
     If you'd like it to move further, increase that number. If you'd like it to not move
     as far from the starting position, decrease it. */
 
-    final double ARM_COLLAPSED_INTO_ROBOT = 0;
-    final double ARM_COLLECT = 250 * ARM_TICKS_PER_DEGREE;
-    final double ARM_CLEAR_BARRIER = 230 * ARM_TICKS_PER_DEGREE;
-    final double ARM_SCORE_SPECIMEN = 160 * ARM_TICKS_PER_DEGREE;
-    final double ARM_SCORE_SAMPLE_IN_LOW = 160 * ARM_TICKS_PER_DEGREE;
-    final double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
-    final double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_COLLAPSED_INTO_ROBOT = 0;
+    public static double ARM_COLLECT = 250 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_CLEAR_BARRIER = 230 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_SCORE_SPECIMEN = 160 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_SCORE_SAMPLE_IN_LOW = 160 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
 
     /* Variables to store the speed the intake servo should be set at to intake, and deposit game elements. */
-    final double INTAKE_COLLECT = -1.0;
-    final double INTAKE_OFF = 0.0;
-    final double INTAKE_DEPOSIT = 0.5;
+    public static double INTAKE_COLLECT = -1.0;
+    public static double INTAKE_OFF = 0.0;
+    public static double INTAKE_DEPOSIT = 0.5;
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
-    final double WRIST_FOLDED_IN = 0.8333;
-    final double WRIST_FOLDED_OUT = 0.5;
+    public static double WRIST_FOLDED_IN = 0.8333;
+    public static double WRIST_FOLDED_OUT = 0.5;
 
     public static double wristPosition = 0;
 
     /* A number in degrees that the triggers can adjust the arm position by */
-    final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
+    public static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
     /* Variables that are used to set the arm to a specific position */
     public static double armPosition = 0; //(int) ARM_COLLAPSED_INTO_ROBOT;
@@ -143,12 +143,10 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
 
         armMotor = hardwareMap.get(DcMotor.class, "arm"); //the arm motor
 
-
         /* Most skid-steer/differential drive robots require reversing one motor to drive forward.
         for this robot, we reverse the right motor.*/
         leftFront.setDirection(DcMotor.Direction.FORWARD);
         rightFront.setDirection(DcMotor.Direction.REVERSE);
-
 
         /* Setting zeroPowerBehavior to BRAKE enables a "brake mode". This causes the motor to slow down
         much faster when it is coasting. This creates a much more controllable drivetrain. As the robot

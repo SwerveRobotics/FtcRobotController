@@ -127,14 +127,26 @@ public class CompetitionTeleOp extends BaseOpMode {
                 speedMultiplier = 1;
             }
 
+            boolean curve = false;
             // Set the drive motor powers according to the gamepad input:
-            drive.setDrivePowers(new PoseVelocity2d(
-                    new Vector2d(
-                            -gamepad1.left_stick_y * speedMultiplier,
-                            -gamepad1.left_stick_x * speedMultiplier
-                    ),
-                    -gamepad1.right_stick_x * speedMultiplier
-            ));
+            if (curve) {
+                drive.setDrivePowers(new PoseVelocity2d(
+                        new Vector2d(
+                                -curveStick(gamepad1.left_stick_y) * speedMultiplier,
+                                -curveStick(gamepad1.left_stick_x) * speedMultiplier
+                        ),
+                        -curveStick(gamepad1.right_stick_x) * speedMultiplier
+                ));
+            } else {
+                drive.setDrivePowers(new PoseVelocity2d(
+                        new Vector2d(
+                                -gamepad1.left_stick_y * speedMultiplier,
+                                -gamepad1.left_stick_x * speedMultiplier
+                        ),
+                        -gamepad1.right_stick_x * speedMultiplier
+                ));
+            }
+
 
             // Update the current pose:
             drive.updatePoseEstimate();
@@ -283,5 +295,10 @@ public class CompetitionTeleOp extends BaseOpMode {
 
     public void setPosition(double position) {
         wristPosition = position;
+    }
+
+    // Applies a curve to the joystick input to give finer control at lower speeds
+    public double curveStick(double rawSpeed) {
+        return Math.copySign(Math.pow(rawSpeed, 2), rawSpeed);
     }
 }
