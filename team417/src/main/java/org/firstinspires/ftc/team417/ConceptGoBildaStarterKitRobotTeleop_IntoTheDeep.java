@@ -209,8 +209,6 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             rightFront.setPower(frontRightPower);
             rightBack.setPower(backRightPower);
 
-
-
             /* Here we handle the three buttons that have direct control of the intake speed.
             These control the continuous rotation servo that pulls elements into the robot,
             If the user presses A, it sets the intake power to the final variable that
@@ -232,7 +230,6 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             } else if (gamepad1.b) {
                 intake.setPower(INTAKE_DEPOSIT);
             }
-
 
             /* Here we create a "fudge factor" for the arm position.
             This allows you to adjust (or "fudge") the arm position slightly with the gamepad triggers.
