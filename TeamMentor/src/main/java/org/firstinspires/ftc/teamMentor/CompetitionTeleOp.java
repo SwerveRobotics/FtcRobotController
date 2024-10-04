@@ -5,7 +5,6 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -30,7 +29,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     public DcMotorEx  armMotor    = null; //the arm motor
     public CRServo    intake      = null; //the active intake servo
     public Servo      wrist       = null; //the wrist servo
-    public Rev2mDistanceSensor distance = null; //the distance sensor
+    public DistanceSensor distance = null; //the distance sensor
 
     static final double ARM_TICKS_PER_DEGREE = 19.7924893140647; //exact fraction is (194481/9826)
 
@@ -58,24 +57,23 @@ public class CompetitionTeleOp extends BaseOpMode {
 
     // Shape the stick input for more precision at slow speeds:
     public double shapeStick(double stickValue) {
-        // Slow down by half:
+        // Slow down max speed by 36% and then shape the result:
         stickValue *= 0.8;
-
-        // Make slow driving easier on the real robot. Don't bother under Wily Works because
-        // then it's too slow:
         return Math.signum(stickValue) * Math.abs(Math.pow(stickValue, 2.0));
     }
 
-
     @Override
     public void runOpMode() {
+        telemetry.addLine("TeamMentor TeleOp");
+        telemetry.update();
+
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
         armMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "arm");
         intake = hardwareMap.get(CRServo.class, "intake");
         wrist  = hardwareMap.get(Servo.class, "wrist");
-        distance = (Rev2mDistanceSensor) hardwareMap.get(DistanceSensor .class, "distanceFrontLeft");
+        distance = hardwareMap.get(DistanceSensor .class, "distanceFrontLeft");
 
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
@@ -94,8 +92,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            telemetry.addLine("Arm, Arm!");
-
             if (gamepad1.a) {
                 intake.setPower(INTAKE_COLLECT);
             }
@@ -169,11 +165,14 @@ public class CompetitionTeleOp extends BaseOpMode {
                 telemetry.addLine("MOTOR EXCEEDED CURRENT LIMIT!");
             }
 
-
             /* send telemetry to the driver of the arm's current position and target position */
-            telemetry.addData("armTarget: ", armMotor.getTargetPosition());
-            telemetry.addData("arm Encoder: ", armMotor.getCurrentPosition());
+            telemetry.addLine(String.format("arm target: %d, arm actual: %d", armMotor.getTargetPosition(), armMotor.getCurrentPosition()));
             telemetry.addData("range", String.format("%.01f\"", distance.getDistance(DistanceUnit.INCH)));
+            telemetry.addLine();
+            telemetry.addLine("A: Intake collect");
+            telemetry.addLine("B: Intake deposit");
+            telemetry.addLine("X: Intake off");
+            telemetry.addLine("Y: Basket");
             telemetry.addLine();
             telemetry.addLine("LB: Clear barrier");
             telemetry.addLine("RB: Intaking position");

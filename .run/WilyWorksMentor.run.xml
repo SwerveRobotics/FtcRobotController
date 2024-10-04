@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="WilyWorksMentor" type="Application" factoryName="Application">
+    <envs>
+      <env name="SRC_ROOT" value="..\TeamMentor\src\main\java" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="com.wilyworks.simulator.WilyCore" />
+    <module name="FtcRobotController.WilyCore.main" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
