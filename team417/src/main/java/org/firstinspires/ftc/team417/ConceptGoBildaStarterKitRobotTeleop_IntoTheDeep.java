@@ -204,6 +204,14 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             double frontRightPower = (y - x - rx) / denominator;
             double backRightPower = (y + x - rx) / denominator;
 
+            // GamePad 1 slowdown
+            if(gamepad1.left_bumper){
+                frontLeftPower *= 0.5;    // Reduce speed to 50% when left bumper is held
+                backLeftPower *= 0.5;
+                frontRightPower *= 0.5;
+                backRightPower *= 0.5;
+            }
+
             leftFront.setPower(frontLeftPower);
             leftBack.setPower(backLeftPower);
             rightFront.setPower(frontRightPower);
