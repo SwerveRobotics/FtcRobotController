@@ -15,8 +15,8 @@ if (propertiesFile.exists()) {
     properties.load(propertiesFile.newDataInputStream())
     team = properties.getProperty('team')
     if (team != null) {
-        team = team[0].toUpperCase() + team[1..-1].toLowerCase() // Make first character upper-case
-        if ((team != 'Team417') && (team != 'Team6220') && (team != 'Team8923') && (team != 'Teammentor')) {
+        team = team[0].toUpperCase() + team[1..-1] // Make first character upper-case
+        if ((team != 'Team417') && (team != 'Team6220') && (team != 'Team8923') && (team != 'TeamMentor')) {
             println("ERROR: The team property in 'my.properties' is set to '" + team + "', " +
                     "it needs to be Team417, Team6220, Team8923 or TeamMentor\n")
         }
