@@ -347,6 +347,26 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             /* send telemetry to the driver of the arm's current position and target position */
             telemetry.addData("armTarget: ", armMotor.getTargetPosition());
             telemetry.addData("arm Encoder: ", armMotor.getCurrentPosition());
+
+            // These telemetry.addline() calls will inform the user of what each button does
+
+            telemetry.addLine("Low Basket Score: Y-Button");
+            telemetry.addLine("Intake Deposit: B-Button");
+            telemetry.addLine("On Intake: A-Button");
+            telemetry.addLine("Off Intake: X-Button: ");
+            telemetry.addLine();
+
+            telemetry.addLine("Low rung hang orientation: Up D-Pad");
+            telemetry.addLine("High Chamber Orientation: Right D-Pad");
+            telemetry.addLine("Fold wrist & folds arm, intake off: Left D-Pad:");
+            telemetry.addLine("Accent robot: Down D-Pad");
+            telemetry.addLine();
+
+            telemetry.addLine("Clear floor for intake: left-bumper");
+            telemetry.addLine("Sample collection: right-bumper");
+            telemetry.addLine("Negative fudge position: left-trigger");
+            telemetry.addLine("Positive fudge position: right-trigger");
+
             telemetry.update();
 
         }
