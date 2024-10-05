@@ -957,7 +957,7 @@ public class LoonyTune extends LinearOpMode {
                 telemetry.addLine();
                 telemetry.addLine(comparison);
                 telemetry.addLine("Please update your code and restart now. Or, to proceed anyway and "
-                        + "delete the Loony Tune results, triple-tap the START button on the gamepad.");
+                        + "delete the Loony Tune results, triple-tap the START button (to the left of the X) on the gamepad.");
                 telemetry.update();
 
                 // Wait for a triple-tap of the button:
@@ -3475,7 +3475,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
 
             } else if (type == PidTunerType.HEADING) {
                 overview = "The robot will rotate in place 180\u00b0. Tune these gains to reduce the "
-                        + "error between target and actual headings:"
+                        + "error between target and actual headings:\n"
                         + "\n"
                         + "\u2022 <b>headingGain</b> sets the magnitude of response to the error. "
                         + "A higher value more aggressively corrects but can cause overshoot.\n"
