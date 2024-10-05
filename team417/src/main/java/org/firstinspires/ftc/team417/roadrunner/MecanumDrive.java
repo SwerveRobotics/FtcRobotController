@@ -431,8 +431,8 @@ public final class MecanumDrive {
                 break;
 
             case FASTBOT_MECANUM:
-                opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
-                initializeOpticalTracker();
+                //opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+                //initializeOpticalTracker();
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");

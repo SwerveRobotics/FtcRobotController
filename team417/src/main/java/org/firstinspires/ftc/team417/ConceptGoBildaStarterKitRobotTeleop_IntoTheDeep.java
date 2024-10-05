@@ -91,7 +91,7 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
     We can multiply these two ratios together to get our final reduction of ~254.47:1.
     The motor's encoder counts 28 times per rotation. So in total you should see about 7125.16
     counts per rotation of the arm. We divide that by 360 to get the counts per degree. */
-    public static double ARM_TICKS_PER_DEGREE = 19.7924893140647; //exact fraction is (194481/9826)
+    final double ARM_TICKS_PER_DEGREE = 19.7924893140647; //exact fraction is (194481/9826)
 
 
     /* These constants hold the position that the arm is commanded to run to.
@@ -105,30 +105,30 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
     If you'd like it to move further, increase that number. If you'd like it to not move
     as far from the starting position, decrease it. */
 
-    public static double ARM_COLLAPSED_INTO_ROBOT = 0;
-    public static double ARM_COLLECT = 250 * ARM_TICKS_PER_DEGREE;
-    public static double ARM_CLEAR_BARRIER = 230 * ARM_TICKS_PER_DEGREE;
-    public static double ARM_SCORE_SPECIMEN = 160 * ARM_TICKS_PER_DEGREE;
-    public static double ARM_SCORE_SAMPLE_IN_LOW = 160 * ARM_TICKS_PER_DEGREE;
-    public static double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
-    public static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
+    final double ARM_COLLAPSED_INTO_ROBOT = 0;
+    final double ARM_COLLECT = 250 * ARM_TICKS_PER_DEGREE;
+    final double ARM_CLEAR_BARRIER = 230 * ARM_TICKS_PER_DEGREE;
+    final double ARM_SCORE_SPECIMEN = 160 * ARM_TICKS_PER_DEGREE;
+    final double ARM_SCORE_SAMPLE_IN_LOW = 160 * ARM_TICKS_PER_DEGREE;
+    final double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
+    final double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
 
     /* Variables to store the speed the intake servo should be set at to intake, and deposit game elements. */
-    public static double INTAKE_COLLECT = -1.0;
-    public static double INTAKE_OFF = 0.0;
-    public static double INTAKE_DEPOSIT = 0.5;
+    final double INTAKE_COLLECT = -1.0;
+    final double INTAKE_OFF = 0.0;
+    final double INTAKE_DEPOSIT = 0.5;
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
-    public static double WRIST_FOLDED_IN = 1;
-    public static double WRIST_FOLDED_OUT = 0.61;
+    final double WRIST_FOLDED_IN = 1;
+    final double WRIST_FOLDED_OUT = 0.61;
 
-    public static double wristPosition = 0;
+    double wristPosition = 0;
 
     /* A number in degrees that the triggers can adjust the arm position by */
-    public static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
+    final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
     /* Variables that are used to set the arm to a specific position */
-    public static double armPosition = 0; //(int) ARM_COLLAPSED_INTO_ROBOT;
+    double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
 
 
@@ -294,7 +294,7 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
                 setPosition(WRIST_FOLDED_IN);
             }
 
-            // Here we set the servo position.
+            // Here we set the wrist servo position.
             wrist.setPosition(wristPosition);
 
             /* Here we set the target position of our arm to match the variable that was selected
@@ -334,7 +334,7 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             telemetry.addData("armTarget: ", armMotor.getTargetPosition());
             telemetry.addData("arm Encoder: ", armMotor.getCurrentPosition());
 
-            // These telemetry.addline() calls will inform the user of what each button does
+            // These telemetry.addLine() calls will inform the user of what each button does
 
             telemetry.addLine("Low Basket Score: Y-Button");
             telemetry.addLine("Intake Deposit: B-Button");
