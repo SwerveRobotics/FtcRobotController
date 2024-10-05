@@ -91,26 +91,25 @@ public final class MecanumDrive {
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
                 inPerTick = 1;
-                lateralInPerTick = 0.935;
-                trackWidthTicks = 12.86;
+                lateralInPerTick = 0.886;
+                trackWidthTicks = 16.10;
 
-                kS = 0.552;
-                kV = 0.229;
-                kA = 0.0620;
+                kS = 0.578;
+                kV = 0.185;
+                kA = 0.0120;
 
-                axialGain      = 8.40;
-                axialVelGain   = 0.70;
-                lateralGain    = 10.0;
-                lateralVelGain = 0.10;
-                headingGain    = 18.00;
-                headingVelGain = 0.10;
+                axialGain      = 12.0;
+                axialVelGain   = 0.90;
+                lateralGain    = 8.0;
+                lateralVelGain = 0.0;
+                headingGain    = 9.90;
+                headingVelGain = 0.0;
 
-                otos.offset.x = 5.215;
-                otos.offset.y = 2.734;
-                otos.offset.h = Math.toRadians(-88.88);
-                otos.linearScalar = 1.027;
-                otos.angularScalar = 1.0006;
-
+                otos.offset.x = 6.485;
+                otos.offset.y = 3.132;
+                otos.offset.h = Math.toRadians(-89.42);
+                otos.linearScalar = 1.014;
+                otos.angularScalar = 1.0494;
             } else {
                 // Your competition robot Loony Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
@@ -656,6 +655,11 @@ public final class MecanumDrive {
             lastHeadingGainError = error.heading.toDouble();
             maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
             maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
+
+System.out.printf("Pose - target: %.1f, actual: %.1f, error: %.1f\n",
+            Math.toDegrees(pose.heading.toDouble()),
+            Math.toDegrees(txWorldTarget.heading.value().toDouble()),
+            Math.toDegrees(lastHeadingGainError));
 
             // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();

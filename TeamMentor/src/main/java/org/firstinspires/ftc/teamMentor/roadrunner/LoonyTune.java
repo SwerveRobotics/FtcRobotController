@@ -8,6 +8,7 @@ package org.firstinspires.ftc.teamMentor.roadrunner;
 import static com.acmerobotics.roadrunner.Profiles.constantProfile;
 
 import static org.firstinspires.ftc.teamMentor.roadrunner.LoonyTune.A;
+import static org.firstinspires.ftc.teamMentor.roadrunner.LoonyTune.DPAD_UP_DOWN;
 import static java.lang.System.nanoTime;
 
 import android.annotation.SuppressLint;
@@ -385,7 +386,7 @@ class Io {
     }
 
     // Get rid of any sticky variables that have accumulated in FTC Dashboard's telemetry:
-    void clearDashboardTelemetry() {
+    static void clearDashboardTelemetry() {
         FtcDashboard.getInstance().clearTelemetry();
     }
 }
@@ -497,7 +498,7 @@ class TuneParameters {
         compare("otos.offset.y", "%.3f", oldSettings.params.otos.offset.y, params.otos.offset.y);
         compareRadians("otos.offset.h", "%.2f", oldSettings.params.otos.offset.h, params.otos.offset.h);
         compare("otos.linearScalar", "%.3f", oldSettings.params.otos.linearScalar, params.otos.linearScalar);
-        compare("otos.angularScalar", "%.4f", oldSettings.params.otos.angularScalar, params.otos.angularScalar);
+        compare("otos.angularScalar", "%.3f", oldSettings.params.otos.angularScalar, params.otos.angularScalar);
         compare("maxWheelVel", "%.2f", oldSettings.params.maxWheelVel, params.maxWheelVel);
         compare("minProfileAccel", "%.2f", oldSettings.params.minProfileAccel, params.minProfileAccel);
         compare("maxProfileAccel", "%.2f", oldSettings.params.maxProfileAccel, params.maxProfileAccel);
@@ -612,18 +613,17 @@ class Menu {
 
         // Add a header with submenu names:
         if (menuStack.size() <= 1) {
-            output.append("<big>Dpad to navigate, "+ A+" to select</big>");
+            output.append("Press " + DPAD_UP_DOWN + " to navigate, " + A + " to select.\n\n");
         } else {
-            output.append("<big>");
+            output.append("<big><b>");
             for (int i = 1; i < menuStack.size(); i++) {
                 if (i > 1)
                     output.append("\u00b7");
                 output.append(menuStack.get(i).description);
             }
-            output.append("</big>");
-            footer = "\nPress " + A + " to select, " + LoonyTune.GUIDE + " to exit.";
+            output.append("...</b></big>\n\n");
+            footer = "\nPress " + LoonyTune.GUIDE + " for previous menu.";
         }
-        output.append("<br><small><small><br></small></small>"); // Leave half a line blank
 
         // Process dpad up and down with auto-repeat and clamping:
         MenuWidget menu = (MenuWidget) menuStack.get(menuStack.size() - 1);
@@ -786,9 +786,9 @@ public class LoonyTune extends LinearOpMode {
     static final String RIGHT_TRIGGER = buttonString("RT");
     static final String LEFT_BUMPER = buttonString("LB");
     static final String RIGHT_BUMPER = buttonString("RB");
-    static final String DPAD_LEFT_RIGHT = buttonString("\u2194 DPAD");
-    static final String DPAD_UP_DOWN = buttonString("&nbsp;\u2195 DPAD");
-    static final String GUIDE = buttonString("<small>\u2302 HOME</small>");
+    static final String DPAD_LEFT_RIGHT = buttonString("&nbsp;DPAD \u2194&nbsp;");
+    static final String DPAD_UP_DOWN = buttonString("&nbsp;DPAD \u2195&nbsp;");
+    static final String GUIDE = buttonString("<small>HOME \u2302</small>");
 
     // Types of interactive PiD tuners:
     enum PidTunerType { AXIAL, LATERAL, HEADING, ALL }
@@ -921,7 +921,7 @@ public class LoonyTune extends LinearOpMode {
                 telemetry.addLine();
                 telemetry.addLine("The code's configuration parameters don't match the last "
                         + "results saved in Loony Tune. To use the Loony Tune results, double-tap the shift key in Android "
-                        + "Studio, enter 'md.params' to jump to the MecanumDrive Params constructor, "
+                        + "Studio, enter 'md.Params' to jump to the MecanumDrive Params constructor, "
                         + "then update as follows:");
                 telemetry.addLine();
                 telemetry.addLine(comparison);
@@ -1092,10 +1092,14 @@ public class LoonyTune extends LinearOpMode {
         static final String WARNING_ICON = "<big>\u26a0\ufe0f</big> ";
 
         void warning(String format, Object... args) {
+            Io.clearDashboardTelemetry();
+            stopMotors();
             io.message(WARNING_ICON + format + "\n\nPress " + A + " to continue.", args);
             poll.ok();
         }
         void warning(String message) {
+            Io.clearDashboardTelemetry();
+            stopMotors();
             io.message(WARNING_ICON + message + "\n\nPress " + A + " to continue.");
             poll.ok();
         }
@@ -1142,7 +1146,7 @@ public class LoonyTune extends LinearOpMode {
     // Road Runner expects the hardware to be in different states when using high-level MecanumDrive
     // functionality vs. its lower-level tuning functionality.
     private void configureToDrive(boolean enableRoadRunnerDefaults) {
-        io.clearDashboardTelemetry();
+        Io.clearDashboardTelemetry();
 
         DcMotorEx[] motors = { drive.leftFront, drive.leftBack, drive.rightBack, drive.rightFront };
         if (enableRoadRunnerDefaults) {
@@ -1198,7 +1202,7 @@ public class LoonyTune extends LinearOpMode {
             MecanumDrive.PARAMS = newParameters.params;
             currentParameters = newParameters;
             currentParameters.save();
-            io.message("Double-tap the shift key in Android Studio, enter '<b>md.params</b>' to jump to the "
+            io.message("Double-tap the shift key in Android Studio, enter '<b>md.Params</b>' to jump to the "
                     + "MecanumDrive Params constructor, then update as follows:\n\n"
                     + comparison
                     + "\nPress "+A+" to continue.");
@@ -1651,7 +1655,7 @@ public class LoonyTune extends LinearOpMode {
             }
         }
 
-        io.clearDashboardTelemetry();
+        Io.clearDashboardTelemetry();
     }
 
     // All tuner results are derived from this Result class:
@@ -1707,7 +1711,7 @@ public class LoonyTune extends LinearOpMode {
                 io.out("&emsp;<b>%s.setPower(%.2f)</b>", motorName, power);
                 io.out("\n\n"
                         + "If this wheel turns in the wrong direction, double-tap the shift "
-                        + "key in Android Studio, enter 'md.configure', and ");
+                        + "key in Android Studio, enter <b>'MecanumDrive.configure'</b>, and ");
                 if (direction == DcMotorSimple.Direction.FORWARD) {
                     io.out("add a call to <b>'%s.setDirection( DcMotorEx.Direction.REVERSE)'</b>.", motorName);
                 } else {
@@ -2112,6 +2116,9 @@ public class LoonyTune extends LinearOpMode {
                     }
                 }
             }
+
+            // Set/restore the hardware settings:
+            setOtosHardware();
         }
     }
 
@@ -2140,7 +2147,7 @@ public class LoonyTune extends LinearOpMode {
 
             @Override
             public String getValues() {
-                return String.format("%.2f, %.4f, (%.3f\", %.3f\")", trackWidthTicks, otosAngularScalar, otosOffsetX, otosOffsetY);
+                return String.format("%.2f, %.3f, (%.3f\", %.3f\")", trackWidthTicks, otosAngularScalar, otosOffsetX, otosOffsetY);
             }
 
             @Override
@@ -2509,7 +2516,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                             + "aligned against a wall, facing forward. This marks the start orientation for "
                             + "calibration."
                             + "\n\n"
-                            + "Press "+A+" once the robot is snug against a wall, "+ screens.buttons+".");
+                            + "Press "+A+" to start once the robot is snug against a wall, "+ screens.buttons+".");
                     io.end();
                     if (io.ok()) {
                         SpinResult result = measure(screens.header);
@@ -2531,7 +2538,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                 }
             }
 
-            // Restore the hardware settings:
+            // Set/restore the hardware settings:
             setOtosHardware();
         }
     }
@@ -2916,7 +2923,6 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
             if (Math.abs(velocityPose.y) > 0.2 * maxTargetVelocity) {
                 dialog.warning("Odometry results are inconsistent with movement. "
                         + "Re-run first tuners.");
-                stopMotors();
                 return null; // ====>
             }
 
@@ -3071,18 +3077,17 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                     if (screens.switched) {
                         io.canvas(Io.Background.BLANK); // Clear the field
                     }
-                    updateGamepadDriving(); // Let the user drive
 
                     if (screens.index == 1) {
                         io.out("&emsp;kV: <big><big>%s</big></big>\n", vInput.update());
                         io.out("&emsp;Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0);
-                        io.out("Once started, view the graph in FTC Dashboard and adjust "
+                        io.out("Once started, view the graph in FTC Dashboard's field view and adjust "
                                 + "<b>kV</b> to make the horizontal lines as close as possible in height. "
                                 + "<b>vTarget</b> is green, <b>vActual</b> is blue, <i>kV = vTarget / vActual</i>. ");
                     } else {
                         io.out("&emsp;kA: <big><big>%s</big></big>\n", aInput.update());
                         io.out("&emsp;Max velocity is <b>%.0f%%</b>.\n\n", maxVelocityFactor * 100.0);
-                        io.out("View the graph in FTC Dashboard and adjust "
+                        io.out("Once started, view the graph in FTC Dashboard's field view and adjust "
                                 + "<b>kA</b> to shift <b>vActual</b> left and right so the angled lines overlap "
                                 + "where the robot accelerates. It's too much if the horizontal line gets overshot. "
                                 + "Don't worry about the gray sloping portions if they bulge out. ");
@@ -3174,7 +3179,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
         // Do the lateral multiplier measurement step:
         LateralResult measure(String header, TuneParameters testParameters, List<Result> history) {
             // Accelerate and decelerate slowly so we don't overshoot:
-            ProfileAccelConstraint accelConstraint = new ProfileAccelConstraint(-3, 3);
+            ProfileAccelConstraint accelConstraint = new ProfileAccelConstraint(-15, 25);
 
             // Strafe left and then right:
             Pose2d startPose1 = new Pose2d(0, -DISTANCE / 2.0, 0);
@@ -3508,6 +3513,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                         io.out("\n<b>"+ errorSummary + "</b>");
                         io.out("Increase the gain to make the circles %scoincident and to minimize "
                                 + "the maximum and final error. ", adjective);
+                        io.out("Green is target, blue is actual. ");
                         io.out("Don't increase so much that the robot has "
                                 + "significant shaking or oscillation. ");
                         io.out("(A small amount can be corrected by adjusting the corresponding "
@@ -3571,7 +3577,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                 + "in the field view. "
                 + "It needs half a tile clearance on either side. ";
         String clearance = "(ensure " + clearanceDistance(48) + " clearance in front, half a "
-                + "tile on each side)";
+                + "tile on either side)";
         runTrajectory(()->drive.actionBuilder(zeroPose)
                 .setTangent(Math.toRadians(60))
                 .splineToLinearHeading(new Pose2d(24, 0, Math.toRadians(90)), Math.toRadians(-60))
@@ -3662,7 +3668,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
             poll.ok();
         } else {
             io.message("Here are all of the parameter updates from your current run. "
-                    + "Double-tap the shift key in Android Studio, enter 'md.params' to jump to the "
+                    + "Double-tap the shift key in Android Studio, enter 'md.Params' to jump to the "
                     + "MecanumDrive Params constructor, then update as follows:\n\n"
                     + comparison
                     + "\nPress "+A+" to continue.");
