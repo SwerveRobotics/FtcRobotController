@@ -14,7 +14,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@Autonomous(name = "Auto", group = "Reliable", preselectTeleOp = "CompetitionTeleOp")
+@Autonomous(name = "Reliable Auto", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
 public class ReliableAuto extends BaseOpMode {
     ElapsedTime clock = new ElapsedTime();
 
@@ -36,7 +36,7 @@ public class ReliableAuto extends BaseOpMode {
             telemetry.addData("Kinematic Type", kinematicType);
             telemetry.addData("Elapsed time", clock.milliseconds());
             telemetry.update();
-            if (clock.milliseconds() < 500) {
+            if (clock.milliseconds() < 3000) {
                 drive.setDrivePowers(new PoseVelocity2d(
                         new Vector2d(
                                 0,
