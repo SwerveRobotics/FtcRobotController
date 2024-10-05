@@ -729,6 +729,7 @@ class Menu {
             if (io.ok()) {
                 if (runWidget.isEnabled) {
                     runWidget.runnable.run();
+                    Io.clearDashboardTelemetry();
                 }
             }
         }
@@ -1855,7 +1856,7 @@ public class LoonyTune extends LinearOpMode {
                         + "so just look for approximate correctness here.)\n"
                         + "\u2022 When the robot rotates in place using only the right stick, the "
                         + "on-screen robot shouldn't move its <i>(x, y)</i> position at all. Does it?\n"
-                        + "\u2022 Does a full 360° correctly align?\n"
+                        + "\u2022 Does a full 360° end with correct alignment?\n"
                         + "\n");
                 io.out("Pose: (%.2f\", %.2f\"), %.2f\u00b0\n\n",
                         drive.pose.position.x, drive.pose.position.y, Math.toDegrees(drive.pose.heading.toDouble()));
@@ -2284,7 +2285,7 @@ public class LoonyTune extends LinearOpMode {
         // Draw the spin sample points, plus the optional best-fit circle, on FTC Dashboard:
         void drawSpinPoints(List<Point> points, Circle circle) {
             io.begin();
-            Canvas canvas = io.canvas(Io.Background.BLANK);
+            Canvas canvas = io.canvas(Io.Background.GRID);
             double[] xPoints = new double[points.size()];
             double[] yPoints = new double[points.size()];
             for (int i = 0; i < points.size(); i++) {
@@ -2527,7 +2528,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                             + "again. This will measure the following:", REVOLUTION_COUNT);
                     io.out("\n\n"
                             + "\u2022 <b>trackWidthTicks</b> accounts for how far the wheels have to travel when "
-                            + "rotating in place 360\u00b0.\n"
+                            + "the robot turns 360\u00b0.\n"
 
                             + "\u2022 <b>otos.angularScalar</b> is the calibration factor to apply to make "
                             + "the OTOS gyro more accurate.\n"
@@ -2787,7 +2788,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                         double kS = bestFitLine.intercept;
                         double kV = bestFitLine.slope * currentParameters.params.inPerTick;
 
-                        graphExplanation = String.format("The graph in FTC Dashboard shows "
+                        graphExplanation = String.format("The graph in the Field view shows "
                                 + "velocity as the <i>x</i> axis going up to %.1f\"/s, and voltage "
                                 + "as the <i>y</i> axis going up to %.2fV.\n\n", max.x, max.y);
 
@@ -2951,7 +2952,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
             maxDuration = Math.max(maxDuration, time - runStartTime);
 
             // Do some sanity checking:
-            if (Math.abs(velocityPose.y) > 0.2 * maxTargetVelocity) {
+            if (Math.abs(velocityPose.y) > 0.3 * maxTargetVelocity) {
                 dialog.warning("Odometry results are inconsistent with movement. "
                         + "Re-run first tuners.");
                 return null; // ====>
@@ -3235,7 +3236,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                     double multiplier1 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance1 / DISTANCE);
                     double multiplier2 = MecanumDrive.PARAMS.lateralInPerTick * (actualDistance2 / DISTANCE);
 
-                    if ((error1 > 0.1 * DISTANCE) || (error2 > 0.1 * DISTANCE)) {
+                    if ((error1 > 0.4 * DISTANCE) || (error2 > 0.4 * DISTANCE)) {
                         dialog.warning("Odometry results are inconsistent with movement. "
                                 + "Re-run first tuners");
                         return null; // ====>
@@ -3646,7 +3647,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                     .build();
             runCancelableAction("", action);
 
-            io.message("The robot should be facing the same direction as when it started. It it's "
+            io.message("The robot should be facing close to the same direction as when it started. It it's "
                     + "not, run the spin tuner again to re-tune <b>trackWidthTicks</b>."
                     + "\n\nPress "+A+" to continue.");
             poll.ok();
