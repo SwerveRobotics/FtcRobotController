@@ -9,6 +9,7 @@ import static com.acmerobotics.roadrunner.Profiles.constantProfile;
 
 import static org.firstinspires.ftc.teamMentor.roadrunner.LoonyTune.A;
 import static org.firstinspires.ftc.teamMentor.roadrunner.LoonyTune.DPAD_UP_DOWN;
+import static org.firstinspires.ftc.teamMentor.roadrunner.LoonyTune.FILE_NAME;
 import static java.lang.System.nanoTime;
 
 import android.annotation.SuppressLint;
@@ -53,6 +54,11 @@ import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Field;
@@ -64,7 +70,6 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.prefs.Preferences;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -421,10 +426,9 @@ class TuneParameters {
 
     // Save the current settings to the preferences database:
     public void save() {
-        Preferences preferences = Preferences.userNodeForPackage(TuneParameters.class);
         Gson gson = new Gson();
         String json = gson.toJson(this);
-        preferences.put("settings", json);
+        writeDataFile(json);
     }
 
     // Compare the saved and current values for a configuration parameter. If they're different,
@@ -462,16 +466,40 @@ class TuneParameters {
         }
     }
 
+    // It's not simple to read a file into a string on Java:
+    static String readDataFile() {
+        StringBuilder string = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                string.append(line);
+                string.append("\n");
+            }
+        } catch (IOException e) {
+            return "";
+        }
+        return string.toString();
+    }
+
+    // It's not simple to write a string to a file on Java:
+    static void writeDataFile(String string) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME))) {
+            writer.write(string);
+        } catch (IOException e) {
+            if (!WilyWorks.isSimulating)
+                throw new RuntimeException(e);
+        }
+    }
+
     // Validate that the settings are valid and apply to the current robot:
     static TuneParameters getSavedParameters() {
         // Load the saved settings from the preferences database:
-        Preferences preferences = Preferences.userNodeForPackage(TuneParameters.class);
         Gson gson = new Gson();
-        String json = preferences.get("settings", "");
+        String json = readDataFile();
         TuneParameters savedParameters = gson.fromJson(json, TuneParameters.class);
 
         if ((savedParameters == null) || (savedParameters.params == null)) {
-            out.println("Couldn't load saved settings!");
+            out.println("LoonyTune: Couldn't load saved settings!");
             return null; // No saved settings were found
         }
         return savedParameters;
@@ -774,6 +802,8 @@ class Menu {
 @SuppressLint("DefaultLocale")
 @TeleOp(name="Loony Tune", group="Tuning")
 public class LoonyTune extends LinearOpMode {
+    @SuppressLint("SdCardPath")
+    static final String FILE_NAME = "/sdcard/loony_tune.dat";
     static final String HIGHLIGHT_COLOR = "#9090c0"; // Used to be #88285a
     static String buttonString(String button) {
         return String.format("<span style='background:#a0a0a0'>%s</span>", button);
