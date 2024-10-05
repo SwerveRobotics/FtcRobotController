@@ -36,13 +36,13 @@ public class ReliableAuto extends BaseOpMode {
             telemetry.addData("Kinematic Type", kinematicType);
             telemetry.addData("Elapsed time", clock.milliseconds());
             telemetry.update();
-            if (clock.milliseconds() < 3000) {
+            if (clock.milliseconds() < 5000) {
                 drive.setDrivePowers(new PoseVelocity2d(
                         new Vector2d(
                                 0,
                                 0.2
                         ),
-                        0
+                        -0.04
                 ));
             } else {
                 drive.setDrivePowers(new PoseVelocity2d(
