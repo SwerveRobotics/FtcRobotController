@@ -498,7 +498,7 @@ class TuneParameters {
         compare("otos.offset.y", "%.3f", oldSettings.params.otos.offset.y, params.otos.offset.y);
         compareRadians("otos.offset.h", "%.2f", oldSettings.params.otos.offset.h, params.otos.offset.h);
         compare("otos.linearScalar", "%.3f", oldSettings.params.otos.linearScalar, params.otos.linearScalar);
-        compare("otos.angularScalar", "%.3f", oldSettings.params.otos.angularScalar, params.otos.angularScalar);
+        compare("otos.angularScalar", "%.4f", oldSettings.params.otos.angularScalar, params.otos.angularScalar);
         compare("maxWheelVel", "%.2f", oldSettings.params.maxWheelVel, params.maxWheelVel);
         compare("minProfileAccel", "%.2f", oldSettings.params.minProfileAccel, params.minProfileAccel);
         compare("maxProfileAccel", "%.2f", oldSettings.params.maxProfileAccel, params.maxProfileAccel);
@@ -1130,7 +1130,7 @@ public class LoonyTune extends LinearOpMode {
             io.out(header + "Press "+B+" to cancel and stop the robot.");
             boolean more = drive.doActionsWork(io.packet);
             if (!more) {
-                // We successfully completed the Action! Abort the current canvas:
+                // We successfully completed the Action! Toss the current (incomplete) canvas:
                 io.abortCanvas();
                 io.end();
                 return true; // ====>
@@ -2147,7 +2147,7 @@ public class LoonyTune extends LinearOpMode {
 
             @Override
             public String getValues() {
-                return String.format("%.2f, %.3f, (%.3f\", %.3f\")", trackWidthTicks, otosAngularScalar, otosOffsetX, otosOffsetY);
+                return String.format("%.2f, %.4f, (%.3f\", %.3f\")", trackWidthTicks, otosAngularScalar, otosOffsetX, otosOffsetY);
             }
 
             @Override

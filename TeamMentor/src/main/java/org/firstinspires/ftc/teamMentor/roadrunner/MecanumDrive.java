@@ -109,7 +109,7 @@ public final class MecanumDrive {
                 otos.offset.y = 3.132;
                 otos.offset.h = Math.toRadians(-89.42);
                 otos.linearScalar = 1.014;
-                otos.angularScalar = 1.0494;
+                otos.angularScalar = 1.0011;
             } else {
                 // Your competition robot Loony Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
