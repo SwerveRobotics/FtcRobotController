@@ -447,7 +447,8 @@ public final class MecanumDrive {
                 // TODO: Create the optical tracking object:
                 //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
 
-                opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+                // TODO: enable this when we have the optical tracker
+                //  opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -455,8 +456,7 @@ public final class MecanumDrive {
                 rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
                 // TODO: reverse motor directions if needed
-                leftFront.setDirection(DcMotorEx.Direction.REVERSE);
-                leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+                rightBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
         }
 

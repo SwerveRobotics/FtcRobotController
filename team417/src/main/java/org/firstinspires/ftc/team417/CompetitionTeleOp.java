@@ -87,9 +87,6 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
         drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
-        armMotor = hardwareMap.get(DcMotor.class, "ArmMotor");
-        intake = hardwareMap.get(CRServo.class, "BootWheelServo");
-        wrist = hardwareMap.get(Servo.class, "RotationServo");
 
         if (hasMechanisms) {
             armMotor = hardwareMap.get(DcMotor.class, "arm");
