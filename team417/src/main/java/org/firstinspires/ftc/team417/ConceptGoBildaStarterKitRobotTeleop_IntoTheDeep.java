@@ -188,8 +188,10 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
         /* Run until the driver presses stop */
         while (opModeIsActive()) {
 
-            double y = -gamepad1.left_stick_y; // Remember, Y stick value is reversed
-            double x = gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
+            double y = gamepad1.left_stick_y; // TODO: Y-value should be reversed,
+            // but the motor configurations are messed up
+            double x = -gamepad1.left_stick_x * 1.1; // Counteract imperfect strafing
+            // TODO: Ditto, it shouldn't be reversed
             double rx = gamepad1.right_stick_x;
 
             // Denominator is the largest motor power (absolute value) or 1
@@ -202,7 +204,7 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             double backRightPower = (y + x - rx) / denominator;
 
             // GamePad 1 slowdown
-            if(gamepad1.left_bumper){
+            if (gamepad1.left_bumper) {
                 frontLeftPower *= 0.5;    // Reduce speed to 50% when left bumper is held
                 backLeftPower *= 0.5;
                 frontRightPower *= 0.5;
@@ -343,7 +345,7 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             telemetry.addLine("Low rung hang orientation: Up D-Pad");
             telemetry.addLine("High Chamber Orientation: Right D-Pad");
             telemetry.addLine("Fold wrist & folds arm, intake off: Left D-Pad:");
-            telemetry.addLine("Accent robot: Down D-Pad");
+            telemetry.addLine("Make the robot ascent: Down D-Pad");
             telemetry.addLine();
 
             telemetry.addLine("Clear floor for intake: left-bumper");
