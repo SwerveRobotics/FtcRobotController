@@ -471,6 +471,7 @@ class TuneParameters {
         TuneParameters savedParameters = gson.fromJson(json, TuneParameters.class);
 
         if ((savedParameters == null) || (savedParameters.params == null)) {
+            out.println("Couldn't load saved settings!");
             return null; // No saved settings were found
         }
         return savedParameters;
@@ -1146,8 +1147,6 @@ public class LoonyTune extends LinearOpMode {
     // Road Runner expects the hardware to be in different states when using high-level MecanumDrive
     // functionality vs. its lower-level tuning functionality.
     private void configureToDrive(boolean enableRoadRunnerDefaults) {
-        Io.clearDashboardTelemetry();
-
         DcMotorEx[] motors = { drive.leftFront, drive.leftBack, drive.rightBack, drive.rightFront };
         if (enableRoadRunnerDefaults) {
             // Initialize hardware state the same way that MecanumDrive does:
@@ -1350,6 +1349,9 @@ public class LoonyTune extends LinearOpMode {
                 }
 
                 switched = (index != oldIndex); // Callers can check this variable
+                if (switched) {
+                    Io.clearDashboardTelemetry();
+                }
                 if (index == 0) {
                     buttons = RIGHT_BUMPER + " (bumper button above right trigger) for the "
                             + "next screen, " + GUIDE + " (big center button) "
@@ -1654,8 +1656,6 @@ public class LoonyTune extends LinearOpMode {
                 }
             }
         }
-
-        Io.clearDashboardTelemetry();
     }
 
     // All tuner results are derived from this Result class:
@@ -1825,6 +1825,7 @@ public class LoonyTune extends LinearOpMode {
                         + "so just look for approximate correctness here.)\n"
                         + "\u2022 When the robot rotates in place using only the right stick, the "
                         + "on-screen robot shouldn't move its <i>(x, y)</i> position at all. Does it?\n"
+                        + "\u2022 Does a full 360° correctly align?\n"
                         + "\n");
                 io.out("Pose: (%.2f\", %.2f\"), %.2f\u00b0\n\n",
                         drive.pose.position.x, drive.pose.position.y, Math.toDegrees(drive.pose.heading.toDouble()));
@@ -3142,7 +3143,6 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
             // We're done, undo any temporary state we set:
             MecanumDrive.PARAMS = currentParameters.params;
             stopMotors();
-            io.clearDashboardTelemetry();
         }
     }
 
@@ -3343,7 +3343,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                 maxLateralError = Math.max(maxLateralError, lateralError);
                 maxHeadingError = Math.max(maxHeadingError, headingError);
 
-                errorSummary = "Max gain error: ";
+                errorSummary = "Max gain error: <b>";
                 if (type == PidTunerType.AXIAL)
                     errorSummary += String.format("%.2f\"", maxAxialError);
                 else if (type == PidTunerType.LATERAL)
@@ -3353,10 +3353,11 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                 else
                     errorSummary += String.format("%.2f\", %.2f\", %.2f\u00b0",
                             maxAxialError, maxLateralError, Math.toDegrees(maxHeadingError));
+                errorSummary += "</b>";
 
                 if (!more) {
                     errorSummary += (type == PidTunerType.ALL) ? "\n" : ", ";
-                    errorSummary += "End error: ";
+                    errorSummary += "End error: <b>";
                     if (type == PidTunerType.AXIAL)
                         errorSummary += String.format("%.2f\"", axialError);
                     else if (type == PidTunerType.LATERAL)
@@ -3366,6 +3367,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                     else
                         errorSummary += String.format("%.2f\", %.2f\", %.2f\u00b0",
                                 axialError, lateralError, Math.toDegrees(headingError));
+                    errorSummary += "</b>";
                 }
                 errorSummary += "\n\n";
             }
@@ -3510,7 +3512,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
                     io.out("&emsp;%s: <big><big>%s</big></big>\n", input.fieldName, input.update());
 
                     if ((index & 1) == 0) { // Tuning a proportional gain
-                        io.out("\n<b>"+ errorSummary + "</b>");
+                        io.out("\n"+ errorSummary);
                         io.out("Increase the gain to make the circles %scoincident and to minimize "
                                 + "the maximum and final error. ", adjective);
                         io.out("Green is target, blue is actual. ");
