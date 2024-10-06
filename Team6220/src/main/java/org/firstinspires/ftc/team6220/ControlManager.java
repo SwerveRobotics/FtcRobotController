@@ -7,8 +7,8 @@ public class ControlManager {
     private Gamepad gamepad1 = null;
     private Gamepad gamepad2 = null;
 
-    private double armBaseMotorPower;
-    private double slidesMotorPower;
+    private int armBaseMotorPosition;
+    private int slidesMotorPosition;
     private double intakeServoPower;
     private double dumperServoPosition;
     private double armElbowServoPosition;
@@ -20,24 +20,33 @@ public class ControlManager {
     }
 
     public void update() {
-        if(gamepad2.a) {
+        if(gamepad2.a && !gamepad2.b) {
             armElbowServoPosition =  Constants.ARM_ELBOW_SERVO_PRESET_POSITION_OVER_BARRIER;
         }
-        if(gamepad2.b) {
-            armElbowServoPosition = Constants.ARM_ELBOW_SERVO_PRESET_POSITION_INTAKE_TO_GROUND;
+        if(gamepad2.b && !gamepad2.a) {
+            armElbowServoPosition = Constants.ARM_ELBOW_SERVO_PRESET_POSITION_GROUND;
         }
-        if(gamepad2.x) {
-            armBaseMotorPower = Constants.ARM_BASE_MOTOR_POWER_BACK_TO_GROUND;
-
+        if(gamepad2.x && !gamepad2.y) {
+            armBaseMotorPosition = Constants.ARM_BASE_MOTOR_POSITION_GROUND;
+        }
+        if (gamepad2.y && !gamepad2.x) {
+            armBaseMotorPosition = Constants.ARM_BASE_MOTOR_POSITION_FOLD;
+        }
+        intakeServoPower = -gamepad2.right_stick_y;
+        if (gamepad2.dpad_down && !gamepad2.dpad_up) {
+            slidesMotorPosition = Constants.SLIDES_MOTOR_GROUND_POSITION;
+        }
+        if (gamepad2.dpad_up && !gamepad2.dpad_down) {
+            slidesMotorPosition = Constants.SLIDES_MOTOR_POSITION_ONE;
         }
     }
 
-    public double getArmBaseMotorPower() {
-        return armBaseMotorPower;
+    public int getArmBaseMotorPosition() {
+        return armBaseMotorPosition;
     }
 
-    public double getSlidesMotorPower() {
-        return slidesMotorPower;
+    public int getSlidesMotorPosition() {
+        return slidesMotorPosition;
     }
 
     public double getIntakeServoPower() {

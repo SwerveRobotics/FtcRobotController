@@ -27,7 +27,7 @@ public class CompetitionAuto extends BaseOpMode {
         // Send all telemetry data to both the Driver Hub and FTC Dashboard:
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        Pose2d beginPose = new Pose2d(10, -60, 0);
+        Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
         // TextMenu implementation yoinked from valsei's GitHub
@@ -59,11 +59,8 @@ public class CompetitionAuto extends BaseOpMode {
         // can take multiple seconds for this operation. We wouldn't want to have to wait
         // as soon as the Start button is pressed!
         Action trajectoryAction = drive.actionBuilder(beginPose)
-                            .splineTo(new Vector2d(48, -40), Math.PI/2)
-                            .endTrajectory()
-
-                            //.setTangent(Math.PI/2)
-                            //.splineTo(new Vector2d(60, -60), -Math.PI/2)
+                            .splineTo(new Vector2d(30, 30), Math.PI / 2)
+                            .splineTo(new Vector2d(0, 60), Math.PI)
                             .build();
 
         // Get a preview of the trajectory's path:

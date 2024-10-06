@@ -8,9 +8,10 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team6220.roadrunner.Drawing;
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 
@@ -21,8 +22,8 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 @TeleOp(name="TeleOp", group="Competition")
 public class CompetitionTeleOp extends BaseOpMode {
 
-    private DcMotor armBaseMotor = null;
-    private DcMotor slidesMotor = null;
+    private DcMotorEx armBaseMotor = null;
+    private DcMotorEx slidesMotor = null;
     private CRServo intakeCRServo = null;
     private Servo dumperServo = null;
     private Servo armElbowServo = null;
@@ -31,11 +32,26 @@ public class CompetitionTeleOp extends BaseOpMode {
     public void runOpMode() {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
-        armBaseMotor = hardwareMap.get(DcMotor.class,"armBaseMotor");
-        slidesMotor = hardwareMap.get(DcMotor.class,"slidesMotor");
+        armBaseMotor = hardwareMap.get(DcMotorEx.class,"armBaseMotor");
+        slidesMotor = hardwareMap.get(DcMotorEx.class,"slidesMotor");
         intakeCRServo = hardwareMap.get(CRServo.class,"intakeServo");
         dumperServo = hardwareMap.get(Servo.class,"dumperServo");
         armElbowServo = hardwareMap.get(Servo.class,"armElbowServo");
+
+        armBaseMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        slidesMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+
+        armBaseMotor.setCurrentAlert(5, CurrentUnit.AMPS);
+        slidesMotor.setCurrentAlert(5, CurrentUnit.AMPS);
+
+        armBaseMotor.setTargetPosition(0);
+        slidesMotor.setTargetPosition(0);
+        armBaseMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        slidesMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        armBaseMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+
+
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
@@ -49,8 +65,8 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             controls.update();
 
-            armBaseMotor.setPower(controls.getArmBaseMotorPower());
-            slidesMotor.setPower(controls.getSlidesMotorPower());
+            armBaseMotor.setTargetPosition(controls.getArmBaseMotorPosition());
+            slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
             intakeCRServo.setPower(controls.getIntakeServoPower());
             dumperServo.setPosition(controls.getDumperServoPosition());
             armElbowServo.setPosition(controls.getArmElbowServoPosition());
