@@ -155,7 +155,7 @@ class WilyVoltageSensor extends WilyHardwareDevice implements VoltageSensor {
  */
 class WilyDistanceSensor extends WilyHardwareDevice implements DistanceSensor {
     @Override
-    public double getDistance(DistanceUnit unit) { return DistanceUnit.infinity; }
+    public double getDistance(DistanceUnit unit) { return unit.fromMm(65535); } // Distance when not responding
 }
 
 /**

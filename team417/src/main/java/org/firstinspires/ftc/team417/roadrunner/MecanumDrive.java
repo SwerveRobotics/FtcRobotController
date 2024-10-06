@@ -20,9 +20,9 @@ import com.acmerobotics.roadrunner.HolonomicController;
 import com.acmerobotics.roadrunner.IdentityPoseMap;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.MotorFeedforward;
+import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Pose2dDual;
-import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.PoseVelocity2dDual;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
@@ -56,6 +56,7 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -246,7 +247,12 @@ public final class MecanumDrive {
     public Localizer localizer;
     public Pose2d pose; // Current actual pose
     public Pose2d targetPose; // Target pose when actively traversing a trajectory
-    public SparkFunOTOS opticalTracker = null; // Can be null which means no optical tracking sensor
+    public SparkFunOTOS opticalTracker; // Can be null which means no OTOS
+    public SparkFunOTOS.Pose2D opticalAcceleration; // Most recent acceleration from the OTOS
+    public double lastLinearGainError = 0; // Most recent gain error in inches and radians
+    public double lastHeadingGainError = 0;
+    public double maxLinearGainError = 0; // Max gain error to date in inches and radians
+    public double maxHeadingGainError = 0;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -436,13 +442,6 @@ public final class MecanumDrive {
         if (opticalTracker == null)
             return; // ====>
 
-        // Get the hardware and firmware version
-        SparkFunOTOS.Version hwVersion = new SparkFunOTOS.Version();
-        SparkFunOTOS.Version fwVersion = new SparkFunOTOS.Version();
-        opticalTracker.getVersionInfo(hwVersion, fwVersion);
-        System.out.printf("SparkFun OTOS hardware version: %d.%d, firmware version: %d.%d\n",
-                hwVersion.major, hwVersion.minor, fwVersion.major, fwVersion.minor);
-
         // Set the desired units for linear and angular measurements. Can be either
         // meters or inches for linear, and radians or degrees for angular. If not
         // set, the default is inches and degrees. Note that this setting is not
@@ -543,7 +542,6 @@ public final class MecanumDrive {
      * .maxAngVel to determine the range to specify. Note however that the robot can actually
      * go faster than Road Runner's PARAMS values so you would be unnecessarily slowing your
      * robot down.
-     *
      * @noinspection unused
      */
     public void setDrivePowers(
@@ -556,7 +554,8 @@ public final class MecanumDrive {
             PoseVelocity2d stickVelocity,
             // Desired computed power velocity, inches/s and radians/s, field-relative coordinates,
             // can be null:
-            PoseVelocity2d assistVelocity) {
+            PoseVelocity2d assistVelocity)
+    {
         if (stickVelocity == null)
             stickVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
         if (assistVelocity == null)
@@ -594,9 +593,9 @@ public final class MecanumDrive {
         double rightFrontPower = manualVels.rightFront.get(0);
 
         // Compute the wheel powers for the assist:
-        double[] x = {pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x};
-        double[] y = {pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y};
-        double[] angular = {pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel};
+        double[] x = { pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x };
+        double[] y = { pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y };
+        double[] angular = { pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel };
 
         Pose2dDual<Time> computedDualPose = new Pose2dDual<>(
                 new Vector2dDual<>(new DualNum<>(x), new DualNum<>(y)),
@@ -715,16 +714,13 @@ public final class MecanumDrive {
             rightBack.setPower(rightBackPower);
             rightFront.setPower(rightFrontPower);
 
+            // Update some statistics:
             updateLoopTimeStatistic(p);
-
-            // p.put("x", pose.position.x);
-            // p.put("y", pose.position.y);
-            // p.put("heading (deg)", Math.toDegrees(pose.heading.toDouble()));
-
-            // Pose2d error = txWorldTarget.value().minusExp(pose);
-            // p.put("xError", error.position.x);
-            // p.put("yError", error.position.y);
-            // p.put("headingError (deg)", Math.toDegrees(error.heading.toDouble()));
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+            lastLinearGainError = error.position.norm();
+            lastHeadingGainError = error.heading.toDouble();
+            maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
+            maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
 
             // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();
@@ -800,7 +796,6 @@ public final class MecanumDrive {
 
             HolonomicKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
 
-            updateLoopTimeStatistic(p);
             double voltage = getVoltage();
 
             final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS,
@@ -817,6 +812,14 @@ public final class MecanumDrive {
             leftBack.setPower(feedforward.compute(wheelVels.leftBack) / voltage);
             rightBack.setPower(feedforward.compute(wheelVels.rightBack) / voltage);
             rightFront.setPower(feedforward.compute(wheelVels.rightFront) / voltage);
+
+            // Update some statistics:
+            updateLoopTimeStatistic(p);
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+            lastLinearGainError = error.position.norm();
+            lastHeadingGainError = error.heading.toDouble();
+            maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
+            maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
 
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);
@@ -843,14 +846,12 @@ public final class MecanumDrive {
 
     // Update the loop time, in milliseconds, and show it on FTC Dashboard:
     double lastLoopTime; // Seconds
-
     void updateLoopTimeStatistic(TelemetryPacket p) {
         double currentTime = nanoTime() * 1e-9; // Seconds
         double loopTime = currentTime - lastLoopTime;
         lastLoopTime = currentTime;
         p.put("Loop time", loopTime * 1000.0); // Milliseconds
     }
-
     void resetLoopTimeStatistic() {
         lastLoopTime = nanoTime() * 1e-9;
     }
@@ -875,8 +876,8 @@ public final class MecanumDrive {
             double rotation = -position.h;
             poseVelocity = new PoseVelocity2d(
                     new Vector2d(Math.cos(rotation) * velocity.x - Math.sin(rotation) * velocity.y,
-                            Math.sin(rotation) * velocity.x + Math.cos(rotation) * velocity.y),
-                    velocity.h);
+                                 Math.sin(rotation) * velocity.x + Math.cos(rotation) * velocity.y),
+                        velocity.h);
 
             pose = new Pose2d(position.x, position.y, position.h);
         } else {
@@ -954,9 +955,7 @@ public final class MecanumDrive {
                 ));
     }
 
-    /**
-     * @noinspection unused
-     */ // Rotate a vector by a prescribed angle:
+    /** @noinspection unused*/ // Rotate a vector by a prescribed angle:
     static public Vector2d rotateVector(Vector2d vector, double theta) {
         return new Vector2d(
                 Math.cos(theta) * vector.x - Math.sin(theta) * vector.y,
@@ -982,7 +981,6 @@ public final class MecanumDrive {
     // Get the current voltage, amortized for performance:
     double previousVoltageSeconds = 0;
     double previousVoltageRead = 0;
-
     public double getVoltage() {
         final double UPDATE_INTERVAL = 0.1; // Minimum duration between hardware reads, in seconds
         double currentSeconds = nanoTime() * 1e-9;
@@ -996,9 +994,7 @@ public final class MecanumDrive {
     // List of currently running Actions:
     LinkedList<Action> actionList = new LinkedList<>();
 
-    /**
-     * @noinspection unused
-     */ // Invoke an Action to run in parallel during TeleOp:
+    /** @noinspection unused*/ // Invoke an Action to run in parallel during TeleOp:
     public void runParallel(Action action) {
         actionList.add(action);
     }
@@ -1008,7 +1004,7 @@ public final class MecanumDrive {
     // FTC Dashboard:
     public boolean doActionsWork(TelemetryPacket packet) {
         LinkedList<Action> deletionList = new LinkedList<>();
-        for (Action action : actionList) {
+        for (Action action: actionList) {
             // Let the Action do any field rendering (such as to draw the path it intends to
             // traverse):
             action.preview(packet.fieldOverlay());
@@ -1022,19 +1018,14 @@ public final class MecanumDrive {
         return !actionList.isEmpty();
     }
 
-    /**
-     * @noinspection unused
-     */
+    /** @noinspection unused*/
     // Abort all currently running actions:
     public void abortActions() {
         actionList.clear();
     }
 
     // Create a new telemetry packet to draw stuff on the FTC Dashboard field.
-    public static TelemetryPacket getTelemetryPacket() {
-        return getTelemetryPacket(true);
-    }
-
+    public static TelemetryPacket getTelemetryPacket() { return getTelemetryPacket(true); }
     public static TelemetryPacket getTelemetryPacket(boolean showField) {
         TelemetryPacket packet = new TelemetryPacket();
 
@@ -1068,10 +1059,5 @@ public final class MecanumDrive {
     // When done with an FTC Dashboard telemetry packet, send it!
     public static void sendTelemetryPacket(TelemetryPacket packet) {
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
-    }
-
-    // Remove any variables that had been 'put' to the TelemetryPacket from the Dashboard view:
-    public static void clearDashboardTelemetry() {
-        FtcDashboard.getInstance().clearTelemetry();
     }
 }

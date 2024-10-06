@@ -1,8 +1,6 @@
 package org.firstinspires.ftc.team417;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -19,9 +17,6 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 public class CompetitionAuto extends BaseOpMode {
     @Override
     public void runOpMode() {
-        // Send all telemetry data to both the Driver Hub and FTC Dashboard:
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
 
