@@ -130,16 +130,20 @@ public class CompetitionTeleOp extends BaseOpMode {
             if (curve) {
                 drive.setDrivePowers(new PoseVelocity2d(
                         new Vector2d(
-                                -curveStick(gamepad1.left_stick_y) * speedMultiplier,
-                                -curveStick(gamepad1.left_stick_x) * speedMultiplier
+                                // TODO: This is supposed to be negative, but the motor configs are messed up
+                                curveStick(gamepad1.left_stick_y) * speedMultiplier,
+                                // TODO: This is supposed to be negative, but the motor configs are messed up
+                                curveStick(gamepad1.left_stick_x) * speedMultiplier
                         ),
                         -curveStick(gamepad1.right_stick_x) * speedMultiplier
                 ));
             } else {
                 drive.setDrivePowers(new PoseVelocity2d(
                         new Vector2d(
-                                -gamepad1.left_stick_y * speedMultiplier,
-                                -gamepad1.left_stick_x * speedMultiplier
+                                // TODO: This is supposed to be negative, but the motor configs are messed up
+                                gamepad1.left_stick_y * speedMultiplier,
+                                // TODO: This is supposed to be negative, but the motor configs are messed up
+                                gamepad1.left_stick_x * speedMultiplier
                         ),
                         -gamepad1.right_stick_x * speedMultiplier
                 ));

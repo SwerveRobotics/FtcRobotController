@@ -42,7 +42,7 @@ public class ReliableAuto extends BaseOpMode {
                                 0,
                                 0.2
                         ),
-                        -0.04
+                        -0.025
                 ));
             } else {
                 drive.setDrivePowers(new PoseVelocity2d(
