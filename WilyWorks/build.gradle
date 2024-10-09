@@ -10,8 +10,10 @@ java {
 repositories {
     jcenter()
     maven { url = 'https://maven.brott.dev/' }
+    // maven { url = 'https://www.jitpack.io' }
 }
 
 dependencies {
     implementation "com.acmerobotics.roadrunner:core:1.0.0"
+    // implementation 'com.github.valsei:java-text-menu:v3.1g' // so reese's java text menu doesn't bork the whole thing
 }

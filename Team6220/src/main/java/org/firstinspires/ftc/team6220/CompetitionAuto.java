@@ -10,6 +10,10 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 
+import org.firstinspires.ftc.team6220.javatextmenu.MenuFinishedButton;
+import org.firstinspires.ftc.team6220.javatextmenu.MenuInput;
+import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
+
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 
 /**
@@ -25,6 +29,31 @@ public class CompetitionAuto extends BaseOpMode {
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
+
+        // TextMenu implementation yoinked from valsei's GitHub
+        TextMenu menu = new TextMenu();
+        MenuInput input = new MenuInput(MenuInput.InputType.CONTROLLER);
+
+        menu.add("Test Text Menu Stuff")
+                .add("Begin autonomous: ")
+                .add("confirm initialization test: ", new MenuFinishedButton());
+
+        // yoinked from valsei's github
+        while (!menu.isCompleted() && !isStopRequested()) {
+            for (String line : menu.toListOfStrings()) {
+                telemetry.addLine(line);
+            }
+            telemetry.update();
+
+            input.update(
+                    gamepad1.left_stick_x, gamepad1.left_stick_y,
+                    gamepad1.dpad_left, gamepad1.dpad_right,
+                    gamepad1.dpad_down, gamepad1.dpad_up,
+                    gamepad1.a
+            );
+            menu.updateWithInput(input);
+            sleep(17);
+        }
 
         // Build the trajectory *before* the start button is pressed because Road Runner
         // can take multiple seconds for this operation. We wouldn't want to have to wait
