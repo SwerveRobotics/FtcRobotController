@@ -469,7 +469,7 @@ class TuneParameters {
     // It's not simple to read a file into a string on Java:
     static String readDataFile() {
         StringBuilder string = new StringBuilder();
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_NAME))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(LoonyTune.FILE_NAME))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 string.append(line);
@@ -483,7 +483,7 @@ class TuneParameters {
 
     // It's not simple to write a string to a file on Java:
     static void writeDataFile(String string) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_NAME))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(LoonyTune.FILE_NAME))) {
             writer.write(string);
         } catch (IOException e) {
             if (!WilyWorks.isSimulating)
@@ -642,7 +642,7 @@ class Menu {
 
         // Add a header with submenu names:
         if (menuStack.size() <= 1) {
-            output.append("Press " + DPAD_UP_DOWN + " to navigate, " + A + " to select.\n\n");
+            output.append("Press " + LoonyTune.DPAD_UP_DOWN + " to navigate, " + LoonyTune.A + " to select.\n\n");
         } else {
             output.append("<big><b>");
             for (int i = 1; i < menuStack.size(); i++) {
@@ -1739,9 +1739,15 @@ public class LoonyTune extends LinearOpMode {
                 String motorName = motorNames[motor];
 
                 io.out("Use the triggers to power this wheel:\n\n");
-                io.out("&emsp;<b>%s.setPower(%.2f)</b>", motorName, power);
+                io.out("&emsp;<b>%s.setPower(%.2f)</b> ", motorName, power);
+                if (power > 0) {
+                    io.out("// Should turn forward");
+                } else if (power < 0) {
+                    io.out("// Should turn backward");
+                }
                 io.out("\n\n"
-                        + "If this wheel turns in the wrong direction, double-tap the shift "
+                        + "The right trigger should turn the wheel forward; the left trigger should "
+                        + "turn it backward. If it turns in the wrong direction, double-tap the shift "
                         + "key in Android Studio, enter <b>'MecanumDrive.configure'</b>, and ");
                 if (direction == DcMotorSimple.Direction.FORWARD) {
                     io.out("add a call to <b>'%s.setDirection( DcMotorEx.Direction.REVERSE)'</b>.", motorName);
@@ -1980,6 +1986,7 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
+
     /**
      * Class to encapsulate all push-tuner logic.
      */
@@ -2092,6 +2099,7 @@ public class LoonyTune extends LinearOpMode {
             }
             return new PushResult(newLinearScalar, newOffsetHeading);
         }
+
 
         // Measure the optical linear scale and orientation.
         void tune() {
