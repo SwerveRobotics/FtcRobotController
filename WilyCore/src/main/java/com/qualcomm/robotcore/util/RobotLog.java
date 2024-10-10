@@ -358,6 +358,7 @@ public class RobotLog {
             } else {
                 globalWarningMessage = msg;
             }
+            System.out.printf("GLOBAL WARNING: %s\n", msg);
         }
     }
 
