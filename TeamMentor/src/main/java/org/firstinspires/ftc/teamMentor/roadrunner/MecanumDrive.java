@@ -656,11 +656,6 @@ public final class MecanumDrive {
             maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
             maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
 
-System.out.printf("Pose - target: %.1f, actual: %.1f, error: %.1f\n",
-            Math.toDegrees(pose.heading.toDouble()),
-            Math.toDegrees(txWorldTarget.heading.value().toDouble()),
-            Math.toDegrees(lastHeadingGainError));
-
             // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);

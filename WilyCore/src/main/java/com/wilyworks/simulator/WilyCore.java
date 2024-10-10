@@ -94,8 +94,8 @@ class Annotations {
  * Class responsible for creation of the main window.
  */
 class DashboardWindow extends JFrame {
-    final int WINDOW_WIDTH = 500;
-    final int WINDOW_HEIGHT = 500;
+    static final int WINDOW_WIDTH = Field.FIELD_VIEW_DIMENSION;
+    static final int WINDOW_HEIGHT = Field.FIELD_VIEW_DIMENSION;
     DashboardCanvas dashboardCanvas = new DashboardCanvas(WINDOW_WIDTH, WINDOW_HEIGHT);
     String opModeName = "";
 
@@ -160,6 +160,7 @@ class DashboardWindow extends JFrame {
                     // Inform the main thread of the choice and save the preference:
                     OpModeChoice opModeChoice = opModeChoices.get(dropDown.getSelectedIndex());
                     WilyCore.status = new WilyCore.Status(WilyCore.State.INITIALIZED, opModeChoice.klass, button);
+                    WilyCore.startTime = 0;
                     dropDown.setMaximumSize(new Dimension(0, 0));
                     dropDown.setVisible(false); // Needed for long opMode names, for whatever reason
                     button.setText("\u25B6");
@@ -171,6 +172,7 @@ class DashboardWindow extends JFrame {
 
                 case INITIALIZED:
                     WilyCore.status = new WilyCore.Status(WilyCore.State.STARTED, WilyCore.status.klass, button);
+                    WilyCore.startTime = WilyCore.wallClockTime();
                     button.setText("Stop");
                     break;
 
@@ -251,6 +253,7 @@ public class WilyCore {
     public static WilyWorks.Config config;
     public static Gamepad gamepad1;
     public static Gamepad gamepad2;
+    public static HardwareMap hardwareMap;
     public static InputManager inputManager;
     public static DashboardWindow dashboardWindow;
     public static Telemetry telemetry;
@@ -259,6 +262,7 @@ public class WilyCore {
     public static DashboardCanvas dashboardCanvas;
     public static OpModeThread opModeThread;
     public static Status status = new Status(State.STOPPED, null, null);
+    public static double startTime; // Time when the opmode started, zero if opmode not active
 
     private static boolean simulationUpdated; // True if WilyCore.update() has been called since
     private static double lastUpdateWallClockTime = nanoTime() * 1e-9; // Clock time since last update() call, in seconds
@@ -459,7 +463,10 @@ public class WilyCore {
             throw new RuntimeException(e);
         }
 
-        opMode.hardwareMap = new HardwareMap();
+        // We need to re-instantiate hardware map on every run:
+        hardwareMap = new HardwareMap();
+
+        opMode.hardwareMap = hardwareMap;
         opMode.gamepad1 = gamepad1;
         opMode.gamepad2 = gamepad2;
         opMode.telemetry = telemetry;

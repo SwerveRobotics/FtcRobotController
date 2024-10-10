@@ -5,6 +5,8 @@ import static java.lang.Thread.currentThread;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.wilyworks.common.WilyWorks;
 import com.wilyworks.simulator.WilyCore;
 import com.wilyworks.simulator.helpers.Point;
@@ -19,10 +21,12 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.Transparency;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
@@ -30,10 +34,9 @@ import javax.imageio.ImageIO;
  * Field view manager.
  */
 public class Field {
-    // Make the field view 720x720 pixels but inset the field surface so that there's padding
-    // all around it:
-    static final int FIELD_VIEW_DIMENSION = 500;
-    static final int FIELD_SURFACE_DIMENSION = 480;
+    // Inset the field surface so that there's padding all around it:
+    public static final int FIELD_VIEW_DIMENSION = 504;
+    public static final int FIELD_SURFACE_DIMENSION = 480;
 
     // These are derived from the above to describe the field rendering:
     static final int FIELD_INSET = (FIELD_VIEW_DIMENSION - FIELD_SURFACE_DIMENSION) / 2;
@@ -164,8 +167,64 @@ public class Field {
         return oldTransform;
     }
 
+    // Render the LED for REV Digital Channels:
+    void renderDigitalChannels(Graphics2D g) {
+        HardwareMap hardwareMap = WilyCore.hardwareMap;
+        if (hardwareMap == null)
+            return; // Might not have been created yet
+
+        final int colors[] = { 0, 0xff0000, 0x00ff00, 0xffbf00 }; // black, red, green, amber
+        final double radius = 1.0; // Circle radius, in inches
+        Pose2d pose = simulation.getPose(0);
+
+        ArrayList<WilyDigitalChannel> channelArray = new ArrayList<>();
+        for (DigitalChannel channel: hardwareMap.digitalChannel) {
+            channelArray.add((WilyDigitalChannel) channel);
+        }
+        for (int i = 0; i < channelArray.size(); i++) {
+            WilyDigitalChannel channel = channelArray.get(i);
+            int colorIndex = 0;
+            colorIndex |= (channel.isRed && !channel.state) ? 1 : 0;
+            colorIndex |= (!channel.isRed && !channel.state) ? 2 : 0;
+
+            // The LED actually needs two digital channels to describe all 4 possible colors.
+            // Assume that consecutively registered channels make a pair:
+            if (i + 1 < channelArray.size()) {
+                WilyDigitalChannel nextChannel = channelArray.get(i + 1);
+                if ((nextChannel.x == channel.x) &&
+                    (nextChannel.y == channel.y) &&
+                    (nextChannel.isRed == !channel.isRed)) {
+
+                    colorIndex |= (nextChannel.isRed && !nextChannel.state) ? 1 : 0;
+                    colorIndex |= (!nextChannel.isRed && !nextChannel.state) ? 2 : 0;
+                    i++;
+                }
+            }
+
+            // Draw the circle at the location of the sensor on the robot, accounting for its
+            // current heading:
+            Point point = new Point(channel.x, channel.y)
+                    .rotate(pose.heading.log())
+                    .add(new Point(pose.position));
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g.setColor(new Color(0xffffff));
+            g.fill(new Ellipse2D.Double(point.x - radius - 0.5, point.y - radius - 0.5,2 * radius + 1, 2 * radius + 1));
+            g.setColor(new Color(colors[colorIndex]));
+            g.fill(new Ellipse2D.Double(point.x - radius, point.y - radius,2 * radius, 2 * radius));
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+        }
+    }
+
     // Render the field, the robot, and the field overlay:
     public void render(Graphics2D g) {
+        // Print the time above the field:
+        g.setColor(new Color(0x808080));
+        if (WilyCore.startTime != 0) {
+            g.drawString(String.format("Seconds: %.1f", WilyCore.wallClockTime() - WilyCore.startTime),
+                    FIELD_VIEW.x + FIELD_INSET, FIELD_VIEW.y + FIELD_INSET - 3);
+        }
+
         // Lay down the background image without needing a transform:
         g.drawImage(backgroundImage, FIELD_VIEW.x + FIELD_INSET, FIELD_VIEW.y + FIELD_INSET, null);
 
@@ -174,6 +233,7 @@ public class Field {
         if (FtcDashboard.fieldOverlay != null)
             FtcDashboard.fieldOverlay.render(g);
         renderRobot(g);
+        renderDigitalChannels(g);
         g.setTransform(oldTransform);
     }
 

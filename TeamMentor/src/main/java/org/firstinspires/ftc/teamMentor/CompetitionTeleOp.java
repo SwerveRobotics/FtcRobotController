@@ -46,7 +46,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     public static double INTAKE_DEPOSIT    =  0.5;
 
     public static double WRIST_FOLDED_IN   = 0.96;
-    public static double WRIST_FOLDED_OUT  = 0.57;
+    public static double WRIST_FOLDED_OUT  = 0.50;
 
     final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
@@ -118,6 +118,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                     they were doing before we clicked left bumper. */
                 armPosition = ARM_CLEAR_BARRIER;
                 wristPosition = WRIST_FOLDED_OUT;
+                intake.setPower(INTAKE_COLLECT);
             }
 
             else if (gamepad1.y){

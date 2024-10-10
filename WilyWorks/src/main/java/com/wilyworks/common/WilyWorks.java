@@ -114,14 +114,17 @@ public class WilyWorks {
             // Indicator's device name as specified in the robot's configuration:
             public String name;
 
+            // True if this is the red channel, false if it's the green channel:
+            public boolean isRed;
+
             // Sensor position in inches relative to the robot's center of rotation.
             // Positive 'x' is towards the front of the robot, negative towards the back.
             // Positive 'y' is towards the left of the robot, negative towards the right:
             public double x;
             public double y;
 
-            public LEDIndicator(String name, double x, double y) {
-                this.name = name; this.x = x; this.y = y;
+            public LEDIndicator(String name, boolean isRed, double x, double y) {
+                this.name = name; this.isRed = isRed; this.x = x; this.y = y;
             }
         }
     }
