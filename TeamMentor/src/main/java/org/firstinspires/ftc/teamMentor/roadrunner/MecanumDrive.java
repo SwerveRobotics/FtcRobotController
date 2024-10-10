@@ -17,11 +17,9 @@ import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.HolonomicController;
-import com.acmerobotics.roadrunner.IdentityPoseMap;
 import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.MotorFeedforward;
-import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Pose2dDual;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
@@ -90,26 +88,28 @@ public final class MecanumDrive {
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
-                inPerTick = 1;
-                lateralInPerTick = 0.799;
-                trackWidthTicks = 15.80;
+                inPerTick = 1.0;
+                lateralInPerTick = 1.0;
+                trackWidthTicks = 0;
 
-                kS = 0.583;
-                kV = 0.187;
-                kA = 0.0110;
+                kS = 0;
+                kV = 0;
+                kA = 0;
 
-                axialGain      = 10.0;
-                axialVelGain   = 0.70;
-                lateralGain    = 4.0;
-                lateralVelGain = 0.0;
-                headingGain    = 7.91;
-                headingVelGain = 0.0;
+                axialGain      = 0;
+                axialVelGain   = 0;
+                lateralGain    = 0;
+                lateralVelGain = 0;
+                headingGain    = 0;
+                headingVelGain = 0;
 
-                otos.offset.x = 6.311;
-                otos.offset.y = 3.243;
-                otos.offset.h = Math.toRadians(-88.93);
-                otos.linearScalar = 1.011;
-                otos.angularScalar = 0.9999;
+                otos.offset.x = 0;
+                otos.offset.y = 0;
+                otos.offset.h = Math.toRadians(89.29);
+                    //was Math.toRadians(0.00)
+                otos.linearScalar = 0.943; //was 0.000
+                otos.angularScalar = 0;
+
             } else {
                 // Your competition robot Loony Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
@@ -201,12 +201,7 @@ public final class MecanumDrive {
     public Localizer localizer;
     public Pose2d pose; // Current actual pose
     public Pose2d targetPose; // Target pose when actively traversing a trajectory
-    public SparkFunOTOS opticalTracker; // Can be null which means no OTOS
-    public SparkFunOTOS.Pose2D opticalAcceleration; // Most recent acceleration from the OTOS
-    public double lastLinearGainError = 0; // Most recent gain error in inches and radians
-    public double lastHeadingGainError = 0;
-    public double maxLinearGainError = 0; // Max gain error to date in inches and radians
-    public double maxHeadingGainError = 0;
+    public SparkFunOTOS opticalTracker = null; // Can be null which means no optical tracking sensor
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -375,6 +370,13 @@ public final class MecanumDrive {
     public void initializeOpticalTracker() {
         if (opticalTracker == null)
             return; // ====>
+
+        // Get the hardware and firmware version
+        SparkFunOTOS.Version hwVersion = new SparkFunOTOS.Version();
+        SparkFunOTOS.Version fwVersion = new SparkFunOTOS.Version();
+        opticalTracker.getVersionInfo(hwVersion, fwVersion);
+        System.out.printf("SparkFun OTOS hardware version: %d.%d, firmware version: %d.%d\n",
+                hwVersion.major, hwVersion.minor, fwVersion.major, fwVersion.minor);
 
         // Set the desired units for linear and angular measurements. Can be either
         // meters or inches for linear, and radians or degrees for angular. If not
@@ -648,18 +650,16 @@ public final class MecanumDrive {
             rightBack.setPower(rightBackPower);
             rightFront.setPower(rightFrontPower);
 
-            // Update some statistics:
             updateLoopTimeStatistic(p);
-            Pose2d error = txWorldTarget.value().minusExp(pose);
-            lastLinearGainError = error.position.norm();
-            lastHeadingGainError = error.heading.toDouble();
-            maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
-            maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
 
-System.out.printf("Pose - target: %.1f, actual: %.1f, error: %.1f\n",
-            Math.toDegrees(pose.heading.toDouble()),
-            Math.toDegrees(txWorldTarget.heading.value().toDouble()),
-            Math.toDegrees(lastHeadingGainError));
+            // p.put("x", pose.position.x);
+            // p.put("y", pose.position.y);
+            // p.put("heading (deg)", Math.toDegrees(pose.heading.toDouble()));
+
+            // Pose2d error = txWorldTarget.value().minusExp(pose);
+            // p.put("xError", error.position.x);
+            // p.put("yError", error.position.y);
+            // p.put("headingError (deg)", Math.toDegrees(error.heading.toDouble()));
 
             // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();
@@ -735,6 +735,7 @@ System.out.printf("Pose - target: %.1f, actual: %.1f, error: %.1f\n",
 
             MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
 
+            updateLoopTimeStatistic(p);
             double voltage = getVoltage();
 
             final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS,
@@ -751,14 +752,6 @@ System.out.printf("Pose - target: %.1f, actual: %.1f, error: %.1f\n",
             leftBack.setPower(feedforward.compute(wheelVels.leftBack) / voltage);
             rightBack.setPower(feedforward.compute(wheelVels.rightBack) / voltage);
             rightFront.setPower(feedforward.compute(wheelVels.rightFront) / voltage);
-
-            // Update some statistics:
-            updateLoopTimeStatistic(p);
-            Pose2d error = txWorldTarget.value().minusExp(pose);
-            lastLinearGainError = error.position.norm();
-            lastHeadingGainError = error.heading.toDouble();
-            maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
-            maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
 
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);
@@ -806,7 +799,6 @@ System.out.printf("Pose - target: %.1f, actual: %.1f, error: %.1f\n",
 
             // This single call is faster than separate calls to getPosition() and getVelocity():
             opticalTracker.getPosVelAcc(position, velocity, acceleration);
-            opticalAcceleration = acceleration;
 
             // Road Runner requires the pose to be field-relative while the velocity has to be
             // robot-relative, but the optical tracking sensor reports everything as field-
@@ -857,14 +849,7 @@ System.out.printf("Pose - target: %.1f, actual: %.1f, error: %.1f\n",
         c.strokePolyline(xPoints, yPoints);
     }
 
-    // Build a trajectory without any transformations:
     public TrajectoryActionBuilder actionBuilder(Pose2d beginPose) {
-        return actionBuilder(beginPose, new IdentityPoseMap());
-    }
-
-    // The poseMap is a handy option for transformations (such as mirroring) on all
-    // coordinates in the trajectory:
-    public TrajectoryActionBuilder actionBuilder(Pose2d beginPose, PoseMap poseMap) {
         return new TrajectoryActionBuilder(
                 TurnAction::new,
                 FollowTrajectoryAction::new,
@@ -876,8 +861,7 @@ System.out.printf("Pose - target: %.1f, actual: %.1f, error: %.1f\n",
                 ),
                 beginPose, 0.0,
                 defaultTurnConstraints,
-                defaultVelConstraint, defaultAccelConstraint,
-                poseMap
+                defaultVelConstraint, defaultAccelConstraint
         );
     }
 
@@ -997,5 +981,10 @@ System.out.printf("Pose - target: %.1f, actual: %.1f, error: %.1f\n",
     // When done with an FTC Dashboard telemetry packet, send it!
     public static void sendTelemetryPacket(TelemetryPacket packet) {
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
+    }
+
+    // Remove any variables that had been 'put' to the TelemetryPacket from the Dashboard view:
+    public static void clearDashboardTelemetry() {
+        FtcDashboard.getInstance().clearTelemetry();
     }
 }
