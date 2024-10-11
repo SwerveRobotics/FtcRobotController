@@ -22,7 +22,7 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 public class CompetitionAuto extends BaseOpMode {
     @Override
     public void runOpMode() {
-        Pose2d beginPose = new Pose2d(0, 0, 0);
+        Pose2d beginPose = new Pose2d(0, 60, (3*Math.PI)/2);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
         // TextMenu implementation yoinked from valsei's GitHub
@@ -54,9 +54,10 @@ public class CompetitionAuto extends BaseOpMode {
         // can take multiple seconds for this operation. We wouldn't want to have to wait
         // as soon as the Start button is pressed!
         Action trajectoryAction = drive.actionBuilder(beginPose)
-                            .splineTo(new Vector2d(30, 30), Math.PI / 2)
-                            .splineTo(new Vector2d(0, 60), Math.PI)
-                            .build();
+                .splineTo(new Vector2d(0, 45), (3*Math.PI)/2)
+                .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
+                .splineToSplineHeading(new Pose2d(48, 50, Math.PI/4), (3*Math.PI)/2)
+                .build();
 
         // Get a preview of the trajectory's path:
         Canvas previewCanvas = new Canvas();
