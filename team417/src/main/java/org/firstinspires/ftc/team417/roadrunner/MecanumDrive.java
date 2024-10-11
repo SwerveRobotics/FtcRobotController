@@ -151,8 +151,8 @@ public final class MecanumDrive {
                     lateralInPerTick = inPerTick;
                     trackWidthTicks = 0;
 
-                    kS = 0;
-                    kV = 0;
+                    kS = 0.759;
+                    kV = 0.192;
                     kA = 0;
 
                     axialGain = 0.0;
@@ -164,8 +164,8 @@ public final class MecanumDrive {
 
                     otos.offset.x = 0;
                     otos.offset.y = 0;
-                    otos.offset.h = Math.toRadians(0);
-                    otos.linearScalar = 0;
+                    otos.offset.h = Math.toRadians(91.19);
+                    otos.linearScalar = 0.989;
                     otos.angularScalar = 0;
                     break;
             }
@@ -419,7 +419,8 @@ public final class MecanumDrive {
                 rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
                 // TODO: reverse motor directions if needed
-                leftFront.setDirection(DcMotorEx.Direction.REVERSE);
+                rightFront.setDirection(DcMotorEx.Direction.REVERSE);
+                rightBack.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
         }
