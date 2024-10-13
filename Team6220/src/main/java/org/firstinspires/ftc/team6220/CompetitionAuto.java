@@ -7,9 +7,9 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-
 import org.firstinspires.ftc.team6220.javatextmenu.MenuFinishedButton;
 import org.firstinspires.ftc.team6220.javatextmenu.MenuInput;
+import org.firstinspires.ftc.team6220.javatextmenu.MenuSelection;
 import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
 
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
@@ -20,22 +20,36 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
  */
 @Autonomous(name="Auto", group="Competition", preselectTeleOp="CompetitionTeleOp")
 public class CompetitionAuto extends BaseOpMode {
+
+    private AutonomousEnums.AllianceColor allianceColor;
+    private AutonomousEnums.AutoStartPosition autoStartPosition;
+    private AutonomousEnums.AutoType autoType;
+    private AutonomousEnums.ParkPosition parkPosition;
+    private AutonomousEnums.SpikeMarkPickupAmount pickupAmount;
+    private AutonomousEnums.SpikeMarkSide spikeMarkSide;
+
     @Override
     public void runOpMode() {
+
         Pose2d beginPose = new Pose2d(0, 60, (3*Math.PI)/2);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
         // TextMenu implementation yoinked from valsei's GitHub
-        TextMenu menu = new TextMenu();
+        TextMenu startingConditionMenu = new TextMenu();
         MenuInput input = new MenuInput(MenuInput.InputType.CONTROLLER);
 
-        menu.add("Test Text Menu Stuff")
-                .add("Begin autonomous: ")
-                .add("confirm initialization test: ", new MenuFinishedButton());
+        startingConditionMenu.add("Select Starting Conditions")
+                .add("Alliance Color: ")
+                .add("alliance_color", AutonomousEnums.AllianceColor.class)
+                .add("Start Position: ")
+                .add("start_position", AutonomousEnums.AutoStartPosition.class)
+                .add("Auto Type: ")
+                .add("auto_type", AutonomousEnums.AutoType.class)
+                .add("confirm_selection", new MenuFinishedButton());
 
         // yoinked from valsei's github
-        while (!menu.isCompleted() && !isStopRequested()) {
-            for (String line : menu.toListOfStrings()) {
+        while (!startingConditionMenu.isCompleted() && !isStopRequested()) {
+            for (String line : startingConditionMenu.toListOfStrings()) {
                 telemetry.addLine(line);
             }
             telemetry.update();
@@ -46,9 +60,46 @@ public class CompetitionAuto extends BaseOpMode {
                     gamepad1.dpad_down, gamepad1.dpad_up,
                     gamepad1.a
             );
-            menu.updateWithInput(input);
+            startingConditionMenu.updateWithInput(input);
             sleep(17);
         }
+
+        allianceColor = startingConditionMenu.getResult(AutonomousEnums.AllianceColor.class, "alliance_color");
+        autoStartPosition = startingConditionMenu.getResult(AutonomousEnums.AutoStartPosition.class, "start_position");
+        autoType = startingConditionMenu.getResult(AutonomousEnums.AutoType.class, "auto_type");
+
+        TextMenu scoringSelectionMenu = new TextMenu();
+
+        scoringSelectionMenu.add("Scoring Settings: ")
+                .add("SpikeMark Side: ")
+                .addEnumConditional("spikemark_side", AutonomousEnums.SpikeMarkSide.class, autoType.equals(AutonomousEnums.AutoType.BASKET))
+                .add("Sample Pickup Quantity:")
+                .addEnumConditional("sample_pickup_quantity", AutonomousEnums.SpikeMarkPickupAmount.class, autoType.equals(AutonomousEnums.AutoType.BASKET))
+                .add("Park Position: ")
+                .add("park_position", AutonomousEnums.ParkPosition.class)
+                .add("confirm_selection", new MenuFinishedButton());
+
+        while (!scoringSelectionMenu.isCompleted() && !isStopRequested()) {
+            for (String line : scoringSelectionMenu.toListOfStrings()) {
+                telemetry.addLine(line);
+            }
+            telemetry.update();
+
+            input.update(
+                    gamepad1.left_stick_x, gamepad1.left_stick_y,
+                    gamepad1.dpad_left, gamepad1.dpad_right,
+                    gamepad1.dpad_down, gamepad1.dpad_up,
+                    gamepad1.a
+            );
+            scoringSelectionMenu.updateWithInput(input);
+            sleep(17);
+        }
+
+        if (autoType.equals(AutonomousEnums.AutoType.BASKET)) {
+            spikeMarkSide = scoringSelectionMenu.getResult(AutonomousEnums.SpikeMarkSide.class, "spikemark_side");
+            pickupAmount = scoringSelectionMenu.getResult(AutonomousEnums.SpikeMarkPickupAmount.class, "sample_pickup_quantity");
+        }
+        parkPosition = scoringSelectionMenu.getResult(AutonomousEnums.ParkPosition.class, "park_position");
 
         // Build the trajectory *before* the start button is pressed because Road Runner
         // can take multiple seconds for this operation. We wouldn't want to have to wait

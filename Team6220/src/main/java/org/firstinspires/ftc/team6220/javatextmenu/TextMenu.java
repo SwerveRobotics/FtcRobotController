@@ -51,6 +51,15 @@ public class TextMenu {
         this.viewMargin = viewMargin;
     }
 
+    // this is used to make my code gooder (enabling / disabling options based on prev choices)
+
+    public <E extends Enum<E>> TextMenu addEnumConditional(String name, Class<E> enumClass, boolean isEnabled) {
+        if (isEnabled) {
+            this.add(name, new MenuSelection<E>(enumClass));
+        }
+        return this;
+    }
+
     /**
      * adds a HoverableMenuElement to the end of the menu.
      * @param name a unique internal name for the element; used in retrieving result later
