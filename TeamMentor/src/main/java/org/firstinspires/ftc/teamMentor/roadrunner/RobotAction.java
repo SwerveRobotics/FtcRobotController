@@ -41,10 +41,13 @@ abstract public class RobotAction implements Action {
     // Current time, in seconds:
     private double time() { return System.nanoTime() * 1e-9; }
 
-    // The following globals are used to communicate with the watchdog thread. Start time and
-    // name of the current run() invocation, zero/null if it's not currently running:
+    // The following globals should only be accessed when holding 'runLock'. They are used to
+    // communicate between the watchdog thread and the working threads.
+    static private final Object runLock = new Object();
     static private volatile double runStartTime;
-    static private volatile String runName;
+    static private volatile RobotAction runAction;
+
+    // Global watchdog thread:
     static private volatile Thread watchDogThread;
 
     // Watchdog thread:
@@ -58,31 +61,36 @@ abstract public class RobotAction implements Action {
 
             // Loop forever:
             while (true) {
-                if (runStartTime != 0) {
-                    double elapsedTime = time() - runStartTime;
-                    if (elapsedTime > WATCHDOG_TIMEOUT) {
-                        // Raising an exception is not useful here because it would provide the
-                        // stacktrace of this watchdog thread and not the culprit thread.
-                        // Instead, spew an error message to the Driver Station and terminate the
-                        // main thread:
-                        String message;
-                        if (runName.isEmpty()) {
-                            message = String.format("Aborted, unidentified RobotAction is taking too long "
-                                + "(%.0fms and counting). Call SetName() to identify actions.",
-                                    elapsedTime * 1000.0);
-                        } else {
-                            message = String.format("Aborted, RobotAction '%s' is taking too long (%.0fms "
-                                + "and counting).", runName, elapsedTime * 1000.0);
-                        }
-                        RobotLog.addGlobalWarningMessage(message);
-                        Log.e("RobotAction", message);
-                        runStartTime = 0;
+                // Grab the lock
+                synchronized(runLock) {
+                    if (runStartTime != 0) {
+                        double elapsedTime = time() - runStartTime;
+                        if (elapsedTime > WATCHDOG_TIMEOUT) {
+                            // Raising an exception is not useful here because it would provide the
+                            // stacktrace of this watchdog thread and not the culprit thread.
+                            // Instead, spew an error message to the Driver Station and terminate the
+                            // main thread:
+                            String message;
+                            if (runAction.name.isEmpty()) {
+                                message = String.format("Aborted, unidentified RobotAction is taking too long "
+                                                + "(%.0fms and counting). Call SetName() to identify actions.",
+                                        elapsedTime * 1000.0);
+                            } else {
+                                message = String.format("Aborted, RobotAction '%s' is taking too long (%.0fms "
+                                        + "and counting).", runAction.name, elapsedTime * 1000.0);
+                            }
+                            RobotLog.addGlobalWarningMessage(message);
+                            Log.e("RobotAction", message);
+                            runStartTime = 0;
 
-                        // Terminate the original thread to prevent the robot from running into
-                        // something and breaking:
-                        parentThread.interrupt();
+                            // Terminate the original thread to prevent the robot from running into
+                            // something and breaking:
+                            parentThread.interrupt();
+                        }
                     }
                 }
+
+                // Now that we're no longer holding the lock, sleep:
                 try {
                     //noinspection BusyWait
                     sleep(100);
@@ -101,7 +109,7 @@ abstract public class RobotAction implements Action {
         // Start the watchdog thread if it hasn't already started:
         if (watchDogThread == null) {
             runStartTime = 0;
-            runName = null;
+            runAction = null;
             watchDogThread = new Watchdog(Thread.currentThread());
             watchDogThread.start();
         }
@@ -111,8 +119,10 @@ abstract public class RobotAction implements Action {
         boolean callAgain;
 
         // Use globals to tell the watchdog thread that a run() has started:
-        runName = name;
-        runStartTime = time();
+        synchronized(runLock) {
+            runAction = this;
+            runStartTime = time();
+        }
 
         // Invoke the run!
         if (actionStartTime == 0) {
@@ -124,8 +134,10 @@ abstract public class RobotAction implements Action {
         double runTime = time() - runStartTime;
 
         // Let the watchdog thread know that the run() has completed:
-        runStartTime = 0;
-        runName = null;
+        synchronized(runLock) {
+            runAction = null;
+            runStartTime = 0;
+        }
 
         if ((runTime > WARNING_TIMEOUT) && (!warned)) {
             String message;
