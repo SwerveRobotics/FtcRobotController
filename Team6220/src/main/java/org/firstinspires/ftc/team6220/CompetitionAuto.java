@@ -32,6 +32,7 @@ public class CompetitionAuto extends BaseOpMode {
     public void runOpMode() {
 
         Pose2d beginPose = new Pose2d(0, 60, (3*Math.PI)/2);
+        Pose2d beginPose1 = new Pose2d(-20, 60, (3*Math.PI)/2);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
         // TextMenu implementation yoinked from valsei's GitHub
@@ -104,11 +105,16 @@ public class CompetitionAuto extends BaseOpMode {
         // Build the trajectory *before* the start button is pressed because Road Runner
         // can take multiple seconds for this operation. We wouldn't want to have to wait
         // as soon as the Start button is pressed!
-        Action trajectoryAction = drive.actionBuilder(beginPose)
-                .splineTo(new Vector2d(0, 45), (3*Math.PI)/2)
+        Action trajectoryAction1     = drive.actionBuilder(beginPose)
+                .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
+                .endTrajectory()
+                .splineToSplineHeading(new Pose2d(48, 50, Math.PI/4), (3*Math.PI)/2)
+                .build();
+        Action trajectoryAction2 = drive.actionBuilder(beginPose1)
                 .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
                 .splineToSplineHeading(new Pose2d(48, 50, Math.PI/4), (3*Math.PI)/2)
                 .build();
+        Action trajectoryAction = trajectoryAction2;
 
         // Get a preview of the trajectory's path:
         Canvas previewCanvas = new Canvas();
