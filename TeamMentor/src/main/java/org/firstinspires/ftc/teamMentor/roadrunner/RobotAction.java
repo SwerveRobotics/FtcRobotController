@@ -43,9 +43,9 @@ abstract public class RobotAction implements Action {
 
     // The following globals are used to communicate with the watchdog thread. Start time and
     // name of the current run() invocation, zero/null if it's not currently running:
-    static private double runStartTime;
-    static private String runName;
-    static private Thread watchDogThread;
+    static private volatile double runStartTime;
+    static private volatile String runName;
+    static private volatile Thread watchDogThread;
 
     // Watchdog thread:
     class Watchdog extends Thread {
@@ -128,9 +128,18 @@ abstract public class RobotAction implements Action {
         runName = null;
 
         if ((runTime > WARNING_TIMEOUT) && (!warned)) {
-            RobotLog.addGlobalWarningMessage(String.format(
-                    "RobotAction '%s' took %.0fms in its run() call, should take no more than 10ms.",
-                    name, runTime * 1000.0));
+            String message;
+            if (name.isEmpty()) {
+                message = String.format("Unidentified RobotAction took %.0fms in its run() call, "
+                        + "should take no more than 10ms. Call SetName() to identify actions.",
+                        runTime * 1000.0);
+            } else {
+                message = String.format("RobotAction '%s' took %.0fms in its run() call, "
+                                + "should take no more than 10ms.",
+                        name, runTime * 1000.0);
+            }
+            RobotLog.addGlobalWarningMessage(message);
+            Log.w("RobotAction", message);
             warned = true;
         }
         if (!callAgain) {
