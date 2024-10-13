@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.team417;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -21,6 +22,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
 @TeleOp(name = "TeleOp", group = "Competition")
+@Config
 public class CompetitionTeleOp extends BaseOpMode {
     private double speedMultiplier = 1;
     boolean curve = false;
@@ -56,10 +58,10 @@ public class CompetitionTeleOp extends BaseOpMode {
     as far from the starting position, decrease it. */
 
     final double ARM_COLLAPSED_INTO_ROBOT = 0;
-    final double ARM_COLLECT = 250 * ARM_TICKS_PER_DEGREE;
-    final double ARM_CLEAR_BARRIER = 230 * ARM_TICKS_PER_DEGREE;
+    final double ARM_COLLECT = 255 * ARM_TICKS_PER_DEGREE;
+    final double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
     final double ARM_SCORE_SPECIMEN = 160 * ARM_TICKS_PER_DEGREE;
-    final double ARM_SCORE_SAMPLE_IN_LOW = 160 * ARM_TICKS_PER_DEGREE;
+    final double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
     final double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
     final double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
 
@@ -296,6 +298,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     }
 
     boolean aWasPressed = false;
+
     public void setCurve() {
         if (!aWasPressed && gamepad1.a) {
             curve = !curve;
