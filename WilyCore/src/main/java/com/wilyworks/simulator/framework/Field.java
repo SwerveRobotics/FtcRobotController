@@ -9,6 +9,7 @@ import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.LED;
 import com.wilyworks.common.WilyWorks;
 import com.wilyworks.simulator.WilyCore;
 import com.wilyworks.simulator.helpers.Point;
@@ -169,8 +170,8 @@ public class Field {
         return oldTransform;
     }
 
-    // Render the LED for REV Digital Channels:
-    void renderDigitalChannels(Graphics2D g) {
+    // Render the LED for REV Digital LEDs:
+    void renderLeds(Graphics2D g) {
         HardwareMap hardwareMap = WilyCore.hardwareMap;
         if (hardwareMap == null)
             return; // Might not have been created yet
@@ -179,33 +180,33 @@ public class Field {
         final double radius = 2.0; // Circle radius, in inches
         Pose2d pose = simulation.getPose(0);
 
-        ArrayList<WilyDigitalChannel> channelArray = new ArrayList<>();
-        for (DigitalChannel channel: hardwareMap.digitalChannel) {
-            channelArray.add((WilyDigitalChannel) channel);
+        ArrayList<WilyLED> ledArray = new ArrayList<>();
+        for (LED led: hardwareMap.led) {
+            ledArray.add((WilyLED) led);
         }
-        for (int i = 0; i < channelArray.size(); i++) {
-            WilyDigitalChannel channel = channelArray.get(i);
+        for (int i = 0; i < ledArray.size(); i++) {
+            WilyLED led = ledArray.get(i);
             int colorIndex = 0;
-            colorIndex |= (channel.isRed && !channel.state) ? 1 : 0;
-            colorIndex |= (!channel.isRed && !channel.state) ? 2 : 0;
+            colorIndex |= (led.isRed && led.enable) ? 1 : 0;
+            colorIndex |= (!led.isRed && led.enable) ? 2 : 0;
 
             // The LED actually needs two digital channels to describe all 4 possible colors.
             // Assume that consecutively registered channels make a pair:
-            if (i + 1 < channelArray.size()) {
-                WilyDigitalChannel nextChannel = channelArray.get(i + 1);
-                if ((nextChannel.x == channel.x) &&
-                    (nextChannel.y == channel.y) &&
-                    (nextChannel.isRed == !channel.isRed)) {
+            if (i + 1 < ledArray.size()) {
+                WilyLED nextLed = ledArray.get(i + 1);
+                if ((nextLed.x == led.x) &&
+                    (nextLed.y == led.y) &&
+                    (nextLed.isRed == !led.isRed)) {
 
-                    colorIndex |= (nextChannel.isRed && !nextChannel.state) ? 1 : 0;
-                    colorIndex |= (!nextChannel.isRed && !nextChannel.state) ? 2 : 0;
+                    colorIndex |= (nextLed.isRed && nextLed.enable) ? 1 : 0;
+                    colorIndex |= (!nextLed.isRed && nextLed.enable) ? 2 : 0;
                     i++;
                 }
             }
 
             // Draw the circle at the location of the sensor on the robot, accounting for its
             // current heading:
-            Point point = new Point(channel.x, channel.y)
+            Point point = new Point(led.x, led.y)
                     .rotate(pose.heading.log())
                     .add(new Point(pose.position));
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -236,7 +237,7 @@ public class Field {
         if (FtcDashboard.fieldOverlay != null)
             FtcDashboard.fieldOverlay.render(g);
         renderRobot(g);
-        renderDigitalChannels(g);
+        renderLeds(g);
         g.setTransform(oldTransform);
     }
 

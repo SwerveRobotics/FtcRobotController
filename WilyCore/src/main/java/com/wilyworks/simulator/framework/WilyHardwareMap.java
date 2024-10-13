@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.LED;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -500,27 +501,7 @@ class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
  * Wily Works DigitalChannel implementation.
  */
 class WilyDigitalChannel extends WilyHardwareDevice implements DigitalChannel {
-    // Assume that every digital channels is a REV LED indicator. Doesn't hurt if that's not
-    // the case:
     boolean state;
-    double x;
-    double y;
-    boolean isRed;
-    WilyDigitalChannel(String deviceName, int channelIndex) {
-        WilyWorks.Config.LEDIndicator wilyLed = null;
-        for (WilyWorks.Config.LEDIndicator led: WilyCore.config.ledIndicators) {
-            if (led.name.equals(deviceName)) {
-                wilyLed = led;
-            }
-        }
-        if (wilyLed != null) {
-            x = wilyLed.x;
-            y = wilyLed.y;
-            isRed = wilyLed.isRed;
-        } else {
-            isRed = (channelIndex & 1) == 0;
-        }
-    }
 
     @Override
     public Mode getMode() { return null; }
@@ -533,6 +514,43 @@ class WilyDigitalChannel extends WilyHardwareDevice implements DigitalChannel {
 
     @Override
     public void setState(boolean state) { this.state = state; }
+}
+
+/**
+ * Wily Works LED implementation.
+ */
+class WilyLED extends LED {
+    // Assume that every digital channels is a REV LED indicator. Doesn't hurt if that's not
+    // the case:
+    boolean enable = true; // They're always on by default
+    double x;
+    double y;
+    boolean isRed;
+    WilyLED(String deviceName) {
+        WilyWorks.Config.LEDIndicator wilyLed = null;
+        for (WilyWorks.Config.LEDIndicator led: WilyCore.config.ledIndicators) {
+            if (led.name.equals(deviceName)) {
+                wilyLed = led;
+            }
+        }
+        if (wilyLed != null) {
+            x = wilyLed.x;
+            y = wilyLed.y;
+            isRed = wilyLed.isRed;
+        } else {
+            isRed = !(deviceName.toLowerCase().contains("green"));
+        }
+    }
+
+    @Override
+    public void enableLight(boolean enable) {
+        this.enable = enable;
+    }
+
+    @Override
+    public boolean isLightOn() {
+        return enable;
+    }
 }
 
 /**
@@ -549,6 +567,7 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
     public DeviceMapping<Servo>                 servo                 = new DeviceMapping<>(Servo.class);
     public DeviceMapping<CRServo>               crservo               = new DeviceMapping<>(CRServo.class);
     public DeviceMapping<DigitalChannel>        digitalChannel        = new DeviceMapping<>(DigitalChannel.class);
+    public DeviceMapping<LED>                   led                   = new DeviceMapping<LED>(LED.class);
     public DeviceMapping<SparkFunOTOS>          sparkFunOTOS          = new DeviceMapping<>(SparkFunOTOS.class);
     protected Map<String, List<HardwareDevice>> allDevicesMap         = new HashMap<>();
     protected List<HardwareDevice>              allDevicesList        = new ArrayList<>();
@@ -559,8 +578,6 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
 
     public final Context appContext = new Context();
     protected final Object lock = new Object();
-
-    private int digitalChannelCount; // Count of digital channels assigned
 
     public <T> List<T> getAll(Class<? extends T> classOrInterface) {
         List<T> result = new LinkedList<T>();
@@ -634,8 +651,11 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
             device = new WilyWebcam(deviceName);
             webcamName.put(deviceName, (WebcamName) device);
         } else if (DigitalChannel.class.isAssignableFrom(klass)) {
-            device = new WilyDigitalChannel(deviceName, digitalChannelCount++);
+            device = new WilyDigitalChannel();
             digitalChannel.put(deviceName, (DigitalChannel) device);
+        } else if (LED.class.isAssignableFrom(klass)) {
+            device = new WilyLED(deviceName);
+            led.put(deviceName, (LED) device);
         } else if (SparkFunOTOS.class.isAssignableFrom(klass)) {
             device = new SparkFunOTOS(null);
             sparkFunOTOS.put(deviceName, (SparkFunOTOS) device);
