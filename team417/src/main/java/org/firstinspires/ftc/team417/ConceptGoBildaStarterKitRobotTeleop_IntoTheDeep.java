@@ -230,12 +230,12 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             three if statements, then it will set the intake servo's power to multiple speeds in
             one cycle. Which can cause strange behavior. */
 
-            // GamePad2 Arm Control
-            if (gamepad2.a) {
+            // GamePad1 Arm Control
+            if (gamepad1.a) {
                 intake.setPower(INTAKE_COLLECT);
-            } else if (gamepad2.x) {
+            } else if (gamepad1.x) {
                 intake.setPower(INTAKE_OFF);
-            } else if (gamepad2.b) {
+            } else if (gamepad1.b) {
                 intake.setPower(INTAKE_DEPOSIT);
             }
 
@@ -247,7 +247,7 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             than the other, it "wins out". This variable is then multiplied by our FUDGE_FACTOR.
             The FUDGE_FACTOR is the number of degrees that we can adjust the arm by with this function. */
 
-            armPositionFudgeFactor = FUDGE_FACTOR * (gamepad2.right_trigger + (-gamepad2.left_trigger));
+            armPositionFudgeFactor = FUDGE_FACTOR * (gamepad1.right_trigger + (-gamepad1.left_trigger));
 
 
 
@@ -257,37 +257,37 @@ public class ConceptGoBildaStarterKitRobotTeleop_IntoTheDeep extends LinearOpMod
             to start collecting. So it moves the armPosition to the ARM_COLLECT position,
             it folds out the wrist to make sure it is in the correct orientation to intake, and it
             turns the intake on to the COLLECT mode.*/
-
-            if (gamepad2.right_bumper) {
+            // Gamepad 1 can also control arm
+            if (gamepad2.right_bumper || gamepad1.right_bumper) {
                 /* This is the intaking/collecting arm position */
                 armPosition = ARM_COLLECT;
                 setPosition(WRIST_FOLDED_OUT);
                 intake.setPower(INTAKE_COLLECT);
-            } else if (gamepad2.left_bumper) {
+            } else if (gamepad2.left_bumper || gamepad1.left_bumper) {
                     /* This is about 20° up from the collecting position to clear the barrier
                     Note here that we don't set the wrist position or the intake power when we
                     select this "mode", this means that the intake and wrist will continue what
                     they were doing before we clicked left bumper. */
                 armPosition = ARM_CLEAR_BARRIER;
-            } else if (gamepad2.y) {
+            } else if (gamepad2.y || gamepad1.y) {
                 /* This is the correct height to score the sample in the LOW BASKET */
                 armPosition = ARM_SCORE_SAMPLE_IN_LOW;
-            } else if (gamepad2.dpad_left) {
+            } else if (gamepad2.dpad_left || gamepad1.dpad_left) {
                     /* This turns off the intake, folds in the wrist, and moves the arm
                     back to folded inside the robot. This is also the starting configuration */
                 armPosition = ARM_COLLAPSED_INTO_ROBOT;
                 intake.setPower(INTAKE_OFF);
                 setPosition(WRIST_FOLDED_IN);
-            } else if (gamepad2.dpad_right) {
+            } else if (gamepad2.dpad_right || gamepad1.dpad_right) {
                 /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
                 armPosition = ARM_SCORE_SPECIMEN;
                 setPosition(WRIST_FOLDED_IN);
-            } else if (gamepad2.dpad_up) {
+            } else if (gamepad2.dpad_up || gamepad1.dpad_up) {
                 /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
                 armPosition = ARM_ATTACH_HANGING_HOOK;
                 intake.setPower(INTAKE_OFF);
                 setPosition(WRIST_FOLDED_IN);
-            } else if (gamepad2.dpad_down) {
+            } else if (gamepad2.dpad_down || gamepad1.dpad_down) {
                 /* this moves the arm down to lift the robot up once it has been hooked */
                 armPosition = ARM_WINCH_ROBOT;
                 intake.setPower(INTAKE_OFF);
