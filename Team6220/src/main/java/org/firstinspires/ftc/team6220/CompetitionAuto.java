@@ -55,8 +55,8 @@ public class CompetitionAuto extends BaseOpMode {
         // can take multiple seconds for this operation. We wouldn't want to have to wait
         // as soon as the Start button is pressed!
         Action trajectoryAction1     = drive.actionBuilder(beginPose)
-                .splineTo(new Vector2d(0, 45), (3*Math.PI)/2)
                 .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
+                .endTrajectory()
                 .splineToSplineHeading(new Pose2d(48, 50, Math.PI/4), (3*Math.PI)/2)
                 .build();
         Action trajectoryAction2 = drive.actionBuilder(beginPose1)
