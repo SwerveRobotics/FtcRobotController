@@ -31,6 +31,8 @@ public class FindMotors extends BaseOpMode {
         }
 
         rightBack.setDirection(DcMotorEx.Direction.REVERSE);
+        rightFront.setDirection(DcMotorEx.Direction.REVERSE);
+        leftBack.setDirection(DcMotorEx.Direction.REVERSE);
 
         waitForStart();
         while (opModeIsActive()) {
