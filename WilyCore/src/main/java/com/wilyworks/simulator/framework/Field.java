@@ -3,6 +3,8 @@ package com.wilyworks.simulator.framework;
 
 import static java.lang.Thread.currentThread;
 
+import android.annotation.SuppressLint;
+
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
@@ -173,8 +175,8 @@ public class Field {
         if (hardwareMap == null)
             return; // Might not have been created yet
 
-        final int colors[] = { 0, 0xff0000, 0x00ff00, 0xffbf00 }; // black, red, green, amber
-        final double radius = 1.0; // Circle radius, in inches
+        final int[] colors = { 0, 0xff0000, 0x00ff00, 0xffbf00 }; // black, red, green, amber
+        final double radius = 2.0; // Circle radius, in inches
         Pose2d pose = simulation.getPose(0);
 
         ArrayList<WilyDigitalChannel> channelArray = new ArrayList<>();
@@ -217,6 +219,7 @@ public class Field {
     }
 
     // Render the field, the robot, and the field overlay:
+    @SuppressLint("DefaultLocale")
     public void render(Graphics2D g) {
         // Print the time above the field:
         g.setColor(new Color(0x808080));
