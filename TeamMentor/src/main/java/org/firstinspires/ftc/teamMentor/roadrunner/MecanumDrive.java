@@ -202,7 +202,7 @@ public final class MecanumDrive {
     public Pose2d pose; // Current actual pose
     public Pose2d targetPose; // Target pose when actively traversing a trajectory
     public SparkFunOTOS opticalTracker; // Can be null which means no OTOS
-    public SparkFunOTOS.Pose2D opticalAcceleration; // Most recent acceleration from the OTOS
+    public SparkFunOTOS.Pose2D opticalAcceleration = new SparkFunOTOS.Pose2D(0, 0, 0); // Most recent acceleration from the OTOS
     public double lastLinearGainError = 0; // Most recent gain error in inches and radians
     public double lastHeadingGainError = 0;
     public double maxLinearGainError = 0; // Max gain error to date in inches and radians
