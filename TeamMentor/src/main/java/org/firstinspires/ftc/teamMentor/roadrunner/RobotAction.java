@@ -79,6 +79,7 @@ abstract public class RobotAction implements Action {
                                 message = String.format("Aborted, RobotAction '%s' is taking too long (%.0fms "
                                         + "and counting).", runAction.name, elapsedTime * 1000.0);
                             }
+                            runAction.warned = true;
                             RobotLog.addGlobalWarningMessage(message);
                             Log.e("RobotAction", message);
                             runStartTime = 0;
@@ -103,7 +104,7 @@ abstract public class RobotAction implements Action {
         }
     }
 
-    // This function is called by Road Runner.
+    // This function is called by Road Runner. We, in turn, call the user's RobotAction.
     @Override
     public boolean run(@NonNull TelemetryPacket telemetryPacket) {
         // Start the watchdog thread if it hasn't already started:
