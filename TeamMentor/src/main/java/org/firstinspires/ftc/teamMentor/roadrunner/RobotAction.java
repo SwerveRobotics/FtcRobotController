@@ -72,11 +72,11 @@ abstract public class RobotAction implements Action {
                             // main thread:
                             String message;
                             if (runAction.name.isEmpty()) {
-                                message = String.format("Aborted, unidentified RobotAction is taking too long "
+                                message = String.format("ERROR: Aborted, unidentified RobotAction is taking too long "
                                                 + "(%.0fms and counting). Call SetName() to identify actions.",
                                         elapsedTime * 1000.0);
                             } else {
-                                message = String.format("Aborted, RobotAction '%s' is taking too long (%.0fms "
+                                message = String.format("ERROR: Aborted, RobotAction '%s' is taking too long (%.0fms "
                                         + "and counting).", runAction.name, elapsedTime * 1000.0);
                             }
                             runAction.warned = true;
@@ -143,11 +143,11 @@ abstract public class RobotAction implements Action {
         if ((runTime > WARNING_TIMEOUT) && (!warned)) {
             String message;
             if (name.isEmpty()) {
-                message = String.format("Unidentified RobotAction took %.0fms in its run() call, "
+                message = String.format("WARNING: Unidentified RobotAction took %.0fms in its run() call, "
                         + "should take no more than 10ms. Call SetName() to identify actions.",
                         runTime * 1000.0);
             } else {
-                message = String.format("RobotAction '%s' took %.0fms in its run() call, "
+                message = String.format("WARNING: RobotAction '%s' took %.0fms in its run() call, "
                                 + "should take no more than 10ms.",
                         name, runTime * 1000.0);
             }
