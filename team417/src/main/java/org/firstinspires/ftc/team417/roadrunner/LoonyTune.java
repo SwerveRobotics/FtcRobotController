@@ -1983,6 +1983,7 @@ public class LoonyTune extends LinearOpMode {
         }
     }
 
+
     /**
      * Class to encapsulate all push-tuner logic.
      */
@@ -2095,6 +2096,7 @@ public class LoonyTune extends LinearOpMode {
             }
             return new PushResult(newLinearScalar, newOffsetHeading);
         }
+
 
         // Measure the optical linear scale and orientation.
         void tune() {
