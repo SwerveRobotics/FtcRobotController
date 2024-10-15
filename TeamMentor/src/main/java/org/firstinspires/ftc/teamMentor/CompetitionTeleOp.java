@@ -73,7 +73,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         armMotor = (DcMotorEx) hardwareMap.get(DcMotor.class, "arm");
         intake = hardwareMap.get(CRServo.class, "intake");
         wrist  = hardwareMap.get(Servo.class, "wrist");
-        distance = hardwareMap.get(DistanceSensor .class, "distanceFrontLeft");
+        distance = hardwareMap.get(DistanceSensor.class, "distanceFrontLeft");
 
         armMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
