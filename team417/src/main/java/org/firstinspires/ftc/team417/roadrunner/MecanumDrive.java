@@ -94,7 +94,7 @@ public final class MecanumDrive {
                     usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
                     inPerTick = 1.0;
-                    lateralInPerTick = 0.700; // Was 1.00
+                    lateralInPerTick = 0.819; // Was 1.00
                     trackWidthTicks = 22.29; // Was 0.00
 
                     kS = 0.608; // Was 0
@@ -175,12 +175,12 @@ public final class MecanumDrive {
                     usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
                     inPerTick = 1;
-                    lateralInPerTick = inPerTick;
-                    trackWidthTicks = 0;
+                    lateralInPerTick = 0.819;
+                    trackWidthTicks = 14.89;
 
-                    kS = 0.759;
-                    kV = 0.192;
-                    kA = 0;
+                    kS = 0.695; // Was 0.759
+                    kV = 0.194; // Was 0.192
+                    kA = 0.0200;
 
                     axialGain = 0.0;
                     axialVelGain = 0.0;
@@ -189,11 +189,11 @@ public final class MecanumDrive {
                     headingGain = 0.0;
                     headingVelGain = 0.0;
 
-                    otos.offset.x = 0;
-                    otos.offset.y = 0;
-                    otos.offset.h = Math.toRadians(91.19);
-                    otos.linearScalar = 0.989;
-                    otos.angularScalar = 0;
+                    otos.offset.x = 6.016;
+                    otos.offset.y = -2.511;
+                    otos.offset.h = Math.toRadians(88.550); // Was 91.19
+                    otos.linearScalar = 1.007; // Was 0.989
+                    otos.angularScalar = 1.0019;
                     break;
             }
         }
