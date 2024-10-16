@@ -7,7 +7,7 @@ import java.util.EnumSet;
  */
 public class MenuSelection<E extends Enum<E>> implements HoverableMenuElement<E> {
 
-    public int selectedIndex = -1;
+    public int selectedIndex = 0;
     public int hoverIndex = -1;
     private Object[] options;
     private Class<E> enumClass;
@@ -68,8 +68,7 @@ public class MenuSelection<E extends Enum<E>> implements HoverableMenuElement<E>
         try {
             return Enum.valueOf(this.enumClass, this.options[this.selectedIndex].toString());
         } catch (Exception e) {
-            return Enum.valueOf(this.enumClass, this.options[0].toString()); // very good yup
-            // edit by gavin - this is absolutely great :D
+            return null;
         }
     }
 

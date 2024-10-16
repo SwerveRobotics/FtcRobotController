@@ -260,11 +260,6 @@ public class TextMenu {
      */
     public boolean isCompleted() {
         for (HoverableMenuElement<?> sel : this.hoverableElements.values()) {
-            if (sel instanceof MenuFinishedButton && sel.isCompleted()) {
-                return true; // HACKY FIXES HACKY FIXES YEA YEA YEA
-            }
-        }
-        for (HoverableMenuElement<?> sel : this.hoverableElements.values()) {
             if (!sel.isCompleted()) {
                 return false;
             }
