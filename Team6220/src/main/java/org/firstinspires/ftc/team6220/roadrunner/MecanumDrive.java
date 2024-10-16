@@ -78,7 +78,8 @@ import java.util.List;
 public final class MecanumDrive {
     public static class Params {
         Params() {
-            maxWheelVel = 50;
+            // Speed of wheels
+            maxWheelVel = 20;
             minProfileAccel = -30;
             maxProfileAccel = 50;
 

@@ -35,7 +35,9 @@ public class CompetitionAuto extends BaseOpMode {
 
         Pose2d middlePose = new Pose2d(0, 60, (3*Math.PI)/2);
         Pose2d leftPose = new Pose2d(-20, 60, (3*Math.PI)/2);
-        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, middlePose);
+        Pose2d rightPose = new Pose2d(20, 60, (3*Math.PI)/2);
+
+        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, rightPose);
 
         // TextMenu implementation yoinked from valsei's GitHub
         TextMenu startingConditionMenu = new TextMenu();
@@ -83,13 +85,17 @@ public class CompetitionAuto extends BaseOpMode {
         Action trajectoryAction1     = drive.actionBuilder(middlePose)
                 .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
                 .endTrajectory()
-                .splineToSplineHeading(new Pose2d(48, 50, Math.PI/4), (3*Math.PI)/2)
+                .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
                 .build();
         Action trajectoryAction2 = drive.actionBuilder(leftPose)
                 .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
-                .splineToSplineHeading(new Pose2d(48, 50, Math.PI/4), (3*Math.PI)/2)
+                .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
                 .build();
-        Action trajectoryAction = trajectoryAction1;
+        Action trajectoryAction3 = drive.actionBuilder(rightPose)
+                .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
+                .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
+                .build();
+        Action trajectoryAction = trajectoryAction3;
 
         // Get a preview of the trajectory's path:
         Canvas previewCanvas = new Canvas();
