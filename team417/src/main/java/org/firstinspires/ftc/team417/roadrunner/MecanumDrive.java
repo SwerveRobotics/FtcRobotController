@@ -143,6 +143,33 @@ public final class MecanumDrive {
                     break;
 
                 case FASTBOT_MECANUM:
+                    // Your competition robot Loony Tune configuration is here:
+                    logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
+                    usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+
+                    inPerTick = 1;
+                    lateralInPerTick = 0.819;
+                    trackWidthTicks = 14.89;
+
+                    kS = 0.695; // Was 0.759
+                    kV = 0.194; // Was 0.192
+                    kA = 0.0200;
+
+                    axialGain = 0.0;
+                    axialVelGain = 0.0;
+                    lateralGain = 0.0;
+                    lateralVelGain = 0.0;
+                    headingGain = 0.0;
+                    headingVelGain = 0.0;
+
+                    otos.offset.x = 6.016;
+                    otos.offset.y = -2.511;
+                    otos.offset.h = Math.toRadians(88.550); // Was 91.19
+                    otos.linearScalar = 1.007; // Was 0.989
+                    otos.angularScalar = 1.0019;
+                    break;
+
+                case COMPETITION_ROBOT:
                     // Your DevBot Looney Tune configuration is here:
                     logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                     usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
@@ -169,32 +196,6 @@ public final class MecanumDrive {
                     otos.angularScalar = 1.0005;
                     break;
 
-                case COMPETITION_ROBOT:
-                    // Your competition robot Loony Tune configuration is here:
-                    logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-                    usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
-
-                    inPerTick = 1;
-                    lateralInPerTick = 0.819;
-                    trackWidthTicks = 14.89;
-
-                    kS = 0.695; // Was 0.759
-                    kV = 0.194; // Was 0.192
-                    kA = 0.0200;
-
-                    axialGain = 0.0;
-                    axialVelGain = 0.0;
-                    lateralGain = 0.0;
-                    lateralVelGain = 0.0;
-                    headingGain = 0.0;
-                    headingVelGain = 0.0;
-
-                    otos.offset.x = 6.016;
-                    otos.offset.y = -2.511;
-                    otos.offset.h = Math.toRadians(88.550); // Was 91.19
-                    otos.linearScalar = 1.007; // Was 0.989
-                    otos.angularScalar = 1.0019;
-                    break;
             }
         }
 
@@ -244,13 +245,13 @@ public final class MecanumDrive {
 
     private static DriveParameters getDriveParameters() {
         switch (getBotName()) {
-            case "Something":
-                return DriveParameters.DEVBOT_MECANUM;
-            case "DevBotX":
-                return DriveParameters.DEVBOT_X;
             case "DevBot":
-                return DriveParameters.FASTBOT_MECANUM;
+                return DriveParameters.DEVBOT_MECANUM;
+            case "LiterallyNothing":
+                return DriveParameters.DEVBOT_X;
             case "417-RC":
+                return DriveParameters.FASTBOT_MECANUM;
+            case "TBD":
                 return DriveParameters.COMPETITION_ROBOT;
         }
         throw new IllegalArgumentException("Not one of 417's robots");
@@ -437,6 +438,21 @@ public final class MecanumDrive {
                 break;
 
             case FASTBOT_MECANUM:
+                // enable this when we have the optical tracker
+                opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+
+                leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+                leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+                rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+                rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+
+                // TODO: reverse motor directions if needed
+                rightFront.setDirection(DcMotorEx.Direction.REVERSE);
+                rightBack.setDirection(DcMotorEx.Direction.REVERSE);
+                leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+                break;
+
+            case COMPETITION_ROBOT:
                 //opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
                 //initializeOpticalTracker();
 
@@ -449,23 +465,6 @@ public final class MecanumDrive {
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
 
-            case COMPETITION_ROBOT:
-                // TODO: Create the optical tracking object:
-                //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
-
-                // TODO: enable this when we have the optical tracker
-                //  opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
-
-                leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-                leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
-                rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-                rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
-
-                // TODO: reverse motor directions if needed
-                rightFront.setDirection(DcMotorEx.Direction.REVERSE);
-                rightBack.setDirection(DcMotorEx.Direction.REVERSE);
-                leftBack.setDirection(DcMotorEx.Direction.REVERSE);
-                break;
         }
 
         // Initialize the OTOS, if any:
@@ -586,6 +585,7 @@ public final class MecanumDrive {
      * .maxAngVel to determine the range to specify. Note however that the robot can actually
      * go faster than Road Runner's PARAMS values so you would be unnecessarily slowing your
      * robot down.
+     *
      * @noinspection unused
      */
     public void setDrivePowers(
@@ -598,8 +598,7 @@ public final class MecanumDrive {
             PoseVelocity2d stickVelocity,
             // Desired computed power velocity, inches/s and radians/s, field-relative coordinates,
             // can be null:
-            PoseVelocity2d assistVelocity)
-    {
+            PoseVelocity2d assistVelocity) {
         if (stickVelocity == null)
             stickVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
         if (assistVelocity == null)
@@ -637,9 +636,9 @@ public final class MecanumDrive {
         double rightFrontPower = manualVels.rightFront.get(0);
 
         // Compute the wheel powers for the assist:
-        double[] x = { pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x };
-        double[] y = { pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y };
-        double[] angular = { pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel };
+        double[] x = {pose.position.x, assistVelocity.linearVel.x, assistAcceleration.linearVel.x};
+        double[] y = {pose.position.y, assistVelocity.linearVel.y, assistAcceleration.linearVel.y};
+        double[] angular = {pose.heading.log(), assistVelocity.angVel, assistAcceleration.angVel};
 
         Pose2dDual<Time> computedDualPose = new Pose2dDual<>(
                 new Vector2dDual<>(new DualNum<>(x), new DualNum<>(y)),
@@ -890,12 +889,14 @@ public final class MecanumDrive {
 
     // Update the loop time, in milliseconds, and show it on FTC Dashboard:
     double lastLoopTime; // Seconds
+
     void updateLoopTimeStatistic(TelemetryPacket p) {
         double currentTime = nanoTime() * 1e-9; // Seconds
         double loopTime = currentTime - lastLoopTime;
         lastLoopTime = currentTime;
         p.put("Loop time", loopTime * 1000.0); // Milliseconds
     }
+
     void resetLoopTimeStatistic() {
         lastLoopTime = nanoTime() * 1e-9;
     }
@@ -920,8 +921,8 @@ public final class MecanumDrive {
             double rotation = -position.h;
             poseVelocity = new PoseVelocity2d(
                     new Vector2d(Math.cos(rotation) * velocity.x - Math.sin(rotation) * velocity.y,
-                                 Math.sin(rotation) * velocity.x + Math.cos(rotation) * velocity.y),
-                        velocity.h);
+                            Math.sin(rotation) * velocity.x + Math.cos(rotation) * velocity.y),
+                    velocity.h);
 
             pose = new Pose2d(position.x, position.y, position.h);
         } else {
@@ -999,7 +1000,9 @@ public final class MecanumDrive {
                 ));
     }
 
-    /** @noinspection unused*/ // Rotate a vector by a prescribed angle:
+    /**
+     * @noinspection unused
+     */ // Rotate a vector by a prescribed angle:
     static public Vector2d rotateVector(Vector2d vector, double theta) {
         return new Vector2d(
                 Math.cos(theta) * vector.x - Math.sin(theta) * vector.y,
@@ -1025,6 +1028,7 @@ public final class MecanumDrive {
     // Get the current voltage, amortized for performance:
     double previousVoltageSeconds = 0;
     double previousVoltageRead = 0;
+
     public double getVoltage() {
         final double UPDATE_INTERVAL = 0.1; // Minimum duration between hardware reads, in seconds
         double currentSeconds = nanoTime() * 1e-9;
@@ -1038,7 +1042,9 @@ public final class MecanumDrive {
     // List of currently running Actions:
     LinkedList<Action> actionList = new LinkedList<>();
 
-    /** @noinspection unused*/ // Invoke an Action to run in parallel during TeleOp:
+    /**
+     * @noinspection unused
+     */ // Invoke an Action to run in parallel during TeleOp:
     public void runParallel(Action action) {
         actionList.add(action);
     }
@@ -1048,7 +1054,7 @@ public final class MecanumDrive {
     // FTC Dashboard:
     public boolean doActionsWork(TelemetryPacket packet) {
         LinkedList<Action> deletionList = new LinkedList<>();
-        for (Action action: actionList) {
+        for (Action action : actionList) {
             // Let the Action do any field rendering (such as to draw the path it intends to
             // traverse):
             action.preview(packet.fieldOverlay());
@@ -1062,14 +1068,19 @@ public final class MecanumDrive {
         return !actionList.isEmpty();
     }
 
-    /** @noinspection unused*/
+    /**
+     * @noinspection unused
+     */
     // Abort all currently running actions:
     public void abortActions() {
         actionList.clear();
     }
 
     // Create a new telemetry packet to draw stuff on the FTC Dashboard field.
-    public static TelemetryPacket getTelemetryPacket() { return getTelemetryPacket(true); }
+    public static TelemetryPacket getTelemetryPacket() {
+        return getTelemetryPacket(true);
+    }
+
     public static TelemetryPacket getTelemetryPacket(boolean showField) {
         TelemetryPacket packet = new TelemetryPacket();
 
