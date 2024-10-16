@@ -111,6 +111,13 @@ public class TextMenu {
     public TextMenu add(String text) {
         return this.add(new MenuHeader(text));
     }
+
+    public TextMenu addTextConditional(String text, boolean isDisplayed) {
+        if (isDisplayed) {
+            return this.add(text);
+        }
+        return this;
+    }
     /**
      * adds an empty line for spacing to the end of the menu.
      * @return returns itself so you can chain {@code .add()} methods

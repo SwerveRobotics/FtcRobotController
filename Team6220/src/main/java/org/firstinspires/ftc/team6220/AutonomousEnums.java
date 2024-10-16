@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team6220;
 
+import com.acmerobotics.roadrunner.Pose2d;
+
 public class AutonomousEnums {
     public enum AllianceColor {
         BLUE,
@@ -7,9 +9,15 @@ public class AutonomousEnums {
     }
 
     public enum AutoStartPosition {
-        LEFT,
-        MIDDLE,
-        RIGHT
+        LEFT(new Pose2d(-20, 60, (3*Math.PI)/2)),
+        MIDDLE(new Pose2d(0, 60, (3*Math.PI)/2)),
+        RIGHT(new Pose2d(20, 60, (3*Math.PI)/2));
+
+        public final Pose2d startingPose;
+
+        AutoStartPosition(Pose2d startingPose) {
+            this.startingPose = startingPose;
+        }
     }
 
     public enum AutoType {

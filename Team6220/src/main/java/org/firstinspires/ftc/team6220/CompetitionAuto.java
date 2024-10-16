@@ -9,7 +9,6 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.team6220.javatextmenu.MenuFinishedButton;
 import org.firstinspires.ftc.team6220.javatextmenu.MenuInput;
-import org.firstinspires.ftc.team6220.javatextmenu.MenuSelection;
 import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
 
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
@@ -31,9 +30,9 @@ public class CompetitionAuto extends BaseOpMode {
     @Override
     public void runOpMode() {
 
-        Pose2d beginPose = new Pose2d(0, 60, (3*Math.PI)/2);
-        Pose2d beginPose1 = new Pose2d(-20, 60, (3*Math.PI)/2);
-        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
+        Pose2d middlePose = new Pose2d(0, 60, (3*Math.PI)/2);
+        Pose2d leftPose = new Pose2d(-20, 60, (3*Math.PI)/2);
+        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, middlePose);
 
         // TextMenu implementation yoinked from valsei's GitHub
         TextMenu startingConditionMenu = new TextMenu();
@@ -48,22 +47,8 @@ public class CompetitionAuto extends BaseOpMode {
                 .add("auto_type", AutonomousEnums.AutoType.class)
                 .add("confirm_selection", new MenuFinishedButton());
 
-        // yoinked from valsei's github
-        while (!startingConditionMenu.isCompleted() && !isStopRequested()) {
-            for (String line : startingConditionMenu.toListOfStrings()) {
-                telemetry.addLine(line);
-            }
-            telemetry.update();
-
-            input.update(
-                    gamepad1.left_stick_x, gamepad1.left_stick_y,
-                    gamepad1.dpad_left, gamepad1.dpad_right,
-                    gamepad1.dpad_down, gamepad1.dpad_up,
-                    gamepad1.a
-            );
-            startingConditionMenu.updateWithInput(input);
-            sleep(17);
-        }
+        // update the starting condition menu until it's done
+        textMenuUpdateUntilComplete(startingConditionMenu, input);
 
         allianceColor = startingConditionMenu.getResult(AutonomousEnums.AllianceColor.class, "alliance_color");
         autoStartPosition = startingConditionMenu.getResult(AutonomousEnums.AutoStartPosition.class, "start_position");
@@ -80,21 +65,8 @@ public class CompetitionAuto extends BaseOpMode {
                 .add("park_position", AutonomousEnums.ParkPosition.class)
                 .add("confirm_selection", new MenuFinishedButton());
 
-        while (!scoringSelectionMenu.isCompleted() && !isStopRequested()) {
-            for (String line : scoringSelectionMenu.toListOfStrings()) {
-                telemetry.addLine(line);
-            }
-            telemetry.update();
-
-            input.update(
-                    gamepad1.left_stick_x, gamepad1.left_stick_y,
-                    gamepad1.dpad_left, gamepad1.dpad_right,
-                    gamepad1.dpad_down, gamepad1.dpad_up,
-                    gamepad1.a
-            );
-            scoringSelectionMenu.updateWithInput(input);
-            sleep(17);
-        }
+        // update the scoring selection menu until it's done
+        textMenuUpdateUntilComplete(scoringSelectionMenu, input);
 
         if (autoType.equals(AutonomousEnums.AutoType.BASKET)) {
             spikeMarkSide = scoringSelectionMenu.getResult(AutonomousEnums.SpikeMarkSide.class, "spikemark_side");
@@ -105,16 +77,16 @@ public class CompetitionAuto extends BaseOpMode {
         // Build the trajectory *before* the start button is pressed because Road Runner
         // can take multiple seconds for this operation. We wouldn't want to have to wait
         // as soon as the Start button is pressed!
-        Action trajectoryAction1     = drive.actionBuilder(beginPose)
+        Action trajectoryAction1     = drive.actionBuilder(middlePose)
                 .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
                 .endTrajectory()
                 .splineToSplineHeading(new Pose2d(48, 50, Math.PI/4), (3*Math.PI)/2)
                 .build();
-        Action trajectoryAction2 = drive.actionBuilder(beginPose1)
+        Action trajectoryAction2 = drive.actionBuilder(leftPose)
                 .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
                 .splineToSplineHeading(new Pose2d(48, 50, Math.PI/4), (3*Math.PI)/2)
                 .build();
-        Action trajectoryAction = trajectoryAction2;
+        Action trajectoryAction = trajectoryAction1;
 
         // Get a preview of the trajectory's path:
         Canvas previewCanvas = new Canvas();
@@ -144,6 +116,24 @@ public class CompetitionAuto extends BaseOpMode {
             // drawing up on the field once the robot is done:
             if (more)
                 MecanumDrive.sendTelemetryPacket(packet);
+        }
+    }
+
+    private void textMenuUpdateUntilComplete(TextMenu textMenu, MenuInput input) {
+        while (!textMenu.isCompleted() && !isStopRequested()) {
+            for (String line : textMenu.toListOfStrings()) {
+                telemetry.addLine(line);
+            }
+            telemetry.update();
+
+            input.update(
+                    gamepad1.left_stick_x, gamepad1.left_stick_y,
+                    gamepad1.dpad_left, gamepad1.dpad_right,
+                    gamepad1.dpad_down, gamepad1.dpad_up,
+                    gamepad1.a
+            );
+            textMenu.updateWithInput(input);
+            sleep(17);
         }
     }
 }
