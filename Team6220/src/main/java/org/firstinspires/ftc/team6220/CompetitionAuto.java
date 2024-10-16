@@ -13,6 +13,8 @@ import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
 
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 
+import java.util.ArrayList;
+
 /**
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
@@ -135,6 +137,12 @@ public class CompetitionAuto extends BaseOpMode {
             );
             textMenu.updateWithInput(input);
             sleep(17);
+        }
+    }
+
+    private <E extends Enum> void runIfNotNull (Class<E> enumClass, Runnable runnable) {
+        if (enumClass != null) {
+
         }
     }
 }

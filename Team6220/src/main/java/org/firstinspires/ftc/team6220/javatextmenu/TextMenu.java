@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.team6220.javatextmenu;
 
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -250,7 +251,6 @@ public class TextMenu {
         } catch (ClassCastException e) {
             throw new IllegalArgumentException("Class " + clazz + " is not the correct class for element " + name);
         }
-        
     }
 
     /**
@@ -259,6 +259,11 @@ public class TextMenu {
      * @return boolean of if the menu is completed
      */
     public boolean isCompleted() {
+        for (HoverableMenuElement<?> sel : this.hoverableElements.values()) {
+            if (sel instanceof MenuFinishedButton && sel.isCompleted()) {
+                return true; // HACKY FIXES HACKY FIXES YEA YEA YEA
+            }
+        }
         for (HoverableMenuElement<?> sel : this.hoverableElements.values()) {
             if (!sel.isCompleted()) {
                 return false;

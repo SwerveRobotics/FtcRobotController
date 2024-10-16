@@ -24,7 +24,6 @@ import com.acmerobotics.roadrunner.MotorFeedforward;
 import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Pose2dDual;
-import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.PoseVelocity2dDual;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
@@ -314,7 +313,7 @@ public final class MecanumDrive {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        configure(hardwareMap);
+        initializeHardware(hardwareMap);
 
         // Enable brake mode on the motors:
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -331,7 +330,7 @@ public final class MecanumDrive {
     }
 
     // This is where you configure Road Runner to work with your hardware:
-    public void configure(HardwareMap hardwareMap) {
+    public void initializeHardware(HardwareMap hardwareMap) {
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         if (isDevBot) {
