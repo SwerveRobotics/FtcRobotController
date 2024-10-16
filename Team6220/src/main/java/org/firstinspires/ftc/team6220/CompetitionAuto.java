@@ -20,12 +20,13 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 @Autonomous(name="Auto", group="Competition", preselectTeleOp="CompetitionTeleOp")
 public class CompetitionAuto extends BaseOpMode {
 
-    private AutonomousEnums.AllianceColor allianceColor;
-    private AutonomousEnums.AutoStartPosition autoStartPosition;
-    private AutonomousEnums.AutoType autoType;
-    private AutonomousEnums.ParkPosition parkPosition;
-    private AutonomousEnums.SpikeMarkPickupAmount pickupAmount;
-    private AutonomousEnums.SpikeMarkSide spikeMarkSide;
+    // defaults so it doesnt explode if you skip the text menu
+    private AutonomousEnums.AllianceColor allianceColor = AutonomousEnums.AllianceColor.RED;
+    private AutonomousEnums.AutoStartPosition autoStartPosition = AutonomousEnums.AutoStartPosition.LEFT;
+    private AutonomousEnums.AutoType autoType = AutonomousEnums.AutoType.PARK;
+    private AutonomousEnums.ParkPosition parkPosition = AutonomousEnums.ParkPosition.SUBMERSIBLE;
+    private AutonomousEnums.SpikeMarkPickupAmount pickupAmount = AutonomousEnums.SpikeMarkPickupAmount.ONE;
+    private AutonomousEnums.SpikeMarkSide spikeMarkSide = AutonomousEnums.SpikeMarkSide.LEFT;
 
     @Override
     public void runOpMode() {
@@ -57,9 +58,9 @@ public class CompetitionAuto extends BaseOpMode {
         TextMenu scoringSelectionMenu = new TextMenu();
 
         scoringSelectionMenu.add("Scoring Settings: ")
-                .add("SpikeMark Side: ")
+                .addTextConditional("SpikeMark Side: ", autoType.equals(AutonomousEnums.AutoType.BASKET))
                 .addEnumConditional("spikemark_side", AutonomousEnums.SpikeMarkSide.class, autoType.equals(AutonomousEnums.AutoType.BASKET))
-                .add("Sample Pickup Quantity:")
+                .addTextConditional("Sample Pickup Quantity:", autoType.equals(AutonomousEnums.AutoType.BASKET))
                 .addEnumConditional("sample_pickup_quantity", AutonomousEnums.SpikeMarkPickupAmount.class, autoType.equals(AutonomousEnums.AutoType.BASKET))
                 .add("Park Position: ")
                 .add("park_position", AutonomousEnums.ParkPosition.class)

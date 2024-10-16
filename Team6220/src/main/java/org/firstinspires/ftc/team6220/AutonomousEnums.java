@@ -26,6 +26,7 @@ public class AutonomousEnums {
     }
 
     public enum SpikeMarkPickupAmount {
+        ZERO,
         ONE,
         TWO,
         THREE

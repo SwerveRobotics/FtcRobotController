@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team6220;
 
+import com.acmerobotics.roadrunner.Pose2d;
+
 public abstract class Constants {
     public static final double ARM_ELBOW_SERVO_PRESET_POSITION_OVER_BARRIER = 30;
     public static final double ARM_ELBOW_SERVO_PRESET_POSITION_GROUND = 0;
@@ -11,4 +13,5 @@ public abstract class Constants {
     public static final float[] RED_COLOR_SENSOR_RANGES = {0.025f, 1f};
     public static final float[] BLUE_COLOR_SENSOR_RANGES = {0.025f, 1f};
     public static final float COLOR_SENSOR_GAIN = 3.8f;
+    //public static final Pose2d BASKET_SCORING_POSE = new Pose2d()
 }
