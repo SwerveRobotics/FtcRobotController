@@ -7,9 +7,6 @@ package org.firstinspires.ftc.teamMentor.roadrunner;
 
 import static com.acmerobotics.roadrunner.Profiles.constantProfile;
 
-import static org.firstinspires.ftc.teamMentor.roadrunner.LoonyTune.A;
-import static org.firstinspires.ftc.teamMentor.roadrunner.LoonyTune.DPAD_UP_DOWN;
-import static org.firstinspires.ftc.teamMentor.roadrunner.LoonyTune.FILE_NAME;
 import static java.lang.System.nanoTime;
 
 import android.annotation.SuppressLint;
