@@ -15,12 +15,18 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 public class DistanceSensorConcept extends CompetitionTeleOp {
     DistanceSensor distanceSensor;
 
+    double x = -6.75;
+
+    double y = 7.75;
+
+    double theta = -Math.PI / 4;
+
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
         initializeHardware();
 
-        distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceFrontLeft");
+        distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceLeftCorner");
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
@@ -48,14 +54,32 @@ public class DistanceSensorConcept extends CompetitionTeleOp {
     }
 
     public void senseDistance() {
+        double heading = drive.opticalTracker.getPosition().h;
+
+        double sensorOffset = theta;
+
+        double sensorHeading = heading - sensorOffset;
+
+        telemetry.addData("Heading (deg)", Math.toDegrees(heading));
+
         double distance = distanceSensor.getDistance(DistanceUnit.INCH);
 
         telemetry.addData("Raw distance (in)", distance);
 
-        double heading = drive.opticalTracker.getPosition().h;
+        double sensorToWall = distance * Math.cos(sensorHeading);
 
-        double wallDistance = distance * Math.cos(heading);
+        telemetry.addData("Sensor to wall (in)", sensorToWall);
 
-        telemetry.addData("Wall distance (in)", wallDistance);
+        double leftCenterToSensor = y * Math.cos(heading);
+
+        telemetry.addData("Left Center to Sensor (in)", leftCenterToSensor);
+
+        double centerToLeftCenter = x * Math.sin(heading);
+
+        telemetry.addData("Center to left center (in)", centerToLeftCenter);
+
+        double totalDistanceFromWall = sensorToWall + leftCenterToSensor + centerToLeftCenter;
+
+        telemetry.addData("Total distance from wall (in)", totalDistanceFromWall);
     }
 }
