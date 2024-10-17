@@ -23,12 +23,12 @@ import java.util.ArrayList;
 public class CompetitionAuto extends BaseOpMode {
 
     // defaults so it doesnt explode if you skip the text menu
-    private AutonomousEnums.AllianceColor allianceColor = AutonomousEnums.AllianceColor.RED;
-    private AutonomousEnums.AutoStartPosition autoStartPosition = AutonomousEnums.AutoStartPosition.LEFT;
-    private AutonomousEnums.AutoType autoType = AutonomousEnums.AutoType.PARK;
-    private AutonomousEnums.ParkPosition parkPosition = AutonomousEnums.ParkPosition.SUBMERSIBLE;
-    private AutonomousEnums.SpikeMarkPickupAmount pickupAmount = AutonomousEnums.SpikeMarkPickupAmount.ONE;
-    private AutonomousEnums.SpikeMarkSide spikeMarkSide = AutonomousEnums.SpikeMarkSide.LEFT;
+    private AutonomousEnums.AllianceColor allianceColor = null;
+    private AutonomousEnums.AutoStartPosition autoStartPosition = null;
+    private AutonomousEnums.AutoType autoType = null;
+    private AutonomousEnums.ParkPosition parkPosition = null;
+    private AutonomousEnums.SpikeMarkPickupAmount pickupAmount = null;
+    private AutonomousEnums.SpikeMarkSide spikeMarkSide = null;
 
     @Override
     public void runOpMode() {
