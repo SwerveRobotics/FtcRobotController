@@ -26,7 +26,7 @@ public class DistanceSensorConcept extends CompetitionTeleOp {
         // Initialize the hardware and make the robot ready
         initializeHardware();
 
-        distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceLeftCorner");
+        distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceLeftFront");
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
