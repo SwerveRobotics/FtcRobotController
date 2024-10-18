@@ -43,7 +43,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         colorSensor.setGain(Constants.COLOR_SENSOR_GAIN);
 
-        /*armBaseMotor = hardwareMap.get(DcMotorEx.class,"armBaseMotor");
+        armBaseMotor = hardwareMap.get(DcMotorEx.class,"armBaseMotor");
         slidesMotor = hardwareMap.get(DcMotorEx.class,"slidesMotor");
         intakeCRServo = hardwareMap.get(CRServo.class,"intakeServo");
         dumperServo = hardwareMap.get(Servo.class,"dumperServo");
@@ -60,7 +60,10 @@ public class CompetitionTeleOp extends BaseOpMode {
         armBaseMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         slidesMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         armBaseMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER); */
+        slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+
+        armBaseMotor.setVelocity(Constants.ARM_BASE_MOTOR_VELOCITY);
+        slidesMotor.setVelocity(Constants.SLIDES_MOTOR_VELOCITY);
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);

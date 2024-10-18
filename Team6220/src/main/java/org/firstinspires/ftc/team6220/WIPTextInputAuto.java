@@ -13,14 +13,12 @@ import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
 
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 
-import java.util.ArrayList;
-
 /**
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
 @Autonomous(name="Auto", group="Competition", preselectTeleOp="CompetitionTeleOp")
-public class CompetitionAuto extends BaseOpMode {
+public class WIPTextInputAuto extends BaseOpMode {
 
     // defaults so it doesnt explode if you skip the text menu
     private AutonomousEnums.AllianceColor allianceColor = null;
