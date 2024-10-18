@@ -60,7 +60,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     final double ARM_COLLAPSED_INTO_ROBOT = 0;
     final double ARM_COLLECT = 255 * ARM_TICKS_PER_DEGREE;
     final double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
-    final double ARM_SCORE_SPECIMEN = 160 * ARM_TICKS_PER_DEGREE;
+    final double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
     final double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
     final double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
     final double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
@@ -71,8 +71,8 @@ public class CompetitionTeleOp extends BaseOpMode {
     final double INTAKE_DEPOSIT = 0.5;
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
-    final double WRIST_FOLDED_IN = 1;
-    final double WRIST_FOLDED_OUT = 0.61;
+    final double WRIST_FOLDED_IN = 0.676;
+    final double WRIST_FOLDED_OUT = 0.335;
 
     double wristPosition = 0;
 
