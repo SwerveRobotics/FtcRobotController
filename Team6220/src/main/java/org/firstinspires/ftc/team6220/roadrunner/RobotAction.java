@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.util.RobotLog;
 /**
  * This class wraps Road Runner actions to implement easier-to-use support for state-machine
  * cooperative multitasking, with additional error checking to prevent robot destruction.
+ * @noinspection unused
  */
 @SuppressLint("DefaultLocale")
 abstract public class RobotAction implements Action {
@@ -189,4 +190,9 @@ abstract public class RobotAction implements Action {
     // in the run() call waiting on the hardware. Instead, poll the hardware and return 'true'
     // if the hardware's not ready yet, and you'll be called again:
     public abstract boolean run(double elapsedTime);
+
+    // Returns true if the action is still actively running:
+    public boolean isRunning() {
+        return actionStartTime != 0;
+    }
 }

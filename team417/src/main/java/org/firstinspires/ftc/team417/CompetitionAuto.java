@@ -44,7 +44,6 @@ public class CompetitionAuto extends BaseOpMode {
         boolean more = true;
         while (opModeIsActive() && more) {
             telemetry.addLine("Running Auto!");
-            telemetry.update();
 
             // 'packet' is the object used to send data to FTC Dashboard:
             packet = MecanumDrive.getTelemetryPacket();
@@ -57,6 +56,7 @@ public class CompetitionAuto extends BaseOpMode {
             // drawing up on the field once the robot is done:
             if (more)
                 MecanumDrive.sendTelemetryPacket(packet);
+            telemetry.update();
         }
     }
 }
