@@ -34,8 +34,9 @@ public class CompetitionAuto extends BaseOpMode {
     public void runOpMode() {
 
         Pose2d middlePose = new Pose2d(0, 60, (3*Math.PI)/2);
-        Pose2d leftPose = new Pose2d(-20, 60, (3*Math.PI)/2);
-        Pose2d rightPose = new Pose2d(20, 60, (3*Math.PI)/2);
+        Pose2d leftPose = new Pose2d(-24, 60, (3*Math.PI)/2);
+        Pose2d rightPose = new Pose2d(24, 60, (3*Math.PI)/2);
+
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, rightPose);
 
@@ -82,20 +83,32 @@ public class CompetitionAuto extends BaseOpMode {
         // Build the trajectory *before* the start button is pressed because Road Runner
         // can take multiple seconds for this operation. We wouldn't want to have to wait
         // as soon as the Start button is pressed!
-        Action trajectoryAction1     = drive.actionBuilder(middlePose)
+        // Scoring trajectories
+        Action middleScoringTrajectory     = drive.actionBuilder(middlePose)
                 .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
                 .endTrajectory()
                 .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
                 .build();
-        Action trajectoryAction2 = drive.actionBuilder(leftPose)
+        Action leftScoringTrajectory = drive.actionBuilder(leftPose)
                 .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
                 .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
                 .build();
-        Action trajectoryAction3 = drive.actionBuilder(rightPose)
+        Action rightScoringTrajectory = drive.actionBuilder(rightPose)
                 .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
                 .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
                 .build();
-        Action trajectoryAction = trajectoryAction3;
+
+        // Parking trajectories
+        Action  middleParkingTrajectory = drive.actionBuilder(middlePose)
+                .splineTo(new Vector2d(-60, 60), (Math.PI))
+                .build();
+        Action  leftParkingTrajectory = drive.actionBuilder(leftPose)
+                .splineTo(new Vector2d(-60, 60), (Math.PI))
+                .build();
+        Action  rightParkingTrajectory = drive.actionBuilder(rightPose)
+                .splineTo(new Vector2d(-60, 60), (Math.PI))
+                .build();
+        Action trajectoryAction = rightParkingTrajectory;
 
         // Get a preview of the trajectory's path:
         Canvas previewCanvas = new Canvas();
