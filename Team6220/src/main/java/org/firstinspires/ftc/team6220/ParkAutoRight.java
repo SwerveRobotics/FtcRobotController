@@ -26,7 +26,7 @@ public class ParkAutoRight extends BaseOpMode {
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, rightPose);
 
-        // Create left parking trajectory
+        // Create right parking trajectory
         Action  rightParkingTrajectory = drive.actionBuilder(rightPose)
                 .splineTo(new Vector2d(-60, 60), (Math.PI))
                 .build();

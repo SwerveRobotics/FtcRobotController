@@ -26,7 +26,7 @@ public class ParkAutoMiddle extends BaseOpMode {
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, middlePose);
 
-        // Create left parking trajectory
+        // Create middle parking trajectory
         Action  middleParkingTrajectory = drive.actionBuilder(middlePose)
                 .splineTo(new Vector2d(-60, 60), (Math.PI))
                 .build();

@@ -15,25 +15,27 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@Autonomous(name="Auto", group="Competition", preselectTeleOp="CompetitionTeleOp")
-public class MiddleScoringAuto extends BaseOpMode {
+@Autonomous(name="ScoringAutoRight", group="Competition", preselectTeleOp="CompetitionTeleOp")
+public class ScoringAutoRight extends BaseOpMode {
 
 
     @Override
     public void runOpMode() {
 
-        Pose2d middlePose = new Pose2d(0, 60, (3*Math.PI)/2);
+        Pose2d rightPose = new Pose2d(24, 60, (3*Math.PI)/2);
 
 
-        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, middlePose);
+        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, rightPose);
 
-        Action middleScoringTrajectory     = drive.actionBuilder(middlePose)
+        Action rightScoringTrajectory = drive.actionBuilder(rightPose)
                 .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
                 .endTrajectory()
-                .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
+                .splineTo(new Vector2d(48, 50), (5*Math.PI)/4) //scored a sample
+                .splineTo(new Vector2d(25, 10),(3*Math.PI)/2)
+                .splineTo(new Vector2d(28, 10),(1*Math.PI)/1)
                 .build();
 
-        Action trajectoryAction = middleScoringTrajectory;
+        Action trajectoryAction = rightScoringTrajectory;
 
         // Get a preview of the trajectory's path:
         Canvas previewCanvas = new Canvas();
