@@ -74,8 +74,6 @@ public class CompetitionTeleOp extends BaseOpMode {
     final double WRIST_FOLDED_IN = 0.676;
     final double WRIST_FOLDED_OUT = 0.335;
 
-    double wristPosition = 0;
-
     /* A number in degrees that the triggers can adjust the arm position by */
     final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
@@ -92,7 +90,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            // TODO: Make an option for field-centric driving
             controlDrivebaseWithGamepads(true, true);
 
             controlMechanismsWithGamepads();
@@ -137,7 +134,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             /* Make sure that the intake is off, and the wrist is folded in. */
             intake.setPower(INTAKE_OFF);
-            setPosition(WRIST_FOLDED_IN);
+            wrist.setPosition(WRIST_FOLDED_IN);
         }
 
         /* Send telemetry message to signify robot waiting */
@@ -240,7 +237,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             if (gamepad2.right_bumper) {
                 /* This is the intaking/collecting arm position */
                 armPosition = ARM_COLLECT;
-                setPosition(WRIST_FOLDED_OUT);
+                wrist.setPosition(WRIST_FOLDED_OUT);
                 intake.setPower(INTAKE_COLLECT);
             } else if (gamepad2.left_bumper) {
                         /* This is about 20° up from the collecting position to clear the barrier
@@ -251,30 +248,28 @@ public class CompetitionTeleOp extends BaseOpMode {
             } else if (gamepad2.y) {
                 /* This is the correct height to score the sample in the LOW BASKET */
                 armPosition = ARM_SCORE_SAMPLE_IN_LOW;
+                wrist.setPosition(WRIST_FOLDED_OUT);
             } else if (gamepad2.dpad_left) {
                         /* This turns off the intake, folds in the wrist, and moves the arm
                         back to folded inside the robot. This is also the starting configuration */
                 armPosition = ARM_COLLAPSED_INTO_ROBOT;
                 intake.setPower(INTAKE_OFF);
-                setPosition(WRIST_FOLDED_IN);
+                wrist.setPosition(WRIST_FOLDED_IN);
             } else if (gamepad2.dpad_right) {
                 /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
                 armPosition = ARM_SCORE_SPECIMEN;
-                setPosition(WRIST_FOLDED_IN);
+                wrist.setPosition(WRIST_FOLDED_IN);
             } else if (gamepad2.dpad_up) {
                 /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
                 armPosition = ARM_ATTACH_HANGING_HOOK;
                 intake.setPower(INTAKE_OFF);
-                setPosition(WRIST_FOLDED_IN);
+                wrist.setPosition(WRIST_FOLDED_IN);
             } else if (gamepad2.dpad_down) {
                 /* this moves the arm down to lift the robot up once it has been hooked */
                 armPosition = ARM_WINCH_ROBOT;
                 intake.setPower(INTAKE_OFF);
-                setPosition(WRIST_FOLDED_IN);
+                wrist.setPosition(WRIST_FOLDED_IN);
             }
-
-            // Here we set the servo position.
-            wrist.setPosition(wristPosition);
 
             /* Here we set the target position of our arm to match the variable that was selected
             by the driver.
@@ -286,10 +281,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         }
     }
 
-    public void setPosition(double position) {
-        wristPosition = position;
-    }
-
     // Applies a curve to the joystick input to give finer control at lower speeds
     public double curveStick(double rawSpeed) {
         return Math.copySign(Math.pow(rawSpeed, 2), rawSpeed);
@@ -299,35 +290,48 @@ public class CompetitionTeleOp extends BaseOpMode {
         // action of dpad up button on gamepad 2
         armMotor.setTargetPosition((int) (ARM_ATTACH_HANGING_HOOK));
         intake.setPower(INTAKE_OFF);
-        setPosition(WRIST_FOLDED_IN);
-
-        ((DcMotorEx) armMotor).setVelocity(2100);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        wrist.setPosition(WRIST_FOLDED_IN);
 
         // wait for the arm to reach the position
         while (armMotor.isBusy()) {
             // wait until the arm finishes its movement
+            ((DcMotorEx) armMotor).setVelocity(2100);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
 
         // action of dpad right button on gamepad 2
         armMotor.setTargetPosition((int) (ARM_SCORE_SPECIMEN));
-        setPosition(WRIST_FOLDED_IN);
-
-        ((DcMotorEx) armMotor).setVelocity(2100);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        wrist.setPosition(WRIST_FOLDED_IN);
 
         // wait for the arm to reach the position
         while (armMotor.isBusy()) {
             // wait until the arm finishes its movement
+            ((DcMotorEx) armMotor).setVelocity(2100);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        }
+
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+        // move backward while pressing dpad_down logic
+        drive.setDrivePowers(new PoseVelocity2d(
+                new Vector2d(-0.25, 0),  // move back at 0.25 power
+                0
+        ));
+
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
         }
 
         // action of dpad down gamepad 2
         armMotor.setTargetPosition((int) (ARM_WINCH_ROBOT));
         intake.setPower(INTAKE_OFF);
-        setPosition(WRIST_FOLDED_IN);
-
-        ((DcMotorEx) armMotor).setVelocity(2100);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        wrist.setPosition(WRIST_FOLDED_IN);
 
         // move backward while pressing dpad_down logic
         drive.setDrivePowers(new PoseVelocity2d(
@@ -338,19 +342,20 @@ public class CompetitionTeleOp extends BaseOpMode {
         // wait for the arm movement to finish while moving backward
         while (armMotor.isBusy()) {
             // keep moving backward until the arm finishes its movement
+            ((DcMotorEx) armMotor).setVelocity(2100);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
 
         // once that's over then action of dpad left gamepad 2
         armMotor.setTargetPosition((int) (ARM_COLLAPSED_INTO_ROBOT));
         intake.setPower(INTAKE_OFF);
-        setPosition(WRIST_FOLDED_IN);
-
-        ((DcMotorEx) armMotor).setVelocity(2100);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        wrist.setPosition(WRIST_FOLDED_IN);
 
         // wait for the arm to fold in
         while (armMotor.isBusy()) {
             // wait until the arm finishes folding in
+            ((DcMotorEx) armMotor).setVelocity(2100);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
 
         // stop wheels
