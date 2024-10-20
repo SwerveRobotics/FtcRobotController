@@ -5,8 +5,11 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 /**
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
@@ -14,6 +17,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  */
 @Autonomous(name = "Auto", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
 public class CompetitionAuto extends BaseOpMode {
+
     // RC 17.50
     // DEV 17.75
     final double ROBOT_LENGTH = 17.50;
@@ -21,13 +25,36 @@ public class CompetitionAuto extends BaseOpMode {
     // DEV 18.50
     final double ROBOT_WIDTH = 16.50;
 
+    // This class contains the function to lift the arm
+    class LiftArm extends RobotAction{
+
+
+        @Override
+        public boolean run(double elapsedTime) {
+            double error = Math.abs(armMotor.getTargetPosition() - ARM_SCORE_SAMPLE_IN_LOW);
+            final double EPSILON = 3.00;
+
+            // Prevents hanging from running on wily works
+            if(WilyWorks.isSimulating){
+                return false;
+            }
+
+            if (error < EPSILON)
+                // Arm is within range so arm stops
+                return false;
+            // Arm isn't withjn range so we keep calling
+            armMotor.setTargetPosition((int) (ARM_SCORE_SAMPLE_IN_LOW));
+            return true;
+        }
+    }
+
     @Override
     public void runOpMode() {
 
         // BeginPose is the 2nd tile away from the basket, facing the basket, lined up with the tile boundary
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / 2) + 24, 72 - (ROBOT_WIDTH / 2), 0);
         MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
-
+        initializeHardware();
         Action trajectoryAction;
 
         // Build the trajectory *before* the start button is pressed because Road Runner
@@ -40,7 +67,7 @@ public class CompetitionAuto extends BaseOpMode {
         trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-45))
                 .splineToLinearHeading(new Pose2d(50, 50, Math.toRadians(45)), Math.toRadians(-45))
-                .endTrajectory()
+                .stopAndAdd(new LiftArm())
                 .setTangent(Math.toRadians(-90))
                 .splineToSplineHeading(new Pose2d(48,12, Math.toRadians(180)), Math.toRadians(180))
                 .splineToSplineHeading(new Pose2d(28,12, Math.toRadians(180)), Math.toRadians(180))
