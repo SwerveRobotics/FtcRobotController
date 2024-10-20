@@ -14,10 +14,12 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  */
 @Autonomous(name = "Auto", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
 public class CompetitionAuto extends BaseOpMode {
-    // Original 17.50
-    final double ROBOT_LENGTH = 17.75;
-    // Orginal 16.50
-    final double ROBOT_WIDTH = 18.50;
+    // RC 17.50
+    // DEV 17.75
+    final double ROBOT_LENGTH = 17.50;
+    // RC 16.50
+    // DEV 18.50
+    final double ROBOT_WIDTH = 16.50;
 
     @Override
     public void runOpMode() {
@@ -38,7 +40,12 @@ public class CompetitionAuto extends BaseOpMode {
         trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-45))
                 .splineToLinearHeading(new Pose2d(50, 50, Math.toRadians(45)), Math.toRadians(-45))
+                .endTrajectory()
+                .setTangent(Math.toRadians(-90))
+                .splineToSplineHeading(new Pose2d(48,12, Math.toRadians(180)), Math.toRadians(180))
+                .splineToSplineHeading(new Pose2d(28,12, Math.toRadians(180)), Math.toRadians(180))
                 .build();
+
 
         Canvas previewCanvas = new Canvas();
         trajectoryAction.preview(previewCanvas);
