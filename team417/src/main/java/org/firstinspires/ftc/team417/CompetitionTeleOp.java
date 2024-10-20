@@ -23,11 +23,12 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 @Config
 public class CompetitionTeleOp extends BaseOpMode {
     private double speedMultiplier = 1;
-    boolean curve = false;
     public DcMotor armMotor;
     public CRServo intake;
     public Servo wrist;
     public MecanumDrive drive;
+
+    public double startHeading;
 
     public boolean hasMechanisms = MecanumDrive.driveParameters == DriveParameters.COMPETITION_ROBOT
             || MecanumDrive.driveParameters == DriveParameters.FASTBOT_MECANUM
@@ -92,7 +93,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         while (opModeIsActive()) {
             // TODO: Make an option for field-centric driving
-            controlDrivebaseWithGamepads();
+            controlDrivebaseWithGamepads(true, true);
 
             controlMechanismsWithGamepads();
 
@@ -112,11 +113,12 @@ public class CompetitionTeleOp extends BaseOpMode {
     }
 
     public void initializeHardware() {
-        initializeHardware(new Pose2d(0, 0, 0));
+        initializeHardware(new Pose2d(0, 0, Math.PI / 2));
     }
 
     public void initializeHardware(Pose2d startingPose) {
         drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
+        startHeading = startingPose.heading.log();
 
         if (hasMechanisms) {
             armMotor = hardwareMap.get(DcMotor.class, "arm");
@@ -143,7 +145,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         telemetry.update();
     }
 
-    public void controlDrivebaseWithGamepads() {
+    public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
         if (gamepad1.left_bumper && gamepad1.right_bumper) {
             speedMultiplier = 0.25;
         } else if (gamepad1.left_bumper || gamepad1.right_bumper) {
@@ -152,26 +154,40 @@ public class CompetitionTeleOp extends BaseOpMode {
             speedMultiplier = 1;
         }
 
-        setCurve();
+        double theta, x, y, rot, rotatedX, rotatedY;
+
+        if (fieldCentric) {
+            theta = drive.pose.heading.log() - startHeading;
+        } else {
+            theta = 0;
+        }
+
+        // Curve the stick if needed
+        if (curveStick) {
+            x = curveStick(gamepad1.left_stick_x);
+            y = curveStick(gamepad1.left_stick_y);
+            rot = curveStick(gamepad1.right_stick_x);
+        } else {
+            x = gamepad1.left_stick_x;
+            y = gamepad1.left_stick_y;
+            rot = gamepad1.right_stick_x;
+        }
+
+        // Rotate the movement direction counter to the bot's rotation
+        rotatedX = x * Math.cos(theta) - y * Math.sin(theta);
+        rotatedY = x * Math.sin(theta) + y * Math.cos(theta);
+
+        telemetry.addData("rotatedx", rotatedX);
+        telemetry.addData("rotatedY", rotatedY);
 
         // Set the drive motor powers according to the gamepad input:
-        if (curve) {
-            drive.setDrivePowers(new PoseVelocity2d(
-                    new Vector2d(
-                            -curveStick(gamepad1.left_stick_y) * speedMultiplier,
-                            -curveStick(gamepad1.left_stick_x) * speedMultiplier
-                    ),
-                    -curveStick(gamepad1.right_stick_x) * speedMultiplier
-            ));
-        } else {
-            drive.setDrivePowers(new PoseVelocity2d(
-                    new Vector2d(
-                            -gamepad1.left_stick_y * speedMultiplier,
-                            -gamepad1.left_stick_x * speedMultiplier
-                    ),
-                    -gamepad1.right_stick_x * speedMultiplier
-            ));
-        }
+        drive.setDrivePowers(new PoseVelocity2d(
+                new Vector2d(
+                        -rotatedY * speedMultiplier,
+                        -rotatedX * speedMultiplier
+                ),
+                -rot * speedMultiplier
+        ));
 
         // Update the current pose:
         drive.updatePoseEstimate();
@@ -272,15 +288,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         wristPosition = position;
     }
 
-    boolean aWasPressed = false;
-
-    public void setCurve() {
-        if (!aWasPressed && gamepad1.a) {
-            curve = !curve;
-        }
-        aWasPressed = gamepad1.a;
-    }
-
     // Applies a curve to the joystick input to give finer control at lower speeds
     public double curveStick(double rawSpeed) {
         return Math.copySign(Math.pow(rawSpeed, 2), rawSpeed);
@@ -290,7 +297,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         telemetry.addLine("Running TeleOp!");
         telemetry.addData("Kinematic Type", kinematicType);
         telemetry.addData("Speed Multiplier", speedMultiplier);
-        telemetry.addData("Stick Curve", curve);
 
         /* Check to see if our arm is over the current limit, and report via telemetry. */
         if (((DcMotorEx) armMotor).isOverCurrent()) {
