@@ -173,6 +173,11 @@ public class CompetitionTeleOp extends BaseOpMode {
             rot = gamepad1.right_stick_x;
         }
 
+        if (gamepad1.dpad_left) {
+            driveAssistHanging();
+        }
+
+
         // Rotate the movement direction counter to the bot's rotation
         rotatedX = x * Math.cos(theta) - y * Math.sin(theta);
         rotatedY = x * Math.sin(theta) + y * Math.cos(theta);
@@ -288,6 +293,71 @@ public class CompetitionTeleOp extends BaseOpMode {
     // Applies a curve to the joystick input to give finer control at lower speeds
     public double curveStick(double rawSpeed) {
         return Math.copySign(Math.pow(rawSpeed, 2), rawSpeed);
+    }
+
+    public void driveAssistHanging() {
+        // action of dpad up button on gamepad 2
+        armMotor.setTargetPosition((int) (ARM_ATTACH_HANGING_HOOK));
+        intake.setPower(INTAKE_OFF);
+        setPosition(WRIST_FOLDED_IN);
+
+        ((DcMotorEx) armMotor).setVelocity(2100);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // wait for the arm to reach the position
+        while (armMotor.isBusy()) {
+            // wait until the arm finishes its movement
+        }
+
+        // action of dpad right button on gamepad 2
+        armMotor.setTargetPosition((int) (ARM_SCORE_SPECIMEN));
+        setPosition(WRIST_FOLDED_IN);
+
+        ((DcMotorEx) armMotor).setVelocity(2100);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // wait for the arm to reach the position
+        while (armMotor.isBusy()) {
+            // wait until the arm finishes its movement
+        }
+
+        // action of dpad down gamepad 2
+        armMotor.setTargetPosition((int) (ARM_WINCH_ROBOT));
+        intake.setPower(INTAKE_OFF);
+        setPosition(WRIST_FOLDED_IN);
+
+        ((DcMotorEx) armMotor).setVelocity(2100);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // move backward while pressing dpad_down logic
+        drive.setDrivePowers(new PoseVelocity2d(
+                new Vector2d(-0.25, 0),  // move back at 0.25 power
+                0
+        ));
+
+        // wait for the arm movement to finish while moving backward
+        while (armMotor.isBusy()) {
+            // keep moving backward until the arm finishes its movement
+        }
+
+        // once that's over then action of dpad left gamepad 2
+        armMotor.setTargetPosition((int) (ARM_COLLAPSED_INTO_ROBOT));
+        intake.setPower(INTAKE_OFF);
+        setPosition(WRIST_FOLDED_IN);
+
+        ((DcMotorEx) armMotor).setVelocity(2100);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // wait for the arm to fold in
+        while (armMotor.isBusy()) {
+            // wait until the arm finishes folding in
+        }
+
+        // stop wheels
+        drive.setDrivePowers(new PoseVelocity2d(
+                new Vector2d(0, 0),
+                0
+        ));
     }
 
     public void telemeterData() {
