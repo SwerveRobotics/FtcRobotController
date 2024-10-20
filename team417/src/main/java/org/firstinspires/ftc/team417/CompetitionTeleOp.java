@@ -177,9 +177,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         rotatedX = x * Math.cos(theta) - y * Math.sin(theta);
         rotatedY = x * Math.sin(theta) + y * Math.cos(theta);
 
-        telemetry.addData("rotatedx", rotatedX);
-        telemetry.addData("rotatedY", rotatedY);
-
         // Set the drive motor powers according to the gamepad input:
         drive.setDrivePowers(new PoseVelocity2d(
                 new Vector2d(
