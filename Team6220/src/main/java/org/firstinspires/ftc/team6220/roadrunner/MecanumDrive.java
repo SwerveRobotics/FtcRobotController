@@ -79,7 +79,7 @@ public final class MecanumDrive {
     public static class Params {
         Params() {
             // Speed of wheels
-            maxWheelVel = 20;
+            maxWheelVel = 50;
             minProfileAccel = -30;
             maxProfileAccel = 50;
 
@@ -93,10 +93,10 @@ public final class MecanumDrive {
 
                 inPerTick = 1.0;
                 lateralInPerTick = 0.812;
-                trackWidthTicks = 15.99;
+                trackWidthTicks = 14.80; // Was 15.99
 
-                kS = 0.695;
-                kV = 0.185;
+                kS = 0.693; // Was 0.695
+                kV = 0.194; // Was 0.185
                 kA = 0.0100;
 
                 axialGain      = 9.00;
@@ -106,11 +106,12 @@ public final class MecanumDrive {
                 headingGain    = 2.0;
                 headingVelGain = 0;
 
-                otos.offset.x = -0.029;
-                otos.offset.y = 0.600;
-                otos.offset.h = Math.toRadians(89.72);
-                otos.linearScalar = 0.9998;
-                otos.angularScalar = 0;
+                otos.offset.x = -0.202; // Was -0.029
+                otos.offset.y = -0.496; // Was 0.600
+                otos.offset.h = Math.toRadians(-89.82);
+                // Was Math.toRadians(89.72)
+                otos.linearScalar = 0.988; // Was 1.000
+                otos.angularScalar = 1.0037; // Was 0.0000
 
             } else {
                 // Your competition robot Loony Tune configuration is here:
