@@ -26,25 +26,44 @@ public class CompetitionAuto extends BaseOpMode {
     final double ROBOT_WIDTH = 16.50;
 
     // This class contains the function to lift the arm
-    class LiftArm extends RobotAction{
+    class MoveArm extends RobotAction{
 
+        double targetPosition;
+        MoveArm (double targetPosition) {
+            this.targetPosition = targetPosition;
+        }
+        //ARM_SCORE_SAMPLE_IN_LOW
 
         @Override
         public boolean run(double elapsedTime) {
-            double error = Math.abs(armMotor.getTargetPosition() - ARM_SCORE_SAMPLE_IN_LOW);
+            double error = Math.abs(armMotor.getTargetPosition() - targetPosition);
             final double EPSILON = 3.00;
 
             // Prevents hanging from running on wily works
             if(WilyWorks.isSimulating){
                 return false;
             }
-
             if (error < EPSILON)
                 // Arm is within range so arm stops
                 return false;
             // Arm isn't withjn range so we keep calling
-            armMotor.setTargetPosition((int) (ARM_SCORE_SAMPLE_IN_LOW));
+            armMotor.setTargetPosition((int) (targetPosition));
+            wrist.setPosition(WRIST_FOLDED_OUT);
             return true;
+        }
+    }
+
+    class ScoreSample extends RobotAction{
+        @Override
+        public boolean run(double elapsedTime) {
+            // Keep the intake deposit on until the 2 seconds are over
+            if(elapsedTime <= 2) {
+                intake.setPower(INTAKE_DEPOSIT);
+                return true;
+            }
+            // Turn off deposit after 2 seconds and then end action
+            intake.setPower(INTAKE_OFF);
+            return false;
         }
     }
 
@@ -67,7 +86,9 @@ public class CompetitionAuto extends BaseOpMode {
         trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-45))
                 .splineToLinearHeading(new Pose2d(50, 50, Math.toRadians(45)), Math.toRadians(-45))
-                .stopAndAdd(new LiftArm())
+                .stopAndAdd(new MoveArm(ARM_SCORE_SAMPLE_IN_LOW))
+                .stopAndAdd(new ScoreSample())
+                .stopAndAdd(new MoveArm(ARM_CLEAR_BARRIER))
                 .setTangent(Math.toRadians(-90))
                 .splineToSplineHeading(new Pose2d(48,12, Math.toRadians(180)), Math.toRadians(180))
                 .splineToSplineHeading(new Pose2d(28,12, Math.toRadians(180)), Math.toRadians(180))
