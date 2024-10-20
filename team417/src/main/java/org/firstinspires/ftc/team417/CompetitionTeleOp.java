@@ -92,7 +92,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            // TODO: Make an option for field-centric driving
             controlDrivebaseWithGamepads(true, true);
 
             controlMechanismsWithGamepads();
