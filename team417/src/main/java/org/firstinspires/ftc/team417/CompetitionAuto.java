@@ -33,7 +33,7 @@ public class CompetitionAuto extends BaseOpMode {
         // as soon as the Start button is pressed!
 
         // Position relative to basket, far is away from the basket vice versa
-
+        boolean isFar;
 
         trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-45))
