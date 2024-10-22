@@ -23,7 +23,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 @Config
 public class CompetitionTeleOp extends BaseOpMode {
     private double speedMultiplier = 1;
-    public DcMotor armMotor;
+    public DcMotorEx armMotor;
     public CRServo intake;
     public Servo wrist;
     public MecanumDrive drive;
@@ -77,6 +77,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     /* A number in degrees that the triggers can adjust the arm position by */
     final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
+    /** @noinspection ConstantValue*/
     /* Variables that are used to set the arm to a specific position */
     double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
@@ -118,12 +119,12 @@ public class CompetitionTeleOp extends BaseOpMode {
         startHeading = startingPose.heading.log();
 
         if (hasMechanisms) {
-            armMotor = hardwareMap.get(DcMotor.class, "arm");
+            armMotor = hardwareMap.get(DcMotorEx.class, "arm");
             intake = hardwareMap.get(CRServo.class, "intake");
             wrist = hardwareMap.get(Servo.class, "wrist");
 
             /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
-            ((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
+            armMotor.setCurrentAlert(5, CurrentUnit.AMPS);
 
             /* Before starting the armMotor. We'll make sure the TargetPosition is set to 0.
         Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
@@ -170,6 +171,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             rot = gamepad1.right_stick_x;
         }
 
+        // Press the D-Pad left button ONCE (do not hold)
         if (gamepad1.dpad_left) {
             driveAssistHanging();
         }
@@ -276,7 +278,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
             armMotor.setTargetPosition((int) (armPosition + armPositionFudgeFactor));
 
-            ((DcMotorEx) armMotor).setVelocity(2100);
+            armMotor.setVelocity(2100);
             armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
     }
@@ -292,23 +294,21 @@ public class CompetitionTeleOp extends BaseOpMode {
         intake.setPower(INTAKE_OFF);
         wrist.setPosition(WRIST_FOLDED_IN);
 
+        armMotor.setVelocity(2100);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
         // wait for the arm to reach the position
-        while (armMotor.isBusy()) {
-            // wait until the arm finishes its movement
-            ((DcMotorEx) armMotor).setVelocity(2100);
-            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
+        while (true) if (!armMotor.isBusy()) break;
 
         // action of dpad right button on gamepad 2
         armMotor.setTargetPosition((int) (ARM_SCORE_SPECIMEN));
         wrist.setPosition(WRIST_FOLDED_IN);
 
+        armMotor.setVelocity(2100);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
         // wait for the arm to reach the position
-        while (armMotor.isBusy()) {
-            // wait until the arm finishes its movement
-            ((DcMotorEx) armMotor).setVelocity(2100);
-            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
+        while (true) if (!armMotor.isBusy()) break;
 
         try {
             Thread.sleep(500);
@@ -316,7 +316,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             throw new RuntimeException(e);
         }
 
-        // move backward while pressing dpad_down logic
+        // move backward while pressing (dpad_down logic)
         drive.setDrivePowers(new PoseVelocity2d(
                 new Vector2d(-0.25, 0),  // move back at 0.25 power
                 0
@@ -339,24 +339,23 @@ public class CompetitionTeleOp extends BaseOpMode {
                 0
         ));
 
-        // wait for the arm movement to finish while moving backward
-        while (armMotor.isBusy()) {
-            // keep moving backward until the arm finishes its movement
-            ((DcMotorEx) armMotor).setVelocity(2100);
-            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
+        armMotor.setVelocity(2100);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // wait for the arm to reach the position
+        while (true) if (!armMotor.isBusy()) break;
 
         // once that's over then action of dpad left gamepad 2
-        armMotor.setTargetPosition((int) (ARM_COLLAPSED_INTO_ROBOT));
+        // noinspection ConstantValue
+        armMotor.setTargetPosition((int) ARM_COLLAPSED_INTO_ROBOT);
         intake.setPower(INTAKE_OFF);
         wrist.setPosition(WRIST_FOLDED_IN);
 
-        // wait for the arm to fold in
-        while (armMotor.isBusy()) {
-            // wait until the arm finishes folding in
-            ((DcMotorEx) armMotor).setVelocity(2100);
-            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
+        armMotor.setVelocity(2100);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // wait for the arm to reach the position
+        while (true) if (!armMotor.isBusy()) break;
 
         // stop wheels
         drive.setDrivePowers(new PoseVelocity2d(
@@ -371,7 +370,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         telemetry.addData("Speed Multiplier", speedMultiplier);
 
         /* Check to see if our arm is over the current limit, and report via telemetry. */
-        if (((DcMotorEx) armMotor).isOverCurrent()) {
+        if (armMotor.isOverCurrent()) {
             telemetry.addLine("MOTOR EXCEEDED CURRENT LIMIT!");
         }
 
