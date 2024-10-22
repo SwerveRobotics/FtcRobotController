@@ -91,7 +91,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            controlDrivebaseWithGamepads(true, true);
+            controlDrivebaseWithGamepads(true, false);
 
             controlMechanismsWithGamepads();
 
