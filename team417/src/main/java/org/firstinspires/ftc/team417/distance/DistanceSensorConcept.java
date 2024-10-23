@@ -3,9 +3,7 @@ package org.firstinspires.ftc.team417.distance;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.team417.CompetitionTeleOp;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
@@ -13,7 +11,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 @TeleOp(name = "Distance", group = "Concept")
 @Config
 public class DistanceSensorConcept extends CompetitionTeleOp {
-    DistanceSensor distanceSensor;
+    UltrasoundDistanceSensor distanceSensor;
 
     double x = -6.75;
 
@@ -26,7 +24,7 @@ public class DistanceSensorConcept extends CompetitionTeleOp {
         // Initialize the hardware and make the robot ready
         initializeHardware();
 
-        distanceSensor = hardwareMap.get(DistanceSensor.class, "distanceLeftFront");
+        distanceSensor = hardwareMap.get(UltrasoundDistanceSensor.class, "ultraSensor");
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
@@ -54,6 +52,11 @@ public class DistanceSensorConcept extends CompetitionTeleOp {
     }
 
     public void senseDistance() {
+        double distance = distanceSensor.getDistance();
+        telemetry.addData("Raw distance", distance);
+    }
+
+    public void calculateDistance() {
         double heading = drive.opticalTracker.getPosition().h;
 
         double sensorOffset = theta;
@@ -62,7 +65,7 @@ public class DistanceSensorConcept extends CompetitionTeleOp {
 
         telemetry.addData("Heading (deg)", Math.toDegrees(heading));
 
-        double distance = distanceSensor.getDistance(DistanceUnit.INCH);
+        double distance = distanceSensor.getDistance();
 
         telemetry.addData("Raw distance (in)", distance);
 
