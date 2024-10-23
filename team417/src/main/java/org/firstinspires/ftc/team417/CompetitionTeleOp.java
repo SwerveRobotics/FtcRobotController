@@ -172,7 +172,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         }
 
         // Press the D-Pad left button ONCE (do not hold)
-        if (gamepad1.dpad_left) {
+        if (gamepad1.dpad_up) {
             driveAssistHanging();
         }
 
@@ -298,7 +298,10 @@ public class CompetitionTeleOp extends BaseOpMode {
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position
-        while (true) if (!armMotor.isBusy()) break;
+        while (armMotor.isBusy()) {
+            if (!opModeIsActive())
+                break;
+        }
 
         // action of dpad right button on gamepad 2
         armMotor.setTargetPosition((int) (ARM_SCORE_SPECIMEN));
@@ -308,7 +311,10 @@ public class CompetitionTeleOp extends BaseOpMode {
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position
-        while (true) if (!armMotor.isBusy()) break;
+        while (armMotor.isBusy()) {
+            if (!opModeIsActive())
+                break;
+        }
 
         try {
             Thread.sleep(500);
@@ -343,7 +349,10 @@ public class CompetitionTeleOp extends BaseOpMode {
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position
-        while (true) if (!armMotor.isBusy()) break;
+        while (armMotor.isBusy()) {
+            if (!opModeIsActive())
+                break;
+        }
 
         // once that's over then action of dpad left gamepad 2
         // noinspection ConstantValue
@@ -355,7 +364,10 @@ public class CompetitionTeleOp extends BaseOpMode {
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position
-        while (true) if (!armMotor.isBusy()) break;
+        while (armMotor.isBusy()) {
+            if (!opModeIsActive())
+                break;
+        }
 
         // stop wheels
         drive.setDrivePowers(new PoseVelocity2d(
