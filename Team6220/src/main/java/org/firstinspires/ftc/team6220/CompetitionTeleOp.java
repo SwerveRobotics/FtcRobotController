@@ -29,7 +29,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     private DcMotorEx slidesMotor = null;
     private CRServo intakeCRServo = null;
     private Servo dumperServo = null;
-    private Servo armElbowServo = null;
+    private CRServo armElbowServo = null;
     private NormalizedColorSensor colorSensor = null;
     private AllianceColor allianceColor;
 
@@ -39,31 +39,31 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         allianceColor = AllianceColor.RED;
 
-        colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
+        //colorSensor = hardwareMap.get(NormalizedColorSensor.class, "sensor_color");
 
-        colorSensor.setGain(Constants.COLOR_SENSOR_GAIN);
+        //colorSensor.setGain(Constants.COLOR_SENSOR_GAIN);
 
         armBaseMotor = hardwareMap.get(DcMotorEx.class,"armBaseMotor");
-        slidesMotor = hardwareMap.get(DcMotorEx.class,"slidesMotor");
+        //slidesMotor = hardwareMap.get(DcMotorEx.class,"slidesMotor");
         intakeCRServo = hardwareMap.get(CRServo.class,"intakeServo");
-        dumperServo = hardwareMap.get(Servo.class,"dumperServo");
-        armElbowServo = hardwareMap.get(Servo.class,"armElbowServo");
+        //dumperServo = hardwareMap.get(Servo.class,"dumperServo");
+        armElbowServo = hardwareMap.get(CRServo.class,"armElbowServo");
 
         armBaseMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        slidesMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        //slidesMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
         armBaseMotor.setCurrentAlert(5, CurrentUnit.AMPS);
-        slidesMotor.setCurrentAlert(5, CurrentUnit.AMPS);
+        //slidesMotor.setCurrentAlert(5, CurrentUnit.AMPS);
 
         armBaseMotor.setTargetPosition(0);
-        slidesMotor.setTargetPosition(0);
+        //slidesMotor.setTargetPosition(0);
         armBaseMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        slidesMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        //slidesMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         armBaseMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        //slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
         armBaseMotor.setVelocity(Constants.ARM_BASE_MOTOR_VELOCITY);
-        slidesMotor.setVelocity(Constants.SLIDES_MOTOR_VELOCITY);
+        //slidesMotor.setVelocity(Constants.SLIDES_MOTOR_VELOCITY);
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
@@ -73,22 +73,22 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         while (opModeIsActive()) {
             telemetry.addLine("Running TeleOp!");
-            telemetry.addLine("red: " + colorSensor.getNormalizedColors().red);
-            telemetry.addLine("blue: " + colorSensor.getNormalizedColors().blue);
+            //telemetry.addLine("red: " + colorSensor.getNormalizedColors().red);
+            //telemetry.addLine("blue: " + colorSensor.getNormalizedColors().blue);
 
-            if (isHeldSampleInvalid(allianceColor, colorSensor)) {
+            /*if (isHeldSampleInvalid(allianceColor, colorSensor)) {
                 telemetry.addLine("WEEWOO WEEWOO! EJECT IMMEDIATELY");
-            }
+            }*/
 
             telemetry.update();
 
             controls.update();
 
-            /*armBaseMotor.setTargetPosition(controls.getArmBaseMotorPosition());
-            slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
+            armBaseMotor.setTargetPosition(controls.getArmBaseMotorPosition());
+            //slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
             intakeCRServo.setPower(controls.getIntakeServoPower());
-            dumperServo.setPosition(controls.getDumperServoPosition());
-            armElbowServo.setPosition(controls.getArmElbowServoPosition()); */
+            //dumperServo.setPosition(controls.getDumperServoPosition());
+            armElbowServo.setPower(controls.getArmElbowServoPosition());
 
             // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(
