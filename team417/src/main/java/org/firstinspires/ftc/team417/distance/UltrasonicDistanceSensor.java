@@ -6,34 +6,37 @@ import com.qualcomm.robotcore.hardware.I2cDeviceSynchSimple;
 import com.qualcomm.robotcore.hardware.configuration.annotations.DeviceProperties;
 import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
 
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+
 @I2cDeviceType()
-@DeviceProperties(name = "QWIIC Ultrasonic Distance Sensor", description = "Sparkfun Ultrasonic Distance Sensor", xmlTag = "QWIIC_ULTRASONIC_DISTANCE_SENSOR")
-public class UltrasoundDistanceSensor extends I2cDeviceSynchDevice<I2cDeviceSynchSimple> {
+@DeviceProperties(name = "SparkFun Ultrasonic Distance Sensor", description = "QWIIC Ultrasonic Distance Sensor TCT40", xmlTag = "QWIIC_ULTRASONIC_DISTANCE_SENSOR")
+public class UltrasonicDistanceSensor extends I2cDeviceSynchDevice<I2cDeviceSynchSimple> {
     final int TRIGGER_AND_READ_REGISTER = 0x01;
 
-    public int getDistance() {
+    public double getDistance(DistanceUnit distanceUnit) {
         byte[] rawData = deviceClient.read(TRIGGER_AND_READ_REGISTER, 2);
-        return ((rawData[0] & 0xff) << 8) | (rawData[1] & 0xff);
+        int distance = ((rawData[0] & 0xff) << 8) | (rawData[1] & 0xff);
+        return distanceUnit.fromUnit(DistanceUnit.MM, distance);
     }
 
     @Override
     protected boolean doInitialize() {
-        return false;
+        return true;
     }
 
     @Override
     public Manufacturer getManufacturer() {
-        return null;
+        return Manufacturer.SparkFun;
     }
 
     @Override
     public String getDeviceName() {
-        return "QWIIC Ultrasonic Distance Sensor";
+        return "SparkFun Ultrasonic Distance Sensor";
     }
 
     private final static I2cAddr ADDRESS_I2C_DEFAULT = I2cAddr.create7bit(0x2F);
 
-    public UltrasoundDistanceSensor(I2cDeviceSynchSimple deviceClient, boolean deviceClientIsOwned) {
+    public UltrasonicDistanceSensor(I2cDeviceSynchSimple deviceClient, boolean deviceClientIsOwned) {
         super(deviceClient, deviceClientIsOwned);
 
         this.deviceClient.setI2cAddress(ADDRESS_I2C_DEFAULT);
