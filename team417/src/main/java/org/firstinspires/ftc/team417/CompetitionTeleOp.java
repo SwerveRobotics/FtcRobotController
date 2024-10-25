@@ -19,7 +19,8 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 @Config
 public class CompetitionTeleOp extends BaseOpMode {
     private double speedMultiplier = 1;
-    boolean curve = false;
+    boolean curve = true;
+    boolean fieldCentered = false;
     MecanumDrive drive;
 
     public double startHeading;
@@ -47,7 +48,9 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            controlDrivebaseWithGamepads(true, false);
+            toggleFieldCentricity();
+
+            controlDrivebaseWithGamepads(curve, fieldCentered);
 
             controlMechanismsWithGamepads();
 
@@ -316,9 +319,25 @@ public class CompetitionTeleOp extends BaseOpMode {
         ));
     }
 
+    boolean startWasPressed = false;
+    boolean backWasPressed = false;
+    public void toggleFieldCentricity() {
+        if (!startWasPressed && gamepad1.start) {
+            fieldCentered = !fieldCentered;
+        }
+        startWasPressed = gamepad1.start;
+
+        if (!backWasPressed && gamepad1.back) {
+            drive.pose = new Pose2d(0, 0, 0);
+        }
+        backWasPressed = gamepad1.back;
+    }
+
     public void telemeterData() {
         telemetry.addLine("Running TeleOp!");
         telemetry.addData("Kinematic Type", kinematicType);
+        telemetry.addData("Stick Curve On", curve);
+        telemetry.addData("Field-Centric", fieldCentered);
         telemetry.addData("Speed Multiplier", speedMultiplier);
 
         /* Check to see if our arm is over the current limit, and report via telemetry. */

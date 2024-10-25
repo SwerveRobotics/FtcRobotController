@@ -29,9 +29,11 @@ public class CompetitionAuto extends BaseOpMode {
     class MoveArm extends RobotAction {
 
         double targetPosition;
+        double wristPosition;
 
-        MoveArm(double targetPosition) {
+        MoveArm(double targetPosition, double wristPosition) {
             this.targetPosition = targetPosition;
+            this.wristPosition = wristPosition;
         }
         //ARM_SCORE_SAMPLE_IN_LOW
 
@@ -60,7 +62,7 @@ public class CompetitionAuto extends BaseOpMode {
             armMotor.setTargetPosition((int) (targetPosition));
             armMotor.setVelocity(ARM_VELOCITY);
             armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            wrist.setPosition(WRIST_FOLDED_OUT);
+            wrist.setPosition(wristPosition);
             return true;
         }
     }
@@ -98,9 +100,10 @@ public class CompetitionAuto extends BaseOpMode {
         trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-45))
                 .splineToLinearHeading(new Pose2d(50, 50, Math.toRadians(45)), Math.toRadians(-45))
-                .stopAndAdd(new MoveArm(ARM_SCORE_SAMPLE_IN_LOW))
+                .stopAndAdd(new MoveArm(ARM_SCORE_SAMPLE_IN_LOW, WRIST_FOLDED_OUT))
                 .stopAndAdd(new ScoreSample())
-                .afterDisp(24, new MoveArm(ARM_CLEAR_BARRIER))
+                .afterDisp(24, new MoveArm(ARM_COLLAPSED_INTO_ROBOT, WRIST_FOLDED_IN))
+
                 .setTangent(Math.toRadians(-90))
                 .splineToSplineHeading(new Pose2d(48, 12, Math.toRadians(180)), Math.toRadians(180))
                 .splineToSplineHeading(new Pose2d(28, 12, Math.toRadians(180)), Math.toRadians(180))
