@@ -48,6 +48,8 @@ public class CompetitionAuto extends BaseOpMode {
                 return false;
             // Arm isn't withjn range so we keep calling
             armMotor.setTargetPosition((int) (targetPosition));
+            armMotor.setVelocity(ARM_VELOCITY);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             wrist.setPosition(WRIST_FOLDED_OUT);
             return true;
         }

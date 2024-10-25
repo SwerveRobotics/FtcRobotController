@@ -6,12 +6,8 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
@@ -45,7 +41,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
-        initializeHardware();
+        prepareRobot();
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
@@ -70,21 +66,21 @@ public class CompetitionTeleOp extends BaseOpMode {
         }
     }
 
-    public void initializeHardware() {
-        initializeHardware(new Pose2d(0, 0, Math.PI / 2));
+    public void prepareRobot() {
+        prepareRobot(new Pose2d(0, 0, Math.PI / 2));
     }
 
-    public void initializeHardware(Pose2d startingPose) {
+    public void prepareRobot(Pose2d startingPose) {
         drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
+        initializeHardware();
+
         startHeading = startingPose.heading.log();
 
-        initializeHardware();
-        setPosition(WRIST_FOLDED_IN);
-
+        wrist.setPosition(WRIST_FOLDED_IN);
 
         /* Send telemetry message to signify robot waiting */
         telemetry.addLine("Robot Ready.");
-        telemetry.update();
+        telemetry.update(); 
     }
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
@@ -222,7 +218,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
             armMotor.setTargetPosition((int) (armPosition + armPositionFudgeFactor));
 
-            armMotor.setVelocity(2100);
+            armMotor.setVelocity(ARM_VELOCITY);
             armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
     }
@@ -238,7 +234,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         intake.setPower(INTAKE_OFF);
         wrist.setPosition(WRIST_FOLDED_IN);
 
-        armMotor.setVelocity(2100);
+        armMotor.setVelocity(ARM_VELOCITY);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position
@@ -251,7 +247,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         armMotor.setTargetPosition((int) (ARM_SCORE_SPECIMEN));
         wrist.setPosition(WRIST_FOLDED_IN);
 
-        armMotor.setVelocity(2100);
+        armMotor.setVelocity(ARM_VELOCITY);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position
@@ -289,7 +285,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 0
         ));
 
-        armMotor.setVelocity(2100);
+        armMotor.setVelocity(ARM_VELOCITY);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position
@@ -304,7 +300,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         intake.setPower(INTAKE_OFF);
         wrist.setPosition(WRIST_FOLDED_IN);
 
-        armMotor.setVelocity(2100);
+        armMotor.setVelocity(ARM_VELOCITY);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position

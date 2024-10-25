@@ -15,17 +15,20 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  * Autonomous logic. All TeleOp and Autonomous classes should derive from this class.
  */
 abstract public class BaseOpMode extends LinearOpMode {
-    /* This constant is the number of encoder ticks for each degree of rotation of the arm.
-   To find this, we first need to consider the total gear reduction powering our arm.
-   First, we have an external 20t:100t (5:1) reduction created by two spur gears.
-   But we also have an internal gear reduction in our motor.
-   The motor we use for this arm is a 117RPM Yellow Jacket. Which has an internal gear
-   reduction of ~50.9:1. (more precisely it is 250047/4913:1)
-   We can multiply these two ratios together to get our final reduction of ~254.47:1.
-   The motor's encoder counts 28 times per rotation. So in total you should see about 7125.16
-   counts per rotation of the arm. We divide that by 360 to get the counts per degree. */
-    final double ARM_TICKS_PER_DEGREE = 19.7924893140647; //exact fraction is (194481/9826)
+    public double startHeading;
 
+    final double ARM_VELOCITY = 2100; // The ticks-per-second constant that Go-Bilda gave us
+
+    /* This constant is the number of encoder ticks for each degree of rotation of the arm.
+    To find this, we first need to consider the total gear reduction powering our arm.
+    First, we have an external 20t:100t (5:1) reduction created by two spur gears.
+    But we also have an internal gear reduction in our motor.
+    The motor we use for this arm is a 117RPM Yellow Jacket. Which has an internal gear
+    reduction of ~50.9:1. (more precisely it is 250047/4913:1)
+    We can multiply these two ratios together to get our final reduction of ~254.47:1.
+    The motor's encoder counts 28 times per rotation. So in total you should see about 7125.16
+    counts per rotation of the arm. We divide that by 360 to get the counts per degree. */
+    final double ARM_TICKS_PER_DEGREE = 19.7924893140647; //exact fraction is (194481/9826)
 
     /* These constants hold the position that the arm is commanded to run to.
     These are relative to where the arm was located when you start the OpMode. So make sure the
@@ -41,7 +44,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     final double ARM_COLLAPSED_INTO_ROBOT = 0;
     final double ARM_COLLECT = 255 * ARM_TICKS_PER_DEGREE;
     final double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
-    final double ARM_SCORE_SPECIMEN = 160 * ARM_TICKS_PER_DEGREE;
+    final double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
     final double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
     final double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
     final double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
@@ -52,11 +55,19 @@ abstract public class BaseOpMode extends LinearOpMode {
     final double INTAKE_DEPOSIT = 0.5;
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
-    final double WRIST_FOLDED_IN = 1;
-    final double WRIST_FOLDED_OUT = 0.61;
+    final double WRIST_FOLDED_IN = 0.676;
+    final double WRIST_FOLDED_OUT = 0.335;
+
+    /* A number in degrees that the triggers can adjust the arm position by */
+    final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
+
+    /** @noinspection ConstantValue*/
+    /* Variables that are used to set the arm to a specific position */
+    double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
+    double armPositionFudgeFactor;
 
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
-    DcMotor armMotor;
+    DcMotorEx armMotor;
     CRServo intake;
     Servo wrist;
 
@@ -66,14 +77,12 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static final KinematicType kinematicType = KinematicType.MECANUM;
 
     public void initializeHardware() {
-
-        armMotor = hardwareMap.get(DcMotor.class, "arm");
+        armMotor = hardwareMap.get(DcMotorEx.class, "arm");
         intake = hardwareMap.get(CRServo.class, "intake");
         wrist = hardwareMap.get(Servo.class, "wrist");
 
-
         /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
-        ((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
+        armMotor.setCurrentAlert(5, CurrentUnit.AMPS);
 
         /* Before starting the armMotor. We'll make sure the TargetPosition is set to 0.
         Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
