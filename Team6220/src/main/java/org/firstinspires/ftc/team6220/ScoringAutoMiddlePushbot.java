@@ -15,8 +15,8 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@Autonomous(name="ScoringAutoMiddle", group="Competition", preselectTeleOp="CompetitionTeleOp")
-public class ScoringAutoMIddlePushbot extends BaseOpMode {
+@Autonomous(name="ScoringAutoMiddlePushbot", group="Competition", preselectTeleOp="CompetitionTeleOp")
+public class ScoringAutoMiddlePushbot extends BaseOpMode {
 
 
     @Override
@@ -27,13 +27,18 @@ public class ScoringAutoMIddlePushbot extends BaseOpMode {
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, middlePose);
 
-        Action middleScoringTrajectory     = drive.actionBuilder(middlePose)
-                .splineTo(new Vector2d(45, 15), (3*Math.PI)/2)
-                .endTrajectory()
-                .setTangent(Math.PI / 4)
-                .splineToLinearHeading(new Pose2d(50, 52, Math.toRadians(225)), (Math.PI)/4) //scored a sample
+        Action middleScoringTrajectory = drive.actionBuilder(middlePose)
+                .strafeTo(new Vector2d(55, 60))
+//                .strafeTo(new Vector2d(36, 60))
+//                .endTrajectory()
+//                .setTangent(Math.toRadians(-90))
+//                .splineTo(new Vector2d(36, 12), Math.toRadians(-90))
+////                .strafeTo(new Vector2d(48, 12))
+//                .splineToLinearHeading(new Pose2d(48, 12, -130), -130)
+//                .endTrajectory()
+//                .setTangent(Math.toRadians(-130))
+//                .splineTo(new Vector2d(55, 50), Math.toRadians(-130))
                 .build();
-
         Action trajectoryAction = middleScoringTrajectory;
 
         // Get a preview of the trajectory's path:
