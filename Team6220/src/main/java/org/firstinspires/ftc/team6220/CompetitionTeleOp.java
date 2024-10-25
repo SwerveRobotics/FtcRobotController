@@ -8,7 +8,6 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
@@ -29,7 +28,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     private DcMotorEx slidesMotor = null;
     private CRServo intakeCRServo = null;
     private Servo dumperServo = null;
-    private CRServo armElbowServo = null;
+    private CRServo armElbowCRServo = null;
     private NormalizedColorSensor colorSensor = null;
     private AllianceColor allianceColor;
 
@@ -47,7 +46,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         //slidesMotor = hardwareMap.get(DcMotorEx.class,"slidesMotor");
         intakeCRServo = hardwareMap.get(CRServo.class,"intakeServo");
         //dumperServo = hardwareMap.get(Servo.class,"dumperServo");
-        armElbowServo = hardwareMap.get(CRServo.class,"armElbowServo");
+        armElbowCRServo = hardwareMap.get(CRServo.class,"armElbowServo");
 
         armBaseMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         //slidesMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
@@ -55,14 +54,14 @@ public class CompetitionTeleOp extends BaseOpMode {
         armBaseMotor.setCurrentAlert(5, CurrentUnit.AMPS);
         //slidesMotor.setCurrentAlert(5, CurrentUnit.AMPS);
 
+        armBaseMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        //slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
         armBaseMotor.setTargetPosition(0);
         //slidesMotor.setTargetPosition(0);
         armBaseMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         //slidesMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        armBaseMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        //slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
 
-        armBaseMotor.setVelocity(Constants.ARM_BASE_MOTOR_VELOCITY);
+        //armBaseMotor.setVelocity(Constants.ARM_BASE_MOTOR_VELOCITY);
         //slidesMotor.setVelocity(Constants.SLIDES_MOTOR_VELOCITY);
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
@@ -84,11 +83,13 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             controls.update();
 
+            armBaseMotor.setPower(1.0);
             armBaseMotor.setTargetPosition(controls.getArmBaseMotorPosition());
+            telemetry.addLine("Target Position: " + controls.getArmBaseMotorPosition());
             //slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
             intakeCRServo.setPower(controls.getIntakeServoPower());
             //dumperServo.setPosition(controls.getDumperServoPosition());
-            armElbowServo.setPower(controls.getArmElbowServoPosition());
+            armElbowCRServo.setPower(controls.getArmElbowServoPosition());
 
             // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(

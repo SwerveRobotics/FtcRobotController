@@ -6,8 +6,8 @@ import com.acmerobotics.dashboard.config.Config;
 public abstract class Constants {
     public static double ARM_ELBOW_SERVO_PRESET_POSITION_OVER_BARRIER = 30;
     public static double ARM_ELBOW_SERVO_PRESET_POSITION_GROUND = 0;
-    public static int ARM_BASE_MOTOR_POSITION_GROUND = 0;
-    public static int ARM_BASE_MOTOR_POSITION_FOLD = 40;
+    public static int ARM_BASE_MOTOR_POSITION_GROUND = -1680;
+    public static int ARM_BASE_MOTOR_POSITION_FOLD = 0;
     public static int SLIDES_MOTOR_GROUND_POSITION = 0;
     public static int SLIDES_MOTOR_POSITION_ONE = 20;
     public static int SLIDES_MOTOR_POSITION_TWO = 40;
