@@ -7,4 +7,5 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
  * Autonomous logic. All TeleOp and Autonomous classes should derive from this class.
  */
 abstract public class BaseOpMode extends LinearOpMode {
+
 }
