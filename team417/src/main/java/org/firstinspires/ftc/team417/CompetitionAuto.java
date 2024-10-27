@@ -26,38 +26,50 @@ public class CompetitionAuto extends BaseOpMode {
     final double ROBOT_WIDTH = 16.50;
 
     // This class contains the function to lift the arm
-    class MoveArm extends RobotAction{
+    class MoveArm extends RobotAction {
 
         double targetPosition;
-        MoveArm (double targetPosition) {
+
+        MoveArm(double targetPosition) {
             this.targetPosition = targetPosition;
         }
         //ARM_SCORE_SAMPLE_IN_LOW
 
+        final double EPSILON = 3.00;
+
         @Override
         public boolean run(double elapsedTime) {
-            double error = Math.abs(armMotor.getTargetPosition() - targetPosition);
-            final double EPSILON = 3.00;
+            double error = Math.abs(armMotor.getCurrentPosition() - targetPosition);
+
+            telemetry.addLine("Moving Arm!");
+            telemetry.addData("Target Position", armMotor.getTargetPosition());
+            telemetry.addData("Current Position", armMotor.getCurrentPosition());
+            telemetry.addData("Error", error);
+            telemetry.addData("Within epsilon", error < EPSILON);
 
             // Prevents hanging from running on wily works
-            if(WilyWorks.isSimulating){
+            if (WilyWorks.isSimulating) {
                 return false;
             }
+
             if (error < EPSILON)
                 // Arm is within range so arm stops
                 return false;
-            // Arm isn't withjn range so we keep calling
+
+            // Arm isn't within range so we keep calling
             armMotor.setTargetPosition((int) (targetPosition));
+            armMotor.setVelocity(ARM_VELOCITY);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             wrist.setPosition(WRIST_FOLDED_OUT);
             return true;
         }
     }
 
-    class ScoreSample extends RobotAction{
+    class ScoreSample extends RobotAction {
         @Override
         public boolean run(double elapsedTime) {
             // Keep the intake deposit on until the 2 seconds are over
-            if(elapsedTime <= 2) {
+            if (elapsedTime <= 2) {
                 intake.setPower(INTAKE_DEPOSIT);
                 return true;
             }
@@ -88,10 +100,10 @@ public class CompetitionAuto extends BaseOpMode {
                 .splineToLinearHeading(new Pose2d(50, 50, Math.toRadians(45)), Math.toRadians(-45))
                 .stopAndAdd(new MoveArm(ARM_SCORE_SAMPLE_IN_LOW))
                 .stopAndAdd(new ScoreSample())
-                .stopAndAdd(new MoveArm(ARM_CLEAR_BARRIER))
+                .afterDisp(24, new MoveArm(ARM_CLEAR_BARRIER))
                 .setTangent(Math.toRadians(-90))
-                .splineToSplineHeading(new Pose2d(48,12, Math.toRadians(180)), Math.toRadians(180))
-                .splineToSplineHeading(new Pose2d(28,12, Math.toRadians(180)), Math.toRadians(180))
+                .splineToSplineHeading(new Pose2d(48, 12, Math.toRadians(180)), Math.toRadians(180))
+                .splineToSplineHeading(new Pose2d(28, 12, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
 
@@ -113,7 +125,6 @@ public class CompetitionAuto extends BaseOpMode {
         while (opModeIsActive() && more) {
             telemetry.addLine("Running Auto!");
             telemetry.addData("Kinematic Type", kinematicType);
-            telemetry.update();
 
 
             // 'packet' is the object used to send data to FTC Dashboard:
@@ -129,6 +140,7 @@ public class CompetitionAuto extends BaseOpMode {
             // drawing up on the field once the robot is done:
             if (more)
                 MecanumDrive.sendTelemetryPacket(packet);
+            telemetry.update();
         }
     }
 }
