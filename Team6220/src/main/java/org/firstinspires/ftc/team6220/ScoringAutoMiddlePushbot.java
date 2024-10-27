@@ -29,6 +29,17 @@ public class ScoringAutoMiddlePushbot extends BaseOpMode {
 
         Action middleScoringTrajectory = drive.actionBuilder(middlePose)
                 .strafeTo(new Vector2d(55, 60))
+                .endTrajectory()
+                .setTangent(Math.toRadians(-180))
+                .splineToLinearHeading(new Pose2d(45, 10, Math.toRadians(-90)),  Math.toRadians(-40))
+                .endTrajectory()
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(55, 55, Math.toRadians(-140)),  Math.toRadians(40))
+                //.strafeTo(new Vector2d(35, 60))
+                //.strafeTo(new Vector2d(35, 15))
+                //.strafeTo(new Vector2d(45, 15))
+                //.splineToConstantHeading(new Vector2d(55, 60), Math.toRadians(0))
+
 //                .strafeTo(new Vector2d(36, 60))
 //                .endTrajectory()
 //                .setTangent(Math.toRadians(-90))
