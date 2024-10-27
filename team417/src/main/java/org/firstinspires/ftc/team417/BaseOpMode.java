@@ -5,10 +5,12 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 /**
  * This class contains all of the base logic that is shared between all of the TeleOp and
@@ -58,6 +60,10 @@ abstract public class BaseOpMode extends LinearOpMode {
     final double WRIST_FOLDED_IN = 0.676;
     final double WRIST_FOLDED_OUT = 0.335;
 
+    //position used to score specimens in auto
+    public final double Y_SCORE_POSE = 42.5;
+
+
     /* A number in degrees that the triggers can adjust the arm position by */
     final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
@@ -94,5 +100,52 @@ abstract public class BaseOpMode extends LinearOpMode {
         /* Make sure that the intake is off, and the wrist is folded in. */
         intake.setPower(INTAKE_OFF);
         wrist.setPosition(WRIST_FOLDED_IN);
+    }
+    // RC 17.50
+    // DEV 17.75
+    final double ROBOT_LENGTH = 17.50;
+    // RC 16.50
+    // DEV 18.50
+    final double ROBOT_WIDTH = 16.50;
+    class MoveArm extends RobotAction {
+
+        double targetPosition;
+        double wristPosition;
+
+        MoveArm(double targetPosition, double wristPosition) {
+            this.targetPosition = targetPosition;
+            this.wristPosition = wristPosition;
+        }
+        //ARM_SCORE_SAMPLE_IN_LOW
+
+        final double EPSILON = 3.00;
+
+        @Override
+        public boolean run(double elapsedTime) {
+            double error = Math.abs(armMotor.getCurrentPosition() - targetPosition);
+
+            telemetry.addLine("Moving Arm!");
+            telemetry.addData("Target Position", armMotor.getTargetPosition());
+            telemetry.addData("Current Position", armMotor.getCurrentPosition());
+            telemetry.addData("Error", error);
+            telemetry.addData("Within epsilon", error < EPSILON);
+
+            // Prevents hanging from running on wily works
+            if (WilyWorks.isSimulating) {
+                return false;
+            }
+
+            if (error < EPSILON) {
+                // Arm is within range so arm stops
+                return false;
+            }
+            // Arm isn't within range so we keep calling
+            armMotor.setTargetPosition((int) (targetPosition));
+            armMotor.setVelocity(ARM_VELOCITY);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            wrist.setPosition(wristPosition);
+            return true;
+        }
+
     }
 }
