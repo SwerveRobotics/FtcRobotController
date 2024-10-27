@@ -36,7 +36,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     /* Variables that are used to set the arm to a specific position */
     double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
-
+    boolean intakeEnabled = false;
     @Override
     public void runOpMode() {
         Pose2d beginPose = new Pose2d(0, 0, 0);
@@ -154,13 +154,60 @@ public class CompetitionTeleOp extends BaseOpMode {
             one cycle. Which can cause strange behavior. */
 
         // GamePad2 Arm Control
-        if (gamepad2.a) {
-            intake.setPower(INTAKE_COLLECT);
-        } else if (gamepad2.x) {
-            intake.setPower(INTAKE_OFF);
-        } else if (gamepad2.b) {
-            intake.setPower(INTAKE_DEPOSIT);
-        }
+//        double lastState = INTAKE_OFF;
+//
+//        if (gamepad2.a) {
+//            lastState = INTAKE_COLLECT;
+//            intake.setPower(INTAKE_COLLECT);
+//        } else if (gamepad2.x) {
+//            lastState = INTAKE_OFF;
+//            intake.setPower(INTAKE_OFF);
+//        } else if (gamepad2.b) {
+//            intake.setPower(INTAKE_DEPOSIT);
+//        } else if (!gamepad2.b) {
+//            intake.setPower(lastState);
+//        }
+//            double lastState = INTAKE_OFF;
+//            boolean isIntakeOff = false;
+//            if(gamepad2.a) {
+//                lastState = INTAKE_COLLECT;
+//                intake.setPower(INTAKE_COLLECT);
+//            }
+//            else if(gamepad2.x) {
+//                lastState = INTAKE_OFF;
+//                intake.setPower(INTAKE_OFF);
+//            } else if (gamepad2.b) {
+//                intake.setPower(INTAKE_DEPOSIT);
+//            } else if (!gamepad2.b){
+//                intake.setPower(lastState);
+//            }
+
+
+            // In the loop if 'a' is clicked intakeEnabled is set to true which will be stored to memory
+            if (gamepad2.right_bumper) {
+                intakeEnabled = true;
+            }
+            // In the loop if 'x' is clicked intakeEnabled is set to false which will be stored to memory
+            else if (gamepad2.x) {
+                intakeEnabled = false;
+            }
+
+            boolean reversed = gamepad2.b;
+
+            // When 'b' is HELD down, it will deposit
+            if (reversed) {
+                intake.setPower(INTAKE_DEPOSIT);
+            }
+            // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
+            else if(intakeEnabled) {
+                intake.setPower(INTAKE_COLLECT);
+            }
+            // When 'x' is clicked, it is TOGGLED, so it will turn off the intake until another input
+            else {
+                intake.setPower(INTAKE_OFF);
+            }
+
+
 
             /* Here we create a "fudge factor" for the arm position.
             This allows you to adjust (or "fudge") the arm position slightly with the gamepad triggers.
