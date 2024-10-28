@@ -7,7 +7,7 @@ public class ControlManager {
     private Gamepad gamepad1 = null;
     private Gamepad gamepad2 = null;
 
-    private int armBaseMotorPosition;
+    private int armBaseMotorPosition = Constants.ARM_BASE_MOTOR_POSITION_FOLD;
     private int slidesMotorPosition;
     private double intakeServoPower;
     private double dumperServoPosition;
@@ -32,12 +32,16 @@ public class ControlManager {
         if (gamepad2.y && !gamepad2.x) {
             armBaseMotorPosition = Constants.ARM_BASE_MOTOR_POSITION_FOLD;
         }
-        intakeServoPower = -gamepad2.right_stick_y;
+        intakeServoPower = -gamepad2.left_stick_y;
         if (gamepad2.dpad_down && !gamepad2.dpad_up) {
             slidesMotorPosition = Constants.SLIDES_MOTOR_GROUND_POSITION;
         }
         if (gamepad2.dpad_up && !gamepad2.dpad_down) {
             slidesMotorPosition = Constants.SLIDES_MOTOR_POSITION_ONE;
+        }
+        if (gamepad2.right_bumper && !gamepad2.left_bumper) {
+            armBaseMotorPosition = Constants.ARM_BASE_MOTOR_POSITION_SUB;
+
         }
     }
 
