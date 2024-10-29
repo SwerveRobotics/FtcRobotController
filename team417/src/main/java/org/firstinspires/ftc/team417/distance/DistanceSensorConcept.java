@@ -43,7 +43,7 @@ public class DistanceSensorConcept extends CompetitionTeleOp {
             telemetry.addData("X distance", calculateDistance(dL, h, leftInfo));
             telemetry.addData("Y distance", calculateDistance(dR, h, rightInfo));
 
-            controlDrivebaseWithGamepads();
+            controlDrivebaseWithGamepads(true, false);
 
             controlMechanismsWithGamepads();
 
