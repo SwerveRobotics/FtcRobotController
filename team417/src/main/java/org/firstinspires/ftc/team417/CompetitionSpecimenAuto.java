@@ -18,10 +18,14 @@ public class CompetitionSpecimenAuto extends BaseOpMode {
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), 0);
         MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
         initializeHardware();
+        RobotAction foldOutArm = new MoveArm(ARM_SCORE_SPECIMEN, WRIST_FOLDED_IN);
         Action trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-90))
+                .afterDisp(0, foldOutArm)
                 .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2), Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))
-                .afterDisp(0, new MoveArm(ARM_SCORE_SPECIMEN, WRIST_FOLDED_IN))
+                .stopAndAdd(new WaitAction(foldOutArm))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-60,60,Math.toRadians(-90)),Math.toRadians(90))
                 .build();
 
 

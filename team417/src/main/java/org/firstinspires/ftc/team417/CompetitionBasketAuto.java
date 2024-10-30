@@ -54,9 +54,10 @@ public class CompetitionBasketAuto extends BaseOpMode {
         Action trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-45))
                 .splineToLinearHeading(new Pose2d(50, 50, Math.toRadians(45)), Math.toRadians(-45))
+                .afterDisp(0, new MoveArm(ARM_COLLAPSED_INTO_ROBOT, WRIST_FOLDED_IN))
                 .stopAndAdd(new MoveArm(ARM_SCORE_SAMPLE_IN_LOW, WRIST_FOLDED_OUT))
                 .stopAndAdd(new ScoreSample())
-                .afterDisp(24, new MoveArm(ARM_COLLAPSED_INTO_ROBOT, WRIST_FOLDED_IN))
+
 
                 .setTangent(Math.toRadians(-90))
                 .splineToSplineHeading(new Pose2d(48, 12, Math.toRadians(180)), Math.toRadians(180))

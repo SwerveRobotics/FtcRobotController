@@ -44,7 +44,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     as far from the starting position, decrease it. */
 
     final double ARM_COLLAPSED_INTO_ROBOT = 0;
-    final double ARM_COLLECT = 255 * ARM_TICKS_PER_DEGREE;
+    final double ARM_COLLECT = 253.5 * ARM_TICKS_PER_DEGREE;
     final double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
     final double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
     final double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
@@ -146,6 +146,19 @@ abstract public class BaseOpMode extends LinearOpMode {
             wrist.setPosition(wristPosition);
             return true;
         }
-
     }
+    class WaitAction extends RobotAction {
+        RobotAction actionToWaitOn;
+        WaitAction(RobotAction actionToWaitOn) {
+            this.actionToWaitOn = actionToWaitOn;
+        }
+        @Override
+        public boolean run(double elapsedTime) {
+                return actionToWaitOn.isRunning();
+        }
+
+        }
+
+
 }
+
