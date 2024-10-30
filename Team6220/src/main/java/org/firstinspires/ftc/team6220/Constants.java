@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.team6220;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.roadrunner.Pose2d;
 
 @Config
 public abstract class Constants {
@@ -18,4 +19,7 @@ public abstract class Constants {
     public static final float[] BLUE_COLOR_SENSOR_RANGES = {0.025f, 1f};
     public static final float COLOR_SENSOR_GAIN = 3.8f;
     //public static final Pose2d BASKET_SCORING_POSE = new Pose2d()
+    public static final Pose2d MIDDLE_STARTING_POSE = new Pose2d(0, 60, (3*Math.PI)/2);
+    public static final Pose2d LEFT_STARTING_POSE = new Pose2d(-24, 60, (3*Math.PI)/2);
+    public static final Pose2d RIGHT_STARTING_POSE = new Pose2d(24, 60, (3*Math.PI)/2);
 }
