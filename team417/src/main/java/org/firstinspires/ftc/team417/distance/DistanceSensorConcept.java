@@ -8,6 +8,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.team417.CompetitionTeleOp;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
+import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 
 @TeleOp(name = "Distance", group = "Concept")
 @Config
