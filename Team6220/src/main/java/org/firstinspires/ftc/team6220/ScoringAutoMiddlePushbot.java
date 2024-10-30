@@ -22,7 +22,8 @@ public class ScoringAutoMiddlePushbot extends BaseOpMode {
     @Override
     public void runOpMode() {
 
-        Pose2d startingPose = Constants.MIDDLE_STARTING_POSE;
+        // overridden in subclasses, middle by default
+        Pose2d startingPose = getInitializationPose();
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
 
@@ -117,5 +118,9 @@ public class ScoringAutoMiddlePushbot extends BaseOpMode {
         if (enumClass != null) {
 
         }
+    }
+
+    protected Pose2d getInitializationPose() {
+        return Constants.MIDDLE_STARTING_POSE;
     }
 }
