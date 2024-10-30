@@ -31,9 +31,9 @@ public class WIPTextInputAuto extends BaseOpMode {
     @Override
     public void runOpMode() {
 
-        Pose2d middlePose = new Pose2d(0, 60, (3*Math.PI)/2);
-        Pose2d leftPose = new Pose2d(-24, 60, (3*Math.PI)/2);
-        Pose2d rightPose = new Pose2d(24, 60, (3*Math.PI)/2);
+        Pose2d middlePose = Constants.MIDDLE_STARTING_POSE;
+        Pose2d leftPose = Constants.LEFT_STARTING_POSE;
+        Pose2d rightPose = Constants.RIGHT_STARTING_POSE;
 
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, rightPose);

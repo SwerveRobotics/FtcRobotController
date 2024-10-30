@@ -22,12 +22,12 @@ public class ScoringAutoMiddlePushbot extends BaseOpMode {
     @Override
     public void runOpMode() {
 
-        Pose2d middlePose = new Pose2d(0, 60, (3*Math.PI)/2);
+        // overridden in subclasses, middle by default
+        Pose2d startingPose = getInitializationPose();
 
+        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
 
-        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, middlePose);
-
-        Action middleScoringTrajectory = drive.actionBuilder(middlePose)
+        Action middleScoringTrajectory = drive.actionBuilder(startingPose)
                 .strafeTo(new Vector2d(55, 60))
                 .endTrajectory()
                 .setTangent(Math.toRadians(-180))
@@ -118,5 +118,9 @@ public class ScoringAutoMiddlePushbot extends BaseOpMode {
         if (enumClass != null) {
 
         }
+    }
+
+    protected Pose2d getInitializationPose() {
+        return Constants.MIDDLE_STARTING_POSE;
     }
 }

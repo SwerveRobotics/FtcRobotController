@@ -22,7 +22,7 @@ public class ParkAutoLeft extends BaseOpMode {
     @Override
     public void runOpMode() {
 
-        Pose2d leftPose = new Pose2d(-24, 60, (3 * Math.PI) / 2);
+        Pose2d leftPose = Constants.LEFT_STARTING_POSE;
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, leftPose);
 
