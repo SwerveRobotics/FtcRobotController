@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Team417" type="AndroidRunConfigurationType" factoryName="Android App">
-    <module name="FtcRobotController.Team417.main" />
+    <module name="FTC-2024-2025.Team417.main" />
     <option name="DEPLOY" value="true" />
     <option name="DEPLOY_APK_FROM_BUNDLE" value="false" />
     <option name="DEPLOY_AS_INSTANT" value="false" />

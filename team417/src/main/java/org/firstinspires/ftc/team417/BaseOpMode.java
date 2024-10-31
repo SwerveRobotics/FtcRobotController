@@ -30,7 +30,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     We can multiply these two ratios together to get our final reduction of ~254.47:1.
     The motor's encoder counts 28 times per rotation. So in total you should see about 7125.16
     counts per rotation of the arm. We divide that by 360 to get the counts per degree. */
-    final double ARM_TICKS_PER_DEGREE = 19.7924893140647; //exact fraction is (194481/9826)
+    final static double ARM_TICKS_PER_DEGREE = 19.7924893140647; //exact fraction is (194481/9826)
 
     /* These constants hold the position that the arm is commanded to run to.
     These are relative to where the arm was located when you start the OpMode. So make sure the
@@ -43,33 +43,33 @@ abstract public class BaseOpMode extends LinearOpMode {
     If you'd like it to move further, increase that number. If you'd like it to not move
     as far from the starting position, decrease it. */
 
-    final double ARM_COLLAPSED_INTO_ROBOT = 0;
-    final double ARM_COLLECT = 253.5 * ARM_TICKS_PER_DEGREE;
-    final double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
-    final double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
-    final double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
-    final double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
-    final double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
+    final static double ARM_COLLAPSED_INTO_ROBOT = 0;
+    final static double ARM_COLLECT = 253.5 * ARM_TICKS_PER_DEGREE;
+    final static double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
+    final static double ARM_AUTO_REST_POSITION = 170 * ARM_TICKS_PER_DEGREE;
+    final static double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
+    final static double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
+    final static double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
+    final static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
 
     /* Variables to store the speed the intake servo should be set at to intake, and deposit game elements. */
-    final double INTAKE_COLLECT = -1.0;
-    final double INTAKE_OFF = 0.0;
-    final double INTAKE_DEPOSIT = 0.5;
+    final static double INTAKE_COLLECT = -1.0;
+    final static double INTAKE_OFF = 0.0;
+    final static double INTAKE_DEPOSIT = 0.5;
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
-    final double WRIST_FOLDED_IN = 0.676;
-    final double WRIST_FOLDED_OUT = 0.335;
+    final static double WRIST_FOLDED_IN = 0.676;
+    final static double WRIST_FOLDED_OUT = 0.335;
 
     //position used to score specimens in auto
-    public final double Y_SCORE_POSE = 42.5;
-
+    public final static double Y_SCORE_POSE = 42.5;
 
     /* A number in degrees that the triggers can adjust the arm position by */
-    final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
+    final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
     /** @noinspection ConstantValue*/
     /* Variables that are used to set the arm to a specific position */
-    double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
+    static double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
 
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
@@ -103,10 +103,10 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
     // RC 17.50
     // DEV 17.75
-    final double ROBOT_LENGTH = 17.50;
+    final static double ROBOT_LENGTH = 17.50;
     // RC 16.50
     // DEV 18.50
-    final double ROBOT_WIDTH = 16.50;
+    final static double ROBOT_WIDTH = 16.50;
     class MoveArm extends RobotAction {
 
         double targetPosition;
@@ -118,10 +118,12 @@ abstract public class BaseOpMode extends LinearOpMode {
         }
         //ARM_SCORE_SAMPLE_IN_LOW
 
-        final double EPSILON = 3.00;
+        final static double EPSILON = 3.00;
 
         @Override
         public boolean run(double elapsedTime) {
+            armPosition = armMotor.getCurrentPosition();
+
             double error = Math.abs(armMotor.getCurrentPosition() - targetPosition);
 
             telemetry.addLine("Moving Arm!");

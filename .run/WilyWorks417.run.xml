@@ -4,7 +4,6 @@
       <env name="SRC_ROOT" value="..\Team417\src\main\java" />
     </envs>
     <option name="MAIN_CLASS_NAME" value="com.wilyworks.simulator.WilyCore" />
-    <module name="FtcRobotController.WilyCore.main" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
