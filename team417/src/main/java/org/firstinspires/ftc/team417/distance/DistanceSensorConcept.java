@@ -63,6 +63,7 @@ public class DistanceSensorConcept extends CompetitionTeleOp {
         }
     }
 
+    /** @noinspection unused*/ // Legacy, saved in case needed later
     public void calculateLeft() {
         double heading = -drive.opticalTracker.getPosition().h + ANGLE_OF_POSITIVE_CORNER;
 
@@ -89,6 +90,7 @@ public class DistanceSensorConcept extends CompetitionTeleOp {
         telemetry.addData("Total distance from wall (in)", totalDistanceFromWall);
     }
 
+    /** @noinspection unused*/ // Legacy, saved in case needed later
     public void calculateRight() {
         double heading = -drive.opticalTracker.getPosition().h + ANGLE_OF_POSITIVE_CORNER;
 
