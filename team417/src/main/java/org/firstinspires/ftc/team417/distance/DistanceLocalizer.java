@@ -88,7 +88,7 @@ public class DistanceLocalizer {
             return;
         }
 
-        detectedPosition = rotate(detectedRelativePosition, calculateTheta(leftIntersection.side, rightIntersection.side));
+        detectedPosition = rotate((new Vector2d(FieldSimulator.FIELD_SIZE / 2, FieldSimulator.FIELD_SIZE / 2)).minus(detectedRelativePosition), calculateTheta(leftIntersection.side, rightIntersection.side));
 
         detectedCorrection = detectedPosition.minus(drive.pose.position);
 
