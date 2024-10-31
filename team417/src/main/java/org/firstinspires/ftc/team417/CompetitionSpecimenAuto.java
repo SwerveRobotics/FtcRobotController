@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.wilyworks.common.WilyWorks;
 
@@ -24,7 +25,11 @@ public class CompetitionSpecimenAuto extends BaseOpMode {
                 .afterDisp(0, foldOutArm)
                 .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2), Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))
                 .stopAndAdd(new WaitAction(foldOutArm))
+                .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN+20*ARM_TICKS_PER_DEGREE, WRIST_FOLDED_IN))
                 .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2), Y_SCORE_POSE+6, Math.toRadians(-90)), Math.toRadians(90),new TranslationalVelConstraint(20))
+                .stopAndAdd(new ScoreSample())
+                .setTangent(Math.toRadians(180))
                 .splineToLinearHeading(new Pose2d(-60,60,Math.toRadians(-90)),Math.toRadians(90))
                 .build();
 

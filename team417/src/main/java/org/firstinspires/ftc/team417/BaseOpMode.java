@@ -158,7 +158,19 @@ abstract public class BaseOpMode extends LinearOpMode {
         }
 
         }
-
+    class ScoreSample extends RobotAction {
+        @Override
+        public boolean run(double elapsedTime) {
+            // Keep the intake deposit on until the 2 seconds are over
+            if (elapsedTime <= 2) {
+                intake.setPower(INTAKE_DEPOSIT);
+                return true;
+            }
+            // Turn off deposit after 2 seconds and then end action
+            intake.setPower(INTAKE_OFF);
+            return false;
+        }
+    }
 
 }
 
