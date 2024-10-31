@@ -249,7 +249,7 @@ public final class MecanumDrive {
         switch (getBotName()) {
             case "DevBot":
                 return DriveParameters.DEVBOT_MECANUM;
-            case "LiterallyNothing":
+            case "We don't have this robot":
                 return DriveParameters.DEVBOT_X;
             case "417-RC":
                 return DriveParameters.FASTBOT_MECANUM;
