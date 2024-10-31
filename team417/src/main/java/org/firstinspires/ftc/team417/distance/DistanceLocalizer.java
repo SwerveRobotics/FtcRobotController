@@ -55,7 +55,15 @@ public class DistanceLocalizer {
         angleMap.put(FieldSide.RIGHT, rightMap);
     }
 
-    public DistanceLocalizer(MecanumDrive drive) {
+    public DistanceLocalizer(UltrasonicDistanceSensor leftDistance,
+                             DistanceSensorInfo leftInfo,
+                             UltrasonicDistanceSensor rightDistance,
+                             DistanceSensorInfo rightInfo,
+                             MecanumDrive drive) {
+        this.leftDistance = leftDistance;
+        this.rightDistance = rightDistance;
+        this.leftInfo = leftInfo;
+        this.rightInfo = rightInfo;
         this.drive = drive;
         this.correction = new Vector2d(0, 0);
     }
