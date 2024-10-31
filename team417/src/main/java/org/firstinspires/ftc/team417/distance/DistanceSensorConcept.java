@@ -117,7 +117,7 @@ public class DistanceSensorConcept extends CompetitionTeleOp {
 
     double calculateDistance(double distance, double heading, DistanceSensorInfo info) {
         // Calculate the heading relative to the line that bisects the right angle of the corner
-        // TODO: -heading because I'm using right is positive, where RoadRunner uses left is positive
+        // heading because I'm using right is positive, where RoadRunner uses left is positive
         double relative = -heading + ANGLE_OF_POSITIVE_CORNER;
 
         telemetry.addData("Heading", relative);

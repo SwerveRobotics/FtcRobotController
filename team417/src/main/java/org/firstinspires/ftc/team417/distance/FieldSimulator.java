@@ -73,7 +73,7 @@ public class FieldSimulator {
         }
 
         return new IntersectionResult(hitSide,
-                minDist == Double.POSITIVE_INFINITY ? -1 : minDist);
+                minDist);
     }
 
     public static IntersectionResult findIntersection(Pose2d pose) {
