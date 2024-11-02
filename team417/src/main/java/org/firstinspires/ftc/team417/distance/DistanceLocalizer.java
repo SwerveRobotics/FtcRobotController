@@ -28,30 +28,31 @@ public class DistanceLocalizer {
     double latestLeft = 0;
     double latestRight = 0;
     boolean leftTurn = true;
+    final double MAX_CHANGE = 3;
 
     final DistanceUnit unit = DistanceUnit.INCH;
 
     final double ANGLE_OF_POSITIVE_CORNER = 0.25 * Math.PI;
-    final double RELIABLE_DISTANCE = 24;
+    final double RELIABLE_DISTANCE = 48;
 
     private static final Map<FieldSide, Map<FieldSide, Double>> angleMap = new EnumMap<>(FieldSide.class);
 
     static {
         // Initializing inner maps for each adjacent FieldSide pair with respective angles
         EnumMap<FieldSide, Double> topMap = new EnumMap<>(FieldSide.class);
-        topMap.put(FieldSide.RIGHT, Math.PI / 4); // 45 degrees
+        topMap.put(FieldSide.RIGHT, 0.0); // 0 degrees
         angleMap.put(FieldSide.TOP, topMap);
 
         EnumMap<FieldSide, Double> leftMap = new EnumMap<>(FieldSide.class);
-        leftMap.put(FieldSide.TOP, 3 * Math.PI / 4); // 135 degrees
+        leftMap.put(FieldSide.TOP, Math.PI / 2); // 90 degrees
         angleMap.put(FieldSide.LEFT, leftMap);
 
         EnumMap<FieldSide, Double> bottomMap = new EnumMap<>(FieldSide.class);
-        bottomMap.put(FieldSide.LEFT, 5 * Math.PI / 4); // 225 degrees
+        bottomMap.put(FieldSide.LEFT, Math.PI); // 180 degrees
         angleMap.put(FieldSide.BOTTOM, bottomMap);
 
         EnumMap<FieldSide, Double> rightMap = new EnumMap<>(FieldSide.class);
-        rightMap.put(FieldSide.BOTTOM, 7 * Math.PI / 4); // 315 degrees
+        rightMap.put(FieldSide.BOTTOM, 3 * Math.PI / 2); // 270 degrees
         angleMap.put(FieldSide.RIGHT, rightMap);
     }
 
@@ -79,7 +80,7 @@ public class DistanceLocalizer {
         boolean sameSide = leftIntersection.side == rightIntersection.side;
 
         Vector2d detectedRelativePosition, detectedPosition, detectedCorrection;
-        double heading = drive.pose.heading.log();
+        double heading = normalizeToFirstQuadrant(drive.pose.heading.log());
         if (!sameSide && leftIntersection.distance < RELIABLE_DISTANCE && rightIntersection.distance < RELIABLE_DISTANCE) {
             detectedRelativePosition = new Vector2d(
                     calculateDistance(latestLeft, heading, leftInfo),
@@ -88,7 +89,13 @@ public class DistanceLocalizer {
             return;
         }
 
-        detectedPosition = rotate((new Vector2d(FieldSimulator.FIELD_SIZE / 2, FieldSimulator.FIELD_SIZE / 2)).minus(detectedRelativePosition), calculateTheta(leftIntersection.side, rightIntersection.side));
+        Vector2d fieldVector = new Vector2d(FieldSimulator.FIELD_SIZE / 2, FieldSimulator.FIELD_SIZE / 2);
+
+        Vector2d unrotatedPosition = (fieldVector).minus(detectedRelativePosition);
+
+        double theta = calculateTheta(leftIntersection.side, rightIntersection.side);
+
+        detectedPosition = rotate(unrotatedPosition, theta);
 
         detectedCorrection = detectedPosition.minus(drive.pose.position);
 
@@ -101,8 +108,12 @@ public class DistanceLocalizer {
         targetCorrection = calculateAverage(history);
 
         correction = new Vector2d(
-                Math.min(targetCorrection.x, MAXIMUM_CORRECTION_VELOCITY),
-                Math.min(targetCorrection.y, MAXIMUM_CORRECTION_VELOCITY)
+                correction.x +
+                (Math.abs(targetCorrection.x) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
+                        ? targetCorrection.x : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, targetCorrection.x)),
+                correction.y +
+                (Math.abs(targetCorrection.y) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
+                        ? targetCorrection.y : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, targetCorrection.y))
         );
     }
 
@@ -151,9 +162,15 @@ public class DistanceLocalizer {
     // Firing only one each loop should mitigate the effect.
     void getNextDistance() {
         if (leftTurn) {
-            latestLeft = leftDistance.getDistance(unit);
+            double tentativeDist = leftDistance.getDistance(unit);
+            if (Math.abs(latestLeft - tentativeDist) <= MAX_CHANGE) {
+                latestLeft = tentativeDist;
+            };
         } else {
-            latestRight = rightDistance.getDistance(unit);
+            double tentativeDist = rightDistance.getDistance(unit);
+            if (Math.abs(latestRight - tentativeDist) <= MAX_CHANGE) {
+                latestRight = tentativeDist;
+            }
         }
         leftTurn = !leftTurn;
     }
@@ -173,5 +190,18 @@ public class DistanceLocalizer {
         double m = -info.getXOffset() * Math.sin(relative - info.getThetaOffset());
 
         return sensorToWall + n + m;
+    }
+
+    double normalizeToFirstQuadrant(double theta) {
+        // Normalize to [0, 2π) so we're working with a clean base
+        theta = theta % (2 * Math.PI);
+        if (theta < 0) {
+            theta += 2 * Math.PI;
+        }
+
+        // Rotate until it's within [0, π/2]
+        theta = theta % (Math.PI / 2);
+
+        return theta;
     }
 }

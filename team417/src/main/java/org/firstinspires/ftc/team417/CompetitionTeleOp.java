@@ -91,6 +91,10 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
+            if (gamepad1.b) {
+                String x = "We're debugging right now!";
+            }
+
             controlDrivebaseWithGamepads(true, false);
 
             controlMechanismsWithGamepads();
@@ -111,7 +115,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     }
 
     public void initializeHardware() {
-        initializeHardware(new Pose2d(0, 48, Math.PI / 2));
+        initializeHardware(new Pose2d(48, 48, Math.PI / 4));
     }
 
     public void initializeHardware(Pose2d startingPose) {

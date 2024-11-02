@@ -36,7 +36,7 @@ public class DistanceSensorConcept extends CompetitionTeleOp {
         waitForStart();
 
         while (opModeIsActive()) {
-            double h = drive.opticalTracker.getPosition().h;
+            double h = normalizeToFirstQuadrant(drive.opticalTracker.getPosition().h);
 
             double dL = leftSonic.getDistance(DistanceUnit.INCH);
             double dR = rightSonic.getDistance(DistanceUnit.INCH);
@@ -138,6 +138,19 @@ public class DistanceSensorConcept extends CompetitionTeleOp {
         telemetry.addData("m", m);
 
         return sensorToWall + n + m;
+    }
+
+    double normalizeToFirstQuadrant(double theta) {
+        // Normalize to [0, 2π) so we're working with a clean base
+        theta = theta % (2 * Math.PI);
+        if (theta < 0) {
+            theta += 2 * Math.PI;
+        }
+
+        // Rotate until it's within [0, π/2]
+        theta = theta % (Math.PI / 2);
+
+        return theta;
     }
 }
 
