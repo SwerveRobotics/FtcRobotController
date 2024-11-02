@@ -21,6 +21,7 @@ public class CompetitionBasketAuto extends BaseOpMode {
     public void runOpMode() {
         // Signal initializeHardware() to remake the armMotor object:
         armMotor = null;
+        armPosition = 0;
 
         // BeginPose is the 2nd tile away from the basket, facing the basket, lined up with the tile boundary
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / 2) + 24, 72 - (ROBOT_WIDTH / 2), 0);
@@ -43,7 +44,7 @@ public class CompetitionBasketAuto extends BaseOpMode {
                 .stopAndAdd(new ScoreSample())
                 // Three samples
                 // Spline to position robot to face the first floor sample
-                .splineToLinearHeading(new Pose2d(30, 50, Math.toRadians(-45)), Math.toRadians(-45))
+                .splineToLinearHeading(new Pose2d(30, 46.5, Math.toRadians(-45)), Math.toRadians(-45))
                 // Fold out the arm to the floor
                 .stopAndAdd(new MoveArm(ARM_COLLECT, WRIST_FOLDED_OUT))
                 // Turn on intake
@@ -56,16 +57,10 @@ public class CompetitionBasketAuto extends BaseOpMode {
                 .splineToLinearHeading(new Pose2d(50, 50, Math.toRadians(45)), Math.toRadians(-45))
                 .stopAndAdd(new ScoreSample())
 
-
-                .splineToLinearHeading(new Pose2d(48, 50, Math.toRadians(-60)), Math.toRadians(-45))
-
-
-
-
-//                .setTangent(Math.toRadians(-90))
-//                .splineToSplineHeading(new Pose2d(48, 12, Math.toRadians(180)), Math.toRadians(180))
-//                .stopAndAdd(new MoveArm(ARM_AUTO_REST_POSITION, WRIST_FOLDED_OUT))
-//                .splineToSplineHeading(new Pose2d(31, 12, Math.toRadians(180)), Math.toRadians(180))
+                .setTangent(Math.toRadians(-90))
+                .splineToSplineHeading(new Pose2d(48, 12, Math.toRadians(180)), Math.toRadians(180))
+                .stopAndAdd(new MoveArm(ARM_AUTO_REST_POSITION, WRIST_FOLDED_OUT))
+                .splineToSplineHeading(new Pose2d(31, 12, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
 

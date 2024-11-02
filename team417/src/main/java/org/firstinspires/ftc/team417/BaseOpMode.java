@@ -85,6 +85,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static final KinematicType kinematicType = KinematicType.MECANUM;
 
     public void initializeHardware() {
+        // Only initialize arm if it's not already initialized.
+        // This is CRUCIAL for transitioning between Auto and TeleOp.
         if (armMotor == null) {
             armMotor = hardwareMap.get(DcMotorEx.class, "arm");
             /* This sets the maximum current that the control hub will apply to the arm before throwing a flag */

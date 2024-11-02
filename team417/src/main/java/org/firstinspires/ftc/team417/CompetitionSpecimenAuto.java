@@ -17,6 +17,7 @@ public class CompetitionSpecimenAuto extends BaseOpMode {
     public void runOpMode() {
         // Signal initializeHardware() to remake the armMotor object:
         armMotor = null;
+        armPosition = 0;
 
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), 0);
         MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
