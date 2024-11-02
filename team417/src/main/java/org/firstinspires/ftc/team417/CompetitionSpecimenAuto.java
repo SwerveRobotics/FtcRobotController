@@ -6,7 +6,6 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
@@ -16,6 +15,9 @@ public class CompetitionSpecimenAuto extends BaseOpMode {
     @Override
 
     public void runOpMode() {
+        // Signal initializeHardware() to remake the armMotor object:
+        armMotor = null;
+
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), 0);
         MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
         initializeHardware();

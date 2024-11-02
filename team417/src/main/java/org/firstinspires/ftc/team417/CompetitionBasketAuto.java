@@ -6,8 +6,6 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
@@ -18,14 +16,11 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
  */
 @Autonomous(name = "SawarAutoBasket", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
 public class CompetitionBasketAuto extends BaseOpMode {
-
-
-
     // This class contains the function to lift the arm
-
-
     @Override
     public void runOpMode() {
+        // Signal initializeHardware() to remake the armMotor object:
+        armMotor = null;
 
         // BeginPose is the 2nd tile away from the basket, facing the basket, lined up with the tile boundary
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / 2) + 24, 72 - (ROBOT_WIDTH / 2), 0);

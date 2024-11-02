@@ -85,19 +85,20 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static final KinematicType kinematicType = KinematicType.MECANUM;
 
     public void initializeHardware() {
-        armMotor = hardwareMap.get(DcMotorEx.class, "arm");
+        if (armMotor == null) {
+            armMotor = hardwareMap.get(DcMotorEx.class, "arm");
+            /* This sets the maximum current that the control hub will apply to the arm before throwing a flag */
+            armMotor.setCurrentAlert(5, CurrentUnit.AMPS);
+            /* Before starting the armMotor. We'll make sure the TargetPosition is set to 0.
+            Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
+            If you do not have the encoder plugged into this motor, it will not run in this code. */
+            armMotor.setTargetPosition(0);
+            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        }
+
         intake = hardwareMap.get(CRServo.class, "intake");
         wrist = hardwareMap.get(Servo.class, "wrist");
-
-        /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
-        armMotor.setCurrentAlert(5, CurrentUnit.AMPS);
-
-        /* Before starting the armMotor. We'll make sure the TargetPosition is set to 0.
-        Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
-        If you do not have the encoder plugged into this motor, it will not run in this code. */
-        armMotor.setTargetPosition(0);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         /* Make sure that the intake is off, and the wrist is folded in. */
         intake.setPower(INTAKE_OFF);
