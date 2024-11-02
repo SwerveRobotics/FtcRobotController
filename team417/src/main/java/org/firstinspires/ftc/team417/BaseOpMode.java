@@ -75,7 +75,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     double armPositionFudgeFactor;
 
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
-    DcMotorEx armMotor;
+    static DcMotorEx armMotor;
     CRServo intake;
     Servo wrist;
 

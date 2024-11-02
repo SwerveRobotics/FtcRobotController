@@ -74,22 +74,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
         initializeHardware();
 
-        // After the Basket Auto, the arm will be up, but when TeleOp starts.
-        // The arm's internal encoder will be reset to 0.
-        // This code is to ensure that the encoder matches the value of armPosition.
-        // The code will move the arm down. (Drivers beware!)
-        armMotor.setTargetPosition((int) -armPosition);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setVelocity(ARM_VELOCITY);
-
-        while (true) {
-            if (!armMotor.isBusy()) break;
-        }
-
-        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
-
         startHeading = startingPose.heading.log();
 
         wrist.setPosition(WRIST_FOLDED_IN);
