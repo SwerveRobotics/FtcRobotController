@@ -28,26 +28,35 @@ public class ScoringAutoMiddlePushbot extends BaseOpMode {
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
 
         Action middleScoringTrajectory = drive.actionBuilder(startingPose)
-                .strafeTo(new Vector2d(55, 60))
+                // strafe to scoring area
+                .strafeTo(new Vector2d(55, 55))
                 .endTrajectory()
                 .setTangent(Math.toRadians(-180))
+                // spline to prepare to collect first sample
                 .splineToLinearHeading(new Pose2d(45, 10, Math.toRadians(-90)),  Math.toRadians(-40))
                 .endTrajectory()
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(55, 61, Math.toRadians(-140)),  Math.toRadians(40))
+                // spline to deposit first sample in scoring area
+                .splineToLinearHeading(new Pose2d(55, 55, Math.toRadians(-140)),  Math.toRadians(40))
                 .endTrajectory()
                 .setTangent(Math.toRadians(-180))
+                // spline to prepare to collect second sample
                 .splineToLinearHeading(new Pose2d(55, 10, Math.toRadians(-90)),  Math.toRadians(-40))
                 .endTrajectory()
                 .setTangent(Math.toRadians(90))
+                // spline to deposit second sample in scoring area
                 .splineToLinearHeading(new Pose2d(55, 61, Math.toRadians(-140)),  Math.toRadians(40))
                 .endTrajectory()
                 .setTangent(Math.toRadians(-180))
+                // spline to prepare to collect third sample
                 .splineToLinearHeading(new Pose2d(62, 10, Math.toRadians(-90)),  Math.toRadians(40))
                 .endTrajectory()
+                // strafe to deposit third sample
                 .strafeTo(new Vector2d(62, 55))
+                // prepare to move to park position
                 .strafeTo(new Vector2d(62, 50))
                 .waitSeconds(3)
+                // drive to park position
                 .splineTo(new Vector2d(-55,60), Math.toRadians(180))
                 //.setTangent(Math.toRadians(90))
                 //.splineToLinearHeading(new Pose2d(62, 55, Math.toRadians(-140)),  Math.toRadians(40))
