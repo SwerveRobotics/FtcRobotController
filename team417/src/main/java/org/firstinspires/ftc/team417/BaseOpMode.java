@@ -64,7 +64,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     final static double WRIST_FOLDED_OUT = 0.335;
 
     //position used to score specimens in auto
-    public final static double Y_SCORE_POSE = 42.5;
+    public final static double Y_SCORE_POSE = 41.5;
 
     /* A number in degrees that the triggers can adjust the arm position by */
     final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
@@ -161,7 +161,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         public boolean run (double elapsedTime) {
 
             intake.setPower(power);
-            return true;
+            return false;
         }
     }
     class WaitAction extends RobotAction {
