@@ -80,7 +80,7 @@ public final class MecanumDrive {
 
     public static class Params {
         Params() {
-            maxWheelVel = 50; // old value was 50
+            maxWheelVel = 50; // was 50
             minProfileAccel = -30;
             maxProfileAccel = 50;
 
