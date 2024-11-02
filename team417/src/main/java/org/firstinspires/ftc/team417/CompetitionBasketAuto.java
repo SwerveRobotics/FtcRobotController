@@ -15,7 +15,7 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@Autonomous(name = "AutoBasket", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
+@Autonomous(name = "SawarAutoBasket", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
 public class CompetitionBasketAuto extends BaseOpMode {
 
 
@@ -42,14 +42,13 @@ public class CompetitionBasketAuto extends BaseOpMode {
         Action trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-45))
                 .splineToLinearHeading(new Pose2d(50, 50, Math.toRadians(45)), Math.toRadians(-45))
-                .afterDisp(0, new MoveArm(ARM_COLLAPSED_INTO_ROBOT, WRIST_FOLDED_IN))
                 .stopAndAdd(new MoveArm(ARM_SCORE_SAMPLE_IN_LOW, WRIST_FOLDED_OUT))
                 .stopAndAdd(new ScoreSample())
 
-
                 .setTangent(Math.toRadians(-90))
                 .splineToSplineHeading(new Pose2d(48, 12, Math.toRadians(180)), Math.toRadians(180))
-                .splineToSplineHeading(new Pose2d(28, 12, Math.toRadians(180)), Math.toRadians(180))
+                .stopAndAdd(new MoveArm(ARM_AUTO_REST_POSITION, WRIST_FOLDED_OUT))
+                .splineToSplineHeading(new Pose2d(31, 12, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
 

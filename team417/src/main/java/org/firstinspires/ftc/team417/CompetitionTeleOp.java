@@ -29,14 +29,11 @@ public class CompetitionTeleOp extends BaseOpMode {
             || MecanumDrive.driveParameters == DriveParameters.FASTBOT_MECANUM
             || MecanumDrive.driveParameters == DriveParameters.DEVBOT_MECANUM;
 
-    double wristPosition = 0;
-
     /* A number in degrees that the triggers can adjust the arm position by */
     final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
     /** @noinspection ConstantValue*/
     /* Variables that are used to set the arm to a specific position */
-    double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
     boolean intakeEnabled = false;
     @Override
@@ -76,6 +73,22 @@ public class CompetitionTeleOp extends BaseOpMode {
     public void prepareRobot(Pose2d startingPose) {
         drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
         initializeHardware();
+
+        // After the Basket Auto, the arm will be up, but when TeleOp starts.
+        // The arm's internal encoder will be reset to 0.
+        // This code is to ensure that the encoder matches the value of armPosition.
+        // The code will move the arm down. (Drivers beware!)
+        armMotor.setTargetPosition((int) -armPosition);
+        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor.setVelocity(ARM_VELOCITY);
+
+        while (true) {
+            if (!armMotor.isBusy()) break;
+        }
+
+        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
 
         startHeading = startingPose.heading.log();
 
