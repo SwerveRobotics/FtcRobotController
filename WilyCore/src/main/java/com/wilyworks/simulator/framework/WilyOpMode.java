@@ -15,6 +15,10 @@ public abstract class WilyOpMode extends OpMode {
         }
     }
 
+    public final void idle() {
+        Thread.yield();
+    }
+
     public void waitForStart() {
         WilyCore.render();
         while (!isStarted())
