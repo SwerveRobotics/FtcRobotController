@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.team417;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -16,6 +17,7 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
  * This class contains all of the base logic that is shared between all of the TeleOp and
  * Autonomous logic. All TeleOp and Autonomous classes should derive from this class.
  */
+@Config
 abstract public class BaseOpMode extends LinearOpMode {
     public double startHeading;
 
@@ -43,14 +45,14 @@ abstract public class BaseOpMode extends LinearOpMode {
     If you'd like it to move further, increase that number. If you'd like it to not move
     as far from the starting position, decrease it. */
 
-    final static double ARM_COLLAPSED_INTO_ROBOT = 0;
-    final static double ARM_COLLECT = 253.5 * ARM_TICKS_PER_DEGREE;
-    final static double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
-    final static double ARM_AUTO_REST_POSITION = 170 * ARM_TICKS_PER_DEGREE;
-    final static double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
-    final static double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
-    final static double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
-    final static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
+    static double ARM_COLLAPSED_INTO_ROBOT = 0;
+    static double ARM_COLLECT = 254 * ARM_TICKS_PER_DEGREE;
+    static double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
+    static double ARM_AUTO_REST_POSITION = 170 * ARM_TICKS_PER_DEGREE;
+    static double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
+    static double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
+    static double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
+    static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
 
     /* Variables to store the speed the intake servo should be set at to intake, and deposit game elements. */
     final static double INTAKE_COLLECT = -1.0;
@@ -170,6 +172,16 @@ abstract public class BaseOpMode extends LinearOpMode {
             }
             // Turn off deposit after 2 seconds and then end action
             intake.setPower(INTAKE_OFF);
+            return false;
+        }
+    }
+    class intakeSample extends RobotAction {
+        @Override
+        public boolean run(double elapsedTime) {
+            if(elapsedTime <=2) {
+                intake.setPower(INTAKE_COLLECT);
+                return true;
+            }
             return false;
         }
     }
