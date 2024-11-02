@@ -151,6 +151,19 @@ abstract public class BaseOpMode extends LinearOpMode {
             return true;
         }
     }
+
+    class RunIntake extends RobotAction{
+        double power;
+        RunIntake(double power) {
+            this.power = power;
+        }
+        @Override
+        public boolean run (double elapsedTime) {
+
+            intake.setPower(power);
+            return true;
+        }
+    }
     class WaitAction extends RobotAction {
         RobotAction actionToWaitOn;
         WaitAction(RobotAction actionToWaitOn) {

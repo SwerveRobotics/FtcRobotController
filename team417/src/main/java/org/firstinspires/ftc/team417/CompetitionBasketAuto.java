@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.wilyworks.common.WilyWorks;
@@ -23,8 +24,6 @@ public class CompetitionBasketAuto extends BaseOpMode {
     // This class contains the function to lift the arm
 
 
-
-
     @Override
     public void runOpMode() {
 
@@ -38,17 +37,40 @@ public class CompetitionBasketAuto extends BaseOpMode {
         // can take multiple seconds for this operation. We wouldn't want to have to wait
         // as soon as the Start button is pressed!
 
+        RobotAction intakeCollect = new RunIntake(INTAKE_COLLECT);
 
         Action trajectoryAction = drive.actionBuilder(beginPose)
+
                 .setTangent(Math.toRadians(-45))
+                // Drive to the basket
                 .splineToLinearHeading(new Pose2d(50, 50, Math.toRadians(45)), Math.toRadians(-45))
                 .stopAndAdd(new MoveArm(ARM_SCORE_SAMPLE_IN_LOW, WRIST_FOLDED_OUT))
                 .stopAndAdd(new ScoreSample())
+                // Three samples
+                // Spline to position robot to face the first floor sample
+                .splineToLinearHeading(new Pose2d(30, 50, Math.toRadians(-45)), Math.toRadians(-45))
+                // Fold out the arm to the floor
+                .stopAndAdd(new MoveArm(ARM_COLLECT, WRIST_FOLDED_OUT))
+                // Turn on intake
+                .afterDisp(0, intakeCollect)
+                // Move straight forward while arm is intaking
+                .splineToLinearHeading(new Pose2d(43, 40, Math.toRadians(-45)), Math.toRadians(-45), new TranslationalVelConstraint(10))
+                // Raise arm to basket orientation
+                .stopAndAdd(new MoveArm(ARM_SCORE_SAMPLE_IN_LOW, WRIST_FOLDED_OUT))
+                // Spline back to basket
+                .splineToLinearHeading(new Pose2d(50, 50, Math.toRadians(45)), Math.toRadians(-45))
+                .stopAndAdd(new ScoreSample())
 
-                .setTangent(Math.toRadians(-90))
-                .splineToSplineHeading(new Pose2d(48, 12, Math.toRadians(180)), Math.toRadians(180))
-                .stopAndAdd(new MoveArm(ARM_AUTO_REST_POSITION, WRIST_FOLDED_OUT))
-                .splineToSplineHeading(new Pose2d(31, 12, Math.toRadians(180)), Math.toRadians(180))
+
+                .splineToLinearHeading(new Pose2d(48, 50, Math.toRadians(-60)), Math.toRadians(-45))
+
+
+
+
+//                .setTangent(Math.toRadians(-90))
+//                .splineToSplineHeading(new Pose2d(48, 12, Math.toRadians(180)), Math.toRadians(180))
+//                .stopAndAdd(new MoveArm(ARM_AUTO_REST_POSITION, WRIST_FOLDED_OUT))
+//                .splineToSplineHeading(new Pose2d(31, 12, Math.toRadians(180)), Math.toRadians(180))
                 .build();
 
 
