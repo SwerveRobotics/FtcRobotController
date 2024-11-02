@@ -24,21 +24,6 @@ public class CompetitionBasketAuto extends BaseOpMode {
     // This class contains the function to lift the arm
 
 
-
-
-    class RunIntake extends RobotAction{
-        double power;
-        RunIntake(double power) {
-            this.power = power;
-        }
-        @Override
-        public boolean run (double elapsedTime) {
-
-            intake.setPower(power);
-            return true;
-        }
-    }
-
     @Override
     public void runOpMode() {
 
