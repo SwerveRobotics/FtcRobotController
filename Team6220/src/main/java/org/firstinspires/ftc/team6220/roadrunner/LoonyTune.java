@@ -53,6 +53,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -478,7 +479,7 @@ class TuneParameters {
         return string.toString();
     }
 
-    // It's not simple to write a string to a file on Java:
+    // Write to our data file. It's not simple to write a string to a file on Java.
     static void writeDataFile(String string) {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(LoonyTune.FILE_NAME))) {
             writer.write(string);
@@ -486,6 +487,12 @@ class TuneParameters {
             if (!WilyWorks.isSimulating)
                 throw new RuntimeException(e);
         }
+    }
+
+    // Delete the data file.
+    static void deleteDataFile() {
+        //noinspection ResultOfMethodCallIgnored
+        new File(LoonyTune.FILE_NAME).delete();
     }
 
     // Validate that the settings are valid and apply to the current robot:
@@ -971,8 +978,8 @@ public class LoonyTune extends LinearOpMode {
                 }
 
                 // If we reached this point, the user has chosen to ignore the last tuning results.
-                // Override those results with the current settings:
-                currentSettings.save();
+                // Delete the data file entirely:
+                TuneParameters.deleteDataFile();
                 telemetry.addLine("Loony Tune results have been overridden");
                 telemetry.update();
             }
