@@ -23,7 +23,7 @@ public class DistanceLocalizer {
     public ArrayList<Vector2d> history = new ArrayList<>();
     final int MAX_HISTORY_SIZE = 10;
 
-    final double MAXIMUM_CORRECTION_VELOCITY = 2;
+    final double MAXIMUM_CORRECTION_VELOCITY = 0.1;
 
     double latestLeft = 0;
     double latestRight = 0;
@@ -107,13 +107,16 @@ public class DistanceLocalizer {
 
         targetCorrection = calculateAverage(history);
 
+        double xDiff = targetCorrection.x - correction.x;
+        double yDiff = targetCorrection.y - correction.y;
+
         correction = new Vector2d(
                 correction.x +
-                (Math.abs(targetCorrection.x) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
-                        ? targetCorrection.x : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, targetCorrection.x)),
+                (Math.abs(xDiff) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
+                        ? xDiff : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, xDiff)),
                 correction.y +
-                (Math.abs(targetCorrection.y) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
-                        ? targetCorrection.y : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, targetCorrection.y))
+                (Math.abs(yDiff) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
+                        ? yDiff : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, yDiff))
         );
     }
 

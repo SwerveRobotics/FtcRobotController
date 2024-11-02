@@ -115,7 +115,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     }
 
     public void initializeHardware() {
-        initializeHardware(new Pose2d(48, 48, Math.PI / 4));
+        initializeHardware(new Pose2d(0, 48, Math.PI / 2));
     }
 
     public void initializeHardware(Pose2d startingPose) {
