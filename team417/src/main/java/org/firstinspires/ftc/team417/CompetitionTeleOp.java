@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServoImplEx;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.ServoImplEx;
 
@@ -274,7 +275,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         if (stopAllMechanisms) {
             ((ServoImplEx) wrist).setPwmDisable();
             intake.setPower(INTAKE_OFF);
-            ((ServoImplEx) intake).setPwmDisable();
+            ((CRServoImplEx) intake).setPwmDisable();
         }
     }
 
