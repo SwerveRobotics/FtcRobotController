@@ -44,6 +44,9 @@ public class CompetitionTeleOp extends BaseOpMode {
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
 
+        // Only move wrist after start
+        wrist.setPosition(WRIST_FOLDED_IN);
+
         while (opModeIsActive()) {
             toggleFieldCentricity();
 
@@ -75,8 +78,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         initializeHardware();
 
         startHeading = startingPose.heading.log();
-
-        wrist.setPosition(WRIST_FOLDED_IN);
 
         /* Send telemetry message to signify robot waiting */
         telemetry.addLine("Robot Ready.");

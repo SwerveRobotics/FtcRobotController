@@ -104,7 +104,8 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         /* Make sure that the intake is off, and the wrist is folded in. */
         intake.setPower(INTAKE_OFF);
-        wrist.setPosition(WRIST_FOLDED_IN);
+        // wrist.setPosition(WRIST_FOLDED_IN); We do that after start, since we can't move wrist
+        // in the gap before TeleOp.
     }
     // RC 17.50
     // DEV 17.75
