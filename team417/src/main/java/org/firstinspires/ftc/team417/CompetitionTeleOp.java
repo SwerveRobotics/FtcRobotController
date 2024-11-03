@@ -7,6 +7,7 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.ServoImplEx;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
@@ -136,7 +137,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     }
 
     public void controlMechanismsWithGamepads() {
-        if (hasMechanisms) {
+        if (hasMechanisms && !stopAllMechanisms) {
             /* Here we handle the three buttons that have direct control of the intake speed.
             These control the continuous rotation servo that pulls elements into the robot,
             If the user presses A, it sets the intake power to the final variable that
@@ -269,12 +270,20 @@ public class CompetitionTeleOp extends BaseOpMode {
             armMotor.setVelocity(ARM_VELOCITY);
             armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
+
+        if (stopAllMechanisms) {
+            ((ServoImplEx) wrist).setPwmDisable();
+            intake.setPower(INTAKE_OFF);
+            ((ServoImplEx) intake).setPwmDisable();
+        }
     }
 
     // Applies a curve to the joystick input to give finer control at lower speeds
     public double curveStick(double rawSpeed) {
         return Math.copySign(Math.pow(rawSpeed, 2), rawSpeed);
     }
+
+    boolean stopAllMechanisms = false;
 
     public void driveAssistHanging() {
         // action of dpad up button on gamepad 2
@@ -362,6 +371,8 @@ public class CompetitionTeleOp extends BaseOpMode {
                 new Vector2d(0, 0),
                 0
         ));
+
+        stopAllMechanisms = true;
     }
 
     boolean startWasPressed = false;
