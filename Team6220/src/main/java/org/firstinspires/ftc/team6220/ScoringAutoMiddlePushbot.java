@@ -29,7 +29,7 @@ public class ScoringAutoMiddlePushbot extends BaseOpMode {
 
         Action middleScoringTrajectory = drive.actionBuilder(startingPose)
                 // strafe to scoring area
-                .strafeTo(new Vector2d(55, 55))
+                .strafeTo(new Vector2d(55, 60))
                 .endTrajectory()
                 .setTangent(Math.toRadians(-180))
                 // spline to prepare to collect first sample
