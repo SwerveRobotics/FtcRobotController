@@ -25,7 +25,7 @@ public class ScoringAutoRight extends BaseOpMode {
     @Override
     public void runOpMode() {
 
-        Pose2d rightPose = Constants.RIGHT_STARTING_POSE;
+        Pose2d rightPose = DRIFTConstants.RIGHT_STARTING_POSE;
 
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, rightPose);

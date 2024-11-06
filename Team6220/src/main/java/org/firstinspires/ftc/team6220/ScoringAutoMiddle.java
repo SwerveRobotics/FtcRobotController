@@ -25,7 +25,7 @@ public class ScoringAutoMiddle extends BaseOpMode {
     @Override
     public void runOpMode() {
 
-        Pose2d middlePose = Constants.MIDDLE_STARTING_POSE;
+        Pose2d middlePose = DRIFTConstants.MIDDLE_STARTING_POSE;
 
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, middlePose);

@@ -8,6 +8,6 @@ public class ScoringAutoRightPushbot extends ScoringAutoMiddlePushbot{
 
     @Override
     protected Pose2d getInitializationPose() {
-        return Constants.RIGHT_STARTING_POSE;
+        return DRIFTConstants.RIGHT_STARTING_POSE;
     }
 }

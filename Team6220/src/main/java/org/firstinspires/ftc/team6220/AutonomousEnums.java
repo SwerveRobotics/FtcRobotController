@@ -9,9 +9,9 @@ public class AutonomousEnums {
     }
 
     public enum AutoStartPosition {
-        LEFT(new Pose2d(-20, 60, (3*Math.PI)/2)),
-        MIDDLE(new Pose2d(0, 60, (3*Math.PI)/2)),
-        RIGHT(new Pose2d(20, 60, (3*Math.PI)/2));
+        LEFT(DRIFTConstants.LEFT_STARTING_POSE),
+        MIDDLE(DRIFTConstants.MIDDLE_STARTING_POSE),
+        RIGHT(DRIFTConstants.RIGHT_STARTING_POSE);
 
         public final Pose2d startingPose;
 
@@ -22,14 +22,14 @@ public class AutonomousEnums {
 
     public enum AutoType {
         PARK,
-        BASKET;
+        SCORING;
     }
 
     public enum SpikeMarkPickupAmount {
-        ZERO,
-        ONE,
+        THREE,
         TWO,
-        THREE
+        ONE,
+        ZERO
     }
 
     public enum ParkPosition {

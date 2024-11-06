@@ -4,7 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 
 @Config
-public abstract class Constants {
+public abstract class DRIFTConstants {
     public static double ARM_ELBOW_SERVO_PRESET_POSITION_OVER_BARRIER = -0.1;
     public static double ARM_ELBOW_SERVO_PRESET_POSITION_GROUND = 0.25;
     public static int ARM_BASE_MOTOR_POSITION_GROUND = -1680;

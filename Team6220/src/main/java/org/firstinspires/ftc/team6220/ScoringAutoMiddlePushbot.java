@@ -133,6 +133,6 @@ public class ScoringAutoMiddlePushbot extends BaseOpMode {
     }
 
     protected Pose2d getInitializationPose() {
-        return Constants.MIDDLE_STARTING_POSE;
+        return DRIFTConstants.MIDDLE_STARTING_POSE;
     }
 }

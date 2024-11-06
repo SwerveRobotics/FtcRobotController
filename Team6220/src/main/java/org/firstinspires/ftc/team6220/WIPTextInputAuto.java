@@ -3,7 +3,6 @@ package org.firstinspires.ftc.team6220;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
@@ -17,7 +16,7 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@Autonomous(name="Auto", group="Competition", preselectTeleOp="CompetitionTeleOp")
+@Autonomous(name="WIPTextMenuAuto", group="Competition", preselectTeleOp="CompetitionTeleOp")
 public class WIPTextInputAuto extends BaseOpMode {
 
     // defaults so it doesnt explode if you skip the text menu
@@ -30,13 +29,6 @@ public class WIPTextInputAuto extends BaseOpMode {
 
     @Override
     public void runOpMode() {
-
-        Pose2d middlePose = Constants.MIDDLE_STARTING_POSE;
-        Pose2d leftPose = Constants.LEFT_STARTING_POSE;
-        Pose2d rightPose = Constants.RIGHT_STARTING_POSE;
-
-
-        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, rightPose);
 
         // TextMenu implementation yoinked from valsei's GitHub
         TextMenu startingConditionMenu = new TextMenu();
@@ -54,17 +46,22 @@ public class WIPTextInputAuto extends BaseOpMode {
         // update the starting condition menu until it's done
         textMenuUpdateUntilComplete(startingConditionMenu, input);
 
+        // get values from textmenu
         allianceColor = startingConditionMenu.getResult(AutonomousEnums.AllianceColor.class, "alliance_color");
         autoStartPosition = startingConditionMenu.getResult(AutonomousEnums.AutoStartPosition.class, "start_position");
         autoType = startingConditionMenu.getResult(AutonomousEnums.AutoType.class, "auto_type");
 
+        // initialize mecanumdrive
+        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, autoStartPosition.startingPose);
+
         TextMenu scoringSelectionMenu = new TextMenu();
 
+        // declare new textmenu
         scoringSelectionMenu.add("Scoring Settings: ")
-                .addTextConditional("SpikeMark Side: ", autoType.equals(AutonomousEnums.AutoType.BASKET))
-                .addEnumConditional("spikemark_side", AutonomousEnums.SpikeMarkSide.class, autoType.equals(AutonomousEnums.AutoType.BASKET))
-                .addTextConditional("Sample Pickup Quantity:", autoType.equals(AutonomousEnums.AutoType.BASKET))
-                .addEnumConditional("sample_pickup_quantity", AutonomousEnums.SpikeMarkPickupAmount.class, autoType.equals(AutonomousEnums.AutoType.BASKET))
+                .addTextConditional("SpikeMark Side: ", autoType.equals(AutonomousEnums.AutoType.SCORING))
+                .addEnumConditional("spikemark_side", AutonomousEnums.SpikeMarkSide.class, autoType.equals(AutonomousEnums.AutoType.SCORING))
+                .addTextConditional("Sample Pickup Quantity:", autoType.equals(AutonomousEnums.AutoType.SCORING))
+                .addEnumConditional("sample_pickup_quantity", AutonomousEnums.SpikeMarkPickupAmount.class, autoType.equals(AutonomousEnums.AutoType.SCORING))
                 .add("Park Position: ")
                 .add("park_position", AutonomousEnums.ParkPosition.class)
                 .add("confirm_selection", new MenuFinishedButton());
@@ -72,7 +69,8 @@ public class WIPTextInputAuto extends BaseOpMode {
         // update the scoring selection menu until it's done
         textMenuUpdateUntilComplete(scoringSelectionMenu, input);
 
-        if (autoType.equals(AutonomousEnums.AutoType.BASKET)) {
+        // only assign values if they are enabled for selected autotype
+        if (autoType.equals(AutonomousEnums.AutoType.SCORING)) {
             spikeMarkSide = scoringSelectionMenu.getResult(AutonomousEnums.SpikeMarkSide.class, "spikemark_side");
             pickupAmount = scoringSelectionMenu.getResult(AutonomousEnums.SpikeMarkPickupAmount.class, "sample_pickup_quantity");
         }
@@ -82,31 +80,23 @@ public class WIPTextInputAuto extends BaseOpMode {
         // can take multiple seconds for this operation. We wouldn't want to have to wait
         // as soon as the Start button is pressed!
         // Scoring trajectories
-        Action middleScoringTrajectory     = drive.actionBuilder(middlePose)
-                .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
-                .endTrajectory()
-                .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
-                .build();
-        Action leftScoringTrajectory = drive.actionBuilder(leftPose)
-                .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
-                .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
-                .build();
-        Action rightScoringTrajectory = drive.actionBuilder(rightPose)
-                .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
-                .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
-                .build();
 
-        // Parking trajectories
-        Action  middleParkingTrajectory = drive.actionBuilder(middlePose)
-                .splineTo(new Vector2d(-60, 60), (Math.PI))
-                .build();
-        Action  leftParkingTrajectory = drive.actionBuilder(leftPose)
-                .splineTo(new Vector2d(-60, 60), (Math.PI))
-                .build();
-        Action  rightParkingTrajectory = drive.actionBuilder(rightPose)
-                .splineTo(new Vector2d(-60, 60), (Math.PI))
-                .build();
-        Action trajectoryAction = rightParkingTrajectory;
+        Action trajectoryAction = null;
+
+        switch(autoType) {
+            case PARK: {
+                trajectoryAction = drive.actionBuilder(autoStartPosition.startingPose)
+                        .splineTo(new Vector2d(-60, 60), (Math.PI))
+                        .build();
+            }
+            case SCORING: {
+                trajectoryAction = drive.actionBuilder(autoStartPosition.startingPose)
+                        .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
+                        .endTrajectory()
+                        .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
+                        .build();
+            }
+        }
 
         // Get a preview of the trajectory's path:
         Canvas previewCanvas = new Canvas();

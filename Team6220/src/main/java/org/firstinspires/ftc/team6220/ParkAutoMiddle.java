@@ -7,9 +7,6 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import org.firstinspires.ftc.team6220.javatextmenu.MenuFinishedButton;
-import org.firstinspires.ftc.team6220.javatextmenu.MenuInput;
-import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 
 /**
@@ -22,7 +19,7 @@ public class ParkAutoMiddle extends BaseOpMode {
     @Override
     public void runOpMode() {
 
-        Pose2d middlePose = Constants.MIDDLE_STARTING_POSE;
+        Pose2d middlePose = DRIFTConstants.MIDDLE_STARTING_POSE;
 
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, middlePose);
 

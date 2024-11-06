@@ -131,13 +131,13 @@ public class CompetitionTeleOp extends BaseOpMode {
         switch(allianceColor) {
             case RED: {
                 if (colorSensorValues.blue > colorSensorValues.red
-                        && colorSensorValues.blue > Constants.BLUE_COLOR_SENSOR_RANGES[0]) {
+                        && colorSensorValues.blue > DRIFTConstants.BLUE_COLOR_SENSOR_RANGES[0]) {
                     return true;
                 }
             }
             case BLUE: {
                 if (colorSensorValues.red > colorSensorValues.blue
-                        && colorSensorValues.red > Constants.RED_COLOR_SENSOR_RANGES[0]) {
+                        && colorSensorValues.red > DRIFTConstants.RED_COLOR_SENSOR_RANGES[0]) {
                     return true;
                 }
             }
