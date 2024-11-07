@@ -321,9 +321,7 @@ public class Simulation {
             double angularError = Math.abs(Globals.normalizeAngle(truePose.heading.log() - errorPose.heading.log()));
             // return String.format("Pose error: %.1f\", %.1f\u00b0, distance: %.1f\", time: %.0fs",
             //         linearError, Math.toDegrees(angularError), totalDistance, WilyCore.time());
-            return String.format("Pose error: %.1f\", %.1f\u00b0",
-                    linearError, Math.toDegrees(angularError));
-
+            return "";
         } else {
             return "";
         }

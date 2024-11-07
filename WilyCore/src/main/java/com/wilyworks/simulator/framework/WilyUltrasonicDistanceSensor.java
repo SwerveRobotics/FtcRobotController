@@ -109,8 +109,8 @@ public class WilyUltrasonicDistanceSensor extends UltrasonicDistanceSensor {
                 if (hitPointDistance < MAX_DISTANCE) {
                     distance = hitPointDistance;
                     if (WilyCore.enableSensorError) {
-                        // 95% (2 standard deviations) of error comes within 0.5 inches:
-                        distance += 0.5 / 2 * random.nextGaussian();
+                        // 95% (2 standard deviations) of error comes within +/- 0.5 inches:
+                        distance += WilyCore.config.distanceSensorError / 2 * random.nextGaussian();
                     }
                     break;
                 }
