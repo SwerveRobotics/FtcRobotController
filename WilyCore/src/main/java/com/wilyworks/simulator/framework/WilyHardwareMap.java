@@ -39,6 +39,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Quaternion;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
+import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -558,19 +559,20 @@ class WilyLED extends LED {
  */
 public class WilyHardwareMap implements Iterable<HardwareDevice> {
 
-    public DeviceMapping<VoltageSensor>         voltageSensor         = new DeviceMapping<VoltageSensor>(VoltageSensor.class);
-    public DeviceMapping<DcMotor>               dcMotor               = new DeviceMapping<DcMotor>(DcMotor.class);
-    public DeviceMapping<DistanceSensor>        distanceSensor        = new DeviceMapping<>(DistanceSensor.class);
-    public DeviceMapping<NormalizedColorSensor> normalizedColorSensor = new DeviceMapping<>(NormalizedColorSensor.class);
-    public DeviceMapping<ColorSensor>           colorSensor           = new DeviceMapping<>(ColorSensor.class);
-    public DeviceMapping<WebcamName>            webcamName            = new DeviceMapping<WebcamName>(WebcamName.class);
-    public DeviceMapping<Servo>                 servo                 = new DeviceMapping<>(Servo.class);
-    public DeviceMapping<CRServo>               crservo               = new DeviceMapping<>(CRServo.class);
-    public DeviceMapping<DigitalChannel>        digitalChannel        = new DeviceMapping<>(DigitalChannel.class);
-    public DeviceMapping<LED>                   led                   = new DeviceMapping<LED>(LED.class);
-    public DeviceMapping<SparkFunOTOS>          sparkFunOTOS          = new DeviceMapping<>(SparkFunOTOS.class);
-    protected Map<String, List<HardwareDevice>> allDevicesMap         = new HashMap<>();
-    protected List<HardwareDevice>              allDevicesList        = new ArrayList<>();
+    public DeviceMapping<VoltageSensor>            voltageSensor            = new DeviceMapping<>(VoltageSensor.class);
+    public DeviceMapping<DcMotor>                  dcMotor                  = new DeviceMapping<>(DcMotor.class);
+    public DeviceMapping<DistanceSensor>           distanceSensor           = new DeviceMapping<>(DistanceSensor.class);
+    public DeviceMapping<NormalizedColorSensor>    normalizedColorSensor    = new DeviceMapping<>(NormalizedColorSensor.class);
+    public DeviceMapping<ColorSensor>              colorSensor              = new DeviceMapping<>(ColorSensor.class);
+    public DeviceMapping<WebcamName>               webcamName               = new DeviceMapping<>(WebcamName.class);
+    public DeviceMapping<Servo>                    servo                    = new DeviceMapping<>(Servo.class);
+    public DeviceMapping<CRServo>                  crservo                  = new DeviceMapping<>(CRServo.class);
+    public DeviceMapping<DigitalChannel>           digitalChannel           = new DeviceMapping<>(DigitalChannel.class);
+    public DeviceMapping<LED>                      led                      = new DeviceMapping<>(LED.class);
+    public DeviceMapping<SparkFunOTOS>             sparkFunOTOS             = new DeviceMapping<>(SparkFunOTOS.class);
+    public DeviceMapping<UltrasonicDistanceSensor> ultrasonicDistanceSensor = new DeviceMapping<>(UltrasonicDistanceSensor.class);
+    protected Map<String, List<HardwareDevice>>    allDevicesMap            = new HashMap<>();
+    protected List<HardwareDevice>                 allDevicesList           = new ArrayList<>();
 
     public WilyHardwareMap() {
         put("voltage_sensor", VoltageSensor.class);
@@ -659,6 +661,9 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
         } else if (SparkFunOTOS.class.isAssignableFrom(klass)) {
             device = new SparkFunOTOS(null);
             sparkFunOTOS.put(deviceName, (SparkFunOTOS) device);
+        } else if (UltrasonicDistanceSensor.class.isAssignableFrom(klass)) {
+            device = new WilyUltrasonicDistanceSensor(deviceName);
+            ultrasonicDistanceSensor.put(deviceName, (WilyUltrasonicDistanceSensor) device);
         } else {
             throw new IllegalArgumentException("Unexpected device type for HardwareMap");
         }
