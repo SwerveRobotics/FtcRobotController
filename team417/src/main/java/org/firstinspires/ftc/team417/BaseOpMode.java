@@ -109,10 +109,12 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
     // RC 17.50
     // DEV 17.75
-    final static double ROBOT_LENGTH = 17.50;
+    // X 17.00
+    final static double ROBOT_LENGTH = 17.00;
     // RC 16.50
     // DEV 18.50
-    final static double ROBOT_WIDTH = 16.50;
+    // X 17.00
+    final static double ROBOT_WIDTH = 17.00;
     class MoveArm extends RobotAction {
 
         double targetPosition;
