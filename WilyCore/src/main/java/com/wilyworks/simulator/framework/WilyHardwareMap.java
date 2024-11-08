@@ -80,12 +80,10 @@ class WilyHardwareDevice implements HardwareDevice {
     }
 
     @Override
-    public void resetDeviceConfigurationForOpMode() {
-    }
+    public void resetDeviceConfigurationForOpMode() { }
 
     @Override
-    public void close() {
-    }
+    public void close() { }
 }
 
 /**
@@ -93,7 +91,6 @@ class WilyHardwareDevice implements HardwareDevice {
  */
 class WilyIMU extends WilyHardwareDevice implements IMU {
     double startYaw;
-
     @Override
     public boolean initialize(Parameters parameters) {
         resetYaw();
@@ -156,9 +153,7 @@ class WilyVoltageSensor extends WilyHardwareDevice implements VoltageSensor {
  */
 class WilyDistanceSensor extends WilyHardwareDevice implements DistanceSensor {
     @Override
-    public double getDistance(DistanceUnit unit) {
-        return unit.fromMm(65535);
-    } // Distance when not responding
+    public double getDistance(DistanceUnit unit) { return unit.fromMm(65535); } // Distance when not responding
 }
 
 /**
@@ -166,18 +161,13 @@ class WilyDistanceSensor extends WilyHardwareDevice implements DistanceSensor {
  */
 class WilyNormalizedColorSensor extends WilyHardwareDevice implements NormalizedColorSensor {
     @Override
-    public NormalizedRGBA getNormalizedColors() {
-        return new NormalizedRGBA();
-    }
+    public NormalizedRGBA getNormalizedColors() { return new NormalizedRGBA(); }
 
     @Override
-    public float getGain() {
-        return 0;
-    }
+    public float getGain() { return 0; }
 
     @Override
-    public void setGain(float newGain) {
-    }
+    public void setGain(float newGain) { }
 }
 
 /**
@@ -186,42 +176,28 @@ class WilyNormalizedColorSensor extends WilyHardwareDevice implements Normalized
 class WilyColorSensor extends WilyHardwareDevice implements ColorSensor {
 
     @Override
-    public int red() {
-        return 0;
-    }
+    public int red() { return 0; }
 
     @Override
-    public int green() {
-        return 0;
-    }
+    public int green() { return 0; }
 
     @Override
-    public int blue() {
-        return 0;
-    }
+    public int blue() { return 0; }
 
     @Override
-    public int alpha() {
-        return 0;
-    }
+    public int alpha() { return 0; }
 
     @Override
-    public int argb() {
-        return 0;
-    }
+    public int argb() { return 0; }
 
     @Override
-    public void enableLed(boolean enable) {
-    }
+    public void enableLed(boolean enable) { }
 
     @Override
-    public void setI2cAddress(I2cAddr newAddress) {
-    }
+    public void setI2cAddress(I2cAddr newAddress) { }
 
     @Override
-    public I2cAddr getI2cAddress() {
-        return null;
-    }
+    public I2cAddr getI2cAddress() { return null; }
 }
 
 /**
@@ -231,7 +207,7 @@ class WilyWebcam extends WilyHardwareDevice implements WebcamName {
     WilyWorks.Config.Camera wilyCamera;
 
     WilyWebcam(String deviceName) {
-        for (WilyWorks.Config.Camera camera : WilyCore.config.cameras) {
+        for (WilyWorks.Config.Camera camera: WilyCore.config.cameras) {
             if (camera.name.equals(deviceName)) {
                 wilyCamera = camera;
             }
@@ -506,8 +482,7 @@ class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
     }
 
     @Override
-    public void setDirection(Direction direction) {
-    }
+    public void setDirection(Direction direction) { }
 
     @Override
     public Direction getDirection() {
@@ -515,8 +490,7 @@ class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
     }
 
     @Override
-    public void setPower(double power) {
-    }
+    public void setPower(double power) { }
 
     @Override
     public double getPower() {
@@ -531,23 +505,16 @@ class WilyDigitalChannel extends WilyHardwareDevice implements DigitalChannel {
     boolean state;
 
     @Override
-    public Mode getMode() {
-        return null;
-    }
+    public Mode getMode() { return null; }
 
     @Override
-    public void setMode(Mode mode) {
-    }
+    public void setMode(Mode mode) {}
 
     @Override
-    public boolean getState() {
-        return state;
-    }
+    public boolean getState() { return state; }
 
     @Override
-    public void setState(boolean state) {
-        this.state = state;
-    }
+    public void setState(boolean state) { this.state = state; }
 }
 
 /**
@@ -560,10 +527,9 @@ class WilyLED extends LED {
     double x;
     double y;
     boolean isRed;
-
     WilyLED(String deviceName) {
         WilyWorks.Config.LEDIndicator wilyLed = null;
-        for (WilyWorks.Config.LEDIndicator led : WilyCore.config.ledIndicators) {
+        for (WilyWorks.Config.LEDIndicator led: WilyCore.config.ledIndicators) {
             if (led.name.equals(deviceName)) {
                 wilyLed = led;
             }
@@ -593,20 +559,20 @@ class WilyLED extends LED {
  */
 public class WilyHardwareMap implements Iterable<HardwareDevice> {
 
-    public DeviceMapping<VoltageSensor> voltageSensor = new DeviceMapping<VoltageSensor>(VoltageSensor.class);
-    public DeviceMapping<DcMotor> dcMotor = new DeviceMapping<DcMotor>(DcMotor.class);
-    public DeviceMapping<DistanceSensor> distanceSensor = new DeviceMapping<>(DistanceSensor.class);
-    public DeviceMapping<NormalizedColorSensor> normalizedColorSensor = new DeviceMapping<>(NormalizedColorSensor.class);
-    public DeviceMapping<ColorSensor> colorSensor = new DeviceMapping<>(ColorSensor.class);
-    public DeviceMapping<WebcamName> webcamName = new DeviceMapping<WebcamName>(WebcamName.class);
-    public DeviceMapping<Servo> servo = new DeviceMapping<>(Servo.class);
-    public DeviceMapping<CRServo> crservo = new DeviceMapping<>(CRServo.class);
-    public DeviceMapping<DigitalChannel> digitalChannel = new DeviceMapping<>(DigitalChannel.class);
-    public DeviceMapping<LED> led = new DeviceMapping<LED>(LED.class);
-    public DeviceMapping<SparkFunOTOS> sparkFunOTOS = new DeviceMapping<>(SparkFunOTOS.class);
+    public DeviceMapping<VoltageSensor>            voltageSensor            = new DeviceMapping<>(VoltageSensor.class);
+    public DeviceMapping<DcMotor>                  dcMotor                  = new DeviceMapping<>(DcMotor.class);
+    public DeviceMapping<DistanceSensor>           distanceSensor           = new DeviceMapping<>(DistanceSensor.class);
+    public DeviceMapping<NormalizedColorSensor>    normalizedColorSensor    = new DeviceMapping<>(NormalizedColorSensor.class);
+    public DeviceMapping<ColorSensor>              colorSensor              = new DeviceMapping<>(ColorSensor.class);
+    public DeviceMapping<WebcamName>               webcamName               = new DeviceMapping<>(WebcamName.class);
+    public DeviceMapping<Servo>                    servo                    = new DeviceMapping<>(Servo.class);
+    public DeviceMapping<CRServo>                  crservo                  = new DeviceMapping<>(CRServo.class);
+    public DeviceMapping<DigitalChannel>           digitalChannel           = new DeviceMapping<>(DigitalChannel.class);
+    public DeviceMapping<LED>                      led                      = new DeviceMapping<>(LED.class);
+    public DeviceMapping<SparkFunOTOS>             sparkFunOTOS             = new DeviceMapping<>(SparkFunOTOS.class);
     public DeviceMapping<UltrasonicDistanceSensor> ultrasonicDistanceSensor = new DeviceMapping<>(UltrasonicDistanceSensor.class);
-    protected Map<String, List<HardwareDevice>> allDevicesMap = new HashMap<>();
-    protected List<HardwareDevice> allDevicesList = new ArrayList<>();
+    protected Map<String, List<HardwareDevice>>    allDevicesMap            = new HashMap<>();
+    protected List<HardwareDevice>                 allDevicesList           = new ArrayList<>();
 
     public WilyHardwareMap() {
         put("voltage_sensor", VoltageSensor.class);
@@ -620,11 +586,11 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
         return result;
     }
 
-    private synchronized <T> T tryGet(Class<? extends T> classOrInterface, String deviceName) {
+    private synchronized <T> T tryGet(Class<? extends T> classOrInterface, String deviceName){
         List<HardwareDevice> list = allDevicesMap.get(deviceName.trim());
         if (list != null) {
-            for (HardwareDevice device : list) {
-                if (classOrInterface.isInstance(device)) return classOrInterface.cast(device);
+            for (HardwareDevice device : list){
+                if(classOrInterface.isInstance(device)) return classOrInterface.cast(device);
             }
         }
         return null;
@@ -696,8 +662,8 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
             device = new SparkFunOTOS(null);
             sparkFunOTOS.put(deviceName, (SparkFunOTOS) device);
         } else if (UltrasonicDistanceSensor.class.isAssignableFrom(klass)) {
-            device = new UltrasonicDistanceSensor(null, true);
-            ultrasonicDistanceSensor.put(deviceName, (UltrasonicDistanceSensor) device);
+            device = new WilyUltrasonicDistanceSensor(deviceName);
+            ultrasonicDistanceSensor.put(deviceName, (WilyUltrasonicDistanceSensor) device);
         } else {
             throw new IllegalArgumentException("Unexpected device type for HardwareMap");
         }
@@ -709,7 +675,7 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
     }
 
     private void initializeMultipleDevicesIfNecessary(Iterable<? extends HardwareDevice> devices) {
-        for (HardwareDevice device : devices) {
+        for (HardwareDevice device: devices) {
             initializeDeviceIfNecessary(device);
         }
     }
@@ -782,8 +748,7 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
             }
         }
 
-        @Override
-        public @NonNull Iterator<DEVICE_TYPE> iterator() {
+        @Override public @NonNull Iterator<DEVICE_TYPE> iterator() {
             synchronized (lock) {
                 initializeMultipleDevicesIfNecessary(map.values());
                 return new ArrayList<>(map.values()).iterator();

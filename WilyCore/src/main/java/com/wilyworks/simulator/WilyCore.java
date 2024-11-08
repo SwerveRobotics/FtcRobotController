@@ -4,7 +4,6 @@ import static java.lang.System.nanoTime;
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -19,31 +18,23 @@ import com.wilyworks.simulator.framework.InputManager;
 import com.wilyworks.simulator.framework.Simulation;
 import com.wilyworks.simulator.framework.WilyTelemetry;
 import com.qualcomm.robotcore.hardware.Gamepad;
-import com.wilyworks.simulator.helpers.Point;
 
 import com.wilyworks.simulator.framework.Field;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.reflections.Reflections;
 
-import java.awt.AlphaComposite;
 import java.awt.BorderLayout;
+import java.awt.Checkbox;
 import java.awt.Choice;
-import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
-import java.awt.GraphicsConfiguration;
-import java.awt.GraphicsEnvironment;
 import java.awt.Image;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Transparency;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.GeneralPath;
 import java.awt.image.BufferStrategy;
-import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -97,6 +88,7 @@ class DashboardWindow extends JFrame {
     static final int WINDOW_WIDTH = Field.FIELD_VIEW_DIMENSION;
     static final int WINDOW_HEIGHT = Field.FIELD_VIEW_DIMENSION;
     DashboardCanvas dashboardCanvas = new DashboardCanvas(WINDOW_WIDTH, WINDOW_HEIGHT);
+    JLabel errorLabel = new JLabel("");
     String opModeName = "";
 
     DashboardWindow(Image icon, List<OpModeChoice> opModeChoices, String[] args) {
@@ -193,14 +185,30 @@ class DashboardWindow extends JFrame {
             button.doClick(0);
         }
 
+        Checkbox enableErrorCheckbox = new Checkbox("Enable sensor error");
+
+        WilyCore.enableSensorError = preferences.get("sensorError", "no").equals("yes");
+        enableErrorCheckbox.setState(WilyCore.enableSensorError);
+        enableErrorCheckbox.addItemListener(itemEvent -> {
+            WilyCore.enableSensorError = enableErrorCheckbox.getState();
+            preferences.put("sensorError", WilyCore.enableSensorError ? "yes" : "no");
+        });
+
         JPanel masterPanel = new JPanel(new BorderLayout());
 
         JPanel menuPanel = new JPanel();
         menuPanel.setLayout(new BoxLayout(menuPanel, BoxLayout.X_AXIS));
         menuPanel.add(button);
         menuPanel.add(dropDown);
-        menuPanel.add(label);
+        menuPanel.add(label); // Currently running opMode (shown only when dropDown is invisible)
         masterPanel.add(menuPanel, BorderLayout.NORTH);
+
+        // The simulated error status bar goes along the bottom:
+        JPanel statusBar = new JPanel();
+        statusBar.setLayout(new BoxLayout(statusBar, BoxLayout.X_AXIS));
+        statusBar.add(enableErrorCheckbox);
+        statusBar.add(errorLabel);
+        masterPanel.add(statusBar, BorderLayout.SOUTH);
 
         JPanel canvasPanel = new JPanel();
         canvasPanel.add(dashboardCanvas);
@@ -263,6 +271,7 @@ public class WilyCore {
     public static OpModeThread opModeThread;
     public static Status status = new Status(State.STOPPED, null, null);
     public static double startTime; // Time when the opmode started, zero if opmode not active
+    public static boolean enableSensorError; // True if simulation should add error to sensor inputs
 
     private static boolean simulationUpdated; // True if WilyCore.update() has been called since
     private static double lastUpdateWallClockTime = nanoTime() * 1e-9; // Clock time since last update() call, in seconds
@@ -303,6 +312,17 @@ public class WilyCore {
 
         g.dispose();
         dashboardCanvas.getBufferStrategy().show();
+        dashboardWindow.errorLabel.setText(simulation.getErrorLabel());
+    }
+
+    // Advance the time:
+    static double advanceTime(double deltaT) {
+        if (deltaT <= 0) {
+            deltaT = nanoTime() * 1e-9 - lastUpdateWallClockTime;
+        }
+        elapsedTime += deltaT;
+        lastUpdateWallClockTime = nanoTime() * 1e-9;
+        return deltaT;
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -311,13 +331,8 @@ public class WilyCore {
 
     // The guest can specify the delta-t (which is handy when single stepping):
     static public void updateSimulation(double deltaT) {
-        if (deltaT <= 0) {
-            deltaT = nanoTime() * 1e-9 - lastUpdateWallClockTime;
-        }
-        elapsedTime += deltaT;
-        lastUpdateWallClockTime = nanoTime() * 1e-9;
-
-        // Advance the simulation:
+        // Advance the time then advance the simulation:
+        deltaT = advanceTime(deltaT);
         simulation.advance(deltaT);
 
         // Render everything:
@@ -337,16 +352,16 @@ public class WilyCore {
     // results.
     static public void runTo(Pose2d pose, PoseVelocity2d velocity) {
         // If the user didn't explicitly call the simulation update() API, do it now:
-        if (!simulationUpdated)
-            updateSimulation(0);
-        simulation.runTo(pose, velocity);
-        simulationUpdated = false;
+        double deltaT = advanceTime(0);
+        simulation.runTo(deltaT, pose, velocity);
+        simulationUpdated = true;
+        render();
     }
 
     // Get the simulation's true pose and velocity, in field coordinates and inches and radians:
-    static public Pose2d getPose() { return getPose(0); }
-    static public Pose2d getPose(double secondsAgo) {
-        return simulation.getPose(secondsAgo);
+    static public Pose2d getPose(boolean truePose) { return getPose(0, truePose); }
+    static public Pose2d getPose(double secondsAgo, boolean truePose) {
+        return simulation.getPose(secondsAgo, truePose);
     }
     static public PoseVelocity2d getPoseVelocity() {
         return simulation.poseVelocity;
@@ -578,6 +593,7 @@ public class WilyCore {
 
             // The user has selected an opMode and pressed Init! Run the opMode on a dedicated
             // thread so that it can be interrupted as necessary:
+            simulation.totalDistance = 0;
             opModeThread = new OpModeThread(status.klass);
             try {
                 // Wait for the opMode thread to complete:

@@ -17,7 +17,6 @@ public class WilyVisionPortal extends VisionPortal {
             if ((processor instanceof WilyAprilTagProcessor) &&
                     (camera instanceof WilyWebcam)) {
                 WilyAprilTagProcessor wilyAprilTagProcessor = (WilyAprilTagProcessor) processor;
-                WilyWebcam wilyWebCam = (WilyWebcam) camera;
                 wilyAprilTagProcessor.initialize(((WilyWebcam) camera).wilyCamera);
             }
         }
