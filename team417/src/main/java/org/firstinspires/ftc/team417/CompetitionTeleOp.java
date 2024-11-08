@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -26,8 +27,11 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 public class CompetitionTeleOp extends BaseOpMode {
     private double speedMultiplier = 1;
     boolean curve = false;
-    DcMotor armMotor;
-    CRServo intake;
+    DcMotor armMotor1;
+    DcMotor armMotor2;
+    DcMotor slideMotor;
+    CRServo intake1;
+    CRServo intake2;
     Servo wrist;
     MecanumDrive drive;
 
@@ -83,30 +87,70 @@ public class CompetitionTeleOp extends BaseOpMode {
     double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
 
+    public void initFastBot() {
+        armMotor1 = hardwareMap.get(DcMotor.class, "arm");
+        intake1 = hardwareMap.get(CRServo.class, "intake");
+        wrist = hardwareMap.get(Servo.class, "wrist");
+
+        /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
+        ((DcMotorEx) armMotor1).setCurrentAlert(5, CurrentUnit.AMPS);
+
+        /* Before starting the armMotor. We'll make sure the TargetPosition is set to 0.
+        Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
+        If you do not have the encoder plugged into this motor, it will not run in this code. */
+        armMotor1.setTargetPosition(0);
+        armMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        /* Make sure that the intake is off, and the wrist is folded in. */
+        intake1.setPower(INTAKE_OFF);
+        setPosition(WRIST_FOLDED_IN);
+    }
+
+    public void initCompBot() {
+        //Init Motors
+        armMotor1 = hardwareMap.get(DcMotor.class, "arm1");
+        armMotor2 = hardwareMap.get(DcMotor.class, "arm2");
+        slideMotor = hardwareMap.get(DcMotor.class, "slides");
+
+
+        //Init servos
+        intake1 = hardwareMap.get(CRServo.class, "intake1");
+        intake2 = hardwareMap.get(CRServo.class, "intake2");
+        wrist = hardwareMap.get(Servo.class, "wrist");
+
+        /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
+        ((DcMotorEx) armMotor1).setCurrentAlert(5, CurrentUnit.AMPS);
+        ((DcMotorEx) armMotor2).setCurrentAlert(5, CurrentUnit.AMPS);
+
+        //Reset encoder
+        armMotor1.setTargetPosition(0);
+        armMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        armMotor2.setTargetPosition(0);
+        armMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        armMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        //init servo pos
+        intake1.setPower(INTAKE_OFF);
+        intake2.setPower(INTAKE_OFF);
+        //setPosition(WRIST_FOLDED_IN);
+    }
+    
     @Override
     public void runOpMode() {
         Pose2d beginPose = new Pose2d(0, 0, 0);
         drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
 
-        if (hasMechanisms) {
-            armMotor = hardwareMap.get(DcMotor.class, "arm");
-            intake = hardwareMap.get(CRServo.class, "intake");
-            wrist = hardwareMap.get(Servo.class, "wrist");
+        switch (MecanumDrive.driveParameters) {
+            case FASTBOT_MECANUM:
+                initFastBot();
+
+            case COMPETITION_ROBOT:
+                initCompBot();
         }
-
-        /*This sets the maximum current that the control hub will apply to the arm before throwing a flag */
-        ((DcMotorEx) armMotor).setCurrentAlert(5, CurrentUnit.AMPS);
-
-        /* Before starting the armMotor. We'll make sure the TargetPosition is set to 0.
-        Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
-        If you do not have the encoder plugged into this motor, it will not run in this code. */
-        armMotor.setTargetPosition(0);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        /* Make sure that the intake is off, and the wrist is folded in. */
-        intake.setPower(INTAKE_OFF);
-        setPosition(WRIST_FOLDED_IN);
 
         /* Send telemetry message to signify robot waiting */
         telemetry.addLine("Robot Ready.");
@@ -116,6 +160,8 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
+
+            //Enter slow down if bumpers are pressed
             if (gamepad1.left_bumper && gamepad1.right_bumper) {
                 speedMultiplier = 0.25;
             } else if (gamepad1.left_bumper || gamepad1.right_bumper) {
@@ -149,7 +195,13 @@ public class CompetitionTeleOp extends BaseOpMode {
             // Update the current pose:
             drive.updatePoseEstimate();
 
-            controlMechanisms();
+            switch (MecanumDrive.driveParameters) {
+                case FASTBOT_MECANUM:
+                    controlFastBotMechanisms();
+
+                case COMPETITION_ROBOT:
+                    controlCompBotMechanisms();
+            }
 
             telemetry.addLine("Running TeleOp!");
             telemetry.addData("Kinematic Type", kinematicType);
@@ -157,14 +209,14 @@ public class CompetitionTeleOp extends BaseOpMode {
             telemetry.addData("Stick Curve", curve);
 
             /* Check to see if our arm is over the current limit, and report via telemetry. */
-            if (((DcMotorEx) armMotor).isOverCurrent()) {
+            if (((DcMotorEx) armMotor1).isOverCurrent()) {
                 telemetry.addLine("MOTOR EXCEEDED CURRENT LIMIT!");
             }
 
 
             /* send telemetry to the driver of the arm's current position and target position */
-            telemetry.addData("armTarget: ", armMotor.getTargetPosition());
-            telemetry.addData("arm Encoder: ", armMotor.getCurrentPosition());
+            telemetry.addData("armTarget: ", armMotor1.getTargetPosition());
+            telemetry.addData("arm Encoder: ", armMotor1.getCurrentPosition());
 
             // These telemetry.addline() calls will inform the user of what each button does
 
@@ -200,7 +252,32 @@ public class CompetitionTeleOp extends BaseOpMode {
         }
     }
 
-    public void controlMechanisms() {
+    public void controlCompBotMechanisms() {
+
+        // GamePad2 Arm Control
+        if (gamepad2.a) {
+            intake1.setPower(INTAKE_COLLECT);
+            intake2.setPower(INTAKE_COLLECT);
+        } else if (gamepad2.x) {
+            intake1.setPower(INTAKE_OFF);
+            intake2.setPower(INTAKE_OFF);
+        } else if (gamepad2.b) {
+            intake1.setPower(INTAKE_DEPOSIT);
+            intake2.setPower(INTAKE_DEPOSIT);
+        }
+
+        //set arm motor powers
+        armMotor1.setPower(gamepad2.left_stick_y);
+        armMotor2.setPower(gamepad2.left_stick_y);
+
+        //set intake powers
+        slideMotor.setPower(gamepad2.right_stick_y);
+
+        // Here we set the servo position.
+        wrist.setPosition(wristPosition);
+    }
+
+    public void controlFastBotMechanisms() {
         /* Here we handle the three buttons that have direct control of the intake speed.
             These control the continuous rotation servo that pulls elements into the robot,
             If the user presses A, it sets the intake power to the final variable that
@@ -217,11 +294,11 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         // GamePad2 Arm Control
         if (gamepad2.a) {
-            intake.setPower(INTAKE_COLLECT);
+            intake1.setPower(INTAKE_COLLECT);
         } else if (gamepad2.x) {
-            intake.setPower(INTAKE_OFF);
+            intake1.setPower(INTAKE_OFF);
         } else if (gamepad2.b) {
-            intake.setPower(INTAKE_DEPOSIT);
+            intake1.setPower(INTAKE_DEPOSIT);
         }
 
             /* Here we create a "fudge factor" for the arm position.
@@ -247,7 +324,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             /* This is the intaking/collecting arm position */
             armPosition = ARM_COLLECT;
             setPosition(WRIST_FOLDED_OUT);
-            intake.setPower(INTAKE_COLLECT);
+            intake1.setPower(INTAKE_COLLECT);
         } else if (gamepad2.left_bumper) {
                     /* This is about 20° up from the collecting position to clear the barrier
                     Note here that we don't set the wrist position or the intake power when we
@@ -261,7 +338,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                     /* This turns off the intake, folds in the wrist, and moves the arm
                     back to folded inside the robot. This is also the starting configuration */
             armPosition = ARM_COLLAPSED_INTO_ROBOT;
-            intake.setPower(INTAKE_OFF);
+            intake1.setPower(INTAKE_OFF);
             setPosition(WRIST_FOLDED_IN);
         } else if (gamepad2.dpad_right) {
             /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
@@ -270,12 +347,12 @@ public class CompetitionTeleOp extends BaseOpMode {
         } else if (gamepad2.dpad_up) {
             /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
             armPosition = ARM_ATTACH_HANGING_HOOK;
-            intake.setPower(INTAKE_OFF);
+            intake1.setPower(INTAKE_OFF);
             setPosition(WRIST_FOLDED_IN);
         } else if (gamepad2.dpad_down) {
             /* this moves the arm down to lift the robot up once it has been hooked */
             armPosition = ARM_WINCH_ROBOT;
-            intake.setPower(INTAKE_OFF);
+            intake1.setPower(INTAKE_OFF);
             setPosition(WRIST_FOLDED_IN);
         }
 
@@ -285,10 +362,10 @@ public class CompetitionTeleOp extends BaseOpMode {
             /* Here we set the target position of our arm to match the variable that was selected
             by the driver.
             We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
-        armMotor.setTargetPosition((int) (armPosition + armPositionFudgeFactor));
+        armMotor1.setTargetPosition((int) (armPosition + armPositionFudgeFactor));
 
-        ((DcMotorEx) armMotor).setVelocity(2100);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        ((DcMotorEx) armMotor1).setVelocity(2100);
+        armMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
     }
 
     public void setPosition(double position) {
