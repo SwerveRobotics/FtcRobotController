@@ -82,7 +82,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public boolean hasMechanisms = MecanumDrive.driveParameters == DriveParameters.COMPETITION_ROBOT
             || MecanumDrive.driveParameters == DriveParameters.FASTBOT_MECANUM;
 
-    public static final KinematicType kinematicType = KinematicType.MECANUM;
+    public static final KinematicType kinematicType = KinematicType.MECANUM; // will have to change for league 2, once all robot measurements are updated
 
     public void initializeHardware() {
         // Only initialize arm if it's not already initialized.
