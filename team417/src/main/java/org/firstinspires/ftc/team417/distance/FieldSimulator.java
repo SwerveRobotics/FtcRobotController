@@ -19,9 +19,9 @@ public class FieldSimulator {
         double newX = base.position.x + rotatedX;
         double newY = base.position.y + rotatedY;
 
-        // Add headings (and normalize to 0-360 range)
-        double newHeading = (base.heading.log() + relative.heading.log()) % 360;
-        if (newHeading < 0) newHeading += 360;
+        // Add headings (and normalize to 0-2π range)
+        double newHeading = (base.heading.log() + relative.heading.log()) % (2 * Math.PI);
+        if (newHeading < 0) newHeading += (2 * Math.PI);
 
         return new Pose2d(newX, newY, newHeading);
     }

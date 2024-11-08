@@ -2,6 +2,7 @@ package org.firstinspires.ftc.team417.distance;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
@@ -23,17 +24,18 @@ public class DistanceLocalizer {
     public ArrayList<Vector2d> history = new ArrayList<>();
     final int MAX_HISTORY_SIZE = 10;
 
-    final double MAXIMUM_CORRECTION_VELOCITY = 0.1;
+    final double MAXIMUM_CORRECTION_VELOCITY = 3; // Inches per second
 
     double latestLeft = 0;
     double latestRight = 0;
     boolean leftTurn = true;
-    final double MAX_CHANGE = 3;
 
     final DistanceUnit unit = DistanceUnit.INCH;
 
     final double ANGLE_OF_POSITIVE_CORNER = 0.25 * Math.PI;
     final double RELIABLE_DISTANCE = 48;
+
+    final ElapsedTime clock = new ElapsedTime();
 
     private static final Map<FieldSide, Map<FieldSide, Double>> angleMap = new EnumMap<>(FieldSide.class);
 
@@ -67,9 +69,16 @@ public class DistanceLocalizer {
         this.rightInfo = rightInfo;
         this.drive = drive;
         this.correction = new Vector2d(0, 0);
+        clock.reset();
     }
 
+    double lastLoopTime = 0;
+
     public void updateIfPossible() {
+        double time = clock.nanoseconds();
+        double delta = (time - lastLoopTime) ; // In milliseconds
+        lastLoopTime = time;
+
         getNextDistance();
 
         Pose2d estimatedPose = new Pose2d(drive.pose.position.plus(correction), drive.pose.heading.log());
@@ -83,8 +92,8 @@ public class DistanceLocalizer {
         double heading = normalizeToFirstQuadrant(drive.pose.heading.log());
         if (!sameSide && leftIntersection.distance < RELIABLE_DISTANCE && rightIntersection.distance < RELIABLE_DISTANCE) {
             detectedRelativePosition = new Vector2d(
-                    calculateDistance(latestLeft, heading, leftInfo),
-                    calculateDistance(latestRight, heading, rightInfo));
+                    calculateDistance(latestRight, heading, rightInfo),
+                    calculateDistance(latestLeft, heading, leftInfo));
         } else {
             return;
         }
@@ -112,11 +121,11 @@ public class DistanceLocalizer {
 
         correction = new Vector2d(
                 correction.x +
-                (Math.abs(xDiff) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
-                        ? xDiff : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, xDiff)),
+                        (Math.abs(xDiff) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
+                                ? xDiff : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, xDiff)),
                 correction.y +
-                (Math.abs(yDiff) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
-                        ? yDiff : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, yDiff))
+                        (Math.abs(yDiff) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
+                                ? yDiff : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, yDiff))
         );
     }
 
@@ -165,15 +174,9 @@ public class DistanceLocalizer {
     // Firing only one each loop should mitigate the effect.
     void getNextDistance() {
         if (leftTurn) {
-            double tentativeDist = leftDistance.getDistance(unit);
-            if (Math.abs(latestLeft - tentativeDist) <= MAX_CHANGE) {
-                latestLeft = tentativeDist;
-            };
+            latestLeft = leftDistance.getDistance(unit);
         } else {
-            double tentativeDist = rightDistance.getDistance(unit);
-            if (Math.abs(latestRight - tentativeDist) <= MAX_CHANGE) {
-                latestRight = tentativeDist;
-            }
+            latestRight = rightDistance.getDistance(unit);
         }
         leftTurn = !leftTurn;
     }
