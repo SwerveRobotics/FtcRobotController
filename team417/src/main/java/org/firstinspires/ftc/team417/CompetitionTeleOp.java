@@ -19,7 +19,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 @TeleOp(name = "TeleOp", group = "Competition")
 @Config
 public class CompetitionTeleOp extends BaseOpMode {
-    private double speedMultiplier = 1;
+    private double speedMultiplier = 0.5;
     boolean curve = true;
     boolean fieldCentered = false;
     MecanumDrive drive;
@@ -86,12 +86,12 @@ public class CompetitionTeleOp extends BaseOpMode {
     }
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
-        if (gamepad1.left_bumper && gamepad1.right_bumper) {
-            speedMultiplier = 0.25;
-        } else if (gamepad1.left_bumper || gamepad1.right_bumper) {
-            speedMultiplier = 0.5;
-        } else {
-            speedMultiplier = 1;
+        speedMultiplier = 0.5;
+        if (gamepad1.left_bumper) {
+            speedMultiplier *= 0.5;
+        }
+        if (gamepad1.right_bumper) {
+            speedMultiplier *= 2;
         }
 
         double theta, x, y, rot, rotatedX, rotatedY;
