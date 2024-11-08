@@ -127,11 +127,13 @@ public class CompetitionTeleOp extends BaseOpMode {
         armMotor1.setTargetPosition(0);
         armMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        armMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         armMotor2.setTargetPosition(0);
         armMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         armMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         armMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+        armMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         //init servo pos
         intake1.setPower(INTAKE_OFF);
