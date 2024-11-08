@@ -65,7 +65,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     //position used to score specimens in auto
     public final static double Y_SCORE_POSE = 41.5;
-
+    public final static double XDRIVE_Y_SCORE_POSE = 33;
     /* A number in degrees that the triggers can adjust the arm position by */
     final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
