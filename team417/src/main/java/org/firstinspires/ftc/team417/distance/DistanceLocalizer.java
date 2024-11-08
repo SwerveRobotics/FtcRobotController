@@ -24,7 +24,7 @@ public class DistanceLocalizer {
     public ArrayList<Vector2d> history = new ArrayList<>();
     final int MAX_HISTORY_SIZE = 10;
 
-    final double MAXIMUM_CORRECTION_VELOCITY = 3; // Inches per second
+    final double MAXIMUM_CORRECTION_VELOCITY = 5; // Inches per second
 
     double latestLeft = 0;
     double latestRight = 0;
@@ -72,11 +72,11 @@ public class DistanceLocalizer {
         clock.reset();
     }
 
-    double lastLoopTime = 0;
+    long lastLoopTime = 0;
 
     public void updateIfPossible() {
-        double time = clock.nanoseconds();
-        double delta = (time - lastLoopTime) ; // In milliseconds
+        long time = clock.nanoseconds();
+        double delta = (time - lastLoopTime) / 1_000_000.0; // Delta is in milliseconds
         lastLoopTime = time;
 
         getNextDistance();
@@ -119,13 +119,15 @@ public class DistanceLocalizer {
         double xDiff = targetCorrection.x - correction.x;
         double yDiff = targetCorrection.y - correction.y;
 
+        double maxCorrection = MAXIMUM_CORRECTION_VELOCITY * delta / 1000.0;
+
         correction = new Vector2d(
                 correction.x +
-                        (Math.abs(xDiff) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
-                                ? xDiff : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, xDiff)),
+                        (Math.abs(xDiff) < Math.abs(maxCorrection)
+                                ? xDiff : Math.copySign(maxCorrection, xDiff)),
                 correction.y +
-                        (Math.abs(yDiff) < Math.abs(MAXIMUM_CORRECTION_VELOCITY)
-                                ? yDiff : Math.copySign(MAXIMUM_CORRECTION_VELOCITY, yDiff))
+                        (Math.abs(yDiff) < Math.abs(maxCorrection)
+                                ? yDiff : Math.copySign(maxCorrection, yDiff))
         );
     }
 
