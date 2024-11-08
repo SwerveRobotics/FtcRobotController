@@ -8,6 +8,8 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.team417.liveView.LiveView;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
@@ -20,17 +22,23 @@ public class CompetitionTeleOp extends BaseOpMode {
 
     @Override
     public void runOpMode() {
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
+
+        LiveView view = new LiveView(telemetry);
+        view.initHTML();
+
+        telemetry.update();
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
 
+        view.resize(4);
+        view.processBitmap(view.fadeTest(255, 16));
+        //view.allWhiteTest(160, 80);
+
         while (opModeIsActive()) {
-            telemetry.addLine("Running TeleOp!");
-            telemetry.update();
+            //telemetry.addLine("Running TeleOp!");
 
             // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(
@@ -53,7 +61,12 @@ public class CompetitionTeleOp extends BaseOpMode {
             // Draw the robot and field:
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
+
+            //view.trackLoopTime(100, packet);
+
             MecanumDrive.sendTelemetryPacket(packet);
+
+            telemetry.update();
         }
     }
 }
