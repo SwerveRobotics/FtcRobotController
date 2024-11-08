@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.team6220.javatextmenu.MenuInput;
 import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
@@ -15,6 +16,8 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
+
+@Disabled
 @Autonomous(name="ScoringAutoMiddlePushbot", group="Competition", preselectTeleOp="CompetitionTeleOp")
 public class ScoringAutoMiddlePushbot extends BaseOpMode {
 
@@ -58,22 +61,6 @@ public class ScoringAutoMiddlePushbot extends BaseOpMode {
                 .waitSeconds(3)
                 // drive to park position
                 .splineTo(new Vector2d(-55,60), Math.toRadians(180))
-                //.setTangent(Math.toRadians(90))
-                //.splineToLinearHeading(new Pose2d(62, 55, Math.toRadians(-140)),  Math.toRadians(40))
-                //.strafeTo(new Vector2d(35, 60))
-                //.strafeTo(new Vector2d(35, 15))
-                //.strafeTo(new Vector2d(45, 15))
-                //.splineToConstantHeading(new Vector2d(55, 60), Math.toRadians(0))
-
-//                .strafeTo(new Vector2d(36, 60))
-//                .endTrajectory()
-//                .setTangent(Math.toRadians(-90))
-//                .splineTo(new Vector2d(36, 12), Math.toRadians(-90))
-////                .strafeTo(new Vector2d(48, 12))
-//                .splineToLinearHeading(new Pose2d(48, 12, -130), -130)
-//                .endTrajectory()
-//                .setTangent(Math.toRadians(-130))
-//                .splineTo(new Vector2d(55, 50), Math.toRadians(-130))
                 .build();
         Action trajectoryAction = middleScoringTrajectory;
 

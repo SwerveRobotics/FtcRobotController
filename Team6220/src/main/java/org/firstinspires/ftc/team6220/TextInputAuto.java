@@ -3,7 +3,7 @@ package org.firstinspires.ftc.team6220;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
-import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.team6220.javatextmenu.MenuFinishedButton;
@@ -16,15 +16,13 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@Autonomous(name="WIPTextMenuAuto", group="Competition", preselectTeleOp="CompetitionTeleOp")
-public class WIPTextInputAuto extends BaseOpMode {
+@Autonomous(name="TextInputAuto", group="Competition", preselectTeleOp="CompetitionTeleOp")
+public class TextInputAuto extends BaseOpMode {
 
     // defaults so it doesnt explode if you skip the text menu
-    private AutonomousEnums.AllianceColor allianceColor = null;
     private AutonomousEnums.AutoStartPosition autoStartPosition = null;
     private AutonomousEnums.AutoType autoType = null;
     private AutonomousEnums.ParkPosition parkPosition = null;
-    private AutonomousEnums.SpikeMarkPickupAmount pickupAmount = null;
     private AutonomousEnums.SpikeMarkSide spikeMarkSide = null;
 
     @Override
@@ -35,8 +33,6 @@ public class WIPTextInputAuto extends BaseOpMode {
         MenuInput input = new MenuInput(MenuInput.InputType.CONTROLLER);
 
         startingConditionMenu.add("Select Starting Conditions")
-                .add("Alliance Color: ")
-                .add("alliance_color", AutonomousEnums.AllianceColor.class)
                 .add("Start Position: ")
                 .add("start_position", AutonomousEnums.AutoStartPosition.class)
                 .add("Auto Type: ")
@@ -47,7 +43,6 @@ public class WIPTextInputAuto extends BaseOpMode {
         textMenuUpdateUntilComplete(startingConditionMenu, input);
 
         // get values from textmenu
-        allianceColor = startingConditionMenu.getResult(AutonomousEnums.AllianceColor.class, "alliance_color");
         autoStartPosition = startingConditionMenu.getResult(AutonomousEnums.AutoStartPosition.class, "start_position");
         autoType = startingConditionMenu.getResult(AutonomousEnums.AutoType.class, "auto_type");
 
@@ -60,8 +55,6 @@ public class WIPTextInputAuto extends BaseOpMode {
         scoringSelectionMenu.add("Scoring Settings: ")
                 .addTextConditional("SpikeMark Side: ", autoType.equals(AutonomousEnums.AutoType.SCORING))
                 .addEnumConditional("spikemark_side", AutonomousEnums.SpikeMarkSide.class, autoType.equals(AutonomousEnums.AutoType.SCORING))
-                .addTextConditional("Sample Pickup Quantity:", autoType.equals(AutonomousEnums.AutoType.SCORING))
-                .addEnumConditional("sample_pickup_quantity", AutonomousEnums.SpikeMarkPickupAmount.class, autoType.equals(AutonomousEnums.AutoType.SCORING))
                 .add("Park Position: ")
                 .add("park_position", AutonomousEnums.ParkPosition.class)
                 .add("confirm_selection", new MenuFinishedButton());
@@ -72,7 +65,6 @@ public class WIPTextInputAuto extends BaseOpMode {
         // only assign values if they are enabled for selected autotype
         if (autoType.equals(AutonomousEnums.AutoType.SCORING)) {
             spikeMarkSide = scoringSelectionMenu.getResult(AutonomousEnums.SpikeMarkSide.class, "spikemark_side");
-            pickupAmount = scoringSelectionMenu.getResult(AutonomousEnums.SpikeMarkPickupAmount.class, "sample_pickup_quantity");
         }
         parkPosition = scoringSelectionMenu.getResult(AutonomousEnums.ParkPosition.class, "park_position");
 
@@ -81,22 +73,7 @@ public class WIPTextInputAuto extends BaseOpMode {
         // as soon as the Start button is pressed!
         // Scoring trajectories
 
-        Action trajectoryAction = null;
-
-        switch(autoType) {
-            case PARK: {
-                trajectoryAction = drive.actionBuilder(autoStartPosition.startingPose)
-                        .splineTo(new Vector2d(-60, 60), (Math.PI))
-                        .build();
-            }
-            case SCORING: {
-                trajectoryAction = drive.actionBuilder(autoStartPosition.startingPose)
-                        .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
-                        .endTrajectory()
-                        .splineTo(new Vector2d(48, 50), (5*Math.PI)/4)
-                        .build();
-            }
-        }
+        Action trajectoryAction = computeAutoPath(drive);
 
         // Get a preview of the trajectory's path:
         Canvas previewCanvas = new Canvas();
@@ -147,9 +124,32 @@ public class WIPTextInputAuto extends BaseOpMode {
         }
     }
 
-    private <E extends Enum> void runIfNotNull (Class<E> enumClass, Runnable runnable) {
-        if (enumClass != null) {
+    private Action computeAutoPath(MecanumDrive drive) {
+        TrajectoryActionBuilder actionBuilder = drive.actionBuilder(autoStartPosition.startingPose);
 
+        switch(autoType) {
+            case PARK: {
+                // strafe to the park position, build, and return
+                return actionBuilder.strafeTo(parkPosition.parkingPosition)
+                        .endTrajectory()
+                        .build();
+            }
+            case SCORING: {
+                // so much cleaner omg such wow much yes
+                // yoink the auto scoring route from the enum
+                actionBuilder = spikeMarkSide.appendScoringRoute(actionBuilder);
+
+                // still putting the wait here because yeah
+                actionBuilder = actionBuilder.waitSeconds(3);
+
+                // spline to park position, and return
+                return actionBuilder.splineTo(parkPosition.parkingPosition, Math.PI)
+                        .endTrajectory()
+                        .build();
+            }
         }
+
+        // this should never happen
+        return actionBuilder.build();
     }
 }

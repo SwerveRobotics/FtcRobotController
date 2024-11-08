@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 
@@ -13,6 +14,7 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
+@Disabled
 @Autonomous(name="ParkAutoLeft", group="Competition", preselectTeleOp="CompetitionTeleOp")
 public class ParkAutoLeft extends BaseOpMode {
 
