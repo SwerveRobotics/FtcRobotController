@@ -34,6 +34,13 @@ abstract public class BaseOpMode extends LinearOpMode {
     counts per rotation of the arm. We divide that by 360 to get the counts per degree. */
     final static double ARM_TICKS_PER_DEGREE = 19.7924893140647; //exact fraction is (194481/9826)
 
+    /*This constant is the number of encoder ticks for each inch of the four bar.
+    The four bar has a total travel range of 42 inches.
+
+    */
+
+    final static double LIFT_TICKS_PER_INCH =  196;
+
     /* These constants hold the position that the arm is commanded to run to.
     These are relative to where the arm was located when you start the OpMode. So make sure the
     arm is reset to collapsed inside the robot before you start the program.
@@ -46,13 +53,20 @@ abstract public class BaseOpMode extends LinearOpMode {
     as far from the starting position, decrease it. */
 
     static double ARM_COLLAPSED_INTO_ROBOT = 0;
+    static double LIFT_COLLECT = 0;
     static double ARM_COLLECT = 254 * ARM_TICKS_PER_DEGREE;
     static double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
     static double ARM_AUTO_REST_POSITION = 170 * ARM_TICKS_PER_DEGREE;
     static double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
+    static double LIFT_SAMPLE_LOW = 0 ; // not known yet
+    static double LIFT_SAMPLE_HIGH = 0; //not known yet
     static double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
+    static double LIFT_SPECIMEN = 0 ; // not known yet
     static double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
     static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
+    static double LINEAR_SLIDES_OUT =0; // not known yet
+    static double LINEAR_SLIDES_IN = 0;
+
 
     /* Variables to store the speed the intake servo should be set at to intake, and deposit game elements. */
     final static double INTAKE_COLLECT = -1.0;
@@ -61,7 +75,9 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
     final static double WRIST_FOLDED_IN = 0.676;
+    final static double X_WRIST_FOLDED_IN = 0; //not known yet
     final static double WRIST_FOLDED_OUT = 0.335;
+    final static double X_WRIST_FOLDED_OUT = 0; //not known yet
 
     //position used to score specimens in auto
     public final static double Y_SCORE_POSE = 41.5;
@@ -110,11 +126,11 @@ abstract public class BaseOpMode extends LinearOpMode {
     // RC 17.50
     // DEV 17.75
     // X 17.00
-    final static double ROBOT_LENGTH = 17.00;
+    final static double ROBOT_LENGTH = 17.50;
     // RC 16.50
     // DEV 18.50
     // X 17.00
-    final static double ROBOT_WIDTH = 17.00;
+    final static double ROBOT_WIDTH = 16.50;
     class MoveArm extends RobotAction {
 
         double targetPosition;

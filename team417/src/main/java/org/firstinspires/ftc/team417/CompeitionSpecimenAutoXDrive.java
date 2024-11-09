@@ -12,7 +12,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 public class CompeitionSpecimenAutoXDrive extends BaseOpMode{
     @Override
     public void runOpMode () {
-        Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), -90);  // sets the beginning pose relative to the robot and  cxc
+        Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(-90));  // sets the beginning pose relative to the robot and  cxc
         MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
         initializeHardware();
         Action trajectoryAction = drive.actionBuilder(beginPose)
