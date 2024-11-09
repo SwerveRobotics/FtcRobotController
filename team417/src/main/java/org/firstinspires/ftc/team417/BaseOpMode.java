@@ -66,13 +66,18 @@ abstract public class BaseOpMode extends LinearOpMode {
     //position used to score specimens in auto
     public final static double Y_SCORE_POSE = 41.5;
 
+
+
     /* A number in degrees that the triggers can adjust the arm position by */
     final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
     /** @noinspection ConstantValue*/
     /* Variables that are used to set the arm to a specific position */
+    // Fast Bot variables
     static double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
+
+
 
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
     static DcMotorEx armMotor;
@@ -83,6 +88,10 @@ abstract public class BaseOpMode extends LinearOpMode {
             || MecanumDrive.driveParameters == DriveParameters.FASTBOT_MECANUM;
 
     public static final KinematicType kinematicType = KinematicType.MECANUM;
+
+
+
+
 
     public void initializeHardware() {
         // Only initialize arm if it's not already initialized.
@@ -191,6 +200,9 @@ abstract public class BaseOpMode extends LinearOpMode {
             return false;
         }
     }
+
+
+
     class intakeSample extends RobotAction {
         @Override
         public boolean run(double elapsedTime) {

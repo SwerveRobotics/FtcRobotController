@@ -7,35 +7,33 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
-/**
- * This class exposes the competition version of TeleOp. As a general rule, add code to the
- * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
- */
 @TeleOp(name = "TeleOp", group = "Competition")
 @Config
-public class CompetitionTeleOp extends BaseOpMode {
+public class SlowBotTeleOp extends BaseOpModeSlowBot {
     private double speedMultiplier = 1;
     boolean curve = true;
     boolean fieldCentered = false;
+
     MecanumDrive drive;
 
     public double startHeading;
 
-    public boolean hasMechanisms = MecanumDrive.driveParameters == DriveParameters.COMPETITION_ROBOT
-            || MecanumDrive.driveParameters == DriveParameters.FASTBOT_MECANUM
-            || MecanumDrive.driveParameters == DriveParameters.DEVBOT_MECANUM;
-
     /* A number in degrees that the triggers can adjust the arm position by */
-    final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
+    // TODO: needs tuning
+    final double FUDGE_FACTOR = 200;
 
-    /** @noinspection ConstantValue*/
+    /**
+     * @noinspection ConstantValue
+     */
     /* Variables that are used to set the arm to a specific position */
-    double armPositionFudgeFactor;
+    double liftPositionFudgeFactor;
+    double slidePositionFudgeFactor;
+
     boolean intakeEnabled = false;
+
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
@@ -76,8 +74,6 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         startHeading = startingPose.heading.log();
 
-        wrist.setPosition(WRIST_FOLDED_IN);
-
         /* Send telemetry message to signify robot waiting */
         telemetry.addLine("Robot Ready.");
         telemetry.update();
@@ -112,9 +108,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         }
 
         // Press the D-Pad left button ONCE (do not hold)
-        if (gamepad1.dpad_up) {
-            driveAssistHanging();
-        }
+        //TODO: FIX LATER
 
 
         // Rotate the movement direction counter to the bot's rotation
@@ -135,7 +129,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     }
 
     public void controlMechanismsWithGamepads() {
-        if (hasMechanisms) {
+
             /* Here we handle the three buttons that have direct control of the intake speed.
             These control the continuous rotation servo that pulls elements into the robot,
             If the user presses A, it sets the intake power to the final variable that
@@ -150,61 +144,34 @@ public class CompetitionTeleOp extends BaseOpMode {
             three if statements, then it will set the intake servo's power to multiple speeds in
             one cycle. Which can cause strange behavior. */
 
-        // GamePad2 Arm Control
-//        double lastState = INTAKE_OFF;
-//
-//        if (gamepad2.a) {
-//            lastState = INTAKE_COLLECT;
-//            intake.setPower(INTAKE_COLLECT);
-//        } else if (gamepad2.x) {
-//            lastState = INTAKE_OFF;
-//            intake.setPower(INTAKE_OFF);
-//        } else if (gamepad2.b) {
-//            intake.setPower(INTAKE_DEPOSIT);
-//        } else if (!gamepad2.b) {
-//            intake.setPower(lastState);
-//        }
-//            double lastState = INTAKE_OFF;
-//            boolean isIntakeOff = false;
-//            if(gamepad2.a) {
-//                lastState = INTAKE_COLLECT;
-//                intake.setPower(INTAKE_COLLECT);
-//            }
-//            else if(gamepad2.x) {
-//                lastState = INTAKE_OFF;
-//                intake.setPower(INTAKE_OFF);
-//            } else if (gamepad2.b) {
-//                intake.setPower(INTAKE_DEPOSIT);
-//            } else if (!gamepad2.b){
-//                intake.setPower(lastState);
-//            }
 
-
-            // In the loop if 'a' is clicked intakeEnabled is set to true which will be stored to memory
-            if (gamepad2.right_bumper) {
-                intakeEnabled = true;
-            }
             // In the loop if 'x' is clicked intakeEnabled is set to false which will be stored to memory
-            else if (gamepad2.x) {
-                intakeEnabled = false;
+            if (gamepad2.x) {
+                if(isSlideExtended()){
+                    wristControl(X_WRIST_FOLDED_IN);
+                    slidePosition = SLIDE_HOME_POSITION;
+                } else{
+                    slidePosition = SLIDE_SCORE_IN_BASKET;
+                    liftPosition = LIFT_SCORE_LOW_BASKET;
+                }
+
             }
 
             boolean reversed = gamepad2.b;
 
             // When 'b' is HELD down, it will deposit
             if (reversed) {
-                intake.setPower(INTAKE_DEPOSIT);
+                intakeControl(INTAKE_DEPOSIT);
             }
             // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
-            else if(intakeEnabled) {
-                intake.setPower(INTAKE_COLLECT);
+            else if (intakeEnabled) {
+                intakeControl(INTAKE_COLLECT);
+
             }
             // When 'x' is clicked, it is TOGGLED, so it will turn off the intake until another input
             else {
-                intake.setPower(INTAKE_OFF);
+                intakeControl(INTAKE_OFF);
             }
-
-
 
             /* Here we create a "fudge factor" for the arm position.
             This allows you to adjust (or "fudge") the arm position slightly with the gamepad triggers.
@@ -214,7 +181,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             than the other, it "wins out". This variable is then multiplied by our FUDGE_FACTOR.
             The FUDGE_FACTOR is the number of degrees that we can adjust the arm by with this function. */
 
-            armPositionFudgeFactor = FUDGE_FACTOR * (gamepad2.right_trigger + (-gamepad2.left_trigger));
+            liftPositionFudgeFactor = FUDGE_FACTOR * (gamepad2.right_trigger + (-gamepad2.left_trigger));
 
             /* Here we implement a set of if else loops to set our arm to different scoring positions.
             We check to see if a specific button is pressed, and then move the arm (and sometimes
@@ -222,149 +189,67 @@ public class CompetitionTeleOp extends BaseOpMode {
             to start collecting. So it moves the armPosition to the ARM_COLLECT position,
             it folds out the wrist to make sure it is in the correct orientation to intake, and it
             turns the intake on to the COLLECT mode.*/
-
+    // In the loop if 'a' is clicked intakeEnabled is set to true which will be stored to memory
+            if (gamepad2.right_bumper) {
+                intakeEnabled = true;
+            }
             if (gamepad2.right_bumper) {
                 /* This is the intaking/collecting arm position */
-                armPosition = ARM_COLLECT;
-                wrist.setPosition(WRIST_FOLDED_OUT);
-                intake.setPower(INTAKE_COLLECT);
+                liftPosition = LIFT_COLLECT;
+                wristControl(WRIST_OUT);
+                intakeControl(INTAKE_COLLECT);
+
             } else if (gamepad2.left_bumper) {
                         /* This is about 20° up from the collecting position to clear the barrier
                         Note here that we don't set the wrist position or the intake power when we
                         select this "mode", this means that the intake and wrist will continue what
                         they were doing before we clicked left bumper. */
-                armPosition = ARM_CLEAR_BARRIER;
+                liftPosition = LIFT_CLEAR_BARRIER;
             } else if (gamepad2.y) {
                 /* This is the correct height to score the sample in the LOW BASKET */
-                armPosition = ARM_SCORE_SAMPLE_IN_LOW;
-                wrist.setPosition(WRIST_FOLDED_OUT);
+                liftPosition = SLIDE_SCORE_IN_BASKET;
+                wristControl(WRIST_OUT);
             } else if (gamepad2.dpad_left) {
                         /* This turns off the intake, folds in the wrist, and moves the arm
                         back to folded inside the robot. This is also the starting configuration */
-                armPosition = ARM_COLLAPSED_INTO_ROBOT;
-                intake.setPower(INTAKE_OFF);
-                wrist.setPosition(WRIST_FOLDED_IN);
+                liftPosition = LIFT_REST_POSITION;
+                intakeControl(INTAKE_OFF);
+                wristControl(WRIST_IN);
             } else if (gamepad2.dpad_right) {
                 /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
-                armPosition = ARM_SCORE_SPECIMEN;
-                wrist.setPosition(WRIST_FOLDED_IN);
+                liftPosition = LIFT_SCORE_SPECIMEN;
+                wristControl(WRIST_IN);
             } else if (gamepad2.dpad_up) {
                 /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
-                armPosition = ARM_ATTACH_HANGING_HOOK;
-                intake.setPower(INTAKE_OFF);
-                wrist.setPosition(WRIST_FOLDED_IN);
+                //TODO: implement functionality after decided
+                intakeControl(INTAKE_OFF);
+                wristControl(WRIST_IN);
             } else if (gamepad2.dpad_down) {
                 /* this moves the arm down to lift the robot up once it has been hooked */
-                armPosition = ARM_WINCH_ROBOT;
-                intake.setPower(INTAKE_OFF);
-                wrist.setPosition(WRIST_FOLDED_IN);
+                //TODO: implement functionality after decided
+                intakeControl(INTAKE_OFF);
+                wristControl(WRIST_IN);
             }
 
             /* Here we set the target position of our arm to match the variable that was selected
             by the driver.
             We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
-            armMotor.setTargetPosition((int) (armPosition + armPositionFudgeFactor));
-
-            armMotor.setVelocity(ARM_VELOCITY);
-            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            moveLift(liftPosition + liftPositionFudgeFactor);
+            controlSlide(slidePosition + slidePositionFudgeFactor);
+//            armMotor.setVelocity(ARM_VELOCITY);
+//            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
-    }
+
 
     // Applies a curve to the joystick input to give finer control at lower speeds
     public double curveStick(double rawSpeed) {
         return Math.copySign(Math.pow(rawSpeed, 2), rawSpeed);
     }
 
-    public void driveAssistHanging() {
-        // action of dpad up button on gamepad 2
-        armMotor.setTargetPosition((int) (ARM_ATTACH_HANGING_HOOK));
-        intake.setPower(INTAKE_OFF);
-        wrist.setPosition(WRIST_FOLDED_IN);
-
-        armMotor.setVelocity(ARM_VELOCITY);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // wait for the arm to reach the position
-        while (armMotor.isBusy()) {
-            if (!opModeIsActive())
-                break;
-        }
-
-        // action of dpad right button on gamepad 2
-        armMotor.setTargetPosition((int) (ARM_SCORE_SPECIMEN));
-        wrist.setPosition(WRIST_FOLDED_IN);
-
-        armMotor.setVelocity(ARM_VELOCITY);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // wait for the arm to reach the position
-        while (armMotor.isBusy()) {
-            if (!opModeIsActive())
-                break;
-        }
-
-        try {
-            Thread.sleep(500);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        // move backward while pressing (dpad_down logic)
-        drive.setDrivePowers(new PoseVelocity2d(
-                new Vector2d(-0.25, 0),  // move back at 0.25 power
-                0
-        ));
-
-        try {
-            Thread.sleep(1000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        // action of dpad down gamepad 2
-        armMotor.setTargetPosition((int) (ARM_WINCH_ROBOT));
-        intake.setPower(INTAKE_OFF);
-        wrist.setPosition(WRIST_FOLDED_IN);
-
-        // move backward while pressing dpad_down logic
-        drive.setDrivePowers(new PoseVelocity2d(
-                new Vector2d(-0.25, 0),  // move back at 0.25 power
-                0
-        ));
-
-        armMotor.setVelocity(ARM_VELOCITY);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // wait for the arm to reach the position
-        while (armMotor.isBusy()) {
-            if (!opModeIsActive())
-                break;
-        }
-
-        // once that's over then action of dpad left gamepad 2
-        // noinspection ConstantValue
-        armMotor.setTargetPosition((int) ARM_COLLAPSED_INTO_ROBOT);
-        intake.setPower(INTAKE_OFF);
-        wrist.setPosition(WRIST_FOLDED_IN);
-
-        armMotor.setVelocity(ARM_VELOCITY);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        // wait for the arm to reach the position
-        while (armMotor.isBusy()) {
-            if (!opModeIsActive())
-                break;
-        }
-
-        // stop wheels
-        drive.setDrivePowers(new PoseVelocity2d(
-                new Vector2d(0, 0),
-                0
-        ));
-    }
 
     boolean startWasPressed = false;
     boolean backWasPressed = false;
+
     public void toggleFieldCentricity() {
         if (!startWasPressed && gamepad1.start) {
             fieldCentered = !fieldCentered;
@@ -385,14 +270,16 @@ public class CompetitionTeleOp extends BaseOpMode {
         telemetry.addData("Speed Multiplier", speedMultiplier);
 
         /* Check to see if our arm is over the current limit, and report via telemetry. */
-        if (armMotor.isOverCurrent()) {
+        // TODO: FIX THIS
+        /*if (armMotor.isOverCurrent()) {
             telemetry.addLine("MOTOR EXCEEDED CURRENT LIMIT!");
         }
-
+        */
 
         /* send telemetry to the driver of the arm's current position and target position */
-        telemetry.addData("armTarget: ", armMotor.getTargetPosition());
-        telemetry.addData("arm Encoder: ", armMotor.getCurrentPosition());
+        // TODO: FIX THIS
+        //telemetry.addData("armTarget: ", armMotor.getTargetPosition());
+        //telemetry.addData("arm Encoder: ", armMotor.getCurrentPosition());
 
         // These telemetry.addLine() calls will inform the user of what each button does
 
