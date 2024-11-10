@@ -251,10 +251,10 @@ public final class MecanumDrive {
                 return DriveParameters.DEVBOT_X;
             case "417-RC":
                 return DriveParameters.FASTBOT_MECANUM;
-            case "TBD":
+            case "417-S-RC":
                 return DriveParameters.COMPETITION_ROBOT;
         }
-        throw new IllegalArgumentException("Not one of 417's robots");
+        return null; // Not one of 417's robots
     }
 
     public static DriveParameters driveParameters = getDriveParameters();
