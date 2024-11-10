@@ -6,7 +6,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
+
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
@@ -148,7 +148,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             // In the loop if 'x' is clicked intakeEnabled is set to false which will be stored to memory
             if (gamepad2.x) {
                 if(isSlideExtended()){
-                    wristControl(X_WRIST_FOLDED_IN);
+                    moveWrist(X_WRIST_FOLDED_IN);
                     slidePosition = SLIDE_HOME_POSITION;
                 } else{
                     slidePosition = SLIDE_SCORE_IN_BASKET;
@@ -196,7 +196,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             if (gamepad2.right_bumper) {
                 /* This is the intaking/collecting arm position */
                 liftPosition = LIFT_COLLECT;
-                wristControl(WRIST_OUT);
+                moveWrist(WRIST_OUT);
                 intakeControl(INTAKE_COLLECT);
 
             } else if (gamepad2.left_bumper) {
@@ -208,34 +208,34 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             } else if (gamepad2.y) {
                 /* This is the correct height to score the sample in the LOW BASKET */
                 liftPosition = SLIDE_SCORE_IN_BASKET;
-                wristControl(WRIST_OUT);
+                moveWrist(WRIST_OUT);
             } else if (gamepad2.dpad_left) {
                         /* This turns off the intake, folds in the wrist, and moves the arm
                         back to folded inside the robot. This is also the starting configuration */
                 liftPosition = LIFT_REST_POSITION;
                 intakeControl(INTAKE_OFF);
-                wristControl(WRIST_IN);
+                moveWrist(WRIST_IN);
             } else if (gamepad2.dpad_right) {
                 /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
                 liftPosition = LIFT_SCORE_SPECIMEN;
-                wristControl(WRIST_IN);
+                moveWrist(WRIST_IN);
             } else if (gamepad2.dpad_up) {
                 /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
                 //TODO: implement functionality after decided
                 intakeControl(INTAKE_OFF);
-                wristControl(WRIST_IN);
+                moveWrist(WRIST_IN);
             } else if (gamepad2.dpad_down) {
                 /* this moves the arm down to lift the robot up once it has been hooked */
                 //TODO: implement functionality after decided
                 intakeControl(INTAKE_OFF);
-                wristControl(WRIST_IN);
+                moveWrist(WRIST_IN);
             }
 
             /* Here we set the target position of our arm to match the variable that was selected
             by the driver.
             We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
             moveLift(liftPosition + liftPositionFudgeFactor);
-            controlSlide(slidePosition + slidePositionFudgeFactor);
+            moveSlide(slidePosition + slidePositionFudgeFactor);
 //            armMotor.setVelocity(ARM_VELOCITY);
 //            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
@@ -269,20 +269,9 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         telemetry.addData("Field-Centric", fieldCentered);
         telemetry.addData("Speed Multiplier", speedMultiplier);
 
-        /* Check to see if our arm is over the current limit, and report via telemetry. */
-        // TODO: FIX THIS
-        /*if (armMotor.isOverCurrent()) {
-            telemetry.addLine("MOTOR EXCEEDED CURRENT LIMIT!");
-        }
-        */
 
-        /* send telemetry to the driver of the arm's current position and target position */
-        // TODO: FIX THIS
-        //telemetry.addData("armTarget: ", armMotor.getTargetPosition());
-        //telemetry.addData("arm Encoder: ", armMotor.getCurrentPosition());
 
         // These telemetry.addLine() calls will inform the user of what each button does
-
         telemetry.addLine("Low Basket Score: Y-Button");
         telemetry.addLine("Intake Deposit: B-Button");
         telemetry.addLine("On Intake: A-Button");
