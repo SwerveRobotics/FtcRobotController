@@ -76,7 +76,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 
     public void prepareRobot(Pose2d startingPose) {
         drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
-        prepareRobot();
+        initializeHardware();
 
         startHeading = startingPose.heading.log();
 
