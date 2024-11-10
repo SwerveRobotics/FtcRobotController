@@ -20,7 +20,7 @@ public class CompetitionBasketAuto extends BaseOpMode {
     @Override
     public void runOpMode() {
         // Signal initializeHardware() to remake the armMotor object:
-        armMotor = null;
+        armMotor1 = null;
         armPosition = 0;
 
         // BeginPose is the 2nd tile away from the basket, facing the basket, lined up with the tile boundary

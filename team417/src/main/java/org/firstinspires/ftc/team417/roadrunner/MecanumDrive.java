@@ -254,7 +254,7 @@ public final class MecanumDrive {
             case "TBD":
                 return DriveParameters.COMPETITION_ROBOT;
         }
-        throw new IllegalArgumentException("Not one of 417's robots");
+        return null;
     }
 
     public static DriveParameters driveParameters = getDriveParameters();
