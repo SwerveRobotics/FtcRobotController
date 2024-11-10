@@ -22,7 +22,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     private double speedMultiplier = 0.5;
     boolean curve = true;
     boolean fieldCentered = false;
-    MecanumDrive drive;
+    public MecanumDrive drive;
 
     public double startHeading;
 
