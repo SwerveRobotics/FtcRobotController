@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 
-import org.firstinspires.ftc.team417.BaseOpMode;
+import org.firstinspires.ftc.team417.programs.BaseOpMode;
 
 /*
     This test class is for measuring the latency for April Tag detection.

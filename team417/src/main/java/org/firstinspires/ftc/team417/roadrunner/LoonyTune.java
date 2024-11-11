@@ -49,7 +49,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.team417.BaseOpMode;
+import org.firstinspires.ftc.team417.programs.BaseOpMode;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
