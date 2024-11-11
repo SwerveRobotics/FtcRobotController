@@ -5,8 +5,11 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.wilyworks.common.WilyWorks;
 import com.wilyworks.simulator.WilyCore;
+import com.wilyworks.simulator.helpers.Globals;
+import com.wilyworks.simulator.helpers.Point;
 
 import java.util.LinkedList;
+import java.util.Random;
 
 /**
  * Fake wheel odometry localizer for the simulation.
@@ -18,7 +21,7 @@ class WheelLocalizer {
 
     WheelLocalizer(Simulation simulation) {
         this.simulation = simulation;
-        this.previousPose = simulation.getPose(0);
+        this.previousPose = simulation.getPose(0, false); // Use error-added pose
         this.previousVelocity = simulation.poseVelocity;
     }
 
@@ -30,7 +33,7 @@ class WheelLocalizer {
 
     // Return a 'twist' that represents all movement since the last call:
     double[] update() {
-        Pose2d simulationPose = simulation.getPose(0);
+        Pose2d simulationPose = simulation.getPose(0, false); // Use error-added pose
         double deltaAng = simulationPose.heading.log() - previousPose.heading.log();
         double deltaAngVel = simulation.poseVelocity.angVel - previousVelocity.angVel;
 
@@ -72,8 +75,9 @@ public class Simulation {
     // Size of the pose history, in seconds:
     final double POSE_HISTORY_SECONDS = 2.0;
 
-    // History of robot's true poses, field-relative. The newest is first:
-    public LinkedList<PoseRecord> poseHistory = new LinkedList<>();
+    // Histories of the robot's poses, field-relative. The newest is first:
+    public LinkedList<PoseRecord> truePoseHistory = new LinkedList<>(); // True pose
+    public LinkedList<PoseRecord> errorPoseHistory = new LinkedList<>(); // Simulated error
 
     // The robot's current true pose velocity, field-relative:
     public PoseVelocity2d poseVelocity = new PoseVelocity2d(new Vector2d(0, 0), Math.toRadians(0));
@@ -82,14 +86,27 @@ public class Simulation {
     private WilyWorks.Config config; // Kinematic parameters for the simulation
     private PoseVelocity2d requestedVelocity; // Velocity requested by MecanumDrive
 
+    // Random number generator for introducing error:
+    private Random random = new Random();
+    // Heading in which to bias the positional error, in radians:
+    private double positionErrorAngle = Math.toRadians(Math.random() * 360);
+    // Unit vector pointing in the direction of the positional bias, in robot-relative coordinates:
+    private Point positionErrorVector = new Point(Math.cos(positionErrorAngle), Math.sin(positionErrorAngle));
+    // Direction in which to bias the heading, either -1 or 1:
+    private double headingErrorSign = random.nextInt(2) == 0 ? -1 : 1;
+    // Distance traveled, in inches:
+    public double totalDistance;
+
     public Simulation(WilyWorks.Config config) {
         this.config = config;
-        poseHistory.add(new PoseRecord(WilyCore.time(), new Pose2d(0, 0, Math.toRadians(0))));
+        truePoseHistory.add(new PoseRecord(WilyCore.time(), new Pose2d(0, 0, Math.toRadians(0))));
+        errorPoseHistory.add(new PoseRecord(WilyCore.time(), new Pose2d(0, 0, Math.toRadians(0))));
         wheelLocalizer = new WheelLocalizer(this);
     }
 
     // Find the closest pose from the specified seconds ago. Zero retrieves the current pose.
-    public Pose2d getPose(double secondsAgo) {
+    public Pose2d getPose(double secondsAgo, boolean truePose) {
+        LinkedList<PoseRecord> poseHistory = (truePose) ? truePoseHistory : errorPoseHistory;
         if (secondsAgo == 0)
             return poseHistory.get(0).pose;
 
@@ -109,7 +126,8 @@ public class Simulation {
     }
 
     // Record into the pose history:
-    void recordPose(double time, Pose2d pose) {
+    void recordPose(double time, Pose2d pose, boolean truePose) {
+        LinkedList<PoseRecord> poseHistory = (truePose) ? truePoseHistory : errorPoseHistory;
         while (poseHistory.size() != 0) {
             PoseRecord oldPose = poseHistory.getLast();
             if (time - oldPose.time < POSE_HISTORY_SECONDS)
@@ -117,7 +135,6 @@ public class Simulation {
             poseHistory.removeLast();
         }
         poseHistory.addFirst(new PoseRecord(time, pose));
-
     }
 
     // Move the robot in the requested direction via kinematics:
@@ -200,9 +217,13 @@ public class Simulation {
         currentLinearY = Math.sin(requestedAngle) * parallelVelocity
                        + Math.sin(requestedAngle - Math.PI / 2) * perpVelocity;
 
-        Pose2d pose = getPose(0);
-        double x = pose.position.x + dt * currentLinearX;
-        double y = pose.position.y + dt * currentLinearY;
+        //------------------------------------------------------------------------------------------
+        // Update the true pose:
+        Pose2d truePose = getPose(0, true);
+        double x = truePose.position.x + dt * currentLinearX;
+        double y = truePose.position.y + dt * currentLinearY;
+
+        totalDistance += Math.hypot(dt * currentLinearX, dt * currentLinearY);
 
         // Keep the robot on the field. Zero the component velocity that made it leave
         // the field:
@@ -224,9 +245,86 @@ public class Simulation {
         }
 
         // Update our official pose and velocity:
-        pose = new Pose2d(x, y, pose.heading.log() + dt * currentAngular);
-        recordPose(WilyCore.time(), pose);
+        truePose = new Pose2d(x, y, truePose.heading.log() + dt * currentAngular);
         poseVelocity = new PoseVelocity2d(new Vector2d(currentLinearX, currentLinearY), currentAngular);
+
+        //------------------------------------------------------------------------------------------
+        // Update the pose with error:
+        Pose2d errorPose = truePose;
+        if (WilyCore.enableSensorError) {
+            Point fieldOffset = new Point(dt * currentLinearX, dt * currentLinearY);
+            Point robotOffset = fieldOffset.rotate(-truePose.heading.log());
+
+            // Calculate the new error pose as an offset from the old one:
+            errorPose = addError(getPose(0, false), dt, robotOffset, dt * currentAngular);
+        }
+
+        recordPose(WilyCore.time(), truePose, true);
+        recordPose(WilyCore.time(), errorPose, false);
+    }
+
+    // Add sensor error to the pose. The deltas are the differences from the new reference pose to
+    // the old reference pose, where 'offset' is robot-relative coordinates:
+    public Pose2d addError(Pose2d pose, double dt, Point offset, double dRadians) {
+        // 95% of the heading error (two standard deviations) should be within a function
+        // of time taken in this tick, times WilyConfig.headingError. The latter is expressed
+        // as degrees per minute:
+        double headingMeanError = headingErrorSign * dt * Math.toRadians(WilyCore.config.headingError) / 60;
+        double heading = pose.heading.log() + dRadians + headingMeanError * (1 + random.nextGaussian() / 2);
+
+        // 95% of the positional error (two standard deviations) should be within a function
+        // of distance traveled in this tick, times WilyConfig.positionError. The latter is
+        // expressed as a percentage of distance traveled:
+        double positionMeanError = offset.length() * (WilyCore.config.positionError / 100.0);
+        double errorMagnitude = positionMeanError * (1 + random.nextGaussian() / 2);
+        Point positionError = positionErrorVector.multiply(errorMagnitude); // Field space
+
+        Point positionDelta = offset.rotate(heading);
+
+        double x = pose.position.x + positionDelta.x + positionError.x;
+        double y = pose.position.y + positionDelta.y + positionError.y;
+        return new Pose2d(x, y, heading);
+    }
+
+    // Entry point for Road Runner to set the current pose and velocity, both in field coordinates,
+    // while running a trajectory.
+    public void runTo(double dt, Pose2d errorPose, PoseVelocity2d poseVelocity) {
+        Pose2d truePose = errorPose;
+        if (WilyCore.enableSensorError) {
+            // Perhaps intuitively, we add error to the 'true' pose rather than the error pose
+            // in this case:
+            Pose2d previousErrorPose = getPose(0, false);
+
+            Point fieldOffset = new Point(errorPose.position.minus(previousErrorPose.position));
+            Point robotOffset = fieldOffset.rotate(-errorPose.heading.log());
+            double dRadians = errorPose.heading.log() - previousErrorPose.heading.log();
+
+            // Calculate the new error pose as an offset from the old one:
+            truePose = addError(getPose(0, true), dt, robotOffset, dRadians);
+
+            totalDistance += Math.hypot(fieldOffset.x, fieldOffset.y);
+        }
+
+        recordPose(WilyCore.time(), truePose, true);
+        recordPose(WilyCore.time(), errorPose, false);
+        if (poseVelocity != null)
+            this.poseVelocity = poseVelocity;
+    }
+
+    // Get the error label to show in the UI:
+    public String getErrorLabel() {
+        if (WilyCore.enableSensorError) {
+            Pose2d truePose = getPose(0, true);
+            Pose2d errorPose = getPose(0, false);
+
+            double linearError = truePose.position.minus(errorPose.position).norm();
+            double angularError = Math.abs(Globals.normalizeAngle(truePose.heading.log() - errorPose.heading.log()));
+            // return String.format("Pose error: %.1f\", %.1f\u00b0, distance: %.1f\", time: %.0fs",
+            //         linearError, Math.toDegrees(angularError), totalDistance, WilyCore.time());
+            return "";
+        } else {
+            return "";
+        }
     }
 
     // Power the motors according to the specified velocities. 'stickVelocity' is for controller
@@ -253,7 +351,7 @@ public class Simulation {
                     stickVelocity.linearVel.x * config.maxLinearSpeed,
                     stickVelocity.linearVel.y * config.maxLinearSpeed),
                     stickVelocity.angVel * config.maxAngularSpeed);
-            fieldVelocity = getPose(0).times(fieldVelocity); // Make it field-relative
+            fieldVelocity = getPose(0, true).times(fieldVelocity); // Make it field-relative
         }
         if (assistVelocity != null) {
             fieldVelocity = new PoseVelocity2d(new Vector2d(
@@ -267,16 +365,13 @@ public class Simulation {
     // Entry point to get the current wheel-odometry localizer position:
     public double[] localizerUpdate() { return wheelLocalizer.update(); }
 
-    // Entry point to set the pose and velocity, both in field coordinates:
-    public void runTo(Pose2d pose, PoseVelocity2d poseVelocity) {
-        recordPose(WilyCore.time(), pose);
-        if (poseVelocity != null)
-            this.poseVelocity = poseVelocity;
-    }
-
     // Entry point to set the pose and velocity, both in field coordinates and inches and radians:
     public void setStartPose(Pose2d pose, PoseVelocity2d poseVelocity) {
-        runTo(pose, poseVelocity);
+        recordPose(WilyCore.time(), pose, true);
+        recordPose(WilyCore.time(), pose, false);
+        if (poseVelocity != null)
+            this.poseVelocity = poseVelocity;
+
         // Recreate the localizer so that it doesn't register a move:
         wheelLocalizer = new WheelLocalizer(this);
     }

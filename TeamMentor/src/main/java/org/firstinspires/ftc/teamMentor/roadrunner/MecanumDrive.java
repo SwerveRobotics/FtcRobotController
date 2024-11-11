@@ -17,9 +17,11 @@ import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.HolonomicController;
+import com.acmerobotics.roadrunner.IdentityPoseMap;
 import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.MotorFeedforward;
+import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Pose2dDual;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
@@ -66,7 +68,6 @@ import org.firstinspires.ftc.teamMentor.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.teamMentor.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.teamMentor.roadrunner.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.teamMentor.roadrunner.messages.PoseMessage;
-import org.firstinspires.ftc.teamMentor.roadrunner.tuning.LooneyTune;
 import org.firstinspires.inspection.InspectionState;
 
 import java.util.Arrays;
@@ -85,35 +86,32 @@ public final class MecanumDrive {
             maxAngAccel = Math.PI;
 
             if (isDevBot) {
-                // Your DevBot Looney Tune configuration goes here!
-
+                // Your DevBot Loony Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
-                inPerTick = 1.0;
-                lateralInPerTick = 1.0;
-                trackWidthTicks = 0;
+                inPerTick = 1;
+                lateralInPerTick = 0.799;
+                trackWidthTicks = 15.80;
 
-                kS = 0;
-                kV = 0;
-                kA = 0;
+                kS = 0.583;
+                kV = 0.187;
+                kA = 0.0110;
 
-                axialGain      = 0;
-                axialVelGain   = 0;
-                lateralGain    = 0;
-                lateralVelGain = 0;
-                headingGain    = 0;
-                headingVelGain = 0;
+                axialGain      = 10.0;
+                axialVelGain   = 0.70;
+                lateralGain    = 4.0;
+                lateralVelGain = 0.0;
+                headingGain    = 7.91;
+                headingVelGain = 0.0;
 
-                otos.offset.x = 0;
-                otos.offset.y = 0;
-                otos.offset.h = Math.toRadians(0);
-                otos.linearScalar = 0;
-                otos.angularScalar = 0;
-
+                otos.offset.x = 6.311;
+                otos.offset.y = 3.243;
+                otos.offset.h = Math.toRadians(-88.93);
+                otos.linearScalar = 1.011;
+                otos.angularScalar = 0.9999;
             } else {
-                // Your competition robot Looney Tune configuration goes here!
-
+                // Your competition robot Loony Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
@@ -187,16 +185,10 @@ public final class MecanumDrive {
 
     public static Params PARAMS = new Params();
 
-    public MecanumKinematics kinematics = new MecanumKinematics(
-            PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
-
+    public MecanumKinematics kinematics; // Initialized by initializeKinematics()
+    public VelConstraint defaultVelConstraint; // Initialized by initializeKinematics()
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
             PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
-    public final VelConstraint defaultVelConstraint =
-            new MinVelConstraint(Arrays.asList(
-                    kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
-                    new AngularVelConstraint(PARAMS.maxAngVel)
-            ));
     public final AccelConstraint defaultAccelConstraint =
             new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccel);
 
@@ -207,9 +199,14 @@ public final class MecanumDrive {
     public LazyImu lazyImu;
 
     public Localizer localizer;
-    public Pose2d pose; // Actual pose
-    public Pose2d targetPose; // Target pose
-    public SparkFunOTOS opticalTracker = null; // Can be null which means no optical tracking sensor
+    public Pose2d pose; // Current actual pose
+    public Pose2d targetPose; // Target pose when actively traversing a trajectory
+    public SparkFunOTOS opticalTracker; // Can be null which means no OTOS
+    public SparkFunOTOS.Pose2D opticalAcceleration = new SparkFunOTOS.Pose2D(0, 0, 0); // Most recent acceleration from the OTOS
+    public double lastLinearGainError = 0; // Most recent gain error in inches and radians
+    public double lastHeadingGainError = 0;
+    public double maxLinearGainError = 0; // Max gain error to date in inches and radians
+    public double maxHeadingGainError = 0;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -228,10 +225,6 @@ public final class MecanumDrive {
 
         public DriveLocalizer() {
             imu = lazyImu.get();
-            configure();
-        }
-
-        void configure() { // @@@ Revert this?
             leftFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftFront));
             leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
             rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
@@ -305,7 +298,10 @@ public final class MecanumDrive {
         }
     }
 
+    // Constructor for the Mecanum Drive object.
     public MecanumDrive(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
+        initializeKinematics();
+
         this.pose = pose;
 
         WilyWorks.setStartPose(pose, new PoseVelocity2d(new Vector2d(0, 0), 0));
@@ -329,7 +325,7 @@ public final class MecanumDrive {
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
 
         // Now that configuration is complete, verify the parameters:
-        LooneyTune.verifyCodeMatchesTuneResults(this, telemetry, gamepad);
+        LoonyTune.verifyCodeMatchesTuneResults(this, telemetry, gamepad);
     }
 
     // This is where you configure Road Runner to work with your hardware:
@@ -338,7 +334,6 @@ public final class MecanumDrive {
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         if (isDevBot) {
             opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
-            initializeOpticalTracker();
 
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
             leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -351,15 +346,20 @@ public final class MecanumDrive {
             // TODO: Create the optical tracking object:
             //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
 
+            opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
             leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
             rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
             rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
             // TODO: reverse motor directions if needed
-            leftFront.setDirection(DcMotorEx.Direction.REVERSE);
             leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+            rightBack.setDirection(DcMotorEx.Direction.REVERSE);
         }
+
+        // Initialize the OTOS, if any:
+        initializeOpticalTracker();
 
         // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
@@ -375,13 +375,6 @@ public final class MecanumDrive {
     public void initializeOpticalTracker() {
         if (opticalTracker == null)
             return; // ====>
-
-        // Get the hardware and firmware version
-        SparkFunOTOS.Version hwVersion = new SparkFunOTOS.Version();
-        SparkFunOTOS.Version fwVersion = new SparkFunOTOS.Version();
-        opticalTracker.getVersionInfo(hwVersion, fwVersion);
-        System.out.printf("SparkFun OTOS hardware version: %d.%d, firmware version: %d.%d\n",
-                hwVersion.major, hwVersion.minor, fwVersion.major, fwVersion.minor);
 
         // Set the desired units for linear and angular measurements. Can be either
         // meters or inches for linear, and radians or degrees for angular. If not
@@ -655,16 +648,13 @@ public final class MecanumDrive {
             rightBack.setPower(rightBackPower);
             rightFront.setPower(rightFrontPower);
 
+            // Update some statistics:
             updateLoopTimeStatistic(p);
-
-            // p.put("x", pose.position.x);
-            // p.put("y", pose.position.y);
-            // p.put("heading (deg)", Math.toDegrees(pose.heading.toDouble()));
-
-            // Pose2d error = txWorldTarget.value().minusExp(pose);
-            // p.put("xError", error.position.x);
-            // p.put("yError", error.position.y);
-            // p.put("headingError (deg)", Math.toDegrees(error.heading.toDouble()));
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+            lastLinearGainError = error.position.norm();
+            lastHeadingGainError = error.heading.toDouble();
+            maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
+            maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
 
             // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();
@@ -692,7 +682,7 @@ public final class MecanumDrive {
     }
 
     public final class TurnAction implements Action {
-        private final TimeTurn turn;
+        public final TimeTurn turn;
 
         private double beginTs = -1;
 
@@ -740,7 +730,6 @@ public final class MecanumDrive {
 
             MecanumKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
 
-            updateLoopTimeStatistic(p);
             double voltage = getVoltage();
 
             final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS,
@@ -757,6 +746,14 @@ public final class MecanumDrive {
             leftBack.setPower(feedforward.compute(wheelVels.leftBack) / voltage);
             rightBack.setPower(feedforward.compute(wheelVels.rightBack) / voltage);
             rightFront.setPower(feedforward.compute(wheelVels.rightFront) / voltage);
+
+            // Update some statistics:
+            updateLoopTimeStatistic(p);
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+            lastLinearGainError = error.position.norm();
+            lastHeadingGainError = error.heading.toDouble();
+            maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
+            maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
 
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);
@@ -804,6 +801,7 @@ public final class MecanumDrive {
 
             // This single call is faster than separate calls to getPosition() and getVelocity():
             opticalTracker.getPosVelAcc(position, velocity, acceleration);
+            opticalAcceleration = acceleration;
 
             // Road Runner requires the pose to be field-relative while the velocity has to be
             // robot-relative, but the optical tracking sensor reports everything as field-
@@ -854,7 +852,14 @@ public final class MecanumDrive {
         c.strokePolyline(xPoints, yPoints);
     }
 
+    // Build a trajectory without any transformations:
     public TrajectoryActionBuilder actionBuilder(Pose2d beginPose) {
+        return actionBuilder(beginPose, new IdentityPoseMap());
+    }
+
+    // The poseMap is a handy option for transformations (such as mirroring) on all
+    // coordinates in the trajectory:
+    public TrajectoryActionBuilder actionBuilder(Pose2d beginPose, PoseMap poseMap) {
         return new TrajectoryActionBuilder(
                 TurnAction::new,
                 FollowTrajectoryAction::new,
@@ -866,15 +871,21 @@ public final class MecanumDrive {
                 ),
                 beginPose, 0.0,
                 defaultTurnConstraints,
-                defaultVelConstraint, defaultAccelConstraint
+                defaultVelConstraint, defaultAccelConstraint,
+                poseMap
         );
     }
 
-    // Recreate the kinematics object using the current settings:
-    public void recreateKinematics() {
+    // Create the kinematics object and any dependents from the current settings:
+    public void initializeKinematics() {
         kinematics = new MecanumKinematics(
                 PARAMS.inPerTick * PARAMS.trackWidthTicks,
                 PARAMS.inPerTick / PARAMS.lateralInPerTick);
+        defaultVelConstraint =
+                new MinVelConstraint(Arrays.asList(
+                        kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
+                        new AngularVelConstraint(PARAMS.maxAngVel)
+                ));
     }
 
     /** @noinspection unused*/ // Rotate a vector by a prescribed angle:
@@ -947,7 +958,8 @@ public final class MecanumDrive {
     }
 
     // Create a new telemetry packet to draw stuff on the FTC Dashboard field.
-    public static TelemetryPacket getTelemetryPacket() {
+    public static TelemetryPacket getTelemetryPacket() { return getTelemetryPacket(true); }
+    public static TelemetryPacket getTelemetryPacket(boolean showField) {
         TelemetryPacket packet = new TelemetryPacket();
 
         // Prepare the packet for drawing.
@@ -958,7 +970,13 @@ public final class MecanumDrive {
         // Then draw the grid on top and finally set the transform to rotate all subsequent
         // rendering.
         Canvas canvas = packet.fieldOverlay();
-        canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144, Math.toRadians(90), 0, 144, true);
+        if (showField) {
+            canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144,
+                    Math.toRadians(90), 0, 144, true);
+        } else {
+            canvas.setFill("#000000");
+            canvas.fillRect(-72, -72, 144, 144);
+        }
         canvas.drawGrid(0, 0, 144, 144, 7, 7);
 
         canvas.setRotation(Math.toRadians(-90));
@@ -974,10 +992,5 @@ public final class MecanumDrive {
     // When done with an FTC Dashboard telemetry packet, send it!
     public static void sendTelemetryPacket(TelemetryPacket packet) {
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
-    }
-
-    // Remove any variables that had been 'put' to the TelemetryPacket from the Dashboard view:
-    public static void clearDashboardTelemetry() {
-        FtcDashboard.getInstance().clearTelemetry();
     }
 }

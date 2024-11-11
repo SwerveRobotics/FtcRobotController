@@ -17,10 +17,12 @@ import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.AngularVelConstraint;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.HolonomicController;
+import com.acmerobotics.roadrunner.IdentityPoseMap;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.MotorFeedforward;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Pose2dDual;
+import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.PoseVelocity2dDual;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
@@ -60,13 +62,16 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.team417.BaseOpMode;
 import org.firstinspires.ftc.team417.DriveParameters;
-import org.firstinspires.ftc.team417.LooneyTune;
+import org.firstinspires.ftc.team417.distance.DistanceLocalizer;
+import org.firstinspires.ftc.team417.distance.DistanceSensorInfo;
 import org.firstinspires.ftc.team417.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
 import org.firstinspires.inspection.InspectionState;
+import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -78,7 +83,7 @@ public final class MecanumDrive {
 
     public static class Params {
         Params() {
-            maxWheelVel = 50;
+            maxWheelVel = 50; // was 50
             minProfileAccel = -30;
             maxProfileAccel = 50;
 
@@ -87,12 +92,12 @@ public final class MecanumDrive {
 
             switch (driveParameters) {
                 case DEVBOT_MECANUM:
-                    // Your DevBot Looney Tune configuration is here:
+                    // Your DevBot Loony Tune configuration is here:
                     logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                     usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
                     inPerTick = 1.0;
-                    lateralInPerTick = 0.700; // Was 1.00
+                    lateralInPerTick = 0.819; // Was 1.00
                     trackWidthTicks = 22.29; // Was 0.00
 
                     kS = 0.608; // Was 0
@@ -140,32 +145,60 @@ public final class MecanumDrive {
                     otos.angularScalar = 0;
                     break;
 
-                case COMPETITION_ROBOT:
-                    // Your competition robot Looney Tune configuration is here:
+                case FASTBOT_MECANUM:
+                    // Your competition robot Loony Tune configuration is here:
                     logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                     usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
                     inPerTick = 1;
-                    lateralInPerTick = inPerTick;
-                    trackWidthTicks = 0;
+                    lateralInPerTick = 0.819;
+                    trackWidthTicks = 14.89;
 
-                    kS = 0;
-                    kV = 0;
-                    kA = 0;
+                    kS = 0.695; // Was 0.759
+                    kV = 0.194; // Was 0.192
+                    kA = 0.0200;
 
-                    axialGain = 0.0;
-                    axialVelGain = 0.0;
-                    lateralGain = 0.0;
-                    lateralVelGain = 0.0;
-                    headingGain = 0.0;
+                    axialGain = 11.0;
+                    axialVelGain = 2.70;
+                    lateralGain = 2.0;
+                    lateralVelGain = 0.40;
+                    headingGain = 2.27;
                     headingVelGain = 0.0;
 
-                    otos.offset.x = 0;
-                    otos.offset.y = 0;
-                    otos.offset.h = Math.toRadians(0);
-                    otos.linearScalar = 0;
-                    otos.angularScalar = 0;
+                    otos.offset.x = 6.016;
+                    otos.offset.y = -2.511;
+                    otos.offset.h = Math.toRadians(88.550); // Was 91.19
+                    otos.linearScalar = 1.007; // Was 0.989
+                    otos.angularScalar = 1.0019;
                     break;
+
+                case COMPETITION_ROBOT:
+                    // Your DevBot Looney Tune configuration is here:
+                    logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
+                    usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+
+                    inPerTick = 1.0;
+                    lateralInPerTick = 0.700; // Was 1.00
+                    trackWidthTicks = 22.29; // Was 0.00
+
+                    kS = 0.608; // Was 0
+                    kV = 0.188; // Was 0
+                    kA = 0;
+
+                    axialGain = 6.00; // Was 0
+                    axialVelGain = 0.70; // Was 0
+                    lateralGain = 4.00; // Was 0.00
+                    lateralVelGain = 3.00; // Was 0.00
+                    headingGain = 9.0; // Was 0.0
+                    headingVelGain = 0;
+
+                    otos.offset.x = 6.115; // Was 0.00
+                    otos.offset.y = 3.031; // Was 0.00
+                    otos.offset.h = Math.toRadians(-89.71); // Was Math.toRadians(0)
+                    otos.linearScalar = 1.000; // Was 0.000
+                    otos.angularScalar = 1.0005;
+                    break;
+
             }
         }
 
@@ -217,28 +250,24 @@ public final class MecanumDrive {
         switch (getBotName()) {
             case "DevBot":
                 return DriveParameters.DEVBOT_MECANUM;
-            case "DevBotX":
+            case "We don't have this robot":
                 return DriveParameters.DEVBOT_X;
             case "417-RC":
+                return DriveParameters.FASTBOT_MECANUM;
+            case "417-S-RC":
                 return DriveParameters.COMPETITION_ROBOT;
         }
-        throw new IllegalArgumentException("Not one of 417's robots");
+        return null; // Not one of 417's robots
     }
 
     public static DriveParameters driveParameters = getDriveParameters();
 
     public static Params PARAMS = new Params();
 
-    public HolonomicKinematics kinematics = new HolonomicKinematics(
-            PARAMS.inPerTick * PARAMS.trackWidthTicks, PARAMS.inPerTick / PARAMS.lateralInPerTick);
-
+    public HolonomicKinematics kinematics; // Initialized by initializeKinematics()
+    public VelConstraint defaultVelConstraint; // Initialized by initializeKinematics()
     public final TurnConstraints defaultTurnConstraints = new TurnConstraints(
             PARAMS.maxAngVel, -PARAMS.maxAngAccel, PARAMS.maxAngAccel);
-    public final VelConstraint defaultVelConstraint =
-            new MinVelConstraint(Arrays.asList(
-                    kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
-                    new AngularVelConstraint(PARAMS.maxAngVel)
-            ));
     public final AccelConstraint defaultAccelConstraint =
             new ProfileAccelConstraint(PARAMS.minProfileAccel, PARAMS.maxProfileAccel);
 
@@ -251,7 +280,14 @@ public final class MecanumDrive {
     public Localizer localizer;
     public Pose2d pose; // Current actual pose
     public Pose2d targetPose; // Target pose when actively traversing a trajectory
-    public SparkFunOTOS opticalTracker = null; // Can be null which means no optical tracking sensor
+    public SparkFunOTOS opticalTracker; // Can be null which means no OTOS
+    public SparkFunOTOS.Pose2D opticalAcceleration = new SparkFunOTOS.Pose2D(0, 0, 0); // Most recent acceleration from the OTOS
+    public double lastLinearGainError = 0; // Most recent gain error in inches and radians
+    public double lastHeadingGainError = 0;
+    public double maxLinearGainError = 0; // Max gain error to date in inches and radians
+    public double maxHeadingGainError = 0;
+
+    public DistanceLocalizer distanceLocalizer;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -343,8 +379,11 @@ public final class MecanumDrive {
         }
     }
 
+    // Constructor for the Mecanum Drive object.
     public MecanumDrive(KinematicType kinematicType, HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
         this.kinematicType = kinematicType;
+        initializeKinematics();
+
         this.pose = pose;
 
         kinematics.kinematicType = kinematicType;
@@ -370,7 +409,7 @@ public final class MecanumDrive {
         FlightRecorder.write("MECANUM_PARAMS", PARAMS);
 
         // Now that configuration is complete, verify the parameters:
-        LooneyTune.verifyCodeMatchesTuneResults(this, telemetry, gamepad);
+        LoonyTune.verifyCodeMatchesTuneResults(this, telemetry, gamepad);
     }
 
     // This is where you configure Road Runner to work with your hardware:
@@ -380,7 +419,14 @@ public final class MecanumDrive {
         switch (driveParameters) {
             case DEVBOT_MECANUM:
                 opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
-                initializeOpticalTracker();
+
+                if (BaseOpMode.USE_DISTANCE) {
+                    UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
+                    UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
+                    DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
+                    DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
+                    distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
+                }
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -396,28 +442,72 @@ public final class MecanumDrive {
                 //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
                 //   initializeOpticalTracker();
 
+                if (BaseOpMode.USE_DISTANCE) {
+                    // TODO: Create the distance sensor tracking object:
+                    //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
+                    //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
+                    //   DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
+                    //   DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
+                    //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
+                }
+
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
                 rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
                 rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
                 leftFront.setDirection(DcMotorEx.Direction.REVERSE);
+                leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+                break;
+
+            case FASTBOT_MECANUM:
+                // enable this when we have the optical tracker
+                opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+
+                if (BaseOpMode.USE_DISTANCE) {
+                    // TODO: Create the distance sensor tracking object:
+                    //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
+                    //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
+                    //   DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
+                    //   DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
+                    //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
+                }
+
+                leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
+                leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
+                rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
+                rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+
+                rightFront.setDirection(DcMotorEx.Direction.REVERSE);
+                rightBack.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
 
             case COMPETITION_ROBOT:
-                // TODO: Create the optical tracking object:
-                //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
+                //opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+                //initializeOpticalTracker();
+
+                if (BaseOpMode.USE_DISTANCE) {
+                    // TODO: Create the distance sensor tracking object:
+                    //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
+                    //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
+                    //   DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
+                    //   DistanceSensorInfo riMghtInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
+                    //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
+                }
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
                 rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
                 rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
-                // TODO: reverse motor directions if needed
                 leftFront.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
+
         }
+
+        // Initialize the OTOS, if any:
+        initializeOpticalTracker();
 
         // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
@@ -433,13 +523,6 @@ public final class MecanumDrive {
     public void initializeOpticalTracker() {
         if (opticalTracker == null)
             return; // ====>
-
-        // Get the hardware and firmware version
-        SparkFunOTOS.Version hwVersion = new SparkFunOTOS.Version();
-        SparkFunOTOS.Version fwVersion = new SparkFunOTOS.Version();
-        opticalTracker.getVersionInfo(hwVersion, fwVersion);
-        System.out.printf("SparkFun OTOS hardware version: %d.%d, firmware version: %d.%d\n",
-                hwVersion.major, hwVersion.minor, fwVersion.major, fwVersion.minor);
 
         // Set the desired units for linear and angular measurements. Can be either
         // meters or inches for linear, and radians or degrees for angular. If not
@@ -713,16 +796,13 @@ public final class MecanumDrive {
             rightBack.setPower(rightBackPower);
             rightFront.setPower(rightFrontPower);
 
+            // Update some statistics:
             updateLoopTimeStatistic(p);
-
-            // p.put("x", pose.position.x);
-            // p.put("y", pose.position.y);
-            // p.put("heading (deg)", Math.toDegrees(pose.heading.toDouble()));
-
-            // Pose2d error = txWorldTarget.value().minusExp(pose);
-            // p.put("xError", error.position.x);
-            // p.put("yError", error.position.y);
-            // p.put("headingError (deg)", Math.toDegrees(error.heading.toDouble()));
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+            lastLinearGainError = error.position.norm();
+            lastHeadingGainError = error.heading.toDouble();
+            maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
+            maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
 
             // only draw when active; only one drive action should be active at a time
             Canvas c = p.fieldOverlay();
@@ -750,7 +830,7 @@ public final class MecanumDrive {
     }
 
     public final class TurnAction implements Action {
-        private final TimeTurn turn;
+        public final TimeTurn turn;
 
         private double beginTs = -1;
 
@@ -798,7 +878,6 @@ public final class MecanumDrive {
 
             HolonomicKinematics.WheelVelocities<Time> wheelVels = kinematics.inverse(command);
 
-            updateLoopTimeStatistic(p);
             double voltage = getVoltage();
 
             final MotorFeedforward feedforward = new MotorFeedforward(PARAMS.kS,
@@ -816,6 +895,14 @@ public final class MecanumDrive {
             rightBack.setPower(feedforward.compute(wheelVels.rightBack) / voltage);
             rightFront.setPower(feedforward.compute(wheelVels.rightFront) / voltage);
 
+            // Update some statistics:
+            updateLoopTimeStatistic(p);
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+            lastLinearGainError = error.position.norm();
+            lastHeadingGainError = error.heading.toDouble();
+            maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
+            maxHeadingGainError = Math.max(maxHeadingGainError, lastHeadingGainError);
+
             Canvas c = p.fieldOverlay();
             drawPoseHistory(c);
 
@@ -825,6 +912,7 @@ public final class MecanumDrive {
             c.setStroke("#3F51B5");
             Drawing.drawRobot(c, pose);
 
+            //noinspection SpellCheckingInspection
             c.setStroke("#7C4DFFFF");
             c.fillCircle(turn.beginPose.position.x, turn.beginPose.position.y, 2);
 
@@ -887,6 +975,11 @@ public final class MecanumDrive {
             poseVelocity = twist.velocity().value();
         }
 
+        if (distanceLocalizer != null) {
+            distanceLocalizer.updateIfPossible();
+            pose = new Pose2d(pose.position.plus(distanceLocalizer.correction), pose.heading.log());
+        }
+
         poseHistory.add(pose);
         while (poseHistory.size() > 100) {
             poseHistory.removeFirst();
@@ -914,7 +1007,14 @@ public final class MecanumDrive {
         c.strokePolyline(xPoints, yPoints);
     }
 
+    // Build a trajectory without any transformations:
     public TrajectoryActionBuilder actionBuilder(Pose2d beginPose) {
+        return actionBuilder(beginPose, new IdentityPoseMap());
+    }
+
+    // The poseMap is a handy option for transformations (such as mirroring) on all
+    // coordinates in the trajectory:
+    public TrajectoryActionBuilder actionBuilder(Pose2d beginPose, PoseMap poseMap) {
         return new TrajectoryActionBuilder(
                 TurnAction::new,
                 FollowTrajectoryAction::new,
@@ -926,16 +1026,22 @@ public final class MecanumDrive {
                 ),
                 beginPose, 0.0,
                 defaultTurnConstraints,
-                defaultVelConstraint, defaultAccelConstraint
+                defaultVelConstraint, defaultAccelConstraint,
+                poseMap
         );
     }
 
-    // Recreate the kinematics object using the current settings:
-    public void recreateKinematics() {
+    // Create the kinematics object and any dependents from the current settings:
+    public void initializeKinematics() {
         kinematics = new HolonomicKinematics(
                 kinematicType,
                 PARAMS.inPerTick * PARAMS.trackWidthTicks,
                 PARAMS.inPerTick / PARAMS.lateralInPerTick);
+        defaultVelConstraint =
+                new MinVelConstraint(Arrays.asList(
+                        kinematics.new WheelVelConstraint(PARAMS.maxWheelVel),
+                        new AngularVelConstraint(PARAMS.maxAngVel)
+                ));
     }
 
     /**
@@ -1052,10 +1158,5 @@ public final class MecanumDrive {
     // When done with an FTC Dashboard telemetry packet, send it!
     public static void sendTelemetryPacket(TelemetryPacket packet) {
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
-    }
-
-    // Remove any variables that had been 'put' to the TelemetryPacket from the Dashboard view:
-    public static void clearDashboardTelemetry() {
-        FtcDashboard.getInstance().clearTelemetry();
     }
 }

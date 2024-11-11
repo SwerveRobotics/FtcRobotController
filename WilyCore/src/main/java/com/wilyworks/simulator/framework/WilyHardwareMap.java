@@ -6,18 +6,20 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
-import com.qualcomm.robotcore.hardware.I2cDeviceSynch;
-import com.qualcomm.robotcore.hardware.I2cDeviceSynchDevice;
+import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.LED;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoController;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
@@ -37,6 +39,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Quaternion;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
+import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -48,7 +51,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 import kotlin.coroutines.Continuation;
@@ -78,14 +80,10 @@ class WilyHardwareDevice implements HardwareDevice {
     }
 
     @Override
-    public void resetDeviceConfigurationForOpMode() {
-
-    }
+    public void resetDeviceConfigurationForOpMode() { }
 
     @Override
-    public void close() {
-
-    }
+    public void close() { }
 }
 
 /**
@@ -155,7 +153,51 @@ class WilyVoltageSensor extends WilyHardwareDevice implements VoltageSensor {
  */
 class WilyDistanceSensor extends WilyHardwareDevice implements DistanceSensor {
     @Override
-    public double getDistance(DistanceUnit unit) { return DistanceUnit.infinity; }
+    public double getDistance(DistanceUnit unit) { return unit.fromMm(65535); } // Distance when not responding
+}
+
+/**
+ * Wily Works normalized color sensor implementation.
+ */
+class WilyNormalizedColorSensor extends WilyHardwareDevice implements NormalizedColorSensor {
+    @Override
+    public NormalizedRGBA getNormalizedColors() { return new NormalizedRGBA(); }
+
+    @Override
+    public float getGain() { return 0; }
+
+    @Override
+    public void setGain(float newGain) { }
+}
+
+/**
+ * Wily Works color sensor implementation.
+ */
+class WilyColorSensor extends WilyHardwareDevice implements ColorSensor {
+
+    @Override
+    public int red() { return 0; }
+
+    @Override
+    public int green() { return 0; }
+
+    @Override
+    public int blue() { return 0; }
+
+    @Override
+    public int alpha() { return 0; }
+
+    @Override
+    public int argb() { return 0; }
+
+    @Override
+    public void enableLed(boolean enable) { }
+
+    @Override
+    public void setI2cAddress(I2cAddr newAddress) { }
+
+    @Override
+    public I2cAddr getI2cAddress() { return null; }
 }
 
 /**
@@ -460,6 +502,7 @@ class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
  * Wily Works DigitalChannel implementation.
  */
 class WilyDigitalChannel extends WilyHardwareDevice implements DigitalChannel {
+    boolean state;
 
     @Override
     public Mode getMode() { return null; }
@@ -468,10 +511,47 @@ class WilyDigitalChannel extends WilyHardwareDevice implements DigitalChannel {
     public void setMode(Mode mode) {}
 
     @Override
-    public boolean getState() { return false; }
+    public boolean getState() { return state; }
 
     @Override
-    public void setState(boolean state) {}
+    public void setState(boolean state) { this.state = state; }
+}
+
+/**
+ * Wily Works LED implementation.
+ */
+class WilyLED extends LED {
+    // Assume that every digital channels is a REV LED indicator. Doesn't hurt if that's not
+    // the case:
+    boolean enable = true; // They're always on by default
+    double x;
+    double y;
+    boolean isRed;
+    WilyLED(String deviceName) {
+        WilyWorks.Config.LEDIndicator wilyLed = null;
+        for (WilyWorks.Config.LEDIndicator led: WilyCore.config.ledIndicators) {
+            if (led.name.equals(deviceName)) {
+                wilyLed = led;
+            }
+        }
+        if (wilyLed != null) {
+            x = wilyLed.x;
+            y = wilyLed.y;
+            isRed = wilyLed.isRed;
+        } else {
+            isRed = !(deviceName.toLowerCase().contains("green"));
+        }
+    }
+
+    @Override
+    public void enableLight(boolean enable) {
+        this.enable = enable;
+    }
+
+    @Override
+    public boolean isLightOn() {
+        return enable;
+    }
 }
 
 /**
@@ -479,17 +559,20 @@ class WilyDigitalChannel extends WilyHardwareDevice implements DigitalChannel {
  */
 public class WilyHardwareMap implements Iterable<HardwareDevice> {
 
-    public DeviceMapping<VoltageSensor>         voltageSensor         = new DeviceMapping<VoltageSensor>(VoltageSensor.class);
-    public DeviceMapping<DcMotor>               dcMotor               = new DeviceMapping<DcMotor>(DcMotor.class);
-    public DeviceMapping<DistanceSensor>        distanceSensor        = new DeviceMapping<DistanceSensor>(DistanceSensor.class);
-    public DeviceMapping<WebcamName>            webcamName            = new DeviceMapping<WebcamName>(WebcamName.class);
-    public DeviceMapping<Servo>                 servo                 = new DeviceMapping<>(Servo.class);
-    public DeviceMapping<CRServo>               crservo               = new DeviceMapping<>(CRServo.class);
-    public DeviceMapping<DigitalChannel>        digitalChannel        = new DeviceMapping<>(DigitalChannel.class);
-    public DeviceMapping<SparkFunOTOS>          sparkFunOTOS          = new DeviceMapping<>(SparkFunOTOS.class);
-
-    protected Map<String, List<HardwareDevice>> allDevicesMap         = new HashMap<>();
-    protected List<HardwareDevice>              allDevicesList        = new ArrayList<>();
+    public DeviceMapping<VoltageSensor>            voltageSensor            = new DeviceMapping<>(VoltageSensor.class);
+    public DeviceMapping<DcMotor>                  dcMotor                  = new DeviceMapping<>(DcMotor.class);
+    public DeviceMapping<DistanceSensor>           distanceSensor           = new DeviceMapping<>(DistanceSensor.class);
+    public DeviceMapping<NormalizedColorSensor>    normalizedColorSensor    = new DeviceMapping<>(NormalizedColorSensor.class);
+    public DeviceMapping<ColorSensor>              colorSensor              = new DeviceMapping<>(ColorSensor.class);
+    public DeviceMapping<WebcamName>               webcamName               = new DeviceMapping<>(WebcamName.class);
+    public DeviceMapping<Servo>                    servo                    = new DeviceMapping<>(Servo.class);
+    public DeviceMapping<CRServo>                  crservo                  = new DeviceMapping<>(CRServo.class);
+    public DeviceMapping<DigitalChannel>           digitalChannel           = new DeviceMapping<>(DigitalChannel.class);
+    public DeviceMapping<LED>                      led                      = new DeviceMapping<>(LED.class);
+    public DeviceMapping<SparkFunOTOS>             sparkFunOTOS             = new DeviceMapping<>(SparkFunOTOS.class);
+    public DeviceMapping<UltrasonicDistanceSensor> ultrasonicDistanceSensor = new DeviceMapping<>(UltrasonicDistanceSensor.class);
+    protected Map<String, List<HardwareDevice>>    allDevicesMap            = new HashMap<>();
+    protected List<HardwareDevice>                 allDevicesList           = new ArrayList<>();
 
     public WilyHardwareMap() {
         put("voltage_sensor", VoltageSensor.class);
@@ -560,15 +643,27 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
         } else if (DistanceSensor.class.isAssignableFrom(klass)) {
             device = new WilyDistanceSensor();
             distanceSensor.put(deviceName, (DistanceSensor) device);
+        } else if (NormalizedColorSensor.class.isAssignableFrom(klass)) {
+            device = new WilyNormalizedColorSensor();
+            normalizedColorSensor.put(deviceName, (NormalizedColorSensor) device);
+        } else if (ColorSensor.class.isAssignableFrom(klass)) {
+            device = new WilyColorSensor();
+            colorSensor.put(deviceName, (ColorSensor) device);
         } else if (WebcamName.class.isAssignableFrom(klass)) {
             device = new WilyWebcam(deviceName);
             webcamName.put(deviceName, (WebcamName) device);
         } else if (DigitalChannel.class.isAssignableFrom(klass)) {
             device = new WilyDigitalChannel();
             digitalChannel.put(deviceName, (DigitalChannel) device);
+        } else if (LED.class.isAssignableFrom(klass)) {
+            device = new WilyLED(deviceName);
+            led.put(deviceName, (LED) device);
         } else if (SparkFunOTOS.class.isAssignableFrom(klass)) {
             device = new SparkFunOTOS(null);
             sparkFunOTOS.put(deviceName, (SparkFunOTOS) device);
+        } else if (UltrasonicDistanceSensor.class.isAssignableFrom(klass)) {
+            device = new WilyUltrasonicDistanceSensor(deviceName);
+            ultrasonicDistanceSensor.put(deviceName, (WilyUltrasonicDistanceSensor) device);
         } else {
             throw new IllegalArgumentException("Unexpected device type for HardwareMap");
         }

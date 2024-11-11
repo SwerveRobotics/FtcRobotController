@@ -340,7 +340,7 @@ public class SparkFunOTOS extends I2cDeviceSynchDevice<I2cDeviceSynch> {
     public Status getStatus() { return new Status((byte) 0); }
     public Pose2D getOffset() { return new Pose2D(_offset.x, _offset.y, _offset.h); }
     public void setOffset(Pose2D pose) { _offset = new Pose2D(_offset.x, _offset.y, _offset.h); }
-    public Pose2D getPosition() { return otosPose(WilyCore.getPose()); }
+    public Pose2D getPosition() { return otosPose(WilyCore.getPose(false)); } // Use error-added pose
     public void setPosition(Pose2D pose) { WilyCore.setStartPose(simulationPose(pose), null); }
     public Pose2D getVelocity() { return new Pose2D(0, 0, 0); }
     public Pose2D getAcceleration() { return new Pose2D(0, 0, 0); }

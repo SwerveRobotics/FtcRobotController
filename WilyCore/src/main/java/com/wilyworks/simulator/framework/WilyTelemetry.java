@@ -9,6 +9,8 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import static org.firstinspires.ftc.robotcore.external.Telemetry.DisplayFormat;
 
+import androidx.annotation.Nullable;
+
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -417,6 +419,102 @@ class Layout {
     }
 }
 
+class WilyItem implements Telemetry.Item {
+    WilyTelemetry telemetry;
+
+    WilyItem(WilyTelemetry telemetry) {
+        this.telemetry = telemetry;
+    }
+    @Override
+    public String getCaption() {
+        return "";
+    }
+
+    @Override
+    public Telemetry.Item setCaption(String caption) {
+        return null;
+    }
+
+    @Override
+    public Telemetry.Item setValue(String format, Object... args) {
+        return null;
+    }
+
+    @Override
+    public Telemetry.Item setValue(Object value) {
+        return null;
+    }
+
+    @Override
+    public <T> Telemetry.Item setValue(Func<T> valueProducer) {
+        return null;
+    }
+
+    @Override
+    public <T> Telemetry.Item setValue(String format, Func<T> valueProducer) {
+        return null;
+    }
+
+    @Override
+    public Telemetry.Item setRetained(@Nullable Boolean retained) {
+        return this;
+    }
+
+    @Override
+    public boolean isRetained() {
+        return false;
+    }
+
+    @Override
+    public Telemetry.Item addData(String caption, String format, Object... args) {
+        telemetry.addData(caption, format, args);
+        return this;
+    }
+
+    @Override
+    public Telemetry.Item addData(String caption, Object value) {
+        telemetry.addData(caption, value);
+        return this;
+    }
+
+    @Override
+    public <T> Telemetry.Item addData(String caption, Func<T> valueProducer) {
+        return null;
+    }
+
+    @Override
+    public <T> Telemetry.Item addData(String caption, String format, Func<T> valueProducer) {
+        return null;
+    }
+}
+
+class WilyLine implements Telemetry.Line {
+    WilyTelemetry telemetry;
+    WilyLine(WilyTelemetry telemetry) { this.telemetry = telemetry; }
+
+    @Override
+    public Telemetry.Item addData(String caption, String format, Object... args) {
+        telemetry.addData(caption, format, args);
+        return new WilyItem(telemetry);
+    }
+
+    @Override
+    public Telemetry.Item addData(String caption, Object value) {
+        telemetry.addData(caption, value);
+        return new WilyItem(telemetry);
+    }
+
+    @Override
+    public <T> Telemetry.Item addData(String caption, Func<T> valueProducer) {
+        return null;
+    }
+
+    @Override
+    public <T> Telemetry.Item addData(String caption, String format, Func<T> valueProducer) {
+        return null;
+    }
+}
+
 /**
  * This class implements a lightweight emulation of FTC Telemetry that can run on the PC.
  */
@@ -453,7 +551,7 @@ public class WilyTelemetry implements Telemetry {
             }
             lineList.add(string);
         }
-        return null; // ###
+        return new WilyLine(this);
     }
 
     @Override
