@@ -24,6 +24,7 @@ public class CompetitionSpecimenAuto extends BaseOpMode {
         initializeHardware();
         RobotAction foldOutArm = new MoveArm(ARM_SCORE_SPECIMEN, WRIST_FOLDED_IN);
         Action trajectoryAction = drive.actionBuilder(beginPose)
+
                 .setTangent(Math.toRadians(-90))
                 .afterDisp(0, foldOutArm)
                 .splineToLinearHeading(new Pose2d(0, Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
