@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 @TeleOp(name = "TeleOp", group = "Competition")
 @Config
@@ -33,6 +34,11 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     double slidePositionFudgeFactor;
 
     boolean intakeEnabled = false;
+
+    // These are the button states
+    boolean xWasPressed = false;
+    boolean yWaspressed = false;
+    boolean aWasPressed = false;
 
     @Override
     public void runOpMode() {
@@ -128,6 +134,14 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         drive.updatePoseEstimate();
     }
 
+    // In case action needs to be changed, call this function to override the previous action and run the newest action
+    public void runAction(RobotAction action) {
+        // Abort any previous action that still might be running:
+        drive.abortActions();
+        // Run the action:
+        drive.runParallel(action);
+    }
+
     public void controlMechanismsWithGamepads() {
 
             /* Here we handle the three buttons that have direct control of the intake speed.
@@ -146,16 +160,11 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
 
             // In the loop if 'x' is clicked intakeEnabled is set to false which will be stored to memory
-            if (gamepad2.x) {
-                if(isSlideExtended()){
-                    moveWrist(X_WRIST_FOLDED_IN);
-                    slidePosition = SLIDE_HOME_POSITION;
-                } else{
-                    slidePosition = SLIDE_SCORE_IN_BASKET;
-                    liftPosition = LIFT_SCORE_LOW_BASKET;
-                }
-
+            if (gamepad2.x && !xWasPressed) {
+                ControlAction lowBasket = new ControlAction(SLIDE_SCORE_IN_BASKET, WRIST_OUT, LIFT_SCORE_LOW_BASKET);
+                drive.runParallel(lowBasket);
             }
+            xWasPressed = gamepad2.x;
 
             boolean reversed = gamepad2.b;
 

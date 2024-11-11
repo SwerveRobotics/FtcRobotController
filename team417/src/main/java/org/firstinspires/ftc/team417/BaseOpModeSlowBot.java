@@ -7,8 +7,6 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
-    //TODO: Tune correct value
-    final static double X_WRIST_FOLDED_IN = 0;
     //TODO: tune for correct value
     final static double SLIDE_HOME_POSITION = 0;
     //TODO: tune for correct value
