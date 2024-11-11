@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.team6220;
+package org.firstinspires.ftc.team6220.old;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -8,6 +8,8 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
+import org.firstinspires.ftc.team6220.BaseOpMode;
+import org.firstinspires.ftc.team6220.DRIFTConstants;
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 
 /**
@@ -16,21 +18,21 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
  */
 
 @Disabled
-@Autonomous(name="ParkAutoRight", group="Competition", preselectTeleOp="CompetitionTeleOp")
-public class ParkAutoRight extends BaseOpMode {
+@Autonomous(name="ParkAutoMiddle", group="Competition", preselectTeleOp="CompetitionTeleOp")
+public class ParkAutoMiddle extends BaseOpMode {
 
     @Override
     public void runOpMode() {
 
-        Pose2d rightPose = DRIFTConstants.RIGHT_STARTING_POSE;
+        Pose2d middlePose = DRIFTConstants.MIDDLE_STARTING_POSE;
 
-        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, rightPose);
+        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, middlePose);
 
-        // Create right parking trajectory
-        Action rightParkingTrajectory = drive.actionBuilder(rightPose)
+        // Create middle parking trajectory
+        Action  middleParkingTrajectory = drive.actionBuilder(middlePose)
                 .splineTo(new Vector2d(-60, 60), (Math.PI))
                 .build();
-        Action trajectoryAction = rightParkingTrajectory;
+        Action trajectoryAction = middleParkingTrajectory;
 
         // Get a preview of the trajectory's path:
         Canvas previewCanvas = new Canvas();

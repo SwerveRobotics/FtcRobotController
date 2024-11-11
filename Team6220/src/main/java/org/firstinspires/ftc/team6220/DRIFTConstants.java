@@ -25,4 +25,16 @@ public abstract class DRIFTConstants {
     public static final Pose2d RIGHT_STARTING_POSE = new Pose2d(-24, 60, (3*Math.PI)/2);
     public static final Vector2d SUBMERSIBLE_PARK_POSITION = null;
     public static final Vector2d OBSERVATION_PARK_POSITION = new Vector2d(-60, 60);
+
+    // hardware identifiers
+    public static final String ARM_ELBOW_SERVO_HARDWARE_IDENTIFIER = "armElbowServo";
+    public static final String SLIDES_MOTOR_HARDWARE_IDENTIFIER = "slidesMotor";
+    public static final String ARM_BASE_MOTOR_HARDWARE_IDENTIFIER = "armBaseMotor";
+    public static final String INTAKE_SERVO_HARDWARE_IDENTIFIER = "intakeServo";
+    public static final String DUMPER_SERVO_HARDWARE_IDENTIFIER = "dumperServo";
+    public static final String OTOS_HARDWARE_IDENTIFIER = "otos";
+    public static final String LEFT_FRONT_MOTOR_HARDWARE_IDENTIFIER = "leftFront";
+    public static final String LEFT_BACK_MOTOR_HARDWARE_IDENTIFIER = "leftBack";
+    public static final String RIGHT_BACK_MOTOR_HARDWARE_IDENTIFIER = "rightBack";
+    public static final String RIGHT_FRONT_MOTOR_HARDWARE_IDENTIFIER = "rightFront";
 }

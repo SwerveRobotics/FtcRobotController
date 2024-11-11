@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.team6220;
+package org.firstinspires.ftc.team6220.old;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -8,6 +8,8 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
+import org.firstinspires.ftc.team6220.BaseOpMode;
+import org.firstinspires.ftc.team6220.DRIFTConstants;
 import org.firstinspires.ftc.team6220.javatextmenu.MenuInput;
 import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
@@ -18,51 +20,27 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
  */
 
 @Disabled
-@Autonomous(name="ScoringAutoMiddlePushbot", group="Competition", preselectTeleOp="CompetitionTeleOp")
-public class ScoringAutoMiddlePushbot extends BaseOpMode {
+@Autonomous(name="ScoringAutoRight", group="Competition", preselectTeleOp="CompetitionTeleOp")
+public class ScoringAutoRight extends BaseOpMode {
 
 
     @Override
     public void runOpMode() {
 
-        // overridden in subclasses, middle by default
-        Pose2d startingPose = getInitializationPose();
+        Pose2d rightPose = DRIFTConstants.RIGHT_STARTING_POSE;
 
-        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
 
-        Action middleScoringTrajectory = drive.actionBuilder(startingPose)
-                // strafe to scoring area
-                .strafeTo(new Vector2d(55, 60))
+        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, rightPose);
+
+        Action rightScoringTrajectory = drive.actionBuilder(rightPose)
+                .splineTo(new Vector2d(48, 36), (3*Math.PI)/2)
                 .endTrajectory()
-                .setTangent(Math.toRadians(-180))
-                // spline to prepare to collect first sample
-                .splineToLinearHeading(new Pose2d(45, 10, Math.toRadians(-90)),  Math.toRadians(-40))
-                .endTrajectory()
-                .setTangent(Math.toRadians(90))
-                // spline to deposit first sample in scoring area
-                .splineToLinearHeading(new Pose2d(55, 55, Math.toRadians(-140)),  Math.toRadians(40))
-                .endTrajectory()
-                .setTangent(Math.toRadians(-180))
-                // spline to prepare to collect second sample
-                .splineToLinearHeading(new Pose2d(55, 10, Math.toRadians(-90)),  Math.toRadians(-40))
-                .endTrajectory()
-                .setTangent(Math.toRadians(90))
-                // spline to deposit second sample in scoring area
-                .splineToLinearHeading(new Pose2d(55, 61, Math.toRadians(-140)),  Math.toRadians(40))
-                .endTrajectory()
-                .setTangent(Math.toRadians(-180))
-                // spline to prepare to collect third sample
-                .splineToLinearHeading(new Pose2d(62, 10, Math.toRadians(-90)),  Math.toRadians(40))
-                .endTrajectory()
-                // strafe to deposit third sample
-                .strafeTo(new Vector2d(62, 55))
-                // prepare to move to park position
-                .strafeTo(new Vector2d(62, 50))
-                .waitSeconds(3)
-                // drive to park position
-                .splineTo(new Vector2d(-55,60), Math.toRadians(180))
+                .splineTo(new Vector2d(48, 50), (5*Math.PI)/4) //scored a sample
+                .splineTo(new Vector2d(25, 10),(3*Math.PI)/2)
+                .splineTo(new Vector2d(28, 10),(1*Math.PI)/1)
                 .build();
-        Action trajectoryAction = middleScoringTrajectory;
+
+        Action trajectoryAction = rightScoringTrajectory;
 
         // Get a preview of the trajectory's path:
         Canvas previewCanvas = new Canvas();
@@ -117,9 +95,5 @@ public class ScoringAutoMiddlePushbot extends BaseOpMode {
         if (enumClass != null) {
 
         }
-    }
-
-    protected Pose2d getInitializationPose() {
-        return DRIFTConstants.MIDDLE_STARTING_POSE;
     }
 }

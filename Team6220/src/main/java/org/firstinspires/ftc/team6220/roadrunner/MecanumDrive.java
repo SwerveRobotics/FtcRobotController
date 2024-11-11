@@ -64,6 +64,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.team6220.DRIFTConstants;
 import org.firstinspires.ftc.team6220.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.team6220.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team6220.roadrunner.messages.MecanumLocalizerInputsMessage;
@@ -336,12 +337,12 @@ public final class MecanumDrive {
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         if (isDevBot) {
-            opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+            opticalTracker = hardwareMap.get(SparkFunOTOS.class, DRIFTConstants.OTOS_HARDWARE_IDENTIFIER);
 
-            leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-            leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
-            rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-            rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+            leftFront = hardwareMap.get(DcMotorEx.class, DRIFTConstants.LEFT_FRONT_MOTOR_HARDWARE_IDENTIFIER);
+            leftBack = hardwareMap.get(DcMotorEx.class, DRIFTConstants.LEFT_BACK_MOTOR_HARDWARE_IDENTIFIER);
+            rightBack = hardwareMap.get(DcMotorEx.class, DRIFTConstants.RIGHT_BACK_MOTOR_HARDWARE_IDENTIFIER);
+            rightFront = hardwareMap.get(DcMotorEx.class, DRIFTConstants.RIGHT_FRONT_MOTOR_HARDWARE_IDENTIFIER);
 
             rightFront.setDirection(DcMotorEx.Direction.REVERSE);
             rightBack.setDirection(DcMotorEx.Direction.REVERSE);
@@ -349,12 +350,12 @@ public final class MecanumDrive {
             // TODO: Create the optical tracking object:
             //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
 
-            opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+            opticalTracker = hardwareMap.get(SparkFunOTOS.class, DRIFTConstants.OTOS_HARDWARE_IDENTIFIER);
 
-            leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-            leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
-            rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-            rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+            leftFront = hardwareMap.get(DcMotorEx.class, DRIFTConstants.LEFT_FRONT_MOTOR_HARDWARE_IDENTIFIER);
+            leftBack = hardwareMap.get(DcMotorEx.class, DRIFTConstants.LEFT_BACK_MOTOR_HARDWARE_IDENTIFIER);
+            rightBack = hardwareMap.get(DcMotorEx.class, DRIFTConstants.RIGHT_BACK_MOTOR_HARDWARE_IDENTIFIER);
+            rightFront = hardwareMap.get(DcMotorEx.class, DRIFTConstants.RIGHT_FRONT_MOTOR_HARDWARE_IDENTIFIER);
 
             // TODO: reverse motor directions if needed
             leftFront.setDirection(DcMotorEx.Direction.REVERSE);

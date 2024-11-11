@@ -42,11 +42,11 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         //colorSensor.setGain(Constants.COLOR_SENSOR_GAIN);
 
-        armBaseMotor = hardwareMap.get(DcMotorEx.class,"armBaseMotor");
-        //slidesMotor = hardwareMap.get(DcMotorEx.class,"slidesMotor");
-        intakeCRServo = hardwareMap.get(CRServo.class,"intakeServo");
-        //dumperServo = hardwareMap.get(Servo.class,"dumperServo");
-        armElbowCRServo = hardwareMap.get(CRServo.class,"armElbowServo");
+        armBaseMotor = hardwareMap.get(DcMotorEx.class, DRIFTConstants.ARM_BASE_MOTOR_HARDWARE_IDENTIFIER);
+        //slidesMotor = hardwareMap.get(DcMotorEx.class,DRIFTConstants.SLIDES_MOTOR_HARDWARE_IDENTIFIER);
+        intakeCRServo = hardwareMap.get(CRServo.class, DRIFTConstants.INTAKE_SERVO_HARDWARE_IDENTIFIER);
+        //dumperServo = hardwareMap.get(Servo.class,DRIFTConstants.DUMPER_SERVO_HARDWARE_IDENTIFIER);
+        armElbowCRServo = hardwareMap.get(CRServo.class,DRIFTConstants.ARM_ELBOW_SERVO_HARDWARE_IDENTIFIER);
 
         armBaseMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         //slidesMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);

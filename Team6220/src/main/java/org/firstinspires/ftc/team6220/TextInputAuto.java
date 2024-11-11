@@ -12,6 +12,8 @@ import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
 
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 
+import java.util.Objects;
+
 /**
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
@@ -127,29 +129,20 @@ public class TextInputAuto extends BaseOpMode {
     private Action computeAutoPath(MecanumDrive drive) {
         TrajectoryActionBuilder actionBuilder = drive.actionBuilder(autoStartPosition.startingPose);
 
-        switch(autoType) {
-            case PARK: {
-                // strafe to the park position, build, and return
-                return actionBuilder.strafeTo(parkPosition.parkingPosition)
-                        .endTrajectory()
-                        .build();
-            }
-            case SCORING: {
-                // so much cleaner omg such wow much yes
-                // yoink the auto scoring route from the enum
-                actionBuilder = spikeMarkSide.appendScoringRoute(actionBuilder);
+        // apply scoring portion of auto
+        if (Objects.requireNonNull(autoType) == AutonomousEnums.AutoType.SCORING) {
+            // so much cleaner omg such wow much yes
+            // yoink the auto scoring route from the enum
+            actionBuilder = spikeMarkSide.appendScoringRoute(actionBuilder);
 
-                // still putting the wait here because yeah
-                actionBuilder = actionBuilder.waitSeconds(3);
-
-                // spline to park position, and return
-                return actionBuilder.splineTo(parkPosition.parkingPosition, Math.PI)
-                        .endTrajectory()
-                        .build();
-            }
+            // still putting the wait here because yeah
+            actionBuilder = actionBuilder.waitSeconds(3);
         }
 
-        // this should never happen
-        return actionBuilder.build();
+
+        // apply parking portion of auto
+        actionBuilder = parkPosition.appendAutonomousSegment(actionBuilder, autoType);
+
+        return actionBuilder.endTrajectory().build();
     }
 }

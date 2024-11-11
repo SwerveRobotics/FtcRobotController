@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
 
+
 public class AutonomousEnums {
 
     public enum AutoStartPosition {
@@ -33,6 +34,35 @@ public class AutonomousEnums {
 
         ParkPosition(Vector2d parkingPosition) {
             this.parkingPosition = parkingPosition;
+        }
+
+        public TrajectoryActionBuilder appendAutonomousSegment(TrajectoryActionBuilder builder, AutoType autoType) {
+            switch(this) {
+                case OBSERVATION: {
+                    switch(autoType) {
+                        case PARK: {
+                            return builder.strafeTo(parkingPosition)
+                                    .endTrajectory();
+                        }
+                        case SCORING: {
+                            return builder.splineTo(parkingPosition, Math.PI)
+                                    .endTrajectory();
+                        }
+                    }
+                }
+                case SUBMERSIBLE: {
+                    switch (autoType) {
+                        case PARK: {
+                            // code for submersible park auto goes here
+                        }
+                        case SCORING: {
+                            // code for submersible scoring-park auto goes here
+                        }
+                    }
+                }
+            }
+
+            return builder;
         }
 
         @NonNull
