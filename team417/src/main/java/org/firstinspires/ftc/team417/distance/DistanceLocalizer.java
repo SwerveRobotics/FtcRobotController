@@ -34,6 +34,7 @@ public class DistanceLocalizer {
 
     final double ANGLE_OF_POSITIVE_CORNER = 0.25 * Math.PI;
     final double RELIABLE_DISTANCE = 48;
+    final double RELIABLE_ANGLE = Math.PI / 6;
 
     final ElapsedTime clock = new ElapsedTime();
 
@@ -86,11 +87,14 @@ public class DistanceLocalizer {
         IntersectionResult leftIntersection = FieldSimulator.findIntersection(estimatedPose, leftInfo.getPose());
         IntersectionResult rightIntersection = FieldSimulator.findIntersection(estimatedPose, rightInfo.getPose());
 
+        double heading = normalizeToFirstQuadrant(drive.pose.heading.log());
+
         boolean sameSide = leftIntersection.side == rightIntersection.side;
+        boolean closeEnough = leftIntersection.distance < RELIABLE_DISTANCE && rightIntersection.distance < RELIABLE_DISTANCE;
+        boolean angleIsRight = RELIABLE_ANGLE < heading && heading < Math.PI / 2 - RELIABLE_ANGLE;
 
         Vector2d detectedRelativePosition, detectedPosition, detectedCorrection;
-        double heading = normalizeToFirstQuadrant(drive.pose.heading.log());
-        if (!sameSide && leftIntersection.distance < RELIABLE_DISTANCE && rightIntersection.distance < RELIABLE_DISTANCE) {
+        if (!sameSide && closeEnough && angleIsRight) {
             detectedRelativePosition = new Vector2d(
                     calculateDistance(latestRight, heading, rightInfo),
                     calculateDistance(latestLeft, heading, leftInfo));
