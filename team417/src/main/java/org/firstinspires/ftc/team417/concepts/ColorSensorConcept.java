@@ -17,35 +17,38 @@ enum Color {
 @Config
 public class ColorSensorConcept extends LinearOpMode {
     ColorSensor sensor;
-    Color color;
 
     @Override
     public void runOpMode() {
+        Color color;
+
         sensor = hardwareMap.get(ColorSensor.class, "color");
 
         waitForStart();
 
         while (opModeIsActive()) {
-            int a = sensor.alpha();
-            int r = sensor.red();
-            int g = sensor.green();
-            int b = sensor.blue();
-
-            if (a < 200) { // If the detection is too transparent
-                color = Color.UNDETECTED;
-            } else {
-                if (r >= g && r >= b) {
-                    color = Color.RED; // Most red
-                } else if (g >= r && g >= b) {
-                    color = Color.YELLOW; // Most green
-                } else {
-                    color = Color.BLUE; // Most blue
-                }
-            }
-
-            telemetry.addLine(String.format("(a, r, g, b) = (%d, %d, %d, %d)", a, r, g, b));
+            color = senseColor();
             telemetry.addData("Color", color);
             telemetry.update();
+        }
+    }
+
+    public Color senseColor() {
+        int a = sensor.alpha();
+        int r = sensor.red();
+        int g = sensor.green();
+        int b = sensor.blue();
+
+        if (a < 200) { // If the detection is too transparent
+            return Color.UNDETECTED;
+        } else {
+            if (r >= g && r >= b) {
+                return Color.RED; // Most red
+            } else if (g >= r && g >= b) {
+                return Color.YELLOW; // Most green
+            } else {
+                return Color.BLUE; // Most blue
+            }
         }
     }
 }
