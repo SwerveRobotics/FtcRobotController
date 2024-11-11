@@ -22,7 +22,7 @@ public class FastBotTeleOp extends BaseOpMode {
     private double speedMultiplier = 0.5;
     boolean curve = true;
     boolean fieldCentered = false;
-    MecanumDrive drive;
+    public MecanumDrive drive;
 
     public double startHeading;
 
@@ -71,7 +71,7 @@ public class FastBotTeleOp extends BaseOpMode {
     }
 
     public void prepareRobot() {
-        prepareRobot(new Pose2d(0, 0, Math.PI / 2));
+        prepareRobot(new Pose2d(-0, -48, Math.PI / 2));
     }
 
     public void prepareRobot(Pose2d startingPose) {
@@ -366,6 +366,12 @@ public class FastBotTeleOp extends BaseOpMode {
         telemetry.addData("Stick Curve On", curve);
         telemetry.addData("Field-Centric", fieldCentered);
         telemetry.addData("Speed Multiplier", speedMultiplier);
+
+        telemetry.addData("Pose (x, y, h):",
+                String.format("(%.2f\", %.2f\", %.2f°)",
+                        drive.pose.position.x,
+                        drive.pose.position.y,
+                        Math.toDegrees(drive.pose.heading.log())));
 
         /* Check to see if our arm is over the current limit, and report via telemetry. */
         if (armMotor.isOverCurrent()) {
