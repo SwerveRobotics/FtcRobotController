@@ -7,8 +7,6 @@ import org.firstinspires.ftc.team417.programs.BaseOpMode;
 @Autonomous (name = "Auto")
 public class CompetitionAuto extends BaseOpMode {
     @Override
-    public void runOpMode() throws InterruptedException {
-        TextMenu menu = new TextMenu();
-        MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
+    public void runOpMode() {
     }
 }
