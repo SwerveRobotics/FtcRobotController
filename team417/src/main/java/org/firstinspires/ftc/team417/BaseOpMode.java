@@ -71,8 +71,11 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     /** @noinspection ConstantValue*/
     /* Variables that are used to set the arm to a specific position */
+    // Fast Bot variables
     static double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
+
+
 
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
     static DcMotorEx armMotor;
@@ -83,6 +86,10 @@ abstract public class BaseOpMode extends LinearOpMode {
             || MecanumDrive.driveParameters == DriveParameters.FASTBOT_MECANUM;
 
     public static final KinematicType kinematicType = KinematicType.MECANUM; // will have to change for league 2, once all robot measurements are updated
+
+
+
+
 
     public void initializeHardware() {
         // Only initialize arm if it's not already initialized.
@@ -194,6 +201,9 @@ abstract public class BaseOpMode extends LinearOpMode {
             return false;
         }
     }
+
+
+
     class intakeSample extends RobotAction {
         @Override
         public boolean run(double elapsedTime) {
