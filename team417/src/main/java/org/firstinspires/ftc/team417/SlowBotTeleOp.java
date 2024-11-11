@@ -37,8 +37,11 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
     // These are the button states
     boolean xWasPressed = false;
-    boolean yWaspressed = false;
-    boolean aWasPressed = false;
+    boolean yWasPressed = false;
+    boolean rbWasPressed = false;
+    boolean lbWasPressed = false;
+    boolean dpLeftWasPressed = false;
+    boolean dpRightWasPressed = false;
 
     @Override
     public void runOpMode() {
@@ -161,24 +164,50 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
             // In the loop if 'x' is clicked intakeEnabled is set to false which will be stored to memory
             if (gamepad2.x && !xWasPressed) {
-                ControlAction lowBasket = new ControlAction(SLIDE_SCORE_IN_BASKET, WRIST_OUT, LIFT_SCORE_LOW_BASKET);
-                drive.runParallel(lowBasket);
+                runAction(new ControlAction(SLIDE_SCORE_IN_BASKET, WRIST_OUT, LIFT_SCORE_LOW_BASKET));
             }
             xWasPressed = gamepad2.x;
 
-            boolean reversed = gamepad2.b;
+             if (gamepad2.y && !yWasPressed) {
+                 runAction(new ControlAction(SLIDE_SCORE_IN_BASKET, WRIST_OUT, LIFT_SCORE_HIGH_BASKET));
+             }
+            yWasPressed = gamepad2.y;
 
+            if (gamepad2.right_bumper && !rbWasPressed) {
+                /* This is the intaking/collecting arm position */
+                runAction(new ControlAction(SLIDE_COLLECT, WRIST_OUT, LIFT_COLLECT));
+                intakeEnabled = true;
+
+            }
+            rbWasPressed = gamepad2.right_bumper;
+
+            if (gamepad2.dpad_left && !dpLeftWasPressed) {
+                /* This turns off the intake, folds in the wrist, and moves the arm
+                back to folded inside the robot. This is also the starting configuration */
+                runAction(new ControlAction(SLIDE_HOME_POSITION, WRIST_IN, LIFT_REST_POSITION));
+            }
+            dpLeftWasPressed = gamepad2.dpad_left;
+
+            if (gamepad2.dpad_right && !dpRightWasPressed) {
+                /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
+                runAction(new ControlAction(SLIDE_HOME_POSITION, WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN));
+            }
+            dpRightWasPressed = gamepad2.dpad_right;
+
+            if (gamepad2.left_bumper && !lbWasPressed) {
+                runAction(new ControlAction(SLIDE_COLLECT, WRIST_IN, LIFT_COLLECT));
+            }
+            lbWasPressed = gamepad2.left_bumper;
+
+
+        boolean reversed = gamepad2.b;
             // When 'b' is HELD down, it will deposit
             if (reversed) {
                 intakeControl(INTAKE_DEPOSIT);
-            }
-            // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
-            else if (intakeEnabled) {
+            } else if (intakeEnabled) {
+                // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
                 intakeControl(INTAKE_COLLECT);
-
-            }
-            // When 'x' is clicked, it is TOGGLED, so it will turn off the intake until another input
-            else {
+            } else {
                 intakeControl(INTAKE_OFF);
             }
 
@@ -199,46 +228,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             it folds out the wrist to make sure it is in the correct orientation to intake, and it
             turns the intake on to the COLLECT mode.*/
     // In the loop if 'a' is clicked intakeEnabled is set to true which will be stored to memory
-            if (gamepad2.right_bumper) {
-                intakeEnabled = true;
-            }
-            if (gamepad2.right_bumper) {
-                /* This is the intaking/collecting arm position */
-                liftPosition = LIFT_COLLECT;
-                moveWrist(WRIST_OUT);
-                intakeControl(INTAKE_COLLECT);
 
-            } else if (gamepad2.left_bumper) {
-                        /* This is about 20° up from the collecting position to clear the barrier
-                        Note here that we don't set the wrist position or the intake power when we
-                        select this "mode", this means that the intake and wrist will continue what
-                        they were doing before we clicked left bumper. */
-                liftPosition = LIFT_CLEAR_BARRIER;
-            } else if (gamepad2.y) {
-                /* This is the correct height to score the sample in the LOW BASKET */
-                liftPosition = SLIDE_SCORE_IN_BASKET;
-                moveWrist(WRIST_OUT);
-            } else if (gamepad2.dpad_left) {
-                        /* This turns off the intake, folds in the wrist, and moves the arm
-                        back to folded inside the robot. This is also the starting configuration */
-                liftPosition = LIFT_REST_POSITION;
-                intakeControl(INTAKE_OFF);
-                moveWrist(WRIST_IN);
-            } else if (gamepad2.dpad_right) {
-                /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
-                liftPosition = LIFT_SCORE_SPECIMEN;
-                moveWrist(WRIST_IN);
-            } else if (gamepad2.dpad_up) {
-                /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
-                //TODO: implement functionality after decided
-                intakeControl(INTAKE_OFF);
-                moveWrist(WRIST_IN);
-            } else if (gamepad2.dpad_down) {
-                /* this moves the arm down to lift the robot up once it has been hooked */
-                //TODO: implement functionality after decided
-                intakeControl(INTAKE_OFF);
-                moveWrist(WRIST_IN);
-            }
 
             /* Here we set the target position of our arm to match the variable that was selected
             by the driver.
