@@ -1,8 +1,15 @@
 package org.firstinspires.ftc.team417;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
+import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
@@ -17,14 +24,17 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double NO_SLIDE_ZONE_MAX = 0;
 
     //motors
+    static CRServo intake1;
+    static CRServo intake2;
+    static Servo wrist;
     static DcMotorEx liftMotor1;
     static DcMotorEx liftMotor2;
     static DcMotorEx slideMotor;
 
-    // This provides an error tolerance for lift and slide
-    final static double EPSILON = 3.00;
-
     class ControlAction extends RobotAction {
+
+        // This provides an error tolerance for lift and slide
+        final static double EPSILON = 3.00;
 
         double targetSlidePosition;
         double targetWristPosition;
@@ -70,7 +80,10 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             intake1.setPower(INTAKE_OFF);
             // wrist.setPosition(WRIST_FOLDED_IN); We do that after start, since we can't move wrist
             // in the gap before TeleOp.
+
+            final double EPSILON = 3.00;
         }
+
 
         public void initCompBot() {
             //motors
