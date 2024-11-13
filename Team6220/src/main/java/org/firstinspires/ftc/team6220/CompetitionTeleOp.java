@@ -28,7 +28,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     private DcMotorEx slidesMotor = null;
     private CRServo intakeCRServo = null;
     private Servo dumperServo = null;
-    private CRServo armElbowCRServo = null;
+    private Servo armElbowServo = null;
     private NormalizedColorSensor colorSensor = null;
     private AllianceColor allianceColor;
 
@@ -46,7 +46,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         //slidesMotor = hardwareMap.get(DcMotorEx.class,DRIFTConstants.SLIDES_MOTOR_HARDWARE_IDENTIFIER);
         intakeCRServo = hardwareMap.get(CRServo.class, DRIFTConstants.INTAKE_SERVO_HARDWARE_IDENTIFIER);
         //dumperServo = hardwareMap.get(Servo.class,DRIFTConstants.DUMPER_SERVO_HARDWARE_IDENTIFIER);
-        armElbowCRServo = hardwareMap.get(CRServo.class,DRIFTConstants.ARM_ELBOW_SERVO_HARDWARE_IDENTIFIER);
+        armElbowServo = hardwareMap.get(Servo.class,DRIFTConstants.ARM_ELBOW_SERVO_HARDWARE_IDENTIFIER);
 
         armBaseMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         //slidesMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
@@ -89,7 +89,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             //slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
             intakeCRServo.setPower(controls.getIntakeServoPower());
             //dumperServo.setPosition(controls.getDumperServoPosition());
-            armElbowCRServo.setPower(controls.getArmElbowServoPosition());
+            armElbowServo.setPosition(controls.getArmElbowServoPosition());
 
             // jank ass speed modifier
             float speedModifier = 1 - (gamepad1.right_trigger * 0.5f);

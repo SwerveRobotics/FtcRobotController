@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.team6220.actions.ArmElbowAction;
 import org.firstinspires.ftc.team6220.javatextmenu.MenuFinishedButton;
 import org.firstinspires.ftc.team6220.javatextmenu.MenuInput;
 import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
@@ -14,12 +15,8 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 
 import java.util.Objects;
 
-/**
- * This class exposes the competition version of Autonomous. As a general rule, add code to the
- * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
- */
 @Autonomous(name="TextInputAuto", group="Competition", preselectTeleOp="CompetitionTeleOp")
-public class TextInputAuto extends BaseOpMode {
+public class CompetitionAuto extends BaseOpMode {
 
     // defaults so it doesnt explode if you skip the text menu
     private AutonomousEnums.AutoStartPosition autoStartPosition = null;
@@ -29,6 +26,8 @@ public class TextInputAuto extends BaseOpMode {
 
     @Override
     public void runOpMode() {
+
+        System.out.println("amogus test");
 
         // TextMenu implementation yoinked from valsei's GitHub
         TextMenu startingConditionMenu = new TextMenu();
@@ -86,8 +85,14 @@ public class TextInputAuto extends BaseOpMode {
         packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
         MecanumDrive.sendTelemetryPacket(packet);
 
+        // initialize actions
+        ArmElbowAction elbowAction = new ArmElbowAction(hardwareMap);
+
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
+
+        // commented out so nothing's borked on accident :)
+        // drive.runParallel(elbowAction.setTargetPosition(DRIFTConstants.ARM_ELBOW_SERVO_PRESET_POSITION_OVER_BARRIER));
 
         boolean more = true;
         while (opModeIsActive() && more) {
@@ -141,7 +146,7 @@ public class TextInputAuto extends BaseOpMode {
 
 
         // apply parking portion of auto
-        actionBuilder = parkPosition.appendAutonomousSegment(actionBuilder, autoType);
+        actionBuilder = parkPosition.appendAutonomousSegment(actionBuilder, autoType, hardwareMap);
 
         return actionBuilder.endTrajectory().build();
     }

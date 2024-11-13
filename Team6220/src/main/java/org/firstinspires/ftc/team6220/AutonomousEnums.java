@@ -5,6 +5,10 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.ftc.Actions;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
+import org.firstinspires.ftc.team6220.actions.ArmElbowAction;
 
 
 public class AutonomousEnums {
@@ -36,7 +40,7 @@ public class AutonomousEnums {
             this.parkingPosition = parkingPosition;
         }
 
-        public TrajectoryActionBuilder appendAutonomousSegment(TrajectoryActionBuilder builder, AutoType autoType) {
+        public TrajectoryActionBuilder appendAutonomousSegment(TrajectoryActionBuilder builder, AutoType autoType, HardwareMap hardwareMap) {
             switch(this) {
                 case OBSERVATION: {
                     switch(autoType) {
@@ -51,6 +55,7 @@ public class AutonomousEnums {
                     }
                 }
                 case SUBMERSIBLE: {
+
                     switch (autoType) {
                         case PARK: {
                             // code for submersible park auto goes here
@@ -63,13 +68,6 @@ public class AutonomousEnums {
             }
 
             return builder;
-        }
-
-        @NonNull
-        @Override
-        public String toString() {
-            // haven't implemented this yet, so ternary operator override go brrrt
-            return this.equals(ParkPosition.SUBMERSIBLE) ? "DISABLED" : super.toString();
         }
     }
 
