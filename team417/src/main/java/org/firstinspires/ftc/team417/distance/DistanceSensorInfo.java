@@ -2,6 +2,7 @@ package org.firstinspires.ftc.team417.distance;
 
 import com.acmerobotics.roadrunner.Pose2d;
 
+// A data class for keeping track of where distance sensors are relative to the center of the robot.
 public class DistanceSensorInfo {
     private final double xOffset;
     private final double yOffset;
