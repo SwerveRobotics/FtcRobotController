@@ -99,6 +99,7 @@ public class DistanceLocalizer {
 
         Vector2d detectedRelativePosition, detectedPosition, detectedCorrection;
         if (!sameSide && closeEnough && angleIsEnough) {
+            // Detected position relative to the corner
             detectedRelativePosition = new Vector2d(
                     calculateDistance(latestRight, heading, rightInfo),
                     calculateDistance(latestLeft, heading, leftInfo));
@@ -108,12 +109,15 @@ public class DistanceLocalizer {
 
         Vector2d fieldVector = new Vector2d(FieldSimulator.FIELD_SIZE / 2, FieldSimulator.FIELD_SIZE / 2);
 
+        // Position relative to the center, but doesn't account for which corner it is
         Vector2d unrotatedPosition = (fieldVector).minus(detectedRelativePosition);
 
         double theta = calculateTheta(leftIntersection.side, rightIntersection.side);
 
+        // Position detected by this iteration of the loop
         detectedPosition = rotate(unrotatedPosition, theta);
 
+        // Correction recommended by this iteration of the loop
         detectedCorrection = detectedPosition.minus(drive.pose.position);
 
         history.add(detectedCorrection);
@@ -127,12 +131,17 @@ public class DistanceLocalizer {
         double xDiff = targetCorrection.x - correction.x;
         double yDiff = targetCorrection.y - correction.y;
 
+        // Delta is in milliseconds
         double maxCorrection = MAXIMUM_CORRECTION_VELOCITY * delta / 1000.0;
 
         correction = new Vector2d(
+                // Correction x and max correction, whichever is absolutely larger,
+                // taking the sign of the correction
                 correction.x +
                         (Math.abs(xDiff) < Math.abs(maxCorrection)
                                 ? xDiff : Math.copySign(maxCorrection, xDiff)),
+                // Correction y and max correction, whichever is absolutely larger,
+                // taking the sign of the correction
                 correction.y +
                         (Math.abs(yDiff) < Math.abs(maxCorrection)
                                 ? yDiff : Math.copySign(maxCorrection, yDiff))
@@ -158,9 +167,11 @@ public class DistanceLocalizer {
     // Firing only one each loop should mitigate the effect.
     void getNextDistance() {
         if (leftTurn) {
-            latestLeft = leftDistance.getDistance(unit);
+            double tentative = leftDistance.getDistance(unit);
+            latestLeft = tentative > 0 ? tentative : latestLeft;
         } else {
-            latestRight = rightDistance.getDistance(unit);
+            double tentative = rightDistance.getDistance(unit);
+            latestRight = tentative > 0 ? tentative : latestRight;
         }
         leftTurn = !leftTurn;
     }
