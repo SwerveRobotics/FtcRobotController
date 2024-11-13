@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.team417.distance;
 
+// Combines a FieldSide enum and a distance double
 public class IntersectionResult {
     FieldSide side;
     double distance;  // -1 if no intersection

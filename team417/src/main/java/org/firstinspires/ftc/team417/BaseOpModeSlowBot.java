@@ -1,15 +1,8 @@
 package org.firstinspires.ftc.team417;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
-import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
@@ -28,10 +21,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     static DcMotorEx liftMotor2;
     static DcMotorEx slideMotor;
 
-    //servos
-    CRServo intake1;
-    CRServo intake2;
-    Servo wrist;
+    // This provides an error tolerance for lift and slide
+    final static double EPSILON = 3.00;
 
     class ControlAction extends RobotAction {
 
@@ -41,7 +32,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
         boolean isRetracting;
 
-        final static double EPSILON = 3.00;
 
         public ControlAction(double targetSlidePosition, double targetWristPosition, double targetLiftPosition) {
             this.targetSlidePosition = targetSlidePosition;
@@ -204,6 +194,11 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             }
             return false;
         }
+    }
+
+    public boolean isCrossingNoSlideZone(double targetLiftPosition){
+        return ((targetLiftPosition > NO_SLIDE_ZONE_MAX && getLiftPosition() < NO_SLIDE_ZONE_MAX) ||
+                (targetLiftPosition < NO_SLIDE_ZONE_MIN && getLiftPosition() > NO_SLIDE_ZONE_MIN));
     }
 
 
