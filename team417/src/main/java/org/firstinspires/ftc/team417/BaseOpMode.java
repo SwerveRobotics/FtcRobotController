@@ -79,12 +79,12 @@ abstract public class BaseOpMode extends LinearOpMode {
 
 
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
-    
+
     //motors
     static DcMotorEx armMotor1;
     static DcMotorEx armMotor2;
     static DcMotorEx slideMotor;
-    
+
     //servos
     CRServo intake1;
     CRServo intake2;
@@ -94,9 +94,6 @@ abstract public class BaseOpMode extends LinearOpMode {
             || MecanumDrive.driveParameters == DriveParameters.FASTBOT_MECANUM;
 
     public static final KinematicType kinematicType = KinematicType.MECANUM; // will have to change for league 2, once all robot measurements are updated
-
-
-
 
 
     public void initializeHardware() {
@@ -176,38 +173,6 @@ abstract public class BaseOpMode extends LinearOpMode {
         /* Make sure that the intake is off, and the wrist is folded in. */
         intake1.setPower(INTAKE_OFF);
         intake2.setPower(INTAKE_OFF);
-    }
-
-    public void setArmTargetPos(int pos) {
-        if (armMotor1 != null) {
-            armMotor1.setTargetPosition(pos);
-        }
-
-        if (armMotor2 != null) {
-            armMotor2.setTargetPosition(pos);
-        }
-    }
-
-    public void setSlidesTargetPos(int pos) {
-        if (slideMotor != null) {
-            slideMotor.setTargetPosition(pos);
-        }
-    }
-
-    public void INTAKE_OUTTAKE_SPEED(double power) {
-        if (intake1 != null) {
-            intake1.setPower(power);
-        }
-
-        if (intake2 != null) {
-            intake2.setPower(power);
-        }
-    }
-
-    public void setWristPos(double pos) {
-        if (wrist != null) {
-            wrist.setPosition(pos);
-        }
     }
 
     // RC 17.50
