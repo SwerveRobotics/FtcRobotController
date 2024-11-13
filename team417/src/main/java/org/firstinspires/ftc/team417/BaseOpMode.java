@@ -20,7 +20,7 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
  */
 @Config
 abstract public class BaseOpMode extends LinearOpMode {
-    public double startHeading;
+    public static final boolean USE_DISTANCE = true;
 
     final double ARM_VELOCITY = 2100; // The ticks-per-second constant that Go-Bilda gave us
 
@@ -72,8 +72,11 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     /** @noinspection ConstantValue*/
     /* Variables that are used to set the arm to a specific position */
+    // Fast Bot variables
     static double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
+
+
 
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
     
@@ -91,6 +94,10 @@ abstract public class BaseOpMode extends LinearOpMode {
             || MecanumDrive.driveParameters == DriveParameters.FASTBOT_MECANUM;
 
     public static final KinematicType kinematicType = KinematicType.MECANUM; // will have to change for league 2, once all robot measurements are updated
+
+
+
+
 
     public void initializeHardware() {
         switch (MecanumDrive.driveParameters) {
@@ -290,6 +297,9 @@ abstract public class BaseOpMode extends LinearOpMode {
             return false;
         }
     }
+
+
+
     class intakeSample extends RobotAction {
         @Override
         public boolean run(double elapsedTime) {

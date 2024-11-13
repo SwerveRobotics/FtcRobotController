@@ -7,7 +7,6 @@ import android.annotation.SuppressLint;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.LED;
 import com.wilyworks.common.WilyWorks;
@@ -133,7 +132,7 @@ public class Field {
 
     // Render just the robot:
     void renderRobot(Graphics2D g) {
-        Pose2d simulationPose = simulation.getPose(0);
+        Pose2d simulationPose = simulation.getPose(0, true);
         AffineTransform imageTransform = new AffineTransform();
         imageTransform.translate(simulationPose.position.x, simulationPose.position.y);
         imageTransform.scale(1.0 / ROBOT_IMAGE_WIDTH,1.0 / ROBOT_IMAGE_HEIGHT);
@@ -178,7 +177,7 @@ public class Field {
 
         final int[] colors = { 0, 0xff0000, 0x00ff00, 0xffbf00 }; // black, red, green, amber
         final double radius = 2.0; // Circle radius, in inches
-        Pose2d pose = simulation.getPose(0);
+        Pose2d pose = simulation.getPose(0, true);
 
         ArrayList<WilyLED> ledArray = new ArrayList<>();
         for (LED led: hardwareMap.led) {

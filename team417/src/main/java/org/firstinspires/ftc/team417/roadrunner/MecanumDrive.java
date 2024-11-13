@@ -20,9 +20,9 @@ import com.acmerobotics.roadrunner.HolonomicController;
 import com.acmerobotics.roadrunner.IdentityPoseMap;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.MotorFeedforward;
-import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Pose2dDual;
+import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.PoseVelocity2dDual;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
@@ -56,19 +56,22 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
-
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.team417.BaseOpMode;
 import org.firstinspires.ftc.team417.DriveParameters;
+import org.firstinspires.ftc.team417.distance.DistanceLocalizer;
+import org.firstinspires.ftc.team417.distance.DistanceSensorInfo;
 import org.firstinspires.ftc.team417.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
 import org.firstinspires.inspection.InspectionState;
+import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -247,14 +250,14 @@ public final class MecanumDrive {
         switch (getBotName()) {
             case "DevBot":
                 return DriveParameters.DEVBOT_MECANUM;
-            case "LiterallyNothing":
+            case "We don't have this robot":
                 return DriveParameters.DEVBOT_X;
             case "417-RC":
                 return DriveParameters.FASTBOT_MECANUM;
-            case "TBD":
+            case "417-S-RC":
                 return DriveParameters.COMPETITION_ROBOT;
         }
-        return null;
+        return null; // Not one of 417's robots
     }
 
     public static DriveParameters driveParameters = getDriveParameters();
@@ -283,6 +286,8 @@ public final class MecanumDrive {
     public double lastHeadingGainError = 0;
     public double maxLinearGainError = 0; // Max gain error to date in inches and radians
     public double maxHeadingGainError = 0;
+
+    public DistanceLocalizer distanceLocalizer;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -415,6 +420,14 @@ public final class MecanumDrive {
             case DEVBOT_MECANUM:
                 opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
 
+                if (BaseOpMode.USE_DISTANCE) {
+                    UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
+                    UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
+                    DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
+                    DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
+                    distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
+                }
+
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
                 rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
@@ -429,6 +442,15 @@ public final class MecanumDrive {
                 //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
                 //   initializeOpticalTracker();
 
+                if (BaseOpMode.USE_DISTANCE) {
+                    // TODO: Create the distance sensor tracking object:
+                    //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
+                    //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
+                    //   DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
+                    //   DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
+                    //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
+                }
+
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
                 rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
@@ -441,12 +463,20 @@ public final class MecanumDrive {
                 // enable this when we have the optical tracker
                 opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
 
+                if (BaseOpMode.USE_DISTANCE) {
+                    // TODO: Create the distance sensor tracking object:
+                    //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
+                    //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
+                    //   DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
+                    //   DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
+                    //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
+                }
+
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
                 rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
                 rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
-                // TODO: reverse motor directions if needed
                 rightFront.setDirection(DcMotorEx.Direction.REVERSE);
                 rightBack.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
@@ -455,6 +485,15 @@ public final class MecanumDrive {
             case COMPETITION_ROBOT:
                 //opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
                 //initializeOpticalTracker();
+
+                if (BaseOpMode.USE_DISTANCE) {
+                    // TODO: Create the distance sensor tracking object:
+                    //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
+                    //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
+                    //   DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
+                    //   DistanceSensorInfo riMghtInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
+                    //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
+                }
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -934,6 +973,11 @@ public final class MecanumDrive {
 
             pose = pose.plus(twist.value());
             poseVelocity = twist.velocity().value();
+        }
+
+        if (distanceLocalizer != null) {
+            distanceLocalizer.updateIfPossible();
+            pose = new Pose2d(pose.position.plus(distanceLocalizer.correction), pose.heading.log());
         }
 
         poseHistory.add(pose);

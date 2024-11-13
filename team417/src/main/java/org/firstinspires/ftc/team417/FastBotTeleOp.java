@@ -18,11 +18,11 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  */
 @TeleOp(name = "TeleOp", group = "Competition")
 @Config
-public class CompetitionTeleOp extends BaseOpMode {
+public class FastBotTeleOp extends BaseOpMode {
     private double speedMultiplier = 0.5;
     boolean curve = true;
     boolean fieldCentered = false;
-    MecanumDrive drive;
+    public MecanumDrive drive;
 
     public double startHeading;
 
@@ -71,7 +71,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     }
 
     public void prepareRobot() {
-        prepareRobot(new Pose2d(0, 0, Math.PI / 2));
+        prepareRobot(new Pose2d(-0, -48, Math.PI / 2));
     }
 
     public void prepareRobot(Pose2d startingPose) {
@@ -151,35 +151,6 @@ public class CompetitionTeleOp extends BaseOpMode {
             at the same time. "a" will win over and the intake will turn on. If we just had
             three if statements, then it will set the intake servo's power to multiple speeds in
             one cycle. Which can cause strange behavior. */
-
-        // GamePad2 Arm Control
-//        double lastState = INTAKE_OFF;
-//
-//        if (gamepad2.a) {
-//            lastState = INTAKE_COLLECT;
-//            intake.setPower(INTAKE_COLLECT);
-//        } else if (gamepad2.x) {
-//            lastState = INTAKE_OFF;
-//            intake.setPower(INTAKE_OFF);
-//        } else if (gamepad2.b) {
-//            intake.setPower(INTAKE_DEPOSIT);
-//        } else if (!gamepad2.b) {
-//            intake.setPower(lastState);
-//        }
-//            double lastState = INTAKE_OFF;
-//            boolean isIntakeOff = false;
-//            if(gamepad2.a) {
-//                lastState = INTAKE_COLLECT;
-//                intake.setPower(INTAKE_COLLECT);
-//            }
-//            else if(gamepad2.x) {
-//                lastState = INTAKE_OFF;
-//                intake.setPower(INTAKE_OFF);
-//            } else if (gamepad2.b) {
-//                intake.setPower(INTAKE_DEPOSIT);
-//            } else if (!gamepad2.b){
-//                intake.setPower(lastState);
-//            }
 
 
             // In the loop if 'a' is clicked intakeEnabled is set to true which will be stored to memory
@@ -395,6 +366,12 @@ public class CompetitionTeleOp extends BaseOpMode {
         telemetry.addData("Stick Curve On", curve);
         telemetry.addData("Field-Centric", fieldCentered);
         telemetry.addData("Speed Multiplier", speedMultiplier);
+
+        telemetry.addData("Pose (x, y, h):",
+                String.format("(%.2f\", %.2f\", %.2f°)",
+                        drive.pose.position.x,
+                        drive.pose.position.y,
+                        Math.toDegrees(drive.pose.heading.log())));
 
         /* Check to see if our arm is over the current limit, and report via telemetry. */
         if (armMotor1.isOverCurrent()) {
