@@ -1,32 +1,30 @@
 package org.firstinspires.ftc.team417.distance;
 
-import com.acmerobotics.roadrunner.Pose2d;
+import static org.firstinspires.ftc.team417.distance.VectorUtils.rotate;
 
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Vector2d;
+
+// Simulates the field, helping to determine when to use the distance sensors to correct the pose.
 public class FieldSimulator {
     final static double FIELD_SIZE = 144;
 
     public static Pose2d compose(Pose2d base, Pose2d relative) {
-        // Convert base heading to radians
-        double baseHeadingRad = base.heading.log();
-
         // Rotate relative coordinates by base heading
-        double rotatedX = relative.position.x * Math.cos(baseHeadingRad) -
-                relative.position.y * Math.sin(baseHeadingRad);
-        double rotatedY = relative.position.x * Math.sin(baseHeadingRad) +
-                relative.position.y * Math.cos(baseHeadingRad);
+        Vector2d rotated = rotate(relative.position, base.heading.log());
 
         // Add rotated coordinates to base position
-        double newX = base.position.x + rotatedX;
-        double newY = base.position.y + rotatedY;
+        Vector2d sum = base.position.plus(rotated);
 
         // Add headings (and normalize to 0-2π range)
         double newHeading = (base.heading.log() + relative.heading.log()) % (2 * Math.PI);
         if (newHeading < 0) newHeading += (2 * Math.PI);
 
-        return new Pose2d(newX, newY, newHeading);
+        return new Pose2d(rotated, newHeading);
     }
 
     /** @noinspection UnnecessaryLocalVariable*/
+    // Finds the intersection with a square of a certain side length and a ray.
     public static IntersectionResult findIntersection(Pose2d ray, double squareSize) {
         // Convert heading to radians and calculate direction vector
         double headingRad = ray.heading.log();
