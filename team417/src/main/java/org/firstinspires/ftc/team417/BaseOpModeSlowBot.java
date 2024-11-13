@@ -113,6 +113,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double INTAKE_COLLECT = 0.0;
     final static double INTAKE_OFF = 0.0;
     final static double LIFT_COLLECT = 0.0;
+    final static double SLIDE_COLLECT = 0.0;
     final static double WRIST_OUT = 0.0;
     final static double WRIST_IN = 0.0;
     final static double LIFT_CLEAR_BARRIER = 0.0;
@@ -121,8 +122,9 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     double slidePosition = SLIDE_HOME_POSITION;
     final static double linearSlideHome = 0.0;
     final static double SLIDE_SCORE_IN_BASKET = 0;
-    final static double LIFT_SCORE_SPECIMEN = 0.0;
+    final static double LIFT_SCORE_HIGH_SPECIMEN = 0.0;
     final static double LIFT_SCORE_LOW_BASKET = 0.0;
+    final static double LIFT_SCORE_HIGH_BASKET = 0.0;
 
     // RC 17.50
     // DEV 17.75
