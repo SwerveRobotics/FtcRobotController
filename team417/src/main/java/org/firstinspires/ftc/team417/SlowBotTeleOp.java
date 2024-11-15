@@ -242,7 +242,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             // If lift is travelling through 'no mans land', pull in arm and wrist, then perform the lift action.
             // Else, perform all the actions
             if(isCrossingNoSlideZone(liftPosition)) {
-                if(getSlidePosition() <= SLIDE_HOME_POSITION + EPSILON) {
+                if(getSlidePosition() <= SLIDE_HOME_POSITION + ControlAction.EPSILON) {
                     moveWrist(WRIST_IN);
                     moveSlide(SLIDE_HOME_POSITION);
                 } else {

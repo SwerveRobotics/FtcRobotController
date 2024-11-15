@@ -1,6 +1,8 @@
 package org.firstinspires.ftc.team417.distance;
 
-import com.acmerobotics.roadrunner.Pose2d;
+import static org.firstinspires.ftc.team417.distance.VectorUtils.calculateAverage;
+import static org.firstinspires.ftc.team417.distance.VectorUtils.rotate;
+
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -13,6 +15,7 @@ import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
 
+// Localizes and returns a pose estimate based on two distance sensors.
 public class DistanceLocalizer {
     public UltrasonicDistanceSensor leftDistance, rightDistance;
     public DistanceSensorInfo leftInfo, rightInfo;
@@ -26,15 +29,16 @@ public class DistanceLocalizer {
 
     final double MAXIMUM_CORRECTION_VELOCITY = 5; // Inches per second
 
-    double latestLeft = 0;
-    double latestRight = 0;
-    boolean leftTurn = true;
+    // Ultrasonic sensors tend to interfere with each other when fired at the same time.
+    double latestLeft = 0; // Latest distance from left sensor
+    double latestRight = 0; // Latest distance from right sensor
+    boolean leftTurn = true; // If it's the left sensor's turn to get a value
 
     final DistanceUnit unit = DistanceUnit.INCH;
 
-    final double ANGLE_OF_POSITIVE_CORNER = 0.25 * Math.PI;
-    final double RELIABLE_DISTANCE = 48;
-    final double RELIABLE_ANGLE = Math.PI / 6;
+    final double ANGLE_OF_POSITIVE_CORNER = 0.25 * Math.PI; // Angle facing (72, 72)
+    final double RELIABLE_DISTANCE = 48; // Corner is defined as this distance away from walls
+    final double RELIABLE_ANGLE = Math.PI / 6; // This is x in |--x--|--✓--|--x--|, total 90 degrees
 
     final ElapsedTime clock = new ElapsedTime();
 
@@ -75,41 +79,45 @@ public class DistanceLocalizer {
 
     long lastLoopTime = 0;
 
-    public void updateIfPossible() {
+    public Vector2d updateIfPossible() {
         long time = clock.nanoseconds();
         double delta = (time - lastLoopTime) / 1_000_000.0; // Delta is in milliseconds
         lastLoopTime = time;
 
-        getNextDistance();
+        getNextDistance(); // Get distances from distance sensors, one each loop
 
-        Pose2d estimatedPose = new Pose2d(drive.pose.position.plus(correction), drive.pose.heading.log());
+        // Find distances to sides and which sides they are to
+        IntersectionResult leftIntersection = FieldSimulator.findIntersection(drive.pose, leftInfo.getPose());
+        IntersectionResult rightIntersection = FieldSimulator.findIntersection(drive.pose, rightInfo.getPose());
 
-        IntersectionResult leftIntersection = FieldSimulator.findIntersection(estimatedPose, leftInfo.getPose());
-        IntersectionResult rightIntersection = FieldSimulator.findIntersection(estimatedPose, rightInfo.getPose());
-
+        // Since distance sensors can't tell you which quadrant you're in
         double heading = normalizeToFirstQuadrant(drive.pose.heading.log());
 
         boolean sameSide = leftIntersection.side == rightIntersection.side;
         boolean closeEnough = leftIntersection.distance < RELIABLE_DISTANCE && rightIntersection.distance < RELIABLE_DISTANCE;
-        boolean angleIsRight = RELIABLE_ANGLE < heading && heading < Math.PI / 2 - RELIABLE_ANGLE;
+        boolean angleIsEnough = RELIABLE_ANGLE < heading && heading < Math.PI / 2 - RELIABLE_ANGLE;
 
         Vector2d detectedRelativePosition, detectedPosition, detectedCorrection;
-        if (!sameSide && closeEnough && angleIsRight) {
+        if (!sameSide && closeEnough && angleIsEnough) {
+            // Detected position relative to the corner
             detectedRelativePosition = new Vector2d(
                     calculateDistance(latestRight, heading, rightInfo),
                     calculateDistance(latestLeft, heading, leftInfo));
         } else {
-            return;
+            return correction;
         }
 
         Vector2d fieldVector = new Vector2d(FieldSimulator.FIELD_SIZE / 2, FieldSimulator.FIELD_SIZE / 2);
 
+        // Position relative to the center, but doesn't account for which corner it is
         Vector2d unrotatedPosition = (fieldVector).minus(detectedRelativePosition);
 
         double theta = calculateTheta(leftIntersection.side, rightIntersection.side);
 
+        // Position detected by this iteration of the loop
         detectedPosition = rotate(unrotatedPosition, theta);
 
+        // Correction recommended by this iteration of the loop
         detectedCorrection = detectedPosition.minus(drive.pose.position);
 
         history.add(detectedCorrection);
@@ -123,44 +131,23 @@ public class DistanceLocalizer {
         double xDiff = targetCorrection.x - correction.x;
         double yDiff = targetCorrection.y - correction.y;
 
+        // Delta is in milliseconds
         double maxCorrection = MAXIMUM_CORRECTION_VELOCITY * delta / 1000.0;
 
         correction = new Vector2d(
+                // Correction x and max correction, whichever is absolutely larger,
+                // taking the sign of the correction
                 correction.x +
                         (Math.abs(xDiff) < Math.abs(maxCorrection)
                                 ? xDiff : Math.copySign(maxCorrection, xDiff)),
+                // Correction y and max correction, whichever is absolutely larger,
+                // taking the sign of the correction
                 correction.y +
                         (Math.abs(yDiff) < Math.abs(maxCorrection)
                                 ? yDiff : Math.copySign(maxCorrection, yDiff))
         );
-    }
 
-    public static Vector2d rotate(Vector2d vector, double theta) {
-        double cosTheta = Math.cos(theta);
-        double sinTheta = Math.sin(theta);
-
-        // Applying the rotation matrix
-        double rotatedX = vector.x * cosTheta - vector.y * sinTheta;
-        double rotatedY = vector.x * sinTheta + vector.y * cosTheta;
-
-        return new Vector2d(rotatedX, rotatedY);
-    }
-
-    public static Vector2d calculateAverage(ArrayList<Vector2d> vectors) {
-        if (vectors == null || vectors.isEmpty()) {
-            return new Vector2d(0, 0);
-        }
-
-        double sumX = 0;
-        double sumY = 0;
-
-        for (Vector2d vector : vectors) {
-            sumX += vector.x;
-            sumY += vector.y;
-        }
-
-        int count = vectors.size();
-        return new Vector2d(sumX / count, sumY / count);
+        return correction;
     }
 
     // Method to calculate theta based on two FieldSide values
@@ -180,9 +167,11 @@ public class DistanceLocalizer {
     // Firing only one each loop should mitigate the effect.
     void getNextDistance() {
         if (leftTurn) {
-            latestLeft = leftDistance.getDistance(unit);
+            double tentative = leftDistance.getDistance(unit);
+            latestLeft = tentative > 0 ? tentative : latestLeft;
         } else {
-            latestRight = rightDistance.getDistance(unit);
+            double tentative = rightDistance.getDistance(unit);
+            latestRight = tentative > 0 ? tentative : latestRight;
         }
         leftTurn = !leftTurn;
     }

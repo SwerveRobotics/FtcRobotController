@@ -1,8 +1,15 @@
 package org.firstinspires.ftc.team417;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
+import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
@@ -16,11 +23,18 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double NO_SLIDE_ZONE_MIN = 0;
     final static double NO_SLIDE_ZONE_MAX = 0;
 
-
-    // This provides an error tolerance for lift and slide
-    final static double EPSILON = 3.00;
+    //motors
+    static CRServo intake1;
+    static CRServo intake2;
+    static Servo wrist;
+    static DcMotorEx liftMotor1;
+    static DcMotorEx liftMotor2;
+    static DcMotorEx slideMotor;
 
     class ControlAction extends RobotAction {
+
+        // This provides an error tolerance for lift and slide
+        final static double EPSILON = 3.00;
 
         double targetSlidePosition;
         double targetWristPosition;
@@ -33,6 +47,120 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             this.targetSlidePosition = targetSlidePosition;
             this.targetLiftPosition = targetLiftPosition;
             this.targetWristPosition = targetWristPosition;
+        }
+
+        public void initializeHardware() {
+            switch (MecanumDrive.driveParameters) {
+                case COMPETITION_ROBOT:
+                    initCompBot();
+                case FASTBOT_MECANUM:
+                    initFastBot();
+            }
+        }
+
+        public void initFastBot() {
+            // Only initialize arm if it's not already initialized.
+            // This is CRUCIAL for transitioning between Auto and TeleOp.
+            if (liftMotor1 == null) {
+                liftMotor1 = hardwareMap.get(DcMotorEx.class, "arm");
+                /* This sets the maximum current that the control hub will apply to the arm before throwing a flag */
+                liftMotor1.setCurrentAlert(5, CurrentUnit.AMPS);
+            /* Before starting the armMotor1. We'll make sure the TargetPosition is set to 0.
+            Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
+            If you do not have the encoder plugged into this motor, it will not run in this code. */
+                liftMotor1.setTargetPosition(0);
+                liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            }
+
+            intake1 = hardwareMap.get(CRServo.class, "intake");
+            wrist = hardwareMap.get(Servo.class, "wrist");
+
+            /* Make sure that the intake is off, and the wrist is folded in. */
+            intake1.setPower(INTAKE_OFF);
+            // wrist.setPosition(WRIST_FOLDED_IN); We do that after start, since we can't move wrist
+            // in the gap before TeleOp.
+
+            final double EPSILON = 3.00;
+        }
+
+
+        public void initCompBot() {
+            //motors
+
+            // Only initialize arm if it's not already initialized.
+            // This is CRUCIAL for transitioning between Auto and TeleOp.
+            if (liftMotor1 == null && liftMotor2 == null && slideMotor == null) {
+                liftMotor1 = hardwareMap.get(DcMotorEx.class, "arm1");
+                liftMotor2 = hardwareMap.get(DcMotorEx.class, "arm2");
+                slideMotor = hardwareMap.get(DcMotorEx.class, "slides");
+
+                /* This sets the maximum current that the control hub will apply to the arm before throwing a flag */
+                liftMotor1.setCurrentAlert(5, CurrentUnit.AMPS);
+                liftMotor2.setCurrentAlert(5, CurrentUnit.AMPS);
+                slideMotor.setCurrentAlert(5, CurrentUnit.AMPS);
+
+            /* Before starting the armMotor1. We'll make sure the TargetPosition is set to 0.
+            Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
+            If you do not have the encoder plugged into this motor, it will not run in this code. */
+                liftMotor1.setTargetPosition(0);
+                liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+                liftMotor2.setTargetPosition(0);
+                liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                liftMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
+
+                liftMotor1.setTargetPosition(0);
+                liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+                liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            }
+
+            intake1 = hardwareMap.get(CRServo.class, "intake1");
+            intake2 = hardwareMap.get(CRServo.class, "intake2");
+            wrist = hardwareMap.get(Servo.class, "wrist");
+
+            //servos
+
+            /* Make sure that the intake is off, and the wrist is folded in. */
+            intake1.setPower(INTAKE_OFF);
+            intake2.setPower(INTAKE_OFF);
+        }
+
+        public void setLiftTarget(int pos) {
+            if (liftMotor1 != null) {
+                liftMotor1.setTargetPosition(pos);
+            }
+
+            if (liftMotor2 != null) {
+                liftMotor2.setTargetPosition(pos);
+            }
+        }
+
+        public void setSlidesTargetPos(int pos) {
+            if (slideMotor != null) {
+                slideMotor.setTargetPosition(pos);
+            }
+        }
+
+        public void INTAKE_OUTTAKE_SPEED(double power) {
+            if (intake1 != null) {
+                intake1.setPower(power);
+            }
+
+            if (intake2 != null) {
+                intake2.setPower(power);
+            }
+        }
+
+        public void setWristPos(double pos) {
+            if (wrist != null) {
+                wrist.setPosition(pos);
+            }
         }
 
         @Override
@@ -87,24 +215,82 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     }
 
     // This method checks if the linear slide is extended or not. Returns true if it is extended, false if not
-    // TODO: implement this
     public boolean isSlideExtended(){
-        return false;
+        double currentSlidePosition = getSlidePosition();
+        return currentSlidePosition > SLIDE_HOME_POSITION + ControlAction.EPSILON;
     }
 
     // This helper method controls the linear slides and tells motor to go to desired position in ticks
-    // TODO: implement this
-    public void moveSlide(double positionInTicks){}
+    public void moveSlide(double positionInTicks){
+        ControlAction controlAction = new ControlAction(positionInTicks,0, 0);
+        controlAction.setLiftTarget((int)positionInTicks);
+
+        slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        slideMotor.setPower(0.5); // may need to change this depended on what's needed
+
+        while (slideMotor.isBusy() && opModeIsActive()) {
+            telemetry.addData("Slide Target", positionInTicks);
+            telemetry.addData("Slide Current", slideMotor.getCurrentPosition());
+            telemetry.addData("Slide Moving", slideMotor.isBusy());
+            telemetry.update();
+        }
+
+        slideMotor.setPower(0);
+    }
 
     // This method controls the 4bar to desired height
-    // TODO: implement this
-    public void moveLift(double heightInTicks){}
+    public void moveLift(double heightInTicks) {
+        ControlAction controlAction = new ControlAction(0,0, heightInTicks);
 
-    public double getLiftPosition(){
-        return 0.0;
+        // set lift target
+        controlAction.setLiftTarget((int)heightInTicks);
+
+        liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+        // set power for both motors
+        liftMotor1.setPower(0.5); // change if needed
+        liftMotor2.setPower(0.5); // change if needed
+
+        while ((liftMotor1.isBusy() || liftMotor2.isBusy()) && opModeIsActive()) {
+            telemetry.addData("Lift Target", heightInTicks);
+            telemetry.addData("Lift Motor 1 Current", liftMotor1.getCurrentPosition());
+            telemetry.addData("Lift Motor 2 Current", liftMotor2.getCurrentPosition());
+            telemetry.update();
+        }
+
+        // stop motors once the target is reached
+        liftMotor1.setPower(0);
+        liftMotor2.setPower(0);
+    }
+
+    public double getLiftPosition() {
+
+        // ensure the lift motors are initialized
+        if (liftMotor1 == null || liftMotor2 == null) {
+            telemetry.addData("Error", "Lift motors not initialized");
+            telemetry.update();
+            return 0.0; // Return 0 if motors are not initialized
+        }
+
+        // get the current position of both motors
+        int position1 = liftMotor1.getCurrentPosition();
+        int position2 = liftMotor2.getCurrentPosition();
+
+        // return the average of the two positions
+        return (position1 + position2) / 2.0;
     }
     public double getSlidePosition() {
-        return 0.0;
+        // ensure the slide motor is initialized
+        if (slideMotor == null) {
+            telemetry.addData("Error", "Slide motor not initialized");
+            telemetry.update();
+            return 0.0; // return 0 if the motor is not initialized
+        }
+
+        // get and return the current encoder position of the slide motor
+        return slideMotor.getCurrentPosition();
+
     }
 
     // This method moves the wrist up and down based on desired position
