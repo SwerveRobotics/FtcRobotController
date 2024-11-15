@@ -9,19 +9,51 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
-import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
     //TODO: tune for correct value
     final static double SLIDE_HOME_POSITION = 0;
-    //TODO: tune for correct value
     final static double LIFT_REST_POSITION = 0;
 
     //TODO: find the range where the sizes CANNOT be out
     final static double NO_SLIDE_ZONE_MIN = 0;
     final static double NO_SLIDE_ZONE_MAX = 0;
+
+    // TODO: implement this
+    final static double INTAKE_DEPOSIT = 0.0;
+    final static double INTAKE_COLLECT = 0.0;
+    final static double INTAKE_OFF = 0.0;
+
+    final static double LIFT_MAX = 1.0;
+    final static double LIFT_SCORE_HIGH_BASKET = 0.0;
+    final static double LIFT_SCORE_HIGH_SPECIMEN = 0.0;
+    final static double LIFT_SCORE_LOW_BASKET = 0.0;
+    final static double LIFT_COLLECT = 0.0;
+    final static double LIFT_MIN = 0.0;
+    // TODO: Why is it not being called
+    final static double LIFT_CLEAR_BARRIER = 0.0;
+
+    final static double SLIDE_MAX = 1.0;
+    final static double SLIDE_COLLECT = 0.0;
+    final static double SLIDE_SCORE_IN_BASKET = 0;
+    final static double SLIDE_MIN = 0.0;
+
+    final static double WRIST_MAX = 0.0;
+    final static double WRIST_OUT = 0.0;
+    final static double WRIST_IN = 0.0;
+    final static double WRIST_MIN = 0.0;
+
+    // This provides an error tolerance for lift and slide
+    final static double TICKS_EPSILON = 3.00;
+
+    // RC 17.50
+    // DEV 17.75
+    final static double ROBOT_LENGTH = 17.50;
+    // RC 16.50
+    // DEV 18.50
+    final static double ROBOT_WIDTH = 16.50;
 
     //motors
     static CRServo intake1;
@@ -32,24 +64,17 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     static DcMotorEx slideMotor;
 
     class ControlAction extends RobotAction {
-
-        // This provides an error tolerance for lift and slide
-        final static double EPSILON = 3.00;
-
         double targetSlidePosition;
         double targetWristPosition;
         double targetLiftPosition;
 
         boolean isRetracting;
 
-
         public ControlAction(double targetSlidePosition, double targetWristPosition, double targetLiftPosition) {
             this.targetSlidePosition = targetSlidePosition;
             this.targetLiftPosition = targetLiftPosition;
             this.targetWristPosition = targetWristPosition;
         }
-
-
 
         @Override
         public boolean run(double elapsedTime) {
@@ -69,7 +94,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
                 moveSlide(SLIDE_HOME_POSITION);
 
                 // Checks if the slide is at Home position
-                if (getSlidePosition() <= SLIDE_HOME_POSITION + EPSILON) {
+                if (getSlidePosition() <= SLIDE_HOME_POSITION + TICKS_EPSILON) {
                     return false; // Call us again, we're not there yet
                 }
                 isRetracting = false; // No need to retract anymore
@@ -89,7 +114,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
             // TODO: Check if the EPSILON is different for either of the errors
             // Checks if the slide or the lift is in the correct spot
-            if (liftError < EPSILON || slideError < EPSILON) {
+            if (liftError < TICKS_EPSILON || slideError < TICKS_EPSILON) {
                 return false;
             }
             return false;
@@ -99,29 +124,35 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public boolean isCrossingNoSlideZone(double targetLiftPosition){
         return ((targetLiftPosition > NO_SLIDE_ZONE_MAX && getLiftPosition() < NO_SLIDE_ZONE_MAX) ||
                 (targetLiftPosition < NO_SLIDE_ZONE_MIN && getLiftPosition() > NO_SLIDE_ZONE_MIN));
-
-    }
-
-    // This method checks if the linear slide is extended or not. Returns true if it is extended, false if not
-    public boolean isSlideExtended(){
-        double currentSlidePosition = getSlidePosition();
-        return currentSlidePosition > SLIDE_HOME_POSITION + ControlAction.EPSILON;
     }
 
     // This helper method controls the linear slides and tells motor to go to desired position in ticks
     public void moveSlide(double positionInTicks){
         if (slideMotor != null) {
-            slideMotor.setTargetPosition((int) positionInTicks);
+            if(positionInTicks >= SLIDE_MIN && positionInTicks <= SLIDE_MAX){
+                slideMotor.setTargetPosition((int) positionInTicks);
+            }
         }
     }
 
     // This method controls the 4bar to desired height
     public void moveLift(double heightInTicks) {
-        if (liftMotor1 != null) {
-            liftMotor1.setTargetPosition((int) heightInTicks);
+        if (heightInTicks >= LIFT_MIN && heightInTicks <= LIFT_MAX) {
+            if (liftMotor1 != null) {
+                liftMotor1.setTargetPosition((int) heightInTicks);
+            }
+            if (liftMotor2 != null) {
+                liftMotor2.setTargetPosition((int) heightInTicks);
+            }
         }
-        if (liftMotor2 != null) {
-            liftMotor2.setTargetPosition((int) heightInTicks);
+    }
+
+    // This method moves the wrist up and down based on desired position
+    public void moveWrist(double wristPosition){
+        if (wrist != null) {
+            if(wristPosition >= WRIST_MIN && wristPosition <= WRIST_MAX){
+                wrist.setPosition(wristPosition);
+            }
         }
     }
 
@@ -143,13 +174,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         }
         // get and return the current encoder position of the slide motor
         return slideMotor.getCurrentPosition();
-    }
-
-    // This method moves the wrist up and down based on desired position
-    public void moveWrist(double wristPosition){
-        if (wrist != null) {
-            wrist.setPosition(wristPosition);
-        }
     }
 
     // Controls the intake of the wrist
@@ -205,30 +229,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         intake2.setPower(INTAKE_OFF);
     }
 
-    // TODO: implement this
-    final static double INTAKE_DEPOSIT = 0.0;
-    final static double INTAKE_COLLECT = 0.0;
-    final static double INTAKE_OFF = 0.0;
-    final static double LIFT_COLLECT = 0.0;
-    final static double SLIDE_COLLECT = 0.0;
-    final static double WRIST_OUT = 0.0;
-    final static double WRIST_IN = 0.0;
-    final static double LIFT_CLEAR_BARRIER = 0.0;
-    // Slow bot variables
-    double liftPosition = LIFT_REST_POSITION;
-    double slidePosition = SLIDE_HOME_POSITION;
-    final static double linearSlideHome = 0.0;
-    final static double SLIDE_SCORE_IN_BASKET = 0;
-    final static double LIFT_SCORE_HIGH_SPECIMEN = 0.0;
-    final static double LIFT_SCORE_LOW_BASKET = 0.0;
-    final static double LIFT_SCORE_HIGH_BASKET = 0.0;
-
-    // RC 17.50
-    // DEV 17.75
-    final static double ROBOT_LENGTH = 17.50;
-    // RC 16.50
-    // DEV 18.50
-    final static double ROBOT_WIDTH = 16.50;
 
     public static final KinematicType kinematicType = KinematicType.X;
 }

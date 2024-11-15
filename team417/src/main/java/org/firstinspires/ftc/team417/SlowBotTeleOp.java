@@ -26,14 +26,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     // TODO: needs tuning
     final double FUDGE_FACTOR = 200;
 
-    /**
-     * @noinspection ConstantValue
-     */
+
     /* Variables that are used to set the arm to a specific position */
     double liftPositionFudgeFactor;
     double slidePositionFudgeFactor;
 
     boolean intakeEnabled = false;
+    boolean buttonAPressed = false;
 
     // These are variables that will be used for individual control actions
     double slidePosition = SLIDE_HOME_POSITION;
@@ -173,12 +172,36 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                  slidePosition = SLIDE_SCORE_IN_BASKET;
              }
 
+             // Intake on and off
+            if(gamepad2.a && !buttonAPressed){
+                intakeEnabled = !intakeEnabled;
+            }
+            buttonAPressed = gamepad2.a;
+
+            boolean reversed = gamepad2.b;
+            // When 'b' is HELD down, it will deposit
+            if (reversed) {
+                intakeControl(INTAKE_DEPOSIT);
+            } else if (intakeEnabled) {
+                // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
+                intakeControl(INTAKE_COLLECT);
+            } else {
+                intakeControl(INTAKE_OFF);
+            }
+
              // Collecting Sample
             if (gamepad2.right_bumper) {
                 liftPosition = LIFT_COLLECT;
                 wristPosition = WRIST_IN;
                 slidePosition = SLIDE_COLLECT;
                 intakeEnabled = true;
+            }
+
+            // Clear floor barrier for intake
+            if (gamepad2.left_bumper) {
+                slidePosition = SLIDE_COLLECT;
+                wristPosition = WRIST_IN;
+                liftPosition = LIFT_CLEAR_BARRIER;
             }
 
             // Retract linear slides
@@ -193,24 +216,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 liftPosition = LIFT_SCORE_HIGH_SPECIMEN;
                 wristPosition = WRIST_IN;
                 slidePosition = SLIDE_HOME_POSITION;
-            }
-
-            // Clear floor barrier for intake
-            if (gamepad2.left_bumper) {
-                slidePosition = SLIDE_COLLECT;
-                wristPosition = WRIST_IN;
-                liftPosition = LIFT_COLLECT;
-            }
-
-            boolean reversed = gamepad2.b;
-            // When 'b' is HELD down, it will deposit
-            if (reversed) {
-                intakeControl(INTAKE_DEPOSIT);
-            } else if (intakeEnabled) {
-                // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
-                intakeControl(INTAKE_COLLECT);
-            } else {
-                intakeControl(INTAKE_OFF);
             }
 
             /* Here we create a "fudge factor" for the arm position.
@@ -242,7 +247,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             // If lift is travelling through 'no mans land', pull in arm and wrist, then perform the lift action.
             // Else, perform all the actions
             if(isCrossingNoSlideZone(liftPosition)) {
-                if(getSlidePosition() <= SLIDE_HOME_POSITION + ControlAction.EPSILON) {
+                if(getSlidePosition() <= SLIDE_HOME_POSITION + TICKS_EPSILON) {
                     moveWrist(WRIST_IN);
                     moveSlide(SLIDE_HOME_POSITION);
                 } else {
