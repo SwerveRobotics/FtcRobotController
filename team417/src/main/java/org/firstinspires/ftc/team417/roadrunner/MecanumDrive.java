@@ -976,8 +976,7 @@ public final class MecanumDrive {
         }
 
         if (distanceLocalizer != null) {
-            distanceLocalizer.updateIfPossible();
-            pose = new Pose2d(pose.position.plus(distanceLocalizer.correction), pose.heading.log());
+            pose = new Pose2d(pose.position.plus(distanceLocalizer.updateIfPossible()), pose.heading.log());
         }
 
         poseHistory.add(pose);
