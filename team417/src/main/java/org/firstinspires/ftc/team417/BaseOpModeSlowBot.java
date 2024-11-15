@@ -38,14 +38,13 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         @Override
         public boolean run(double elapsedTime) {
 
-            boolean isCrossingNoSlideZone
-                    = ((targetLiftPosition > NO_SLIDE_ZONE_MAX && getLiftPosition() < NO_SLIDE_ZONE_MAX) ||
-                    (targetLiftPosition < NO_SLIDE_ZONE_MIN && getLiftPosition() > NO_SLIDE_ZONE_MIN));
+            boolean checkCrossingNoSlideZone
+                    = isCrossingNoSlideZone(targetLiftPosition);
             boolean isSlideIn = (getSlidePosition() <= SLIDE_HOME_POSITION);
 
             if (elapsedTime == 0) {
                 // This block makes sure the slide goes in before lift goes up
-                if ((isCrossingNoSlideZone) && (!isSlideIn)) {
+                if ((checkCrossingNoSlideZone) && (!isSlideIn)) {
                     isRetracting = true;
                 }
             }
@@ -63,7 +62,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             moveLift(targetLiftPosition);
 
             // Once lift is ABOVE the no slide zone, move the slide & wrist out at the same time
-            if (!isCrossingNoSlideZone) {
+            if (!checkCrossingNoSlideZone) {
                 moveSlide(targetSlidePosition);
                 moveWrist(targetWristPosition);
             }
@@ -84,8 +83,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public boolean isCrossingNoSlideZone(double targetLiftPosition){
         return ((targetLiftPosition > NO_SLIDE_ZONE_MAX && getLiftPosition() < NO_SLIDE_ZONE_MAX) ||
                 (targetLiftPosition < NO_SLIDE_ZONE_MIN && getLiftPosition() > NO_SLIDE_ZONE_MIN));
-    }
 
+    }
 
     // This method checks if the linear slide is extended or not. Returns true if it is extended, false if not
     // TODO: implement this
