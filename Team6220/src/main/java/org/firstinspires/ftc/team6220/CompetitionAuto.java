@@ -101,7 +101,10 @@ public class CompetitionAuto extends BaseOpMode {
             // 'packet' is the object used to send data to FTC Dashboard:
             packet = MecanumDrive.getTelemetryPacket();
 
+            // Update and draw the arm simulator:
+            slideAndDumperSim.update(packet.fieldOverlay(), drive.pose);
             // Draw the preview and then run the next step of the trajectory on top:
+
             packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
             more = trajectoryAction.run(packet);
 
