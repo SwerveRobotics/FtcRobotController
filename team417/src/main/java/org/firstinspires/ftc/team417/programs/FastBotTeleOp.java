@@ -22,7 +22,6 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
     private double speedMultiplier = 0.5;
     boolean curve = true;
     boolean fieldCentered = false;
-    public MecanumDrive drive;
 
     public double startHeading;
 
@@ -86,6 +85,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
     }
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
+        // If the left bumper is pressed, slow down, and if the right bumper is pressed, speed up.
         speedMultiplier = 0.5;
         if (gamepad1.left_bumper) {
             speedMultiplier *= 0.5;
@@ -166,15 +166,15 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
 
             // When 'b' is HELD down, it will deposit
             if (reversed) {
-                intake.setPower(INTAKE_DEPOSIT);
+                intake1.setPower(INTAKE_DEPOSIT);
             }
             // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
             else if(intakeEnabled) {
-                intake.setPower(INTAKE_COLLECT);
+                intake1.setPower(INTAKE_COLLECT);
             }
             // When 'x' is clicked, it is TOGGLED, so it will turn off the intake until another input
             else {
-                intake.setPower(INTAKE_OFF);
+                intake1.setPower(INTAKE_OFF);
             }
 
 
@@ -200,7 +200,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
                 /* This is the intaking/collecting arm position */
                 armPosition = ARM_COLLECT;
                 wrist.setPosition(WRIST_FOLDED_OUT);
-                intake.setPower(INTAKE_COLLECT);
+                intake1.setPower(INTAKE_COLLECT);
             } else if (gamepad2.left_bumper) {
                         /* This is about 20° up from the collecting position to clear the barrier
                         Note here that we don't set the wrist position or the intake power when we
@@ -215,7 +215,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
                         /* This turns off the intake, folds in the wrist, and moves the arm
                         back to folded inside the robot. This is also the starting configuration */
                 armPosition = ARM_COLLAPSED_INTO_ROBOT;
-                intake.setPower(INTAKE_OFF);
+                intake1.setPower(INTAKE_OFF);
                 wrist.setPosition(WRIST_FOLDED_IN);
             } else if (gamepad2.dpad_right) {
                 /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
@@ -224,28 +224,28 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             } else if (gamepad2.dpad_up) {
                 /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
                 armPosition = ARM_ATTACH_HANGING_HOOK;
-                intake.setPower(INTAKE_OFF);
+                intake1.setPower(INTAKE_OFF);
                 wrist.setPosition(WRIST_FOLDED_IN);
             } else if (gamepad2.dpad_down) {
                 /* this moves the arm down to lift the robot up once it has been hooked */
                 armPosition = ARM_WINCH_ROBOT;
-                intake.setPower(INTAKE_OFF);
+                intake1.setPower(INTAKE_OFF);
                 wrist.setPosition(WRIST_FOLDED_IN);
             }
 
             /* Here we set the target position of our arm to match the variable that was selected
             by the driver.
             We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
-            armMotor.setTargetPosition((int) (armPosition + armPositionFudgeFactor));
+            armMotor1.setTargetPosition((int) (armPosition + armPositionFudgeFactor));
 
-            armMotor.setVelocity(ARM_VELOCITY);
-            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            armMotor1.setVelocity(ARM_VELOCITY);
+            armMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         }
 
         if (stopAllMechanisms) {
             ((PwmControl) wrist).setPwmDisable();
-            intake.setPower(INTAKE_OFF);
-            ((PwmControl) intake).setPwmDisable();
+            intake1.setPower(INTAKE_OFF);
+            ((PwmControl) intake1).setPwmDisable();
         }
     }
 
@@ -258,28 +258,28 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
 
     public void driveAssistHanging() {
         // action of dpad up button on gamepad 2
-        armMotor.setTargetPosition((int) (ARM_ATTACH_HANGING_HOOK));
-        intake.setPower(INTAKE_OFF);
+        armMotor1.setTargetPosition((int) (ARM_ATTACH_HANGING_HOOK));
+        intake1.setPower(INTAKE_OFF);
         wrist.setPosition(WRIST_FOLDED_IN);
 
-        armMotor.setVelocity(ARM_VELOCITY);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor1.setVelocity(ARM_VELOCITY);
+        armMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position
-        while (armMotor.isBusy()) {
+        while (armMotor1.isBusy()) {
             if (!opModeIsActive())
                 break;
         }
 
         // action of dpad right button on gamepad 2
-        armMotor.setTargetPosition((int) (ARM_SCORE_SPECIMEN));
+        armMotor1.setTargetPosition((int) (ARM_SCORE_SPECIMEN));
         wrist.setPosition(WRIST_FOLDED_IN);
 
-        armMotor.setVelocity(ARM_VELOCITY);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor1.setVelocity(ARM_VELOCITY);
+        armMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position
-        while (armMotor.isBusy()) {
+        while (armMotor1.isBusy()) {
             if (!opModeIsActive())
                 break;
         }
@@ -303,8 +303,8 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
         }
 
         // action of dpad down gamepad 2
-        armMotor.setTargetPosition((int) (ARM_WINCH_ROBOT));
-        intake.setPower(INTAKE_OFF);
+        armMotor1.setTargetPosition((int) (ARM_WINCH_ROBOT));
+        intake1.setPower(INTAKE_OFF);
         wrist.setPosition(WRIST_FOLDED_IN);
 
         // move backward while pressing dpad_down logic
@@ -313,26 +313,26 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
                 0
         ));
 
-        armMotor.setVelocity(ARM_VELOCITY);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor1.setVelocity(ARM_VELOCITY);
+        armMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position
-        while (armMotor.isBusy()) {
+        while (armMotor1.isBusy()) {
             if (!opModeIsActive())
                 break;
         }
 
         // once that's over then action of dpad left gamepad 2
         // noinspection ConstantValue
-        armMotor.setTargetPosition((int) ARM_COLLAPSED_INTO_ROBOT);
-        intake.setPower(INTAKE_OFF);
+        armMotor1.setTargetPosition((int) ARM_COLLAPSED_INTO_ROBOT);
+        intake1.setPower(INTAKE_OFF);
         wrist.setPosition(WRIST_FOLDED_IN);
 
-        armMotor.setVelocity(ARM_VELOCITY);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotor1.setVelocity(ARM_VELOCITY);
+        armMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
         // wait for the arm to reach the position
-        while (armMotor.isBusy()) {
+        while (armMotor1.isBusy()) {
             if (!opModeIsActive())
                 break;
         }
@@ -347,17 +347,11 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
     }
 
     boolean startWasPressed = false;
-    boolean backWasPressed = false;
     public void toggleFieldCentricity() {
         if (!startWasPressed && gamepad1.start) {
             fieldCentered = !fieldCentered;
         }
         startWasPressed = gamepad1.start;
-
-        if (!backWasPressed && gamepad1.back) {
-            drive.pose = new Pose2d(0, 0, 0);
-        }
-        backWasPressed = gamepad1.back;
     }
 
     public void telemeterData() {
@@ -374,14 +368,14 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
                         Math.toDegrees(drive.pose.heading.log())));
 
         /* Check to see if our arm is over the current limit, and report via telemetry. */
-        if (armMotor.isOverCurrent()) {
+        if (armMotor1.isOverCurrent()) {
             telemetry.addLine("MOTOR EXCEEDED CURRENT LIMIT!");
         }
 
 
         /* send telemetry to the driver of the arm's current position and target position */
-        telemetry.addData("armTarget: ", armMotor.getTargetPosition());
-        telemetry.addData("arm Encoder: ", armMotor.getCurrentPosition());
+        telemetry.addData("armTarget: ", armMotor1.getTargetPosition());
+        telemetry.addData("arm Encoder: ", armMotor1.getCurrentPosition());
 
         // These telemetry.addLine() calls will inform the user of what each button does
 

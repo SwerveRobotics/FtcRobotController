@@ -19,7 +19,7 @@ public class LocalizationTest extends LinearOpMode {
         telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
 
         if (TuningOpModes.DRIVE_CLASS.equals(MecanumDrive.class)) {
-            MecanumDrive drive = new MecanumDrive(CompetitionBasketAuto.kinematicType, hardwareMap, telemetry, gamepad1, new Pose2d(0, 0, 0));
+            MecanumDrive drive = new MecanumDrive(CompetitionBasketAutoFastBot.kinematicType, hardwareMap, telemetry, gamepad1, new Pose2d(0, 0, 0));
 
             waitForStart();
 

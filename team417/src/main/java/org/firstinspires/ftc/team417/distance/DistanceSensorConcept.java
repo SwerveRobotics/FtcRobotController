@@ -24,7 +24,7 @@ public class DistanceSensorConcept extends FastBotTeleOp {
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
-        initializeHardware();
+        prepareRobot();
 
         leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
         rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");

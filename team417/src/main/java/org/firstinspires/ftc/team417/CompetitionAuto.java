@@ -5,9 +5,9 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.team417.programs.BaseOpMode;
 import org.firstinspires.ftc.team417.programs.BaseOpModeFastBot;
-import org.firstinspires.ftc.team417.programs.CompeitionSpecimenAutoXDrive;
-import org.firstinspires.ftc.team417.programs.CompetitionBasketAuto;
-import org.firstinspires.ftc.team417.programs.CompetitionSpecimenAuto;
+import org.firstinspires.ftc.team417.programs.CompetitionBasketAutoFastBot;
+import org.firstinspires.ftc.team417.programs.CompetitionSpecimenAutoFastBot;
+import org.firstinspires.ftc.team417.programs.CompetitionSpecimenAutoSlowBot;
 import org.firstinspires.ftc.team417.programs.ReliableAuto;
 
 @Autonomous(name = "Auto")
@@ -37,16 +37,16 @@ public class CompetitionAuto extends BaseOpModeFastBot {
                 case FAST_BOT:
                     switch (Config.location) {
                         case NET:
-                            return new CompetitionBasketAuto();
+                            return new CompetitionSpecimenAutoFastBot();
                         case OBSERVATION:
-                            return new CompetitionSpecimenAuto();
+                            return new CompetitionBasketAutoFastBot();
                     }
                 case SLOW_BOT:
                     switch (Config.location) {
                         case NET:
                             throw new IllegalArgumentException("The Slow Bot doesn't have a net program yet.");
                         case OBSERVATION:
-                            return new CompeitionSpecimenAutoXDrive();
+                            return new CompetitionSpecimenAutoSlowBot();
                     }
             }
         }

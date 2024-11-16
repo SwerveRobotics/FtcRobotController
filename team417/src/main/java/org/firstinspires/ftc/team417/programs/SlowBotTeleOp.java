@@ -18,27 +18,25 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     boolean curve = true;
     boolean fieldCentered = false;
 
-    MecanumDrive drive;
-
     public double startHeading;
 
     /* A number in degrees that the triggers can adjust the arm position by */
     // TODO: needs tuning
     final double FUDGE_FACTOR = 200;
 
-    /**
-     * @noinspection ConstantValue
-     */
+
     /* Variables that are used to set the arm to a specific position */
     double liftPositionFudgeFactor;
     double slidePositionFudgeFactor;
 
     boolean intakeEnabled = false;
+    boolean buttonAPressed = false;
 
-    // These are the button states
-    boolean xWasPressed = false;
-    boolean yWaspressed = false;
-    boolean aWasPressed = false;
+    // These are variables that will be used for individual control actions
+    double slidePosition = SLIDE_HOME_POSITION;
+    double wristPosition = WRIST_IN;
+    double liftPosition = LIFT_REST_POSITION;
+
 
     @Override
     public void runOpMode() {
@@ -86,12 +84,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
-        if (gamepad1.left_bumper && gamepad1.right_bumper) {
-            speedMultiplier = 0.25;
-        } else if (gamepad1.left_bumper || gamepad1.right_bumper) {
-            speedMultiplier = 0.5;
-        } else {
-            speedMultiplier = 1;
+        // If the left bumper is pressed, slow down, and if the right bumper is pressed, speed up.
+        speedMultiplier = 0.5;
+        if (gamepad1.left_bumper) {
+            speedMultiplier *= 0.5;
+        }
+        if (gamepad1.right_bumper) {
+            speedMultiplier *= 2;
         }
 
         double theta, x, y, rot, rotatedX, rotatedY;
@@ -158,28 +157,64 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             three if statements, then it will set the intake servo's power to multiple speeds in
             one cycle. Which can cause strange behavior. */
 
-
-            // In the loop if 'x' is clicked intakeEnabled is set to false which will be stored to memory
-            if (gamepad2.x && !xWasPressed) {
-                ControlAction lowBasket = new ControlAction(SLIDE_SCORE_IN_BASKET, WRIST_OUT, LIFT_SCORE_LOW_BASKET);
-                drive.runParallel(lowBasket);
+            // Low basket
+            if (gamepad2.x) {
+                liftPosition = LIFT_SCORE_LOW_BASKET;
+                wristPosition = WRIST_OUT;
+                slidePosition = SLIDE_SCORE_IN_BASKET;
             }
-            xWasPressed = gamepad2.x;
+
+            // High Basket
+             if (gamepad2.y) {
+                 liftPosition = LIFT_SCORE_HIGH_BASKET;
+                 wristPosition = WRIST_OUT;
+                 slidePosition = SLIDE_SCORE_IN_BASKET;
+             }
+
+             // Intake on and off
+            if(gamepad2.a && !buttonAPressed){
+                intakeEnabled = !intakeEnabled;
+            }
+            buttonAPressed = gamepad2.a;
 
             boolean reversed = gamepad2.b;
-
             // When 'b' is HELD down, it will deposit
             if (reversed) {
                 intakeControl(INTAKE_DEPOSIT);
-            }
-            // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
-            else if (intakeEnabled) {
+            } else if (intakeEnabled) {
+                // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
                 intakeControl(INTAKE_COLLECT);
-
-            }
-            // When 'x' is clicked, it is TOGGLED, so it will turn off the intake until another input
-            else {
+            } else {
                 intakeControl(INTAKE_OFF);
+            }
+
+             // Collecting Sample
+            if (gamepad2.right_bumper) {
+                liftPosition = LIFT_COLLECT;
+                wristPosition = WRIST_IN;
+                slidePosition = SLIDE_COLLECT;
+                intakeEnabled = true;
+            }
+
+            // Clear floor barrier for intake
+            if (gamepad2.left_bumper) {
+                slidePosition = SLIDE_COLLECT;
+                wristPosition = WRIST_IN;
+                liftPosition = LIFT_CLEAR_BARRIER;
+            }
+
+            // Retract linear slides
+            if (gamepad2.dpad_left) {
+                liftPosition = LIFT_REST_POSITION;
+                wristPosition = WRIST_IN;
+                slidePosition = SLIDE_HOME_POSITION;
+            }
+
+            // Correct height for specimen (High)
+            if (gamepad2.dpad_right) {
+                liftPosition = LIFT_SCORE_HIGH_SPECIMEN;
+                wristPosition = WRIST_IN;
+                slidePosition = SLIDE_HOME_POSITION;
             }
 
             /* Here we create a "fudge factor" for the arm position.
@@ -198,56 +233,33 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             to start collecting. So it moves the armPosition to the ARM_COLLECT position,
             it folds out the wrist to make sure it is in the correct orientation to intake, and it
             turns the intake on to the COLLECT mode.*/
-    // In the loop if 'a' is clicked intakeEnabled is set to true which will be stored to memory
-            if (gamepad2.right_bumper) {
-                intakeEnabled = true;
-            }
-            if (gamepad2.right_bumper) {
-                /* This is the intaking/collecting arm position */
-                liftPosition = LIFT_COLLECT;
-                moveWrist(WRIST_OUT);
-                intakeControl(INTAKE_COLLECT);
-
-            } else if (gamepad2.left_bumper) {
-                        /* This is about 20° up from the collecting position to clear the barrier
-                        Note here that we don't set the wrist position or the intake power when we
-                        select this "mode", this means that the intake and wrist will continue what
-                        they were doing before we clicked left bumper. */
-                liftPosition = LIFT_CLEAR_BARRIER;
-            } else if (gamepad2.y) {
-                /* This is the correct height to score the sample in the LOW BASKET */
-                liftPosition = SLIDE_SCORE_IN_BASKET;
-                moveWrist(WRIST_OUT);
-            } else if (gamepad2.dpad_left) {
-                        /* This turns off the intake, folds in the wrist, and moves the arm
-                        back to folded inside the robot. This is also the starting configuration */
-                liftPosition = LIFT_REST_POSITION;
-                intakeControl(INTAKE_OFF);
-                moveWrist(WRIST_IN);
-            } else if (gamepad2.dpad_right) {
-                /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
-                liftPosition = LIFT_SCORE_SPECIMEN;
-                moveWrist(WRIST_IN);
-            } else if (gamepad2.dpad_up) {
-                /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
-                //TODO: implement functionality after decided
-                intakeControl(INTAKE_OFF);
-                moveWrist(WRIST_IN);
-            } else if (gamepad2.dpad_down) {
-                /* this moves the arm down to lift the robot up once it has been hooked */
-                //TODO: implement functionality after decided
-                intakeControl(INTAKE_OFF);
-                moveWrist(WRIST_IN);
-            }
 
             /* Here we set the target position of our arm to match the variable that was selected
             by the driver.
             We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
             moveLift(liftPosition + liftPositionFudgeFactor);
             moveSlide(slidePosition + slidePositionFudgeFactor);
-//            armMotor.setVelocity(ARM_VELOCITY);
-//            armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//           armMotor.setVelocity(ARM_VELOCITY);
+//           armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+            // If lift is travelling through 'no mans land', pull in arm and wrist, then perform the lift action.
+            // Else, perform all the actions
+            if(isCrossingNoSlideZone(liftPosition)) {
+                if(getSlidePosition() <= SLIDE_HOME_POSITION + TICKS_EPSILON) {
+                    moveWrist(WRIST_IN);
+                    moveSlide(SLIDE_HOME_POSITION);
+                } else {
+                    moveWrist(WRIST_IN);
+                    moveLift(liftPosition);
+                }
+            } else {
+                moveWrist(wristPosition);
+                moveSlide(slidePosition);
+                moveLift(liftPosition);
+            }
         }
+
 
 
     // Applies a curve to the joystick input to give finer control at lower speeds
@@ -257,18 +269,11 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
 
     boolean startWasPressed = false;
-    boolean backWasPressed = false;
-
     public void toggleFieldCentricity() {
         if (!startWasPressed && gamepad1.start) {
             fieldCentered = !fieldCentered;
         }
         startWasPressed = gamepad1.start;
-
-        if (!backWasPressed && gamepad1.back) {
-            drive.pose = new Pose2d(0, 0, 0);
-        }
-        backWasPressed = gamepad1.back;
     }
 
     public void telemeterData() {

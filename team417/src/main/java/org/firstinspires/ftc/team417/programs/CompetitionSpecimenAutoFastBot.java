@@ -11,12 +11,16 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 @Autonomous(name = "AutoSpecimen", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
+<<<<<<<< HEAD:team417/src/main/java/org/firstinspires/ftc/team417/programs/CompetitionSpecimenAuto.java
 public class CompetitionSpecimenAuto extends BaseOpModeFastBot {
+========
+public class CompetitionSpecimenAutoFastBot extends BaseOpMode {
+>>>>>>>> refs/heads/417IntoTheDeepCodebase:team417/src/main/java/org/firstinspires/ftc/team417/CompetitionSpecimenAutoFastBot.java
     @Override
 
     public void runOpMode() {
         // Signal initializeHardware() to remake the armMotor object:
-        armMotor = null;
+        armMotor1 = null;
         armPosition = 0;
 
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), -90);
