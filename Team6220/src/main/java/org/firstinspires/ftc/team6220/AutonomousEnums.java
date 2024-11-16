@@ -5,13 +5,16 @@ import androidx.annotation.NonNull;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.hardware.HardwareMap;
-
-import org.firstinspires.ftc.team6220.actions.ArmElbowAction;
 
 
 public class AutonomousEnums {
+
+    public final BaseOpMode opMode;
+
+    public AutonomousEnums(BaseOpMode opMode) {
+        this.opMode = opMode;
+    }
 
     public enum AutoStartPosition {
         LEFT(DRIFTConstants.LEFT_STARTING_POSE),

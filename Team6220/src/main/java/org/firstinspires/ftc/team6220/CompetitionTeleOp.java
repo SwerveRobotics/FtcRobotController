@@ -24,11 +24,9 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 @TeleOp(name="TeleOp", group="Competition")
 public class CompetitionTeleOp extends BaseOpMode {
 
-    private DcMotorEx armBaseMotor = null;
     private DcMotorEx slidesMotor = null;
-    private CRServo intakeCRServo = null;
+
     private Servo dumperServo = null;
-    private Servo armElbowServo = null;
     private NormalizedColorSensor colorSensor = null;
     private AllianceColor allianceColor;
 
@@ -42,27 +40,8 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         //colorSensor.setGain(Constants.COLOR_SENSOR_GAIN);
 
-        armBaseMotor = hardwareMap.get(DcMotorEx.class, DRIFTConstants.ARM_BASE_MOTOR_HARDWARE_IDENTIFIER);
-        //slidesMotor = hardwareMap.get(DcMotorEx.class,DRIFTConstants.SLIDES_MOTOR_HARDWARE_IDENTIFIER);
-        intakeCRServo = hardwareMap.get(CRServo.class, DRIFTConstants.INTAKE_SERVO_HARDWARE_IDENTIFIER);
-        //dumperServo = hardwareMap.get(Servo.class,DRIFTConstants.DUMPER_SERVO_HARDWARE_IDENTIFIER);
-        armElbowServo = hardwareMap.get(Servo.class,DRIFTConstants.ARM_ELBOW_SERVO_HARDWARE_IDENTIFIER);
-
-        armBaseMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-        //slidesMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
-
-        armBaseMotor.setCurrentAlert(5, CurrentUnit.AMPS);
-        //slidesMotor.setCurrentAlert(5, CurrentUnit.AMPS);
-
-        armBaseMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        //slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
-        armBaseMotor.setTargetPosition(0);
-        //slidesMotor.setTargetPosition(0);
-        armBaseMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-        //slidesMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
-
-        //armBaseMotor.setVelocity(Constants.ARM_BASE_MOTOR_VELOCITY);
-        //slidesMotor.setVelocity(Constants.SLIDES_MOTOR_VELOCITY);
+        // you'll never guess what this does (it may initialize hardware)
+        initializeHardware();
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);

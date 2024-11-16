@@ -4,13 +4,13 @@ import static java.lang.System.nanoTime;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.wilyworks.common.WilyWorks;
 
-import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team6220.roadrunner.RobotAction;
 
 /**
@@ -20,7 +20,7 @@ import org.firstinspires.ftc.team6220.roadrunner.RobotAction;
 abstract public class BaseOpMode extends LinearOpMode {
 
     class SlideAction extends RobotAction {
-        final double EPSILON = 3; // Ticks
+        final int EPSILON = 3; // Ticks
 
         int targetMotorPosition;
         double targetMotorPower;
@@ -34,10 +34,10 @@ abstract public class BaseOpMode extends LinearOpMode {
         public boolean run(double elapsedTime) {
             setSlideMotorPosition(targetMotorPosition);
             setSlideMotorPower(targetMotorPower);
-            double slideHeight = Math.abs(getSlideMotorPosition() - targetMotorPosition);
+            int currentSlideError = Math.abs(getSlideMotorPosition() - targetMotorPosition);
 
             // Return 'true' to call again when not at target position yet:
-            return (slideHeight > EPSILON);
+            return (currentSlideError > EPSILON);
         }
     }
 
@@ -50,10 +50,41 @@ abstract public class BaseOpMode extends LinearOpMode {
     final double INTAKE_DEPOSIT = -1.0;
     final double INTAKE_OFF = 0.0;
 
-    // Mechanism state:
-    DcMotorEx slidesMotor;
-    CRServo dumperServo;
-    SlideAndDumperSimulator slideAndDumperSim = new SlideAndDumperSimulator();
+    // putting more hardware initialization stuff into baseopmode go brrr
+    protected DcMotorEx armBaseMotor;
+    protected CRServo intakeCRServo;
+    protected Servo armElbowServo;
+    protected DcMotorEx slidesMotor;
+    protected CRServo dumperServo;
+
+    // load simulators
+    protected SlideAndDumperSimulator slideAndDumperSim = new SlideAndDumperSimulator();
+
+    protected void initializeHardware() {
+        // yonk stuff from hardwaremap
+        armBaseMotor = hardwareMap.get(DcMotorEx.class, DRIFTConstants.ARM_BASE_MOTOR_HARDWARE_IDENTIFIER);
+        slidesMotor = hardwareMap.get(DcMotorEx.class,DRIFTConstants.SLIDES_MOTOR_HARDWARE_IDENTIFIER);
+        intakeCRServo = hardwareMap.get(CRServo.class, DRIFTConstants.INTAKE_SERVO_HARDWARE_IDENTIFIER);
+        dumperServo = hardwareMap.get(CRServo.class,DRIFTConstants.DUMPER_SERVO_HARDWARE_IDENTIFIER);
+        armElbowServo = hardwareMap.get(Servo.class,DRIFTConstants.ARM_ELBOW_SERVO_HARDWARE_IDENTIFIER);
+
+        // initializing motors yay :D
+        armBaseMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        slidesMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+
+        armBaseMotor.setCurrentAlert(5, CurrentUnit.AMPS);
+        slidesMotor.setCurrentAlert(5, CurrentUnit.AMPS);
+
+        armBaseMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        armBaseMotor.setTargetPosition(0);
+        slidesMotor.setTargetPosition(0);
+        armBaseMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        slidesMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+
+        //armBaseMotor.setVelocity(Constants.ARM_BASE_MOTOR_VELOCITY);
+        //slidesMotor.setVelocity(Constants.SLIDES_MOTOR_VELOCITY);
+    }
 
     // Helper function for settings the arm position, in ticks:
     void setSlideMotorPosition(int targetMotorPosition) {
@@ -136,6 +167,46 @@ abstract public class BaseOpMode extends LinearOpMode {
             // is calculated as a fraction of the end angles:
             // Add more lines to change slide height
             canvas.strokeLine(18, 0, 18, slideHeight);
+        }
+    }
+
+    public class ArmMoveAction extends RobotAction {
+        final int EPSILON = 3;
+
+        ArmActionState armActionState;
+
+        public ArmMoveAction(ArmActionState armActionState) {
+            this.armActionState = armActionState;
+        }
+
+        @Override
+        public boolean run(double elapsedTime) {
+            // only call servo once
+            if (elapsedTime == 0) {
+                armElbowServo.setPosition(armActionState.armElbowServoPosition);
+            }
+
+            // update motor many times because it goofy
+            armBaseMotor.setTargetPosition(armActionState.armBaseMotorTargetPositionTicks);
+
+            int currentArmError = Math.abs(armBaseMotor.getCurrentPosition() - armActionState.armBaseMotorTargetPositionTicks);
+
+            // if it hasnt passed target position, run this again :)
+            return currentArmError > EPSILON;
+        }
+    }
+
+    public enum ArmActionState {
+        PICKUP(DRIFTConstants.ARM_BASE_MOTOR_POSITION_GROUND, DRIFTConstants.ARM_ELBOW_SERVO_POSITION_GROUND),
+        OVER_BAR(DRIFTConstants.ARM_BASE_MOTOR_POSITION_OVER_BAR, DRIFTConstants.ARM_ELBOW_SERVO_POSITION_OVER_BAR),
+        VERTICAL(DRIFTConstants.ARM_BASE_MOTOR_POSITION_INIT, DRIFTConstants.ARM_ELBOW_SERVO_POSITION_OVER_BAR);
+
+        final int armBaseMotorTargetPositionTicks;
+        final double armElbowServoPosition;
+
+        ArmActionState(int armBaseMotorTargetPositionTicks, double armElbowServoPosition) {
+            this.armBaseMotorTargetPositionTicks = armBaseMotorTargetPositionTicks;
+            this.armElbowServoPosition = armElbowServoPosition;
         }
     }
 }

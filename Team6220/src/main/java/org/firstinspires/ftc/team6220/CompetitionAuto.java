@@ -5,13 +5,16 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.team6220.actions.ArmElbowAction;
 import org.firstinspires.ftc.team6220.javatextmenu.MenuFinishedButton;
 import org.firstinspires.ftc.team6220.javatextmenu.MenuInput;
 import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
 
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team6220.roadrunner.RobotAction;
 
 import java.util.Objects;
 
@@ -27,7 +30,8 @@ public class CompetitionAuto extends BaseOpMode {
     @Override
     public void runOpMode() {
 
-        System.out.println("amogus test");
+        // initialize hardware :>
+        initializeHardware();
 
         // TextMenu implementation yoinked from valsei's GitHub
         TextMenu startingConditionMenu = new TextMenu();
@@ -73,7 +77,6 @@ public class CompetitionAuto extends BaseOpMode {
         // can take multiple seconds for this operation. We wouldn't want to have to wait
         // as soon as the Start button is pressed!
         // Scoring trajectories
-
         Action trajectoryAction = computeAutoPath(drive);
 
         // Get a preview of the trajectory's path:
@@ -84,9 +87,6 @@ public class CompetitionAuto extends BaseOpMode {
         TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
         packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
         MecanumDrive.sendTelemetryPacket(packet);
-
-        // initialize actions
-        ArmElbowAction elbowAction = new ArmElbowAction(hardwareMap);
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
@@ -146,7 +146,6 @@ public class CompetitionAuto extends BaseOpMode {
             // still putting the wait here because yeah
             actionBuilder = actionBuilder.waitSeconds(3);
         }
-
 
         // apply parking portion of auto
         actionBuilder = parkPosition.appendAutonomousSegment(actionBuilder, autoType, hardwareMap);
