@@ -76,13 +76,13 @@ abstract public class BaseOpMode extends LinearOpMode {
     final static double INTAKE_DEPOSIT = 0.5;
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
-    final static double WRIST_FOLDED_IN = 0.676;
+    final static double WRIST_FOLDED_IN = 1;
     final static double X_WRIST_FOLDED_IN = 0; //not known yet
-    final static double WRIST_FOLDED_OUT = 0.335;
+    final static double WRIST_FOLDED_OUT = 0.5;
     final static double X_WRIST_FOLDED_OUT = 0; //not known yet
 
     //position used to score specimens in auto
-    public final static double Y_SCORE_POSE = 41.5;
+    public final static double Y_SCORE_POSE = 41;
     public final static double XDRIVE_Y_SCORE_POSE = 33;
     /* A number in degrees that the triggers can adjust the arm position by */
     final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
@@ -97,7 +97,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static ElapsedTime TIME = new ElapsedTime();
 
 
-    static MecanumDrive drive;
+    public static MecanumDrive drive;
 
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
 
@@ -259,7 +259,7 @@ abstract public class BaseOpMode extends LinearOpMode {
             return false;
         }
     }
-    class WaitAction extends RobotAction {
+    class WaitAction extends RobotAction { //waits to complete a different action
         RobotAction actionToWaitOn;
         WaitAction(RobotAction actionToWaitOn) {
             this.actionToWaitOn = actionToWaitOn;
@@ -274,7 +274,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         @Override
         public boolean run(double elapsedTime) {
             // Keep the intake deposit on until the 2 seconds are over
-            if (elapsedTime <= 2) {
+            if (elapsedTime <= 1) {
                 intake1.setPower(INTAKE_DEPOSIT);
                 return true;
             }
@@ -289,7 +289,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     class intakeSample extends RobotAction {
         @Override
         public boolean run(double elapsedTime) {
-            if(elapsedTime <=2) {
+            if(elapsedTime <=1.5) {
                 intake1.setPower(INTAKE_COLLECT);
                 return true;
             }
