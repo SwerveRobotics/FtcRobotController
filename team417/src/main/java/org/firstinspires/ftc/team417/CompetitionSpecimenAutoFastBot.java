@@ -11,12 +11,12 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 @Autonomous(name = "AutoSpecimen", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
-public class CompetitionSpecimenAuto extends BaseOpMode {
+public class CompetitionSpecimenAutoFastBot extends BaseOpMode {
     @Override
 
     public void runOpMode() {
         // Signal initializeHardware() to remake the armMotor object:
-        armMotor = null;
+        armMotor1 = null;
         armPosition = 0;
 
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), -90);
@@ -24,6 +24,7 @@ public class CompetitionSpecimenAuto extends BaseOpMode {
         initializeHardware();
         RobotAction foldOutArm = new MoveArm(ARM_SCORE_SPECIMEN, WRIST_FOLDED_IN);
         Action trajectoryAction = drive.actionBuilder(beginPose)
+
                 .setTangent(Math.toRadians(-90))
                 .afterDisp(0, foldOutArm)
                 .splineToLinearHeading(new Pose2d(0, Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
