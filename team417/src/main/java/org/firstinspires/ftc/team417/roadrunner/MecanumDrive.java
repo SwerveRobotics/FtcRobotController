@@ -279,6 +279,7 @@ public final class MecanumDrive {
 
     public Localizer localizer;
     public Pose2d pose; // Current actual pose
+    public PoseVelocity2d poseVelocity;
     public Pose2d targetPose; // Target pose when actively traversing a trajectory
     public SparkFunOTOS opticalTracker; // Can be null which means no OTOS
     public SparkFunOTOS.Pose2D opticalAcceleration = new SparkFunOTOS.Pose2D(0, 0, 0); // Most recent acceleration from the OTOS
@@ -941,7 +942,6 @@ public final class MecanumDrive {
     }
 
     public PoseVelocity2d updatePoseEstimate() {
-        PoseVelocity2d poseVelocity;
         if (opticalTracker != null) {
             // Get the current pose and current pose velocity from the optical tracking sensor.
             // Reads over the I2C bus are very slow so for performance we query the velocity only
