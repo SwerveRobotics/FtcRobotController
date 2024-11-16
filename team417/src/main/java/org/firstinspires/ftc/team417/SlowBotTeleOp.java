@@ -18,8 +18,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     boolean curve = true;
     boolean fieldCentered = false;
 
-    MecanumDrive drive;
-
     public double startHeading;
 
     /* A number in degrees that the triggers can adjust the arm position by */
@@ -87,12 +85,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
-        if (gamepad1.left_bumper && gamepad1.right_bumper) {
-            speedMultiplier = 0.25;
-        } else if (gamepad1.left_bumper || gamepad1.right_bumper) {
-            speedMultiplier = 0.5;
-        } else {
-            speedMultiplier = 1;
+        // If the left bumper is pressed, slow down, and if the right bumper is pressed, speed up.
+        speedMultiplier = 0.5;
+        if (gamepad1.left_bumper) {
+            speedMultiplier *= 0.5;
+        }
+        if (gamepad1.right_bumper) {
+            speedMultiplier *= 2;
         }
 
         double theta, x, y, rot, rotatedX, rotatedY;
@@ -265,18 +264,11 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
 
     boolean startWasPressed = false;
-    boolean backWasPressed = false;
-
     public void toggleFieldCentricity() {
         if (!startWasPressed && gamepad1.start) {
             fieldCentered = !fieldCentered;
         }
         startWasPressed = gamepad1.start;
-
-        if (!backWasPressed && gamepad1.back) {
-            drive.pose = new Pose2d(0, 0, 0);
-        }
-        backWasPressed = gamepad1.back;
     }
 
     public void telemeterData() {

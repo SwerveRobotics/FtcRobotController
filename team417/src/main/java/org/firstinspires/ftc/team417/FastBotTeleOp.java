@@ -22,7 +22,6 @@ public class FastBotTeleOp extends BaseOpMode {
     private double speedMultiplier = 0.5;
     boolean curve = true;
     boolean fieldCentered = false;
-    public MecanumDrive drive;
 
     public double startHeading;
 
@@ -86,6 +85,7 @@ public class FastBotTeleOp extends BaseOpMode {
     }
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
+        // If the left bumper is pressed, slow down, and if the right bumper is pressed, speed up.
         speedMultiplier = 0.5;
         if (gamepad1.left_bumper) {
             speedMultiplier *= 0.5;
@@ -347,17 +347,11 @@ public class FastBotTeleOp extends BaseOpMode {
     }
 
     boolean startWasPressed = false;
-    boolean backWasPressed = false;
     public void toggleFieldCentricity() {
         if (!startWasPressed && gamepad1.start) {
             fieldCentered = !fieldCentered;
         }
         startWasPressed = gamepad1.start;
-
-        if (!backWasPressed && gamepad1.back) {
-            drive.pose = new Pose2d(0, 0, 0);
-        }
-        backWasPressed = gamepad1.back;
     }
 
     public void telemeterData() {

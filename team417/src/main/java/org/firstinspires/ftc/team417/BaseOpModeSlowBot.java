@@ -3,9 +3,11 @@ package org.firstinspires.ftc.team417;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
+import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
+    static MecanumDrive drive;
 
     //TODO: tune for correct value
     final static double SLIDE_HOME_POSITION = 0;
@@ -144,5 +146,4 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public void initializeHardware() {}
 
     public static final KinematicType kinematicType = KinematicType.X;
-
 }

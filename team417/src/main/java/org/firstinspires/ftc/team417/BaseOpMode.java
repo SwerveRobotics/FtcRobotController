@@ -76,7 +76,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     static double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
 
-
+    static MecanumDrive drive;
 
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
 
