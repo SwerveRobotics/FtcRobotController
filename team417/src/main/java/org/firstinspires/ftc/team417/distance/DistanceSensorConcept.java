@@ -5,14 +5,14 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.team417.CompetitionTeleOp;
+import org.firstinspires.ftc.team417.programs.FastBotTeleOp;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 
 @TeleOp(name = "Distance", group = "Concept")
 @Config
-public class DistanceSensorConcept extends CompetitionTeleOp {
+public class DistanceSensorConcept extends FastBotTeleOp {
     UltrasonicDistanceSensor leftSonic;
     UltrasonicDistanceSensor rightSonic;
 

@@ -6,13 +6,13 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.team417.programs.BaseOpMode;
+import org.firstinspires.ftc.team417.programs.BaseOpModeFastBot;
 
 /**
  * This class finds the motors. If you just built a robot, use this class to get the configuration.
  */
 @TeleOp(name="Find Motors", group="Competition")
-public class FindMotors extends BaseOpMode {
+public class FindMotors extends BaseOpModeFastBot {
     DcMotor leftFront, leftBack, rightBack, rightFront, armMotor;
     CRServo intake;
     Servo wrist;

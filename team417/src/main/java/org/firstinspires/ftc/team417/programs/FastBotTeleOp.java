@@ -18,7 +18,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  */
 @TeleOp(name = "TeleOp", group = "Competition")
 @Config
-public class FastBotTeleOp extends BaseOpMode {
+public class FastBotTeleOp extends BaseOpModeFastBot {
     private double speedMultiplier = 0.5;
     boolean curve = true;
     boolean fieldCentered = false;

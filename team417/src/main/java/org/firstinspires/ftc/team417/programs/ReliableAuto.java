@@ -15,7 +15,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
 @Autonomous(name = "Reliable Auto", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
-public class ReliableAuto extends BaseOpMode {
+public class ReliableAuto extends BaseOpModeFastBot {
     ElapsedTime clock = new ElapsedTime();
 
     @Override

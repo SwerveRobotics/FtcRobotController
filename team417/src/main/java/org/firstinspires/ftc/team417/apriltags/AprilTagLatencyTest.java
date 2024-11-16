@@ -7,7 +7,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 
-import org.firstinspires.ftc.team417.programs.BaseOpMode;
+import org.firstinspires.ftc.team417.programs.BaseOpModeFastBot;
 
 /*
     This test class is for measuring the latency for April Tag detection.
@@ -16,7 +16,7 @@ import org.firstinspires.ftc.team417.programs.BaseOpMode;
 
 @Disabled
 @TeleOp (name = "LatencyTest")
-public class AprilTagLatencyTest extends BaseOpMode {
+public class AprilTagLatencyTest extends BaseOpModeFastBot {
     // Declares instance of our April Tag Pose Estimator
     AprilTagPoseEstimator myAprilTagLatencyCompensation;
 

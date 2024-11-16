@@ -62,7 +62,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
-import org.firstinspires.ftc.team417.programs.BaseOpMode;
+import org.firstinspires.ftc.team417.programs.BaseOpModeFastBot;
 import org.firstinspires.ftc.team417.programs.DriveParameters;
 import org.firstinspires.ftc.team417.distance.DistanceLocalizer;
 import org.firstinspires.ftc.team417.distance.DistanceSensorInfo;
@@ -420,7 +420,7 @@ public final class MecanumDrive {
             case DEVBOT_MECANUM:
                 opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
 
-                if (BaseOpMode.USE_DISTANCE) {
+                if (BaseOpModeFastBot.USE_DISTANCE) {
                     UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
                     UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
                     DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
@@ -442,7 +442,7 @@ public final class MecanumDrive {
                 //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
                 //   initializeOpticalTracker();
 
-                if (BaseOpMode.USE_DISTANCE) {
+                if (BaseOpModeFastBot.USE_DISTANCE) {
                     // TODO: Create the distance sensor tracking object:
                     //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
                     //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
@@ -463,7 +463,7 @@ public final class MecanumDrive {
                 // enable this when we have the optical tracker
                 opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
 
-                if (BaseOpMode.USE_DISTANCE) {
+                if (BaseOpModeFastBot.USE_DISTANCE) {
                     // TODO: Create the distance sensor tracking object:
                     //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
                     //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
@@ -486,7 +486,7 @@ public final class MecanumDrive {
                 //opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
                 //initializeOpticalTracker();
 
-                if (BaseOpMode.USE_DISTANCE) {
+                if (BaseOpModeFastBot.USE_DISTANCE) {
                     // TODO: Create the distance sensor tracking object:
                     //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
                     //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");

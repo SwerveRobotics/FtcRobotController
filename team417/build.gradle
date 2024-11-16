@@ -57,4 +57,5 @@ dependencies {
     implementation "com.acmerobotics.dashboard:dashboard:0.4.16"
     implementation 'com.github.SwerveRobotics:SparkFunUltrasonicDriver:0.0.1'
     implementation 'org.team11260:fast-load:0.1.2'
+    implementation project(':WilyCore')
 }
