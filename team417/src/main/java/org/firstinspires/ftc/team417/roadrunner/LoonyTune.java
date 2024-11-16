@@ -49,7 +49,7 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.matrices.VectorF;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.team417.programs.BaseOpModeFastBot;
+import org.firstinspires.ftc.team417.BaseOpMode;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -3750,7 +3750,7 @@ out.printf("TrackWidth: %.2f, inPerTick: %.2f\n", trackWidth, drive.PARAMS.inPer
         menu = new Menu(io);
         poll = new Poll();
         dialog = new Dialog();
-        drive = new MecanumDrive(BaseOpModeFastBot.kinematicType, hardwareMap, telemetry, gamepad1, zeroPose);
+        drive = new MecanumDrive(BaseOpMode.kinematicType, hardwareMap, telemetry, gamepad1, zeroPose);
         currentParameters = new TuneParameters(drive, TuneParameters.getSavedParameters());
         originalParameters = currentParameters.createClone();
 

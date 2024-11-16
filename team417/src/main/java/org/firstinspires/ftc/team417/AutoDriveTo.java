@@ -6,13 +6,13 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 
-import org.firstinspires.ftc.team417.programs.BaseOpMode;
+import org.firstinspires.ftc.team417.BaseOpMode;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 
 @Config
-public class AutoDriveTo{
+public class AutoDriveTo {
 
     public static double linearDriveAccel = MecanumDrive.PARAMS.maxProfileAccel;
     public static double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel;

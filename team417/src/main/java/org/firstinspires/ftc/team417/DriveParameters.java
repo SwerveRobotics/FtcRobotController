@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.team417.programs;
+package org.firstinspires.ftc.team417;
 
 public enum DriveParameters {
     DEVBOT_MECANUM,

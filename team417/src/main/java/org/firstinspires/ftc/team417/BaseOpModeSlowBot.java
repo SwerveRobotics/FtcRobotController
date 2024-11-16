@@ -1,5 +1,6 @@
-package org.firstinspires.ftc.team417.programs;
+package org.firstinspires.ftc.team417;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -8,13 +9,11 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
+import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
-abstract public class BaseOpModeSlowBot extends BaseOpMode {
-    final static double X_WRIST_FOLDED_IN = 0; //not known yet
-    final static double X_WRIST_FOLDED_OUT = 0; //not known yet
-
-    public final static double XDRIVE_Y_SCORE_POSE = 33;
+abstract public class BaseOpModeSlowBot extends LinearOpMode {
+    static MecanumDrive drive;
 
     //TODO: tune for correct value
     final static double SLIDE_HOME_POSITION = 0;

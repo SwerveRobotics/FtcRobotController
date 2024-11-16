@@ -1,11 +1,13 @@
-package org.firstinspires.ftc.team417.programs;
+package org.firstinspires.ftc.team417;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -18,7 +20,9 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
  * Autonomous logic. All TeleOp and Autonomous classes should derive from this class.
  */
 @Config
-abstract public class BaseOpModeFastBot extends BaseOpMode {
+abstract public class BaseOpMode extends LinearOpMode {
+    public static final boolean USE_DISTANCE = true;
+
     final double ARM_VELOCITY = 2100; // The ticks-per-second constant that Go-Bilda gave us
 
     /* This constant is the number of encoder ticks for each degree of rotation of the arm.
@@ -73,10 +77,13 @@ abstract public class BaseOpModeFastBot extends BaseOpMode {
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
     final static double WRIST_FOLDED_IN = 1;
+    final static double X_WRIST_FOLDED_IN = 0; //not known yet
     final static double WRIST_FOLDED_OUT = 0.5;
+    final static double X_WRIST_FOLDED_OUT = 0; //not known yet
 
     //position used to score specimens in auto
     public final static double Y_SCORE_POSE = 41;
+    public final static double XDRIVE_Y_SCORE_POSE = 33;
     /* A number in degrees that the triggers can adjust the arm position by */
     final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
@@ -85,6 +92,12 @@ abstract public class BaseOpModeFastBot extends BaseOpMode {
     // Fast Bot variables
     static double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
+
+    //Create a central time value
+    public static ElapsedTime TIME = new ElapsedTime();
+
+
+    public static MecanumDrive drive;
 
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
 
@@ -110,11 +123,9 @@ abstract public class BaseOpModeFastBot extends BaseOpMode {
                 initCompBot();
             case FASTBOT_MECANUM:
                 initFastBot();
-            case DEVBOT_MECANUM:
-                initFastBot();
         }
     }
-
+    
     public void initFastBot() {
         // Only initialize arm if it's not already initialized.
         // This is CRUCIAL for transitioning between Auto and TeleOp.
@@ -138,7 +149,7 @@ abstract public class BaseOpModeFastBot extends BaseOpMode {
         // wrist.setPosition(WRIST_FOLDED_IN); We do that after start, since we can't move wrist
         // in the gap before TeleOp.
     }
-
+    
     public void initCompBot() {
         //motors
 
