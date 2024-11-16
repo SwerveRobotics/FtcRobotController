@@ -22,7 +22,7 @@ import org.firstinspires.ftc.team6220.roadrunner.RobotAction;
  * This class exposes the competition version of TeleOp. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@TeleOp(name="TeleOp", group="Competition")
+@TeleOp(name="CompSimTeleOp", group="Competition")
 public class CompetitionSimTeleOp extends BaseOpMode {
 
     // Action for controlling the arm in Auto trajectories.

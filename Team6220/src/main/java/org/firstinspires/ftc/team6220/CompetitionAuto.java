@@ -18,7 +18,7 @@ import org.firstinspires.ftc.team6220.roadrunner.RobotAction;
 
 import java.util.Objects;
 
-@Autonomous(name="TextInputAuto", group="Competition", preselectTeleOp="CompetitionTeleOp")
+@Autonomous(name="CompetitionAuto", group="Competition", preselectTeleOp="CompetitionTeleOp")
 public class CompetitionAuto extends BaseOpMode {
 
     // defaults so it doesnt explode if you skip the text menu

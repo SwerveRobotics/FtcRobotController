@@ -40,7 +40,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         //colorSensor.setGain(Constants.COLOR_SENSOR_GAIN);
 
-        // you'll never guess what this does (it may initialize hardware)
+        armElbowServo.setPosition(0.6);
         initializeHardware();
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
