@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.team417.programs;
 
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.team417.Config;
 import org.firstinspires.ftc.team417.menu.MenuFinishedButton;
@@ -9,8 +10,14 @@ import org.firstinspires.ftc.team417.menu.MenuInput;
 import org.firstinspires.ftc.team417.menu.MenuSlider;
 import org.firstinspires.ftc.team417.menu.MenuSwitch;
 import org.firstinspires.ftc.team417.menu.TextMenu;
+import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 abstract public class BaseOpMode extends LinearOpMode {
+    public static MecanumDrive drive;
+
+    // Create a central time value
+    public static ElapsedTime TIME = new ElapsedTime();
+
     TextMenu menu = new TextMenu();
 
     public void runMenu() {

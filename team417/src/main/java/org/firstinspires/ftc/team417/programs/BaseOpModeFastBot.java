@@ -1,13 +1,11 @@
 package org.firstinspires.ftc.team417.programs;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -92,12 +90,6 @@ abstract public class BaseOpModeFastBot extends BaseOpMode {
     // Fast Bot variables
     static double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
     double armPositionFudgeFactor;
-
-    //Create a central time value
-    public static ElapsedTime TIME = new ElapsedTime();
-
-
-    static MecanumDrive drive;
 
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
 

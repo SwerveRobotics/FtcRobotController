@@ -11,11 +11,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 @Autonomous(name = "AutoSpecimen", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
-<<<<<<<< HEAD:team417/src/main/java/org/firstinspires/ftc/team417/programs/CompetitionSpecimenAuto.java
-public class CompetitionSpecimenAuto extends BaseOpModeFastBot {
-========
-public class CompetitionSpecimenAutoFastBot extends BaseOpMode {
->>>>>>>> refs/heads/417IntoTheDeepCodebase:team417/src/main/java/org/firstinspires/ftc/team417/CompetitionSpecimenAutoFastBot.java
+public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
     @Override
 
     public void runOpMode() {
