@@ -29,9 +29,9 @@ public class CompetitionTeleOp extends BaseOpMode {
     public BaseOpMode chooseProgram() {
         switch (Config.robot) {
             case FAST_BOT:
-                return new FastBotTeleOp();
+                return new FastBotTeleOp(hardwareMap, telemetry, gamepad1, gamepad2);
             case SLOW_BOT:
-                return new SlowBotTeleOp();
+                return new SlowBotTeleOp(hardwareMap, telemetry, gamepad1, gamepad2);
         }
         throw new IllegalArgumentException("Your values aren't supported as a program.");
     }

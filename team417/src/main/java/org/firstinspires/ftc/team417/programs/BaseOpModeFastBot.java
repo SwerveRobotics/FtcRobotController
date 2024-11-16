@@ -115,6 +115,8 @@ abstract public class BaseOpModeFastBot extends BaseOpMode {
                 initCompBot();
             case FASTBOT_MECANUM:
                 initFastBot();
+            case DEVBOT_MECANUM:
+                initFastBot();
         }
     }
     

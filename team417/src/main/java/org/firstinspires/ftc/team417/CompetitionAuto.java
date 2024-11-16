@@ -31,22 +31,22 @@ public class CompetitionAuto extends BaseOpModeFastBot {
 
     public BaseOpMode chooseProgram() {
         if (Config.useReliableAuto) {
-            return new ReliableAuto();
+            return new ReliableAuto(hardwareMap, telemetry, gamepad1, gamepad2);
         } else {
             switch (Config.robot) {
                 case FAST_BOT:
                     switch (Config.location) {
                         case NET:
-                            return new CompetitionSpecimenAutoFastBot();
+                            return new CompetitionSpecimenAutoFastBot(hardwareMap, telemetry, gamepad1, gamepad2);
                         case OBSERVATION:
-                            return new CompetitionBasketAutoFastBot();
+                            return new CompetitionBasketAutoFastBot(hardwareMap, telemetry, gamepad1, gamepad2);
                     }
                 case SLOW_BOT:
                     switch (Config.location) {
                         case NET:
                             throw new IllegalArgumentException("The Slow Bot doesn't have a net program yet.");
                         case OBSERVATION:
-                            return new CompetitionSpecimenAutoSlowBot();
+                            return new CompetitionSpecimenAutoSlowBot(hardwareMap, telemetry, gamepad1, gamepad2);
                     }
             }
         }

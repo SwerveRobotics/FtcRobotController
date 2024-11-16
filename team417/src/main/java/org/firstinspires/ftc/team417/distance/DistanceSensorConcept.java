@@ -21,6 +21,10 @@ public class DistanceSensorConcept extends FastBotTeleOp {
 
     final double ANGLE_OF_POSITIVE_CORNER = 0.25 * Math.PI;
 
+    public DistanceSensorConcept() {
+        super(null, null, null, null);
+    }
+
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
