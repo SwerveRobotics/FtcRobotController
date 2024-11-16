@@ -13,6 +13,8 @@ import org.firstinspires.ftc.team417.menu.TextMenu;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 abstract public class BaseOpMode extends LinearOpMode {
+    public static boolean useDistance = true;
+
     public static MecanumDrive drive;
 
     // Create a central time value

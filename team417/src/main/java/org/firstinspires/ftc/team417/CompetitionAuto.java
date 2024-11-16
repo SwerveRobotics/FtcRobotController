@@ -4,14 +4,13 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.team417.programs.BaseOpMode;
-import org.firstinspires.ftc.team417.programs.BaseOpModeFastBot;
 import org.firstinspires.ftc.team417.programs.CompetitionBasketAutoFastBot;
 import org.firstinspires.ftc.team417.programs.CompetitionSpecimenAutoFastBot;
 import org.firstinspires.ftc.team417.programs.CompetitionSpecimenAutoSlowBot;
 import org.firstinspires.ftc.team417.programs.ReliableAuto;
 
 @Autonomous(name = "Auto")
-public class CompetitionAuto extends BaseOpModeFastBot {
+public class CompetitionAuto extends BaseOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.MONOSPACE);
@@ -21,6 +20,7 @@ public class CompetitionAuto extends BaseOpModeFastBot {
         getResultsFromMenu();
 
         BaseOpMode program = chooseProgram();
+        useDistance = Config.useDistance;
 
         waitForStart();
 
@@ -36,9 +36,9 @@ public class CompetitionAuto extends BaseOpModeFastBot {
             switch (Config.robot) {
                 case FAST_BOT:
                     switch (Config.location) {
-                        case NET:
-                            return new CompetitionSpecimenAutoFastBot(hardwareMap, telemetry, gamepad1, gamepad2);
                         case OBSERVATION:
+                            return new CompetitionSpecimenAutoFastBot(hardwareMap, telemetry, gamepad1, gamepad2);
+                        case NET:
                             return new CompetitionBasketAutoFastBot(hardwareMap, telemetry, gamepad1, gamepad2);
                     }
                 case SLOW_BOT:

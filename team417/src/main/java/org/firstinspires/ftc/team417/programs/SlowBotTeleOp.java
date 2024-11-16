@@ -46,7 +46,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         this.gamepad2 = gamepad2;
     }
 
-
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
