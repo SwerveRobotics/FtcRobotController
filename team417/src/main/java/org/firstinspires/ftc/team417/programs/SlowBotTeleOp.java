@@ -1,17 +1,19 @@
-package org.firstinspires.ftc.team417;
+package org.firstinspires.ftc.team417.programs;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
-@TeleOp(name = "TeleOp", group = "Competition")
+// @TeleOp(name = "TeleOp", group = "Competition")
 @Config
 public class SlowBotTeleOp extends BaseOpModeSlowBot {
     private double speedMultiplier = 1;
@@ -37,6 +39,12 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     double wristPosition = WRIST_IN;
     double liftPosition = LIFT_REST_POSITION;
 
+    public SlowBotTeleOp(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad1, Gamepad gamepad2) {
+        this.hardwareMap = hardwareMap;
+        this.telemetry = telemetry;
+        this.gamepad1 = gamepad1;
+        this.gamepad2 = gamepad2;
+    }
 
     @Override
     public void runOpMode() {

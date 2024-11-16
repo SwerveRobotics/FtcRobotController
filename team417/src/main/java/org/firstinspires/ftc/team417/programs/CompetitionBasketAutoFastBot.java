@@ -1,12 +1,14 @@
-package org.firstinspires.ftc.team417;
+package org.firstinspires.ftc.team417.programs;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.hardware.HardwareMap;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
@@ -14,8 +16,15 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@Autonomous(name = "SawarAutoBasket", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
-public class CompetitionBasketAutoFastBot extends BaseOpMode {
+// @Autonomous(name = "SawarAutoBasket", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
+public class CompetitionBasketAutoFastBot extends BaseOpModeFastBot {
+    public CompetitionBasketAutoFastBot(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad1, Gamepad gamepad2) {
+        this.hardwareMap = hardwareMap;
+        this.telemetry = telemetry;
+        this.gamepad1 = gamepad1;
+        this.gamepad2 = gamepad2;
+    }
+
     // This class contains the function to lift the arm
     @Override
     public void runOpMode() {

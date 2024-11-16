@@ -5,7 +5,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.team417.FastBotTeleOp;
+import org.firstinspires.ftc.team417.programs.FastBotTeleOp;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.swerverobotics.ftc.UltrasonicDistanceSensor;
@@ -20,6 +20,10 @@ public class DistanceSensorConcept extends FastBotTeleOp {
     double y = 7.75;
 
     final double ANGLE_OF_POSITIVE_CORNER = 0.25 * Math.PI;
+
+    public DistanceSensorConcept() {
+        super(null, null, null, null);
+    }
 
     @Override
     public void runOpMode() {
