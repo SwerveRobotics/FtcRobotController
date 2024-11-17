@@ -3,7 +3,9 @@ package org.firstinspires.ftc.team6220;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
+import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.HardwareMap;
@@ -139,16 +141,74 @@ public class CompetitionAuto extends BaseOpMode {
 
         // apply scoring portion of auto
         if (Objects.requireNonNull(autoType) == AutonomousEnums.AutoType.SCORING) {
-            // so much cleaner omg such wow much yes
-            // yoink the auto scoring route from the enum
-            actionBuilder = spikeMarkSide.appendScoringRoute(actionBuilder);
+            switch (spikeMarkSide) {
+                case LEFT: {
+                    actionBuilder = actionBuilder
+                            // strafe to scoring area
+                            .strafeTo(new Vector2d(55, 60))
+                            .endTrajectory()
+                            .setTangent(Math.toRadians(-180))
+                            // spline to prepare to collect first sample
+                            .splineToLinearHeading(new Pose2d(45, 10, Math.toRadians(-90)),  Math.toRadians(-40))
+                            .endTrajectory()
+                            .setTangent(Math.toRadians(90))
+                            // spline to deposit first sample in scoring area
+                            .splineToLinearHeading(new Pose2d(55, 55, Math.toRadians(-140)),  Math.toRadians(40))
+                            .endTrajectory()
+                            .setTangent(Math.toRadians(-180))
+                            // spline to prepare to collect second sample
+                            .splineToLinearHeading(new Pose2d(55, 10, Math.toRadians(-90)),  Math.toRadians(-40))
+                            .endTrajectory()
+                            .setTangent(Math.toRadians(90))
+                            // spline to deposit second sample in scoring area
+                            .splineToLinearHeading(new Pose2d(55, 61, Math.toRadians(-140)),  Math.toRadians(40))
+                            .endTrajectory()
+                            .setTangent(Math.toRadians(-180))
+                            // spline to prepare to collect third sample
+                            .splineToLinearHeading(new Pose2d(62, 10, Math.toRadians(-90)),  Math.toRadians(40))
+                            .endTrajectory()
+                            // strafe to deposit third sample
+                            .strafeTo(new Vector2d(62, 55))
+                            // prepare to move to park position
+                            .strafeTo(new Vector2d(62, 50));
+                }
+                case RIGHT: {
+                    // to be implemented
+                }
+            }
 
             // still putting the wait here because yeah
             actionBuilder = actionBuilder.waitSeconds(3);
         }
 
+
+
         // apply parking portion of auto
-        actionBuilder = parkPosition.appendAutonomousSegment(actionBuilder, autoType, hardwareMap);
+        switch (parkPosition) {
+            case OBSERVATION: {
+                switch(autoType) {
+                    case PARK: {
+                        actionBuilder = actionBuilder.strafeTo(parkPosition.parkingPosition)
+                                .endTrajectory();
+                    }
+                    case SCORING: {
+                        actionBuilder = actionBuilder.splineTo(parkPosition.parkingPosition, Math.PI)
+                                .endTrajectory();
+                    }
+                }
+            }
+            case SUBMERSIBLE: {
+
+                switch (autoType) {
+                    case PARK: {
+                        // code for submersible park auto goes here
+                    }
+                    case SCORING: {
+                        // code for submersible scoring-park auto goes here
+                    }
+                }
+            }
+        }
 
         return actionBuilder.endTrajectory().build();
     }
