@@ -9,6 +9,7 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
 import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynch;
@@ -287,6 +288,12 @@ public class SparkFunOTOS extends I2cDeviceSynchDevice<I2cDeviceSynch> {
                 _distanceUnit.fromInches(simulationPose.position.y),
                 _angularUnit.fromRadians(simulationPose.heading.log()));
     }
+    protected Pose2D otosPose(PoseVelocity2d simulationPoseVelocity) {
+        return new Pose2D(
+                _distanceUnit.fromInches(simulationPoseVelocity.linearVel.x),
+                _distanceUnit.fromInches(simulationPoseVelocity.linearVel.y),
+                _angularUnit.fromRadians(simulationPoseVelocity.angVel));
+    }
 
     @Override
     protected boolean doInitialize() { return true; }
@@ -342,7 +349,7 @@ public class SparkFunOTOS extends I2cDeviceSynchDevice<I2cDeviceSynch> {
     public void setOffset(Pose2D pose) { _offset = new Pose2D(_offset.x, _offset.y, _offset.h); }
     public Pose2D getPosition() { return otosPose(WilyCore.getPose(false)); } // Use error-added pose
     public void setPosition(Pose2D pose) { WilyCore.setStartPose(simulationPose(pose), null); }
-    public Pose2D getVelocity() { return new Pose2D(0, 0, 0); }
+    public Pose2D getVelocity() { return otosPose(WilyCore.getPoseVelocity()); }
     public Pose2D getAcceleration() { return new Pose2D(0, 0, 0); }
     public Pose2D getPositionStdDev() { return new Pose2D(0, 0, 0); }
     public Pose2D getVelocityStdDev() { return new Pose2D(0, 0, 0); }
