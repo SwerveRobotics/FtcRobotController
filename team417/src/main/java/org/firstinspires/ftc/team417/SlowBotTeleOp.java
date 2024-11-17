@@ -22,12 +22,14 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
     /* A number in degrees that the triggers can adjust the arm position by */
     // TODO: needs tuning
-    final double FUDGE_FACTOR = 200;
-
+    final double MAX_SLIDE_VELOCITY = 200; // Ticks per second
+    final double FUDGE_FACTOR_LIFT = 200; // Ticks
 
     /* Variables that are used to set the arm to a specific position */
     double liftPositionFudgeFactor;
-    double slidePositionFudgeFactor;
+
+    double previousTime = 0.0;
+
 
     boolean intakeEnabled = false;
     boolean buttonAPressed = false;
@@ -77,6 +79,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         initializeHardware();
 
         startHeading = startingPose.heading.log();
+        previousTime = currentTime();
 
         /* Send telemetry message to signify robot waiting */
         telemetry.addLine("Robot Ready.");
@@ -112,8 +115,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             rot = gamepad1.right_stick_x;
         }
 
-        // Press the D-Pad left button ONCE (do not hold)
-        //TODO: FIX LATER
+
 
 
         // Rotate the movement direction counter to the bot's rotation
@@ -217,46 +219,49 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 slidePosition = SLIDE_HOME_POSITION;
             }
 
-            /* Here we create a "fudge factor" for the arm position.
-            This allows you to adjust (or "fudge") the arm position slightly with the gamepad triggers.
-            We want the left trigger to move the arm up, and right trigger to move the arm down.
+            /* Here we create a "fudge factor" for the Lift position.
+            This allows you to adjust (or "fudge") the Lift position slightly with the gamepad triggers.
+            We want the left trigger to move the Lift up, and right trigger to move the Lift down.
             So we add the right trigger's variable to the inverse of the left trigger. If you pull
-            both triggers an equal amount, they cancel and leave the arm at zero. But if one is larger
+            both triggers an equal amount, they cancel and leave the Lift at zero. But if one is larger
             than the other, it "wins out". This variable is then multiplied by our FUDGE_FACTOR.
             The FUDGE_FACTOR is the number of degrees that we can adjust the arm by with this function. */
 
-            liftPositionFudgeFactor = FUDGE_FACTOR * (gamepad2.right_trigger + (-gamepad2.left_trigger));
+            liftPositionFudgeFactor = FUDGE_FACTOR_LIFT * (gamepad2.right_trigger - gamepad2.left_trigger);
 
-            /* Here we implement a set of if else loops to set our arm to different scoring positions.
-            We check to see if a specific button is pressed, and then move the arm (and sometimes
-            intake and wrist) to match. For example, if we click the right bumper we want the robot
-            to start collecting. So it moves the armPosition to the ARM_COLLECT position,
-            it folds out the wrist to make sure it is in the correct orientation to intake, and it
-            turns the intake on to the COLLECT mode.*/
+            // Set the slide velocity to magnitude of the 'right stick y' multiplied by the speed multiplier (MAX_SLIDE_VELOCITY)
+            double slideVelocity = MAX_SLIDE_VELOCITY * gamepad2.right_stick_y;
 
-            /* Here we set the target position of our arm to match the variable that was selected
-            by the driver.
-            We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
-            moveLift(liftPosition + liftPositionFudgeFactor);
-            moveSlide(slidePosition + slidePositionFudgeFactor);
-//           armMotor.setVelocity(ARM_VELOCITY);
-//           armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            // DeltaTime will be the actual current time minus the currentTime of the last loop
+            double deltaTime = currentTime() - previousTime;
+            previousTime = currentTime();
 
+            // Set slide position based on magnitude of speed (Position = Velocity * Time)
+            slidePosition += slideVelocity * deltaTime;
+
+            // Makes sure if driver tries to go past the max or min, set the position to the max or min slide values
+            if(slidePosition > SLIDE_MAX){
+                slidePosition = SLIDE_MAX;
+            }
+            if(slidePosition < SLIDE_MIN){
+                slidePosition = SLIDE_MIN;
+            }
 
             // If lift is travelling through 'no mans land', pull in arm and wrist, then perform the lift action.
             // Else, perform all the actions
-            if(isCrossingNoSlideZone(liftPosition)) {
+            double liftPositionWithFudge = liftPosition + liftPositionFudgeFactor;
+            if(isCrossingNoSlideZone(liftPositionWithFudge)) {
                 if(getSlidePosition() <= SLIDE_HOME_POSITION + TICKS_EPSILON) {
                     moveWrist(WRIST_IN);
                     moveSlide(SLIDE_HOME_POSITION);
                 } else {
                     moveWrist(WRIST_IN);
-                    moveLift(liftPosition);
+                    moveLift(liftPositionWithFudge);
                 }
             } else {
                 moveWrist(wristPosition);
                 moveSlide(slidePosition);
-                moveLift(liftPosition);
+                moveLift(liftPositionWithFudge);
             }
         }
 
