@@ -118,7 +118,7 @@ public final class MecanumDrive {
                     otos.offset.h = Math.toRadians(-89.71); // Was Math.toRadians(0)
                     otos.linearScalar = 1.000; // Was 0.000
                     otos.angularScalar = 1.0005;
-                    
+
                     pinpoint.ticksPerMm = 0;
                     pinpoint.xReversed = false;
                     pinpoint.yReversed = false;
@@ -130,10 +130,6 @@ public final class MecanumDrive {
                     // Your competition robot Looney Tune configuration is here:
                     logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                     usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
-                    
-                // Your competition robot Loony Tune configuration is here:
-                logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
-                usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
                     inPerTick = 1;
                     lateralInPerTick = inPerTick;
@@ -149,7 +145,7 @@ public final class MecanumDrive {
                     lateralVelGain = 0.0;
                     headingGain = 0.0;
                     headingVelGain = 0.0;
-                    
+
                     otos.offset.x = 0;
                     otos.offset.y = 0;
                     otos.offset.h = Math.toRadians(0);
@@ -161,7 +157,7 @@ public final class MecanumDrive {
                     pinpoint.yReversed = false;
                     pinpoint.xOffset = 0;
                     pinpoint.yOffset = 0;
-                    
+
                     break;
 
                 case FASTBOT_MECANUM:
@@ -461,7 +457,7 @@ public final class MecanumDrive {
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         switch (driveParameters) {
             case DEVBOT_MECANUM:
-            otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
+                otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
 
                 if (BaseOpMode.USE_DISTANCE) {
                     UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
@@ -476,14 +472,14 @@ public final class MecanumDrive {
                 rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
                 rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
-            leftFront.setDirection(DcMotorEx.Direction.REVERSE);
-            leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+                leftFront.setDirection(DcMotorEx.Direction.REVERSE);
+                leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
 
             case DEVBOT_X:
                 // TODO: Create the optical tracking object:
                 //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
-                //   initializeotosDriver();
+                //   initializeOtosDriver();
 
                 if (BaseOpMode.USE_DISTANCE) {
                     // TODO: Create the distance sensor tracking object:
@@ -527,14 +523,14 @@ public final class MecanumDrive {
 
             case COMPETITION_ROBOT:
                 //otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
-                //initializeotosDriver();
+                //initializeOtosDriver();
 
                 if (BaseOpMode.USE_DISTANCE) {
                     // TODO: Create the distance sensor tracking object:
                     //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
                     //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
                     //   DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
-                    //   DistanceSensorInfo riMghtInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
+                    //   DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
                     //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
                 }
 
@@ -548,6 +544,7 @@ public final class MecanumDrive {
                 break;
 
         }
+    }
 
     // Initialize the Pinpoint sensor if we have one.
     public void initializePinpointDriver() {
@@ -1006,14 +1003,23 @@ public final class MecanumDrive {
                     rotateVector(new Vector2d(xVelocity, yVelocity), -pose.heading.toDouble()),
                     poseVelocity2D.getHeading(AngleUnit.RADIANS));
 
-        } else if (otosDriver != null) {
+        }  else if (otosDriver != null) {
+            // Get the current pose and current pose velocity from the optical tracking sensor.
+            // Reads over the I2C bus are very slow so for performance we query the velocity only
+            // if we'll actually need it - i.e., if using non-zero velocity gains:
+            SparkFunOTOS.Pose2D position = new SparkFunOTOS.Pose2D(0, 0, 0);
+            SparkFunOTOS.Pose2D velocity = new SparkFunOTOS.Pose2D(0, 0, 0);
+            SparkFunOTOS.Pose2D acceleration = new SparkFunOTOS.Pose2D(0, 0, 0);
+
+            // This single call is faster than separate calls to getPosition() and getVelocity():
+            otosDriver.getPosVelAcc(position, velocity, acceleration);
 
             // Convert to Road Runner format, remembering that the optical tracking sensor
             // reports velocity as field-relative but Road Runner wants it robot-relative:
             pose = new Pose2d(position.x, position.y, position.h);
             poseVelocity = new PoseVelocity2d(
                     rotateVector(new Vector2d(velocity.x, velocity.y), -pose.heading.toDouble()),
-                        velocity.h);
+                    velocity.h);
 
             pose = new Pose2d(position.x, position.y, position.h);
         } else {
