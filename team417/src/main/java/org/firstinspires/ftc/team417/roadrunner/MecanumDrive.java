@@ -984,7 +984,6 @@ public final class MecanumDrive {
     }
 
     public PoseVelocity2d updatePoseEstimate() {
-        PoseVelocity2d poseVelocity;
         if (pinpointDriver != null) {
             // Query the driver for position and velocity:
             pinpointDriver.update();
@@ -1003,7 +1002,7 @@ public final class MecanumDrive {
                     rotateVector(new Vector2d(xVelocity, yVelocity), -pose.heading.toDouble()),
                     poseVelocity2D.getHeading(AngleUnit.RADIANS));
 
-        }  else if (otosDriver != null) {
+        } else if (otosDriver != null) {
             // Get the current pose and current pose velocity from the optical tracking sensor.
             // Reads over the I2C bus are very slow so for performance we query the velocity only
             // if we'll actually need it - i.e., if using non-zero velocity gains:
@@ -1020,8 +1019,6 @@ public final class MecanumDrive {
             poseVelocity = new PoseVelocity2d(
                     rotateVector(new Vector2d(velocity.x, velocity.y), -pose.heading.toDouble()),
                     velocity.h);
-
-            pose = new Pose2d(position.x, position.y, position.h);
         } else {
             // Use the wheel odometry to update the pose:
             Twist2dDual<Time> twist = WilyWorks.localizerUpdate();
@@ -1031,10 +1028,6 @@ public final class MecanumDrive {
 
             pose = pose.plus(twist.value());
             poseVelocity = twist.velocity().value();
-        }
-
-        if (distanceLocalizer != null) {
-            pose = new Pose2d(pose.position.plus(distanceLocalizer.updateIfPossible()), pose.heading.log());
         }
 
         poseHistory.add(pose);
