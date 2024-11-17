@@ -3,18 +3,10 @@ package org.firstinspires.ftc.team6220;
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.roadrunner.Pose2d;
-import com.acmerobotics.roadrunner.TrajectoryActionBuilder;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.qualcomm.robotcore.hardware.HardwareMap;
 
 
 public class AutonomousEnums {
-
-    public final BaseOpMode opMode;
-
-    public AutonomousEnums(BaseOpMode opMode) {
-        this.opMode = opMode;
-    }
 
     public enum AutoStartPosition {
         LEFT(DRIFTConstants.LEFT_STARTING_POSE),
@@ -42,77 +34,11 @@ public class AutonomousEnums {
         ParkPosition(Vector2d parkingPosition) {
             this.parkingPosition = parkingPosition;
         }
-
-        public TrajectoryActionBuilder appendAutonomousSegment(TrajectoryActionBuilder builder, AutoType autoType, HardwareMap hardwareMap) {
-            switch(this) {
-                case OBSERVATION: {
-                    switch(autoType) {
-                        case PARK: {
-                            return builder.strafeTo(parkingPosition)
-                                    .endTrajectory();
-                        }
-                        case SCORING: {
-                            return builder.splineTo(parkingPosition, Math.PI)
-                                    .endTrajectory();
-                        }
-                    }
-                }
-                case SUBMERSIBLE: {
-
-                    switch (autoType) {
-                        case PARK: {
-                            // code for submersible park auto goes here
-                        }
-                        case SCORING: {
-                            // code for submersible scoring-park auto goes here
-                        }
-                    }
-                }
-            }
-
-            return builder;
-        }
     }
 
     public enum SpikeMarkSide {
         LEFT,
         RIGHT;
-
-        public TrajectoryActionBuilder appendScoringRoute(TrajectoryActionBuilder actionBuilder) {
-            switch (this) {
-                case LEFT:
-                    return actionBuilder
-                            // strafe to scoring area
-                            .strafeTo(new Vector2d(55, 60))
-                            .endTrajectory()
-                            .setTangent(Math.toRadians(-180))
-                            // spline to prepare to collect first sample
-                            .splineToLinearHeading(new Pose2d(45, 10, Math.toRadians(-90)),  Math.toRadians(-40))
-                            .endTrajectory()
-                            .setTangent(Math.toRadians(90))
-                            // spline to deposit first sample in scoring area
-                            .splineToLinearHeading(new Pose2d(55, 55, Math.toRadians(-140)),  Math.toRadians(40))
-                            .endTrajectory()
-                            .setTangent(Math.toRadians(-180))
-                            // spline to prepare to collect second sample
-                            .splineToLinearHeading(new Pose2d(55, 10, Math.toRadians(-90)),  Math.toRadians(-40))
-                            .endTrajectory()
-                            .setTangent(Math.toRadians(90))
-                            // spline to deposit second sample in scoring area
-                            .splineToLinearHeading(new Pose2d(55, 61, Math.toRadians(-140)),  Math.toRadians(40))
-                            .endTrajectory()
-                            .setTangent(Math.toRadians(-180))
-                            // spline to prepare to collect third sample
-                            .splineToLinearHeading(new Pose2d(62, 10, Math.toRadians(-90)),  Math.toRadians(40))
-                            .endTrajectory()
-                            // strafe to deposit third sample
-                            .strafeTo(new Vector2d(62, 55))
-                            // prepare to move to park position
-                            .strafeTo(new Vector2d(62, 50));
-                case RIGHT:
-            }
-            return actionBuilder;
-        }
 
         @NonNull
         @Override
