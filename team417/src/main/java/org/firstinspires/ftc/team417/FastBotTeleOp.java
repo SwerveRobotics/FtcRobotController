@@ -16,7 +16,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  * This class exposes the competition version of TeleOp. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@TeleOp(name = "TeleOp", group = "Competition")
+@TeleOp(name = "TeleOp", group = "FastBot")
 @Config
 public class FastBotTeleOp extends BaseOpMode {
     private double speedMultiplier = 0.5;

@@ -38,7 +38,8 @@ public class DistanceLocalizer {
 
     final double ANGLE_OF_POSITIVE_CORNER = 0.25 * Math.PI; // Angle facing (72, 72)
     final double RELIABLE_DISTANCE = 48; // Corner is defined as this distance away from walls
-    final double RELIABLE_ANGLE = Math.PI / 6; // This is x in |--x--|--✓--|--x--|, total 90 degrees
+    final double MIN_RELIABLE_ANGLE = 7 * Math.PI / 18; // In radians
+    final double MAX_RELIABLE_ANGLE = 11 * Math.PI / 36; // In radians
 
     final ElapsedTime clock = new ElapsedTime();
 
@@ -95,7 +96,12 @@ public class DistanceLocalizer {
 
         boolean sameSide = leftIntersection.side == rightIntersection.side;
         boolean closeEnough = leftIntersection.distance < RELIABLE_DISTANCE && rightIntersection.distance < RELIABLE_DISTANCE;
-        boolean angleIsEnough = RELIABLE_ANGLE < heading && heading < Math.PI / 2 - RELIABLE_ANGLE;
+        boolean angleIsEnough;
+        if (MIN_RELIABLE_ANGLE < MAX_RELIABLE_ANGLE) {
+            angleIsEnough = MIN_RELIABLE_ANGLE <= heading && heading <= MAX_RELIABLE_ANGLE;
+        } else {
+            angleIsEnough = !(MAX_RELIABLE_ANGLE <= heading && heading <= MIN_RELIABLE_ANGLE);
+        }
 
         Vector2d detectedRelativePosition, detectedPosition, detectedCorrection;
         if (!sameSide && closeEnough && angleIsEnough) {
