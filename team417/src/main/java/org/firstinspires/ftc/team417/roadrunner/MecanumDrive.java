@@ -542,8 +542,16 @@ public final class MecanumDrive {
                 leftFront.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
-
         }
+
+        // Initialize the tracking drivers, if any:
+        initializeOtosDriver();
+        initializePinpointDriver();
+
+        lazyImu = new LazyImu(hardwareMap, "imu", new RevHubOrientationOnRobot(
+                PARAMS.logoFacingDirection, PARAMS.usbFacingDirection));
+
+        localizer = new DriveLocalizer();
     }
 
     // Initialize the Pinpoint sensor if we have one.
