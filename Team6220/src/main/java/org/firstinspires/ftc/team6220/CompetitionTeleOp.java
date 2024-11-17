@@ -65,9 +65,9 @@ public class CompetitionTeleOp extends BaseOpMode {
             armBaseMotor.setPower(1.0);
             armBaseMotor.setTargetPosition(controls.getArmBaseMotorPosition());
             telemetry.addLine("Target Position: " + controls.getArmBaseMotorPosition());
-            //slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
+            slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
             intakeCRServo.setPower(controls.getIntakeServoPower());
-            //dumperServo.setPosition(controls.getDumperServoPosition());
+            dumperServo.setPosition(controls.getDumperServoPosition());
             armElbowServo.setPosition(controls.getArmElbowServoPosition());
 
             // jank ass speed modifier
