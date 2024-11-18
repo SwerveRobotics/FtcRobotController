@@ -32,7 +32,7 @@ public class WilyWorks {
         // Control the magnitude of error added to the pose when sensor error is enabled:
         public double positionError = 1.0; // Percentage error as a function of distance traveled
         public double headingError = 2.0; // Degrees of drift per minute
-        public double distanceSensorError = 0.5; // Range of error for distance sensors
+        public double distanceSensorError = 0.5; // Range of error for distance sensors, in inches
 
         // Set these to the actual dimensions of your robot, in inches:
         public double robotWidth = 18.0;
