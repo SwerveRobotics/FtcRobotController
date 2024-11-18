@@ -220,7 +220,7 @@ public class FastBotTeleOp extends BaseOpMode {
             } else if (gamepad2.dpad_right) {
                 /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
                 armPosition = ARM_SCORE_SPECIMEN;
-                wrist.setPosition(WRIST_FOLDED_IN);
+                wrist.setPosition(WRIST_SCORE_SPECIMEN);
             } else if (gamepad2.dpad_up) {
                 /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
                 armPosition = ARM_ATTACH_HANGING_HOOK;

@@ -62,7 +62,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     static double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
     static double LIFT_SAMPLE_LOW = 0 ; // not known yet
     static double LIFT_SAMPLE_HIGH = 0; //not known yet
-    static double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
+    static double ARM_SCORE_SPECIMEN = 149* ARM_TICKS_PER_DEGREE;
     static double LIFT_SPECIMEN = 0 ; // not known yet
     static double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
     static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
@@ -77,12 +77,13 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
     final static double WRIST_FOLDED_IN = 1;
+    final static double WRIST_SCORE_SPECIMEN = 0.85;
     final static double X_WRIST_FOLDED_IN = 0; //not known yet
     final static double WRIST_FOLDED_OUT = 0.5;
     final static double X_WRIST_FOLDED_OUT = 0; //not known yet
 
     //position used to score specimens in auto
-    public final static double Y_SCORE_POSE = 41;
+    public final static double Y_SCORE_POSE = 41.5;
     public final static double XDRIVE_Y_SCORE_POSE = 33;
     /* A number in degrees that the triggers can adjust the arm position by */
     final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
