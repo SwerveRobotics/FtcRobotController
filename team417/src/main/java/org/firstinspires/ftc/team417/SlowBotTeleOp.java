@@ -11,7 +11,7 @@ import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
-@TeleOp(name = "TeleOp", group = "Competition")
+@TeleOp(name = "TeleOp", group = "SlowBot")
 @Config
 public class SlowBotTeleOp extends BaseOpModeSlowBot {
     private double speedMultiplier = 1;
@@ -28,8 +28,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     /* Variables that are used to set the arm to a specific position */
     double liftPositionFudgeFactor;
 
+    // This variable remembers the tixme in the previous loop to use for slide velocity
     double previousTime = 0.0;
-
 
     boolean intakeEnabled = false;
     boolean buttonAPressed = false;
@@ -37,8 +37,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     // These are variables that will be used for individual control actions
     double slidePosition = SLIDE_HOME_POSITION;
     double wristPosition = WRIST_IN;
-    double liftPosition = LIFT_REST_POSITION;
-
+    double liftPosition = LIFT_HOME_POSITION;
 
     @Override
     public void runOpMode() {
@@ -87,7 +86,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
-        // If the left bumper is pressed, slow down, and if the right bumper is pressed, speed up.
+        // Only on GamePad1, the right and left bumpers are speed multipliers
         speedMultiplier = 0.5;
         if (gamepad1.left_bumper) {
             speedMultiplier *= 0.5;
@@ -190,7 +189,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 intakeControl(INTAKE_OFF);
             }
 
-             // Collecting Sample
+            // Collecting Sample
             if (gamepad2.right_bumper) {
                 liftPosition = LIFT_COLLECT;
                 wristPosition = WRIST_IN;
@@ -207,7 +206,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
             // Retract linear slides
             if (gamepad2.dpad_left) {
-                liftPosition = LIFT_REST_POSITION;
+                liftPosition = LIFT_HOME_POSITION;
                 wristPosition = WRIST_IN;
                 slidePosition = SLIDE_HOME_POSITION;
             }

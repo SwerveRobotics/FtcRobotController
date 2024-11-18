@@ -10,8 +10,8 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
-@Autonomous(name = "AutoSpecimen", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
-public class CompetitionSpecimenAutoFastBot extends BaseOpMode {
+@Autonomous(name = "AutoSpecimen", group = "FastBot", preselectTeleOp = "CompetitionTeleOp")
+public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
     @Override
 
     public void runOpMode() {

@@ -14,8 +14,8 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
  * This class exposes the competition version of Autonomous. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@Autonomous(name = "SawarAutoBasket", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
-public class CompetitionBasketAutoFastBot extends BaseOpMode {
+@Autonomous(name = "SawarAutoBasket", group = "FastBot", preselectTeleOp = "CompetitionTeleOp")
+public class CompetitionBasketAutoFastBot extends BaseOpModeFastBot {
     // This class contains the function to lift the arm
     @Override
     public void runOpMode() {

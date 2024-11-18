@@ -19,11 +19,11 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
     //TODO: tune for correct value
     final static double SLIDE_HOME_POSITION = 0;
-    final static double LIFT_REST_POSITION = 0;
+    final static double LIFT_HOME_POSITION = 0;
 
     //TODO: find the range where the sizes CANNOT be out
-    final static double NO_SLIDE_ZONE_MIN = 0;
-    final static double NO_SLIDE_ZONE_MAX = 0;
+    final static double LIFT_NO_SLIDE_ZONE_MIN = 0;
+    final static double LIFT_NO_SLIDE_ZONE_MAX = 0;
 
     // TODO: implement this
     final static double INTAKE_DEPOSIT = 0.0;
@@ -36,7 +36,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double LIFT_SCORE_LOW_BASKET = 0.0;
     final static double LIFT_COLLECT = 0.0;
     final static double LIFT_MIN = 0.0;
-    // TODO: Why is it not being called
     final static double LIFT_CLEAR_BARRIER = 0.0;
 
     final static double SLIDE_MAX = 1.0;
@@ -48,8 +47,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double WRIST_OUT = 0.0;
     final static double WRIST_IN = 0.0;
     final static double WRIST_MIN = 0.0;
-
-
 
     // This provides an error tolerance for lift and slide
     final static double TICKS_EPSILON = 3.00;
@@ -74,8 +71,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         double targetWristPosition;
         double targetLiftPosition;
 
-        boolean isRetracting;
-
         public ControlAction(double targetSlidePosition, double targetWristPosition, double targetLiftPosition) {
             this.targetSlidePosition = targetSlidePosition;
             this.targetLiftPosition = targetLiftPosition;
@@ -84,34 +79,19 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
         @Override
         public boolean run(double elapsedTime) {
-
-            boolean checkCrossingNoSlideZone
-                    = isCrossingNoSlideZone(targetLiftPosition);
-            boolean isSlideIn = (getSlidePosition() <= SLIDE_HOME_POSITION);
-
-            if (elapsedTime == 0) {
-                // This block makes sure the slide goes in before lift goes up
-                if ((checkCrossingNoSlideZone) && (!isSlideIn)) {
-                    isRetracting = true;
-                }
-            }
-            // First retracts the slides in
-            if (isRetracting) {
-                moveSlide(SLIDE_HOME_POSITION);
-
-                // Checks if the slide is at Home position
-                if (getSlidePosition() <= SLIDE_HOME_POSITION + TICKS_EPSILON) {
-                    return false; // Call us again, we're not there yet
-                }
-                isRetracting = false; // No need to retract anymore
-            }
-            // Then move lift to target position
-            moveLift(targetLiftPosition);
-
             // Once lift is ABOVE the no slide zone, move the slide & wrist out at the same time
-            if (!checkCrossingNoSlideZone) {
-                moveSlide(targetSlidePosition);
+            if(isCrossingNoSlideZone(targetLiftPosition)) {
+                if(getSlidePosition() <= SLIDE_HOME_POSITION + TICKS_EPSILON) {
+                    moveWrist(WRIST_IN);
+                    moveSlide(SLIDE_HOME_POSITION);
+                } else {
+                    moveWrist(WRIST_IN);
+                    moveLift(targetLiftPosition);
+                }
+            } else {
                 moveWrist(targetWristPosition);
+                moveSlide(targetSlidePosition);
+                moveLift(targetLiftPosition);
             }
 
             // Buffers for target lift & slide position
@@ -128,8 +108,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     }
 
     public boolean isCrossingNoSlideZone(double targetLiftPosition){
-        return ((targetLiftPosition > NO_SLIDE_ZONE_MAX && getLiftPosition() < NO_SLIDE_ZONE_MAX) ||
-                (targetLiftPosition < NO_SLIDE_ZONE_MIN && getLiftPosition() > NO_SLIDE_ZONE_MIN));
+        return ((targetLiftPosition > LIFT_NO_SLIDE_ZONE_MAX && getLiftPosition() < LIFT_NO_SLIDE_ZONE_MAX) ||
+                (targetLiftPosition < LIFT_NO_SLIDE_ZONE_MIN && getLiftPosition() > LIFT_NO_SLIDE_ZONE_MIN));
     }
 
     // This helper method controls the linear slides and tells motor to go to desired position in ticks
