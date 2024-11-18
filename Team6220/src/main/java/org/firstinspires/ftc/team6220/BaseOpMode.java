@@ -55,7 +55,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected CRServo intakeCRServo;
     protected Servo armElbowServo;
     protected DcMotorEx slidesMotor;
-    protected CRServo dumperServo;
+    protected Servo dumperServo;
 
     // load simulators
     protected SlideAndDumperSimulator slideAndDumperSim = new SlideAndDumperSimulator();
@@ -65,7 +65,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         armBaseMotor = hardwareMap.get(DcMotorEx.class, DRIFTConstants.ARM_BASE_MOTOR_HARDWARE_IDENTIFIER);
         slidesMotor = hardwareMap.get(DcMotorEx.class,DRIFTConstants.SLIDES_MOTOR_HARDWARE_IDENTIFIER);
         intakeCRServo = hardwareMap.get(CRServo.class, DRIFTConstants.INTAKE_SERVO_HARDWARE_IDENTIFIER);
-        dumperServo = hardwareMap.get(CRServo.class,DRIFTConstants.DUMPER_SERVO_HARDWARE_IDENTIFIER);
+        dumperServo = hardwareMap.get(Servo.class,DRIFTConstants.DUMPER_SERVO_HARDWARE_IDENTIFIER);
         armElbowServo = hardwareMap.get(Servo.class,DRIFTConstants.ARM_ELBOW_SERVO_HARDWARE_IDENTIFIER);
 
         // initializing motors yay :D

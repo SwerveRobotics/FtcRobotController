@@ -7,11 +7,11 @@ public class ControlManager {
     private Gamepad gamepad1 = null;
     private Gamepad gamepad2 = null;
 
-    private int armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_INIT;
+    private int armBaseMotorPosition;
     private int slidesMotorPosition;
     private double intakeServoPower;
     private double dumperServoPosition;
-    private double armElbowServoPosition;
+    private double armElbowServoPosition = 0;
 
 
     public ControlManager(Gamepad gamepad1, Gamepad gamepad2) {
@@ -31,18 +31,19 @@ public class ControlManager {
         }
 
         // Lowering arm all the way to ground (NOT BEING USED)
-//        if(gamepad2.x && !gamepad2.y) {
-//            armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_GROUND;
-//        }
+       if(gamepad2.x && !gamepad2.y) {
+           armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_TRANSFER;
+        }
 
         // Raises the arm up to its initial position (against the hubs)
         if (gamepad2.y && !gamepad2.x) {
-            armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_INIT;
+            armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_OUT;
+            dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER;
+            armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_OVER_BAR;
         }
 
         // Powers the intake
-        intakeServoPower = -gamepad2.left_stick_y;
-
+        intakeServoPower = -gamepad2.right_stick_y;
         // Lowers the arm to go over the submersible
         if (gamepad2.right_bumper && !gamepad2.left_bumper) {
             armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_OVER_BAR;
@@ -56,6 +57,9 @@ public class ControlManager {
         // Raises the slides to reach the high basket
         if (gamepad2.dpad_up && !gamepad2.dpad_down) {
             slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_POSITION_TWO;
+        }
+        if (gamepad2.right_trigger >= 0) {
+            armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER;
         }
     }
 
@@ -78,4 +82,6 @@ public class ControlManager {
     public double getArmElbowServoPosition() {
         return armElbowServoPosition;
     }
+
+
 }

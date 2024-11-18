@@ -24,9 +24,6 @@ import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 @TeleOp(name="TeleOp", group="Competition")
 public class CompetitionTeleOp extends BaseOpMode {
 
-    private DcMotorEx slidesMotor = null;
-
-    private Servo dumperServo = null;
     private NormalizedColorSensor colorSensor = null;
     private AllianceColor allianceColor;
 
@@ -40,8 +37,9 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         //colorSensor.setGain(Constants.COLOR_SENSOR_GAIN);
 
-        armElbowServo.setPosition(0.6);
+
         initializeHardware();
+        armElbowServo.setPosition(0);
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
@@ -63,14 +61,19 @@ public class CompetitionTeleOp extends BaseOpMode {
             controls.update();
 
             armBaseMotor.setPower(1.0);
+            slidesMotor.setPower(1.0);
             armBaseMotor.setTargetPosition(controls.getArmBaseMotorPosition());
-            telemetry.addLine("Target Position: " + controls.getArmBaseMotorPosition());
+            telemetry.addLine("Arm Target Position: " + controls.getArmBaseMotorPosition());
             slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
+            telemetry.addLine("Slides Target Position: " + controls.getSlidesMotorPosition());
+
             intakeCRServo.setPower(controls.getIntakeServoPower());
             dumperServo.setPosition(controls.getDumperServoPosition());
             armElbowServo.setPosition(controls.getArmElbowServoPosition());
+            telemetry.addLine("Arm Elbow Servo Current Position: " + armElbowServo.getPosition());
+            telemetry.addLine("Arm Elbow Servo Target Position: " + controls.getArmElbowServoPosition());
 
-            // jank ass speed modifier
+            // janky speed modifier
             float speedModifier = 1 - (gamepad1.right_trigger * 0.5f);
 
             // Set the drive motor powers according to the gamepad input:
