@@ -19,41 +19,48 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
 
         armPosition = 0;
 
-        Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(-90));
+        Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(0));
         MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
         initFastBot();
-        RobotAction foldOutArm = new MoveArm(ARM_SCORE_SPECIMEN, WRIST_FOLDED_IN);
+        RobotAction foldOutArm = new MoveArm(ARM_SCORE_SPECIMEN, WRIST_SCORE_SPECIMEN);
         Action trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-90))
                 .afterDisp(0, foldOutArm)
                 .splineToLinearHeading(new Pose2d(0, Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
                 .stopAndAdd(new WaitAction(foldOutArm))
-                .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN+20*ARM_TICKS_PER_DEGREE, WRIST_FOLDED_IN))       //scores the specimen with slight downward force
+                .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN+20*ARM_TICKS_PER_DEGREE, WRIST_SCORE_SPECIMEN))       //scores the specimen with slight downward force
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(0, Y_SCORE_POSE+6, Math.toRadians(-90)), Math.toRadians(90),new TranslationalVelConstraint(20))
                 .stopAndAdd(new ScoreSample())
-                .setTangent(180)
-                .splineToLinearHeading(new Pose2d(-36,24,Math.toRadians(-90)),Math.toRadians(-90))
-                .setTangent(-90)
-                //.splineToLinearHeading(new Pose2d())
+                .setTangent(Math.toRadians(90))
+
+                .splineToLinearHeading(new Pose2d(-39.5,24,Math.toRadians(-90)),Math.toRadians(-90))
+                .setTangent(Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-48,12,Math.toRadians(-90)),Math.toRadians(180))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-62,62,Math.toRadians(-90)),Math.toRadians(90))
+
                 // go collect sample to obs zone
 
-                .setTangent(Math.toRadians(90))
+                .setTangent(Math.toRadians(-90))
+
                 .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(180)),Math.toRadians(90))
                 .setTangent(Math.toRadians(180))
                 .afterDisp(0,new MoveArm((256.5*ARM_TICKS_PER_DEGREE),WRIST_FOLDED_OUT))
+
                 .afterDisp(0, new RunIntake(INTAKE_COLLECT))
-                .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2) -24, 72 -(ROBOT_WIDTH / 2),Math.toRadians(180)), Math.toRadians(180),new TranslationalVelConstraint(20))
-                .stopAndAdd(new intakeSample())
+                .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2) -28, 72 -(ROBOT_WIDTH / 2),Math.toRadians(180)), Math.toRadians(180),new TranslationalVelConstraint(20))
+                .setTangent(Math.toRadians(0))
                 .afterDisp(0,foldOutArm)
                 .afterDisp(4,new RunIntake(INTAKE_OFF))
-                .splineToLinearHeading(new Pose2d(-6, Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))
+
+                .splineToLinearHeading(new Pose2d(-7, Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))
                 .stopAndAdd(new WaitAction(foldOutArm))
-                .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN+20*ARM_TICKS_PER_DEGREE, WRIST_FOLDED_IN))
+                .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN+20*ARM_TICKS_PER_DEGREE, WRIST_SCORE_SPECIMEN))
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-6, Y_SCORE_POSE+6, Math.toRadians(-90)), Math.toRadians(90),new TranslationalVelConstraint(20))
+                .splineToLinearHeading(new Pose2d(-7, Y_SCORE_POSE+6, Math.toRadians(-90)), Math.toRadians(90),new TranslationalVelConstraint(20))
                 .stopAndAdd(new ScoreSample())
-                .setTangent(Math.toRadians(180))
+                .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-60,60,Math.toRadians(-90)),Math.toRadians(90))
                 .build();
 
