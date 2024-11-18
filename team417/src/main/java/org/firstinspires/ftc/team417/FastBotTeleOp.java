@@ -33,20 +33,30 @@ public class FastBotTeleOp extends BaseOpMode {
     /* A number in degrees that the triggers can adjust the arm position by */
     final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
+    private boolean xPressed;
+
     /** @noinspection ConstantValue*/
     /* Variables that are used to set the arm to a specific position */
     double armPositionFudgeFactor;
     boolean intakeEnabled = false;
+
+    Vector2d driveToPos = new Vector2d(48, 48);
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
         prepareRobot();
+
+        AutoDriveTo driveTo = new AutoDriveTo(drive);
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
 
         // Only move wrist after start
         wrist.setPosition(WRIST_FOLDED_IN);
+
+        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+
+        driveTo.motionProfileWithVector(driveToPos, 0, true, packet);
 
         while (opModeIsActive()) {
             toggleFieldCentricity();
@@ -58,7 +68,13 @@ public class FastBotTeleOp extends BaseOpMode {
             telemeterData();
 
             // 'packet' is the object used to send data to FTC Dashboard:
-            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+            packet = MecanumDrive.getTelemetryPacket();
+
+            if (gamepad1.x && !xPressed) {
+
+                driveTo.motionProfileWithVector(driveToPos, 0, false, packet);
+            }
+            xPressed = gamepad1.x;
 
             // Do the work now for all active Road Runner actions, if any:
             drive.doActionsWork(packet);

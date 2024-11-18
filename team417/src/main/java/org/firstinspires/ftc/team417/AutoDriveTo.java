@@ -61,21 +61,12 @@ public class AutoDriveTo {
     private Vector2d radialVectorCalculations(Vector2d distVector, double deltaTime) {
         Vector2d radialVelocity;
         double distRemaining;
-        double differenceOfSpeeds;
         double radialSpeed;
-        final double epsilon = 7.5;
+
+        radialSpeed = lastRadialSpeed;
 
         //Distance to goal.
         distRemaining = Math.hypot(distVector.x, distVector.y);
-
-        //The magnitude of the radial portion of the robot's current velocity.
-        radialSpeed = findRadialSpeed(distVector, currentVelocity.linearVel);
-
-        //Find the differance between the last speed and the actual speed to correct for the robot
-        //having not finished accelerating.
-        differenceOfSpeeds = lastRadialSpeed - radialSpeed;
-        if (Math.abs(differenceOfSpeeds) > epsilon)
-            differenceOfSpeeds = 0;
 
         //If radial speed is going toward the goal or is stationary increase it, else decrease it
         if (radialSpeed >= 0)
@@ -85,7 +76,7 @@ public class AutoDriveTo {
 
         //Cap the speed at it's max speed or the speed it needs to be decelerating
         radialSpeed = Math.min(radialSpeed, maxLinearSpeed);
-        radialSpeed = Math.min(radialSpeed, Math.sqrt(Math.abs(2.0 * linearDriveDeccel * distRemaining))) + differenceOfSpeeds;
+        radialSpeed = Math.min(radialSpeed, Math.sqrt(Math.abs(2.0 * linearDriveDeccel * distRemaining)));
         lastRadialSpeed = radialSpeed;
 
         //set radial velocity's theta to be the same as dist vector's
@@ -97,25 +88,16 @@ public class AutoDriveTo {
     private Vector2d tangentialVectorCalculations(Vector2d distVector, double deltaTime) {
         Vector2d tangentialVelocity;
         double tangentialSpeed;
-        double differenceOfSpeeds;
-        final double epsilon  = 7.5;
 
-        //Set tangentialSpeed to the tangential portion of the current velocity
-        tangentialSpeed = findTangentialSpeed(distVector, currentVelocity.linearVel);
-
-        //Find the difference between the last tangentialSpeed and the current tangential speed for it can be corrected.
-        differenceOfSpeeds = lastTangentialSpeed - tangentialSpeed;
-        //If difference of speeds is greater then epsilon, the robot was probably pushed so don't correct.
-        if (Math.abs(differenceOfSpeeds) > epsilon)
-            differenceOfSpeeds = 0;
+        tangentialSpeed = lastTangentialSpeed;
 
         //If tangential speed is positive, decrease until zero, else increase it until zero.
         if (tangentialSpeed > 0) {
             tangentialSpeed = tangentialSpeed + (linearDriveDeccel * deltaTime);
-            tangentialSpeed = Math.min(tangentialSpeed, 0.0) + differenceOfSpeeds;
+            tangentialSpeed = Math.min(tangentialSpeed, 0.0);
         } else if (tangentialSpeed < 0) {
             tangentialSpeed = tangentialSpeed - (linearDriveDeccel * deltaTime);
-            tangentialSpeed = Math.max(tangentialSpeed, 0.0) + differenceOfSpeeds;
+            tangentialSpeed = Math.max(tangentialSpeed, 0.0);
         }
 
         //rotate distance vector by 90 degrees.
@@ -124,6 +106,8 @@ public class AutoDriveTo {
         tangentialVelocity = tangentialVelocity.div(tangentialVelocity.norm());
 
         tangentialVelocity = tangentialVelocity.times(tangentialSpeed);
+
+        lastTangentialSpeed = tangentialSpeed;
 
         return tangentialVelocity;
     }
@@ -198,6 +182,8 @@ public class AutoDriveTo {
             lastRadialSpeed = 0;
             lastTangentialSpeed = 0;
             lastRotationalSpeed = currentVelocity.angVel;
+            lastRadialSpeed = findRadialSpeed(currentVelocity.linearVel, linearVector);
+            lastTangentialSpeed = findTangentialSpeed(currentVelocity.linearVel, linearVector);
             lastTime = 0;
         }
 
