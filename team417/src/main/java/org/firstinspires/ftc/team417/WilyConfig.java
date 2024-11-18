@@ -19,8 +19,8 @@ public class WilyConfig extends WilyWorks.Config {
         robotLength = 18.0;
 
         distanceSensors = new DistanceSensor[] {
-                new DistanceSensor("leftSonic", -4.5, 7, -Math.PI / 9),
-                new DistanceSensor("rightSonic", 6.5, 0, Math.PI / 2)
+                new DistanceSensor("leftSonic", 7, 4.5, Math.PI / 9),
+                new DistanceSensor("rightSonic", 0, -6.5, -Math.toRadians(90))
         };
 
         positionError = 1.0; // Percentage error as a function of distance traveled

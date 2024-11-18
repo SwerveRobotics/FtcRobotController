@@ -29,20 +29,21 @@ public class DistanceSensorConcept extends FastBotTeleOp {
         leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
         rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
 
-        DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
-        DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
+        DistanceSensorInfo leftInfo = new DistanceSensorInfo(-4.5, 7, -Math.PI / 9);
+        DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.5, 0, Math.PI / 2);
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
 
         while (opModeIsActive()) {
-            double h = normalizeToFirstQuadrant(drive.otosDriver.getPosition().h);
+            double h = drive.otosDriver.getPosition().h;
 
             double dL = leftSonic.getDistance(DistanceUnit.INCH);
             double dR = rightSonic.getDistance(DistanceUnit.INCH);
 
-            telemetry.addData("X distance", calculateDistance(dL, h, leftInfo));
-            telemetry.addData("Y distance", calculateDistance(dR, h, rightInfo));
+            // TODO: Doesn't work
+//            telemetry.addData("X distance", calculateDistance(dR, h, rightInfo, true));
+//            telemetry.addData("Y distance", calculateDistance(dL, h, leftInfo, false));
 
             controlDrivebaseWithGamepads(true, false);
 
@@ -115,29 +116,6 @@ public class DistanceSensorConcept extends FastBotTeleOp {
         double totalDistanceFromWall = sensorToWall + topCenterToSensor + centerToTopCenter;
 
         telemetry.addData("Total distance from wall (in)", totalDistanceFromWall);
-    }
-
-    double calculateDistance(double distance, double heading, DistanceSensorInfo info) {
-        // Calculate the heading relative to the line that bisects the right angle of the corner
-        // heading because I'm using right is positive, where RoadRunner uses left is positive
-        double relative = -heading + ANGLE_OF_POSITIVE_CORNER;
-
-        telemetry.addData("Heading", relative);
-
-        telemetry.addData("Raw distance", distance);
-        // Distance from the sensor to the wall
-        double sensorToWall = distance * Math.cos(relative);
-
-        telemetry.addData("d", sensorToWall);
-        // n := distance involving the y-value of the info
-        double n = info.getYOffset() * Math.cos(relative - info.getThetaOffset());
-        telemetry.addData("n", n);
-
-        // m := distance involving the x-value of the info
-        double m = -info.getXOffset() * Math.sin(relative - info.getThetaOffset());
-        telemetry.addData("m", m);
-
-        return sensorToWall + n + m;
     }
 
     double normalizeToFirstQuadrant(double theta) {

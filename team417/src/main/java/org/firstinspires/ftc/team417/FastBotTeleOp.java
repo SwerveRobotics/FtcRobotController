@@ -70,7 +70,7 @@ public class FastBotTeleOp extends BaseOpMode {
     }
 
     public void prepareRobot() {
-        prepareRobot(new Pose2d(-0, -48, Math.PI / 2));
+        prepareRobot(new Pose2d(60, 60, Math.PI / 2));
     }
 
     public void prepareRobot(Pose2d startingPose) {

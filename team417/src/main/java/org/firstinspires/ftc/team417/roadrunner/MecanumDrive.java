@@ -1038,6 +1038,10 @@ public final class MecanumDrive {
             poseVelocity = twist.velocity().value();
         }
 
+        if (distanceLocalizer != null) {
+            pose = new Pose2d(pose.position.plus(distanceLocalizer.updateIfPossible()), pose.heading.log());
+        }
+
         poseHistory.add(pose);
         while (poseHistory.size() > 100) {
             poseHistory.removeFirst();
