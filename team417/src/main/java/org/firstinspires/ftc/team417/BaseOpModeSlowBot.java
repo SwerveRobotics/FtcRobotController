@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team417;
 
+import static java.lang.System.nanoTime;
+
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -9,9 +11,11 @@ import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
+import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
+    static MecanumDrive drive;
 
     //TODO: tune for correct value
     final static double SLIDE_HOME_POSITION = 0;
@@ -44,6 +48,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double WRIST_OUT = 0.0;
     final static double WRIST_IN = 0.0;
     final static double WRIST_MIN = 0.0;
+
+
 
     // This provides an error tolerance for lift and slide
     final static double TICKS_EPSILON = 3.00;
@@ -184,6 +190,11 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         if (intake2 != null) {
             intake2.setPower(spinControl);
         }
+    }
+
+    // The time since the robot started in seconds
+    public double currentTime() {
+        return nanoTime() * 1e-9;
     }
 
     public void initializeHardware() {

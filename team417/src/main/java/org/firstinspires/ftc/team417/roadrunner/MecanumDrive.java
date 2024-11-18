@@ -61,6 +61,7 @@ import com.wilyworks.common.WilyWorks;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.team417.BaseOpMode;
 import org.firstinspires.ftc.team417.DriveParameters;
@@ -72,6 +73,7 @@ import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsM
 import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
 import org.firstinspires.inspection.InspectionState;
 import org.swerverobotics.ftc.UltrasonicDistanceSensor;
+import org.swerverobotics.ftc.GoBildaPinpointDriver;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -116,6 +118,12 @@ public final class MecanumDrive {
                     otos.offset.h = Math.toRadians(-89.71); // Was Math.toRadians(0)
                     otos.linearScalar = 1.000; // Was 0.000
                     otos.angularScalar = 1.0005;
+
+                    pinpoint.ticksPerMm = 0;
+                    pinpoint.xReversed = false;
+                    pinpoint.yReversed = false;
+                    pinpoint.xOffset = 0;
+                    pinpoint.yOffset = 0;
                     break;
 
                 case DEVBOT_X:
@@ -143,6 +151,13 @@ public final class MecanumDrive {
                     otos.offset.h = Math.toRadians(0);
                     otos.linearScalar = 0;
                     otos.angularScalar = 0;
+
+                    pinpoint.ticksPerMm = 0;
+                    pinpoint.xReversed = false;
+                    pinpoint.yReversed = false;
+                    pinpoint.xOffset = 0;
+                    pinpoint.yOffset = 0;
+
                     break;
 
                 case FASTBOT_MECANUM:
@@ -170,6 +185,12 @@ public final class MecanumDrive {
                     otos.offset.h = Math.toRadians(88.550); // Was 91.19
                     otos.linearScalar = 1.007; // Was 0.989
                     otos.angularScalar = 1.0019;
+
+                    pinpoint.ticksPerMm = 0;
+                    pinpoint.xReversed = false;
+                    pinpoint.yReversed = false;
+                    pinpoint.xOffset = 0;
+                    pinpoint.yOffset = 0;
                     break;
 
                 case COMPETITION_ROBOT:
@@ -197,6 +218,12 @@ public final class MecanumDrive {
                     otos.offset.h = Math.toRadians(-89.71); // Was Math.toRadians(0)
                     otos.linearScalar = 1.000; // Was 0.000
                     otos.angularScalar = 1.0005;
+
+                    pinpoint.ticksPerMm = 0;
+                    pinpoint.xReversed = false;
+                    pinpoint.yReversed = false;
+                    pinpoint.xOffset = 0;
+                    pinpoint.yOffset = 0;
                     break;
 
             }
@@ -229,6 +256,7 @@ public final class MecanumDrive {
         public double headingVelGain; // Path controller derivative gain, scalar
 
         public Otos otos = new Otos();
+        public Pinpoint pinpoint = new Pinpoint();
 
         // Structure for the settings of the SparkFun Optical Tracking Odometry Sensor.
         public static class Otos {
@@ -236,6 +264,15 @@ public final class MecanumDrive {
             public SparkFunOTOS.Pose2D offset = new SparkFunOTOS.Pose2D(0, 0, 0);
             public double linearScalar; // Scalar
             public double angularScalar; // Scalar
+        }
+
+        // Structure for the settings of the goBilda Pinpoint Odometry Computer.
+        public static class Pinpoint {
+            public double ticksPerMm; // Millimeters per tick
+            public boolean xReversed; // True if the x-encoder (forward) is reversed, false if forward
+            public boolean yReversed; // True if the y-encoder (strafe) is reversed, false if forward
+            public double xOffset; // Mm offset from center of rotation to x-encoder (forward)
+            public double yOffset; // Mm offset from center of rotation to y-encoder (strafe)
         }
     }
 
@@ -279,10 +316,11 @@ public final class MecanumDrive {
 
     public Localizer localizer;
     public Pose2d pose; // Current actual pose
-    public PoseVelocity2d poseVelocity;
+    public PoseVelocity2d poseVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0); // Current velocity
     public Pose2d targetPose; // Target pose when actively traversing a trajectory
-    public SparkFunOTOS opticalTracker; // Can be null which means no OTOS
-    public SparkFunOTOS.Pose2D opticalAcceleration = new SparkFunOTOS.Pose2D(0, 0, 0); // Most recent acceleration from the OTOS
+    public SparkFunOTOS otosDriver; // Can be null which means no OTOS
+    public GoBildaPinpointDriver pinpointDriver; // Can be null which means no Pinpoint
+
     public double lastLinearGainError = 0; // Most recent gain error in inches and radians
     public double lastHeadingGainError = 0;
     public double maxLinearGainError = 0; // Max gain error to date in inches and radians
@@ -299,14 +337,14 @@ public final class MecanumDrive {
 
     public class DriveLocalizer implements Localizer {
         public Encoder leftFront, leftBack, rightBack, rightFront;
-        public final IMU imu;
+        public IMU imu;
 
         private int lastLeftFrontPos, lastLeftBackPos, lastRightBackPos, lastRightFrontPos;
         private Rotation2d lastHeading;
         private boolean initialized;
 
         public DriveLocalizer() {
-            imu = lazyImu.get();
+            // imu = lazyImu.get(); // NOT NEEDED with OTOS/Pinpoint
             leftFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftFront));
             leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
             rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
@@ -419,7 +457,7 @@ public final class MecanumDrive {
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         switch (driveParameters) {
             case DEVBOT_MECANUM:
-                opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+                otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
 
                 if (BaseOpMode.USE_DISTANCE) {
                     UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
@@ -441,7 +479,7 @@ public final class MecanumDrive {
             case DEVBOT_X:
                 // TODO: Create the optical tracking object:
                 //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
-                //   initializeOpticalTracker();
+                //   initializeOtosDriver();
 
                 if (BaseOpMode.USE_DISTANCE) {
                     // TODO: Create the distance sensor tracking object:
@@ -462,7 +500,7 @@ public final class MecanumDrive {
 
             case FASTBOT_MECANUM:
                 // enable this when we have the optical tracker
-                opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
+                otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
 
                 if (BaseOpMode.USE_DISTANCE) {
                     // TODO: Create the distance sensor tracking object:
@@ -484,15 +522,15 @@ public final class MecanumDrive {
                 break;
 
             case COMPETITION_ROBOT:
-                //opticalTracker = hardwareMap.get(SparkFunOTOS.class, "otos");
-                //initializeOpticalTracker();
+                //otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
+                //initializeOtosDriver();
 
                 if (BaseOpMode.USE_DISTANCE) {
                     // TODO: Create the distance sensor tracking object:
                     //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
                     //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
                     //   DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
-                    //   DistanceSensorInfo riMghtInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
+                    //   DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
                     //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
                 }
 
@@ -504,25 +542,37 @@ public final class MecanumDrive {
                 leftFront.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
-
         }
 
-        // Initialize the OTOS, if any:
-        initializeOpticalTracker();
+        // Initialize the tracking drivers, if any:
+        initializeOtosDriver();
+        initializePinpointDriver();
 
-        // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
-        //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         lazyImu = new LazyImu(hardwareMap, "imu", new RevHubOrientationOnRobot(
                 PARAMS.logoFacingDirection, PARAMS.usbFacingDirection));
 
-        // TODO: Choose the right kind of localizer
         localizer = new DriveLocalizer();
     }
 
-    // Initialize the optical tracking sensor if we have one. Derived from configureOtos(). The
+    // Initialize the Pinpoint sensor if we have one.
+    public void initializePinpointDriver() {
+        if (pinpointDriver == null)
+            return; // ====>
+
+        pinpointDriver.setOffsets(PARAMS.pinpoint.xOffset, PARAMS.pinpoint.yOffset);
+        pinpointDriver.setEncoderResolution(PARAMS.pinpoint.ticksPerMm);
+        pinpointDriver.setEncoderDirections(
+                PARAMS.pinpoint.xReversed ? GoBildaPinpointDriver.EncoderDirection.REVERSED : GoBildaPinpointDriver.EncoderDirection.FORWARD,
+                PARAMS.pinpoint.yReversed ? GoBildaPinpointDriver.EncoderDirection.REVERSED : GoBildaPinpointDriver.EncoderDirection.FORWARD);
+
+        // Now that the Pinpoint is configured, tell it the pose:
+        setPose(pose);
+    }
+
+    // Initialize the OTOS sensor if we have one. Derived from configureOtos(). The
     // pose is the initial pose where the robot will start on the field.
-    public void initializeOpticalTracker() {
-        if (opticalTracker == null)
+    public void initializeOtosDriver() {
+        if (otosDriver == null)
             return; // ====>
 
         // Set the desired units for linear and angular measurements. Can be either
@@ -530,8 +580,8 @@ public final class MecanumDrive {
         // set, the default is inches and degrees. Note that this setting is not
         // persisted in the sensor, so you need to set at the start of all your
         // OpModes if using the non-default value.
-        opticalTracker.setLinearUnit(DistanceUnit.INCH);
-        opticalTracker.setAngularUnit(AngleUnit.RADIANS);
+        otosDriver.setLinearUnit(DistanceUnit.INCH);
+        otosDriver.setAngularUnit(AngleUnit.RADIANS);
 
         // Assuming you've mounted your sensor to a robot and it's not centered,
         // you can specify the offset for the sensor relative to the center of the
@@ -544,7 +594,7 @@ public final class MecanumDrive {
         // clockwise (negative rotation) from the robot's orientation, the offset
         // would be {-5, 10, -90}. These can be any value, even the angle can be
         // tweaked slightly to compensate for imperfect mounting (eg. 1.3 degrees).
-        opticalTracker.setOffset(PARAMS.otos.offset);
+        otosDriver.setOffset(PARAMS.otos.offset);
 
         // Here we can set the linear and angular scalars, which can compensate for
         // scaling issues with the sensor measurements. Note that as of firmware
@@ -562,8 +612,8 @@ public final class MecanumDrive {
         // multiple speeds to get an average, then set the linear scalar to the
         // inverse of the error. For example, if you move the robot 100 inches and
         // the sensor reports 103 inches, set the linear scalar to 100/103 = 0.971
-        opticalTracker.setLinearScalar(PARAMS.otos.linearScalar);
-        opticalTracker.setAngularScalar(PARAMS.otos.angularScalar);
+        otosDriver.setLinearScalar(PARAMS.otos.linearScalar);
+        otosDriver.setAngularScalar(PARAMS.otos.angularScalar);
 
         // The IMU on the OTOS includes a gyroscope and accelerometer, which could
         // have an offset. Note that as of firmware version 1.0, the calibration
@@ -575,11 +625,11 @@ public final class MecanumDrive {
         // to wait until the calibration is complete. If no parameters are provided,
         // it will take 255 samples and wait until done; each sample takes about
         // 2.4ms, so about 612ms total
-        opticalTracker.calibrateImu();
+        otosDriver.calibrateImu();
 
         // Reset the tracking algorithm - this resets the position to the origin,
         // but can also be used to recover from some rare tracking errors
-        opticalTracker.resetTracking();
+        otosDriver.resetTracking();
 
         // After resetting the tracking, the OTOS will report that the robot is at
         // the origin. If your robot does not start at the origin, or you have
@@ -942,7 +992,25 @@ public final class MecanumDrive {
     }
 
     public PoseVelocity2d updatePoseEstimate() {
-        if (opticalTracker != null) {
+        if (pinpointDriver != null) {
+            // Query the driver for position and velocity:
+            pinpointDriver.update();
+            Pose2D pose2D = pinpointDriver.getPosition();
+            Pose2D poseVelocity2D = pinpointDriver.getVelocity();
+
+            // Convert to Road Runner format, remembering that the Pinpoint tracking sensor
+            // reports velocity as field-relative but Road Runner wants it robot-relative:
+            pose = new Pose2d(
+                    pose2D.getX(DistanceUnit.INCH),
+                    pose2D.getY(DistanceUnit.INCH),
+                    pose2D.getHeading(AngleUnit.RADIANS));
+            double xVelocity = poseVelocity2D.getX(DistanceUnit.INCH);
+            double yVelocity = poseVelocity2D.getY(DistanceUnit.INCH);
+            poseVelocity = new PoseVelocity2d(
+                    rotateVector(new Vector2d(xVelocity, yVelocity), -pose.heading.toDouble()),
+                    poseVelocity2D.getHeading(AngleUnit.RADIANS));
+
+        } else if (otosDriver != null) {
             // Get the current pose and current pose velocity from the optical tracking sensor.
             // Reads over the I2C bus are very slow so for performance we query the velocity only
             // if we'll actually need it - i.e., if using non-zero velocity gains:
@@ -951,19 +1019,14 @@ public final class MecanumDrive {
             SparkFunOTOS.Pose2D acceleration = new SparkFunOTOS.Pose2D(0, 0, 0);
 
             // This single call is faster than separate calls to getPosition() and getVelocity():
-            opticalTracker.getPosVelAcc(position, velocity, acceleration);
+            otosDriver.getPosVelAcc(position, velocity, acceleration);
 
-            // Road Runner requires the pose to be field-relative while the velocity has to be
-            // robot-relative, but the optical tracking sensor reports everything as field-
-            // relative. As such, convert the velocity to be robot-relative by rotating it
-            // by the negative of the robot's current heading:
-            double rotation = -position.h;
-            poseVelocity = new PoseVelocity2d(
-                    new Vector2d(Math.cos(rotation) * velocity.x - Math.sin(rotation) * velocity.y,
-                            Math.sin(rotation) * velocity.x + Math.cos(rotation) * velocity.y),
-                    velocity.h);
-
+            // Convert to Road Runner format, remembering that the optical tracking sensor
+            // reports velocity as field-relative but Road Runner wants it robot-relative:
             pose = new Pose2d(position.x, position.y, position.h);
+            poseVelocity = new PoseVelocity2d(
+                    rotateVector(new Vector2d(velocity.x, velocity.y), -pose.heading.toDouble()),
+                    velocity.h);
         } else {
             // Use the wheel odometry to update the pose:
             Twist2dDual<Time> twist = WilyWorks.localizerUpdate();
@@ -973,10 +1036,6 @@ public final class MecanumDrive {
 
             pose = pose.plus(twist.value());
             poseVelocity = twist.velocity().value();
-        }
-
-        if (distanceLocalizer != null) {
-            pose = new Pose2d(pose.position.plus(distanceLocalizer.updateIfPossible()), pose.heading.log());
         }
 
         poseHistory.add(pose);
@@ -1062,9 +1121,15 @@ public final class MecanumDrive {
         poseHistory.clear();
 
         // Set the pose on the optical tracking sensor:
-        if (opticalTracker != null) {
-            opticalTracker.setPosition(new SparkFunOTOS.Pose2D(
+        if (otosDriver != null) {
+            otosDriver.setPosition(new SparkFunOTOS.Pose2D(
                     pose.position.x, pose.position.y, pose.heading.toDouble()));
+        }
+        // Set the pose on the Pinpoint tracking sensor:
+        if (pinpointDriver != null) {
+            pinpointDriver.setPosition(new Pose2D(
+                    DistanceUnit.INCH, pose.position.x, pose.position.y,
+                    AngleUnit.RADIANS, pose.heading.toDouble()));
         }
     }
 

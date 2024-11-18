@@ -36,7 +36,7 @@ public class DistanceSensorConcept extends FastBotTeleOp {
         waitForStart();
 
         while (opModeIsActive()) {
-            double h = normalizeToFirstQuadrant(drive.opticalTracker.getPosition().h);
+            double h = normalizeToFirstQuadrant(drive.otosDriver.getPosition().h);
 
             double dL = leftSonic.getDistance(DistanceUnit.INCH);
             double dR = rightSonic.getDistance(DistanceUnit.INCH);
@@ -65,7 +65,7 @@ public class DistanceSensorConcept extends FastBotTeleOp {
 
     /** @noinspection unused*/ // Legacy, saved in case needed later
     public void calculateLeft() {
-        double heading = -drive.opticalTracker.getPosition().h + ANGLE_OF_POSITIVE_CORNER;
+        double heading = -drive.otosDriver.getPosition().h + ANGLE_OF_POSITIVE_CORNER;
 
         telemetry.addData("Heading (deg)", Math.toDegrees(heading));
 
@@ -92,7 +92,7 @@ public class DistanceSensorConcept extends FastBotTeleOp {
 
     /** @noinspection unused*/ // Legacy, saved in case needed later
     public void calculateRight() {
-        double heading = -drive.opticalTracker.getPosition().h + ANGLE_OF_POSITIVE_CORNER;
+        double heading = -drive.otosDriver.getPosition().h + ANGLE_OF_POSITIVE_CORNER;
 
         telemetry.addData("Heading (deg)", Math.toDegrees(heading));
 

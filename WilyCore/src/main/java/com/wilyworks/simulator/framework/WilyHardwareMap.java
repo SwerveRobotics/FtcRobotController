@@ -39,6 +39,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Quaternion;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.robotcore.internal.system.Deadline;
+import org.swerverobotics.ftc.GoBildaPinpointDriver;
 import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 
 import java.util.ArrayList;
@@ -570,6 +571,7 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
     public DeviceMapping<DigitalChannel>           digitalChannel           = new DeviceMapping<>(DigitalChannel.class);
     public DeviceMapping<LED>                      led                      = new DeviceMapping<>(LED.class);
     public DeviceMapping<SparkFunOTOS>             sparkFunOTOS             = new DeviceMapping<>(SparkFunOTOS.class);
+    public DeviceMapping<GoBildaPinpointDriver>    goBildaPinpointDrivers   = new DeviceMapping<>(GoBildaPinpointDriver.class);
     public DeviceMapping<UltrasonicDistanceSensor> ultrasonicDistanceSensor = new DeviceMapping<>(UltrasonicDistanceSensor.class);
     protected Map<String, List<HardwareDevice>>    allDevicesMap            = new HashMap<>();
     protected List<HardwareDevice>                 allDevicesList           = new ArrayList<>();
@@ -661,6 +663,9 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
         } else if (SparkFunOTOS.class.isAssignableFrom(klass)) {
             device = new SparkFunOTOS(null);
             sparkFunOTOS.put(deviceName, (SparkFunOTOS) device);
+        } else if (GoBildaPinpointDriver.class.isAssignableFrom(klass)) {
+            device = new GoBildaPinpointDriver(null, false);
+            goBildaPinpointDrivers.put(deviceName, (GoBildaPinpointDriver) device);
         } else if (UltrasonicDistanceSensor.class.isAssignableFrom(klass)) {
             device = new WilyUltrasonicDistanceSensor(deviceName);
             ultrasonicDistanceSensor.put(deviceName, (WilyUltrasonicDistanceSensor) device);
