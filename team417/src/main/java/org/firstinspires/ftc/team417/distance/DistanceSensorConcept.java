@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team417.distance;
 
+import static org.firstinspires.ftc.team417.distance.DistanceLocalizer.calculateDistance;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -41,9 +43,8 @@ public class DistanceSensorConcept extends FastBotTeleOp {
             double dL = leftSonic.getDistance(DistanceUnit.INCH);
             double dR = rightSonic.getDistance(DistanceUnit.INCH);
 
-            // TODO: Doesn't work
-//            telemetry.addData("X distance", calculateDistance(dR, h, rightInfo, true));
-//            telemetry.addData("Y distance", calculateDistance(dL, h, leftInfo, false));
+            telemetry.addData("X distance", calculateDistance(dR, h, rightInfo, false));
+            telemetry.addData("Y distance", calculateDistance(dL, h, leftInfo, true));
 
             controlDrivebaseWithGamepads(true, false);
 

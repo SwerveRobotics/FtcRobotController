@@ -81,11 +81,22 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpMode {
             // 'packet' is the object used to send data to FTC Dashboard:
             packet = MecanumDrive.getTelemetryPacket();
 
-
             // Draw the preview and then run the next step of the trajectory on top:
             packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
             more = trajectoryAction.run(packet);
 
+            Pose2d oldPose = new Pose2d(
+                    drive.pose.position.x - drive.distanceLocalizer.correction.x,
+                    drive.pose.position.y - drive.distanceLocalizer.correction.y,
+                    drive.pose.heading.log()
+            );
+            packet.fieldOverlay().setStroke("#FF0000");
+            packet.fieldOverlay().strokeLine(
+                    oldPose.position.x,
+                    oldPose.position.y,
+                    drive.pose.position.x,
+                    drive.pose.position.y
+            );
 
             // Only send the packet if there's more to do in order to keep the very last
             // drawing up on the field once the robot is done:

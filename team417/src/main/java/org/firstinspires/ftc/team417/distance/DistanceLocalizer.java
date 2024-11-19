@@ -22,6 +22,8 @@ public class DistanceLocalizer {
 
     public MecanumDrive drive;
 
+    public boolean correcting = false;
+
     public Vector2d correction;
     public Vector2d targetCorrection;
     public ArrayList<Vector2d> history = new ArrayList<>();
@@ -109,7 +111,9 @@ public class DistanceLocalizer {
             detectedRelativePosition = new Vector2d(
                     calculateDistance(latestRight, heading, rightInfo, false),
                     calculateDistance(latestLeft, heading, leftInfo, true));
+            correcting = true;
         } else {
+            correcting = false;
             return correction;
         }
 
@@ -180,12 +184,12 @@ public class DistanceLocalizer {
         leftTurn = !leftTurn;
     }
 
-    public static double calculateDistance(double distance, double heading, DistanceSensorInfo info, boolean gettingX) {
+    public static double calculateDistance(double distance, double heading, DistanceSensorInfo info, boolean gettingY) {
         // Because I'm using right is positive, where RoadRunner uses left is positive
         double relative = -heading + info.getThetaOffset();
 
         double sensorToWall, n, m;
-        if (gettingX) {
+        if (gettingY) {
             // Distance from the sensor to the wall
             sensorToWall = distance * Math.cos(relative);
 
