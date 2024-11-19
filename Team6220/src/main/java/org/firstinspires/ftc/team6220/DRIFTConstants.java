@@ -37,4 +37,12 @@ public abstract class DRIFTConstants {
     public static final String LEFT_BACK_MOTOR_HARDWARE_IDENTIFIER = "leftBack";
     public static final String RIGHT_BACK_MOTOR_HARDWARE_IDENTIFIER = "rightBack";
     public static final String RIGHT_FRONT_MOTOR_HARDWARE_IDENTIFIER = "rightFront";
+
+    // lists of device set positions
+    public static final double[] ARM_ELBOW_SERVO_SET_POSITIONS =
+            {ARM_ELBOW_SERVO_POSITION_OVER_BAR, ARM_ELBOW_SERVO_POSITION_GROUND};
+    public static final int[] ARM_BASE_MOTOR_SET_POSITIONS =
+            {ARM_BASE_MOTOR_POSITION_INIT, ARM_BASE_MOTOR_POSITION_GROUND, ARM_BASE_MOTOR_POSITION_OVER_BAR};
+    public static final int[] SLIDES_MOTOR_SET_POSITION =
+            {SLIDES_MOTOR_GROUND_POSITION, SLIDES_MOTOR_POSITION_ONE, SLIDES_MOTOR_POSITION_TWO};
 }
