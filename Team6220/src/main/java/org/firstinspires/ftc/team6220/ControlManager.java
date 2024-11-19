@@ -10,9 +10,10 @@ public class ControlManager {
     private int armBaseMotorPosition;
     private int slidesMotorPosition;
     private double intakeServoPower;
-    private double dumperServoPosition;
+    private double dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_INIT;
     private double armElbowServoPosition = 0;
 
+    boolean leftBumperWasPressed = false;
 
     public ControlManager(Gamepad gamepad1, Gamepad gamepad2) {
         this.gamepad1 = gamepad1;
@@ -58,6 +59,23 @@ public class ControlManager {
         if (gamepad2.dpad_up && !gamepad2.dpad_down) {
             slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_POSITION_TWO;
         }
+
+        // protection against holding it down :>
+        if (gamepad2.left_bumper && !leftBumperWasPressed) {
+            // really crappy mode swapper
+            dumperServoPosition =
+                    dumperServoPosition == DRIFTConstants.DUMPER_SERVO_POSITION_INIT
+                     ? DRIFTConstants.DUMPER_SERVO_POSITION_DUMP
+                            : DRIFTConstants.DUMPER_SERVO_POSITION_INIT;
+        }
+
+        /*
+        leftBumperWasPressed = gamepad2.left_bumper;
+
+        armElbowServoPosition = -gamepad1.left_stick_y;
+        intakeServoPower = -gamepad1.right_stick_y;
+        */
+        slidesMotorPosition += (int) (10 * -gamepad2.left_stick_y);
         if (gamepad2.right_trigger >= 0) {
             armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER;
         }

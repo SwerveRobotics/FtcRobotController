@@ -7,13 +7,9 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
-import com.qualcomm.robotcore.hardware.Servo;
 
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team6220.roadrunner.Drawing;
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 
@@ -56,12 +52,11 @@ public class CompetitionTeleOp extends BaseOpMode {
                 telemetry.addLine("WEEWOO WEEWOO! EJECT IMMEDIATELY");
             }*/
 
-            telemetry.update();
 
             controls.update();
 
             armBaseMotor.setPower(1.0);
-            slidesMotor.setPower(1.0);
+            slidesMotor.setPower(0.5);
             armBaseMotor.setTargetPosition(controls.getArmBaseMotorPosition());
             telemetry.addLine("Arm Target Position: " + controls.getArmBaseMotorPosition());
             slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
@@ -71,23 +66,24 @@ public class CompetitionTeleOp extends BaseOpMode {
             dumperServo.setPosition(controls.getDumperServoPosition());
             armElbowServo.setPosition(controls.getArmElbowServoPosition());
             telemetry.addLine("Arm Elbow Servo Current Position: " + armElbowServo.getPosition());
-            telemetry.addLine("Arm Elbow Servo Target Position: " + controls.getArmElbowServoPosition());
 
             // janky speed modifier
             float speedModifier = 1 - (gamepad1.right_trigger * 0.5f);
 
             // Set the drive motor powers according to the gamepad input:
-            drive.setDrivePowers(new PoseVelocity2d(
+            /*drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
                             -gamepad1.left_stick_y * speedModifier,
                             -gamepad1.left_stick_x * speedModifier
                     ),
                     -gamepad1.right_stick_x * speedModifier
-            ));
+            )); */
 
             // Update the current pose:
             drive.updatePoseEstimate();
 
+            // update telemetry
+            telemetry.update();
             // 'packet' is the object used to send data to FTC Dashboard:
             TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
 
