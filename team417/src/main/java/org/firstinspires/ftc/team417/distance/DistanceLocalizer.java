@@ -40,7 +40,7 @@ public class DistanceLocalizer {
 
     final double ANGLE_OF_POSITIVE_CORNER = 0.25 * Math.PI; // Angle facing (72, 72)
     final double RELIABLE_DISTANCE = 48; // Corner is defined as this distance away from walls
-    final double MIN_RELIABLE_ANGLE = -11 * Math.PI / 36; // In radians
+    final double MIN_RELIABLE_ANGLE = -Math.PI / 6; // In radians
     final double MAX_RELIABLE_ANGLE = Math.PI / 9; // In radians
 
     final ElapsedTime clock = new ElapsedTime();
