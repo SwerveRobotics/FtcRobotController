@@ -360,7 +360,6 @@ public final class MecanumDrive {
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         if (isDevBot) {
             otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
-//             pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
             leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");

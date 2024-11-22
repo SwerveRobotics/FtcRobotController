@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.util.RobotLog;
 /**
  * This class wraps Road Runner actions to implement easier-to-use support for state-machine
  * cooperative multitasking, with additional error checking to prevent robot destruction.
+ * @noinspection unused
  */
 @SuppressLint("DefaultLocale")
 abstract public class RobotAction implements Action {
