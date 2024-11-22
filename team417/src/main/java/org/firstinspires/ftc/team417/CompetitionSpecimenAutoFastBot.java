@@ -7,6 +7,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
@@ -77,15 +78,30 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpMode {
             telemetry.addLine("Running Auto!");
             telemetry.addData("Kinematic Type", kinematicType);
 
-
             // 'packet' is the object used to send data to FTC Dashboard:
             packet = MecanumDrive.getTelemetryPacket();
-
 
             // Draw the preview and then run the next step of the trajectory on top:
             packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
             more = trajectoryAction.run(packet);
 
+            Pose2d oldPose = new Pose2d(
+                    drive.pose.position.x - drive.distanceLocalizer.correction.x,
+                    drive.pose.position.y - drive.distanceLocalizer.correction.y,
+                    drive.pose.heading.log()
+            );
+            if (drive.distanceLocalizer.correcting) {
+                packet.fieldOverlay().setStroke("#00FF00");
+            } else {
+                packet.fieldOverlay().setStroke("#FF0000");
+            }
+            packet.fieldOverlay().strokeLine(
+                    oldPose.position.x,
+                    oldPose.position.y,
+                    drive.pose.position.x,
+                    drive.pose.position.y
+            );
+            Drawing.drawRobot(packet.fieldOverlay(), oldPose);
 
             // Only send the packet if there's more to do in order to keep the very last
             // drawing up on the field once the robot is done:

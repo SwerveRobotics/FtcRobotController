@@ -22,6 +22,8 @@ public class DistanceLocalizer {
 
     public MecanumDrive drive;
 
+    public boolean correcting = false;
+
     public Vector2d correction;
     public Vector2d targetCorrection;
     public ArrayList<Vector2d> history = new ArrayList<>();
@@ -38,7 +40,8 @@ public class DistanceLocalizer {
 
     final double ANGLE_OF_POSITIVE_CORNER = 0.25 * Math.PI; // Angle facing (72, 72)
     final double RELIABLE_DISTANCE = 48; // Corner is defined as this distance away from walls
-    final double RELIABLE_ANGLE = Math.PI / 6; // This is x in |--x--|--✓--|--x--|, total 90 degrees
+    final double MIN_RELIABLE_ANGLE = -Math.PI / 6; // In radians
+    final double MAX_RELIABLE_ANGLE = Math.PI / 9; // In radians
 
     final ElapsedTime clock = new ElapsedTime();
 
@@ -90,20 +93,27 @@ public class DistanceLocalizer {
         IntersectionResult leftIntersection = FieldSimulator.findIntersection(drive.pose, leftInfo.getPose());
         IntersectionResult rightIntersection = FieldSimulator.findIntersection(drive.pose, rightInfo.getPose());
 
+        double theta = calculateTheta(leftIntersection.side, rightIntersection.side);
+
         // Since distance sensors can't tell you which quadrant you're in
-        double heading = normalizeToFirstQuadrant(drive.pose.heading.log());
+        // Since the "top" is considered to be PI / 2
+        double heading = drive.pose.heading.log() - theta - Math.PI / 2;
+
+        heading = heading % (2 * Math.PI);
 
         boolean sameSide = leftIntersection.side == rightIntersection.side;
         boolean closeEnough = leftIntersection.distance < RELIABLE_DISTANCE && rightIntersection.distance < RELIABLE_DISTANCE;
-        boolean angleIsEnough = RELIABLE_ANGLE < heading && heading < Math.PI / 2 - RELIABLE_ANGLE;
+        boolean angleIsEnough = MIN_RELIABLE_ANGLE <= heading && heading <= MAX_RELIABLE_ANGLE;
 
         Vector2d detectedRelativePosition, detectedPosition, detectedCorrection;
-        if (!sameSide && closeEnough && angleIsEnough) {
+        if (!sameSide && closeEnough && angleIsEnough && latestRight != 0 && latestLeft != 0) {
             // Detected position relative to the corner
             detectedRelativePosition = new Vector2d(
-                    calculateDistance(latestRight, heading, rightInfo),
-                    calculateDistance(latestLeft, heading, leftInfo));
+                    calculateDistance(latestRight, heading, rightInfo, false),
+                    calculateDistance(latestLeft, heading, leftInfo, true));
+            correcting = true;
         } else {
+            correcting = false;
             return correction;
         }
 
@@ -111,8 +121,6 @@ public class DistanceLocalizer {
 
         // Position relative to the center, but doesn't account for which corner it is
         Vector2d unrotatedPosition = (fieldVector).minus(detectedRelativePosition);
-
-        double theta = calculateTheta(leftIntersection.side, rightIntersection.side);
 
         // Position detected by this iteration of the loop
         detectedPosition = rotate(unrotatedPosition, theta);
@@ -176,19 +184,30 @@ public class DistanceLocalizer {
         leftTurn = !leftTurn;
     }
 
-    double calculateDistance(double distance, double heading, DistanceSensorInfo info) {
-        // Calculate the heading relative to the line that bisects the right angle of the corner
-        // heading because I'm using right is positive, where RoadRunner uses left is positive
-        double relative = -heading + ANGLE_OF_POSITIVE_CORNER;
+    public static double calculateDistance(double distance, double heading, DistanceSensorInfo info, boolean gettingY) {
+        // Because I'm using right is positive, where RoadRunner uses left is positive
+        double relative = -heading + info.getThetaOffset();
 
-        // Distance from the sensor to the wall
-        double sensorToWall = distance * Math.cos(relative);
+        double sensorToWall, n, m;
+        if (gettingY) {
+            // Distance from the sensor to the wall
+            sensorToWall = distance * Math.cos(relative);
 
-        // n := distance involving the y-value of the info
-        double n = info.getYOffset() * Math.cos(relative - info.getThetaOffset());
+            // n := distance involving the y-value of the info
+            n = info.getYOffset() * Math.cos(-heading);
 
-        // m := distance involving the x-value of the info
-        double m = -info.getXOffset() * Math.sin(relative - info.getThetaOffset());
+            // m := distance involving the x-value of the info
+            m = -info.getXOffset() * Math.sin(-heading);
+        } else {
+            // Distance from the sensor to the wall
+            sensorToWall = distance * Math.sin(relative);
+
+            // n := distance involving the y-value of the info
+            n = -info.getYOffset() * Math.sin(-heading);
+
+            // m := distance involving the x-value of the info
+            m = info.getXOffset() * Math.cos(-heading);
+        }
 
         return sensorToWall + n + m;
     }

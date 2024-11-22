@@ -11,7 +11,7 @@ import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
-@TeleOp(name = "TeleOp", group = "Competition")
+@TeleOp(name = "TeleOp", group = "SlowBot")
 @Config
 public class SlowBotTeleOp extends BaseOpModeSlowBot {
     private double speedMultiplier = 1;

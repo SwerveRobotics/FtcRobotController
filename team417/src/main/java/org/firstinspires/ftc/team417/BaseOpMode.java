@@ -123,6 +123,8 @@ abstract public class BaseOpMode extends LinearOpMode {
                 initCompBot();
             case FASTBOT_MECANUM:
                 initFastBot();
+            case DEVBOT_MECANUM:
+                initFastBot();
         }
     }
     

@@ -16,7 +16,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  * This class exposes the competition version of TeleOp. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@TeleOp(name = "TeleOp", group = "Competition")
+@TeleOp(name = "TeleOp", group = "FastBot")
 @Config
 public class FastBotTeleOp extends BaseOpMode {
     private double speedMultiplier = 0.5;
@@ -65,12 +65,24 @@ public class FastBotTeleOp extends BaseOpMode {
             // Draw the robot and field:
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
+            Pose2d oldPose = new Pose2d(
+                    drive.pose.position.x - drive.distanceLocalizer.correction.x,
+                    drive.pose.position.y - drive.distanceLocalizer.correction.y,
+                    drive.pose.heading.log());
+            packet.fieldOverlay().setStroke("#FF0000");
+            packet.fieldOverlay().strokeLine(
+                    oldPose.position.x,
+                    oldPose.position.y,
+                    drive.pose.position.x,
+                    drive.pose.position.y
+                    );
+            Drawing.drawRobot(packet.fieldOverlay(), oldPose);
             MecanumDrive.sendTelemetryPacket(packet);
         }
     }
 
     public void prepareRobot() {
-        prepareRobot(new Pose2d(-0, -48, Math.PI / 2));
+        prepareRobot(new Pose2d(60, 60, Math.PI / 2));
     }
 
     public void prepareRobot(Pose2d startingPose) {
