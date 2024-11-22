@@ -18,7 +18,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  */
 @TeleOp(name = "TeleOp", group = "FastBot")
 @Config
-public class FastBotTeleOp extends BaseOpMode {
+public class FastBotTeleOp extends BaseOpModeFastBot {
     private double speedMultiplier = 0.5;
     boolean curve = true;
     boolean fieldCentered = false;
@@ -232,7 +232,7 @@ public class FastBotTeleOp extends BaseOpMode {
             } else if (gamepad2.dpad_right) {
                 /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
                 armPosition = ARM_SCORE_SPECIMEN;
-                wrist.setPosition(WRIST_FOLDED_IN);
+                wrist.setPosition(WRIST_SCORE_SPECIMEN);
             } else if (gamepad2.dpad_up) {
                 /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
                 armPosition = ARM_ATTACH_HANGING_HOOK;

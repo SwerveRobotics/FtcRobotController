@@ -1,12 +1,10 @@
 package org.firstinspires.ftc.team417;
 
-import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 
-import org.firstinspires.ftc.team417.BaseOpMode;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -194,14 +192,14 @@ public class AutoDriveTo {
         currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
 
         if (hasInit) {
-            initTime = BaseOpMode.TIME.seconds();
+            initTime = BaseOpModeFastBot.TIME.seconds();
             lastRadialSpeed = 0;
             lastTangentialSpeed = 0;
             lastRotationalSpeed = currentVelocity.angVel;
             lastTime = 0;
         }
 
-        timeSinceInit = BaseOpMode.TIME.seconds() - initTime;
+        timeSinceInit = BaseOpModeFastBot.TIME.seconds() - initTime;
         deltaTime = timeSinceInit - lastTime;
 
         if (Math.hypot(finalLinearVelocity.x, finalLinearVelocity.y) < velocityEpsilon && Math.abs(linearVector.x) < distEpsilon && Math.abs(linearVector.y) < distEpsilon){
