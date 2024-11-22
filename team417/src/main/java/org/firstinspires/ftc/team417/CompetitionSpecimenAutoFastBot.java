@@ -23,13 +23,13 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(0));
         MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
         initFastBot();
-        RobotAction foldOutArm = new MoveArm(ARM_SCORE_SPECIMEN, WRIST_SCORE_SPECIMEN);
+        RobotAction foldOutArm = new MoveArm(ARM_SCORE_SPECIMEN, WRIST_FOLDED_OUT);
         Action trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-90))
                 .afterDisp(0, foldOutArm)
                 .splineToLinearHeading(new Pose2d(0, Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
                 .stopAndAdd(new WaitAction(foldOutArm))
-                .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN+20*ARM_TICKS_PER_DEGREE, WRIST_SCORE_SPECIMEN))       //scores the specimen with slight downward force
+                .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN+20*ARM_TICKS_PER_DEGREE, WRIST_FOLDED_OUT))       //scores the specimen with slight downward force
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(0, Y_SCORE_POSE+6, Math.toRadians(-90)), Math.toRadians(90),new TranslationalVelConstraint(20))
                 .stopAndAdd(new ScoreSample())
@@ -57,7 +57,7 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
 
                 .splineToLinearHeading(new Pose2d(-7, Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))
                 .stopAndAdd(new WaitAction(foldOutArm))
-                .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN+20*ARM_TICKS_PER_DEGREE, WRIST_SCORE_SPECIMEN))
+                .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN+20*ARM_TICKS_PER_DEGREE, WRIST_FOLDED_OUT))
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-7, Y_SCORE_POSE+6, Math.toRadians(-90)), Math.toRadians(90),new TranslationalVelConstraint(20))
                 .stopAndAdd(new ScoreSample())
