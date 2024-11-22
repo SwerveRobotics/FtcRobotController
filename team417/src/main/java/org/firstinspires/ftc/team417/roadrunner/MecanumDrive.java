@@ -503,12 +503,11 @@ public final class MecanumDrive {
                 otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
 
                 if (BaseOpModeFastBot.USE_DISTANCE) {
-                    // TODO: Create the distance sensor tracking object:
-                    //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
-                    //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
-                    //   DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
-                    //   DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
-                    //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
+                    UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
+                    UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
+                    DistanceSensorInfo leftInfo = new DistanceSensorInfo(-4.5, 7, -Math.PI / 9);
+                    DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.5, 0, Math.PI / 2);
+                    distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
                 }
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
