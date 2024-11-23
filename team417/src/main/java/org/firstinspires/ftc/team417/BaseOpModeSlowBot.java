@@ -48,6 +48,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double WRIST_IN = 0.0;
     final static double WRIST_MIN = 0.0;
 
+    public final static double XDRIVE_Y_SCORE_POSE = 33;
+
     // This provides an error tolerance for lift and slide
     final static double TICKS_EPSILON = 3.00;
 

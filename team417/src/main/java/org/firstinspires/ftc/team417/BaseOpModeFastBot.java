@@ -72,10 +72,10 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
     final static double WRIST_FOLDED_IN = 1;
     final static double WRIST_FOLDED_OUT = 0.5;
+    final static double WRIST_SCORE_SPECIMEN = 0.85;
 
     //position used to score specimens in auto
     public final static double Y_SCORE_POSE = 41;
-    public final static double XDRIVE_Y_SCORE_POSE = 33;
     /* A number in degrees that the triggers can adjust the arm position by */
     final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
