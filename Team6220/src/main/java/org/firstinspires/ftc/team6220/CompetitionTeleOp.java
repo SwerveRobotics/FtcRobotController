@@ -56,7 +56,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             controls.update();
 
             armBaseMotor.setPower(1.0);
-            slidesMotor.setPower(0.5);
+            slidesMotor.setPower(1.0);
             armBaseMotor.setTargetPosition(controls.getArmBaseMotorPosition());
             telemetry.addLine("Arm Target Position: " + controls.getArmBaseMotorPosition());
             slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());

@@ -68,12 +68,14 @@ public class ControlManager {
                      ? DRIFTConstants.DUMPER_SERVO_POSITION_DUMP
                             : DRIFTConstants.DUMPER_SERVO_POSITION_INIT;
         }
-/*
-        leftBumperWasPressed = gamepad2.left_bumper;
 
+        leftBumperWasPressed = gamepad2.left_bumper;
+        slidesMotorPosition += (int) (10 * -gamepad2.left_stick_y);
+
+
+/*
         armElbowServoPosition = Math.abs(gamepad1.left_stick_y);
         intakeServoPower = -gamepad1.right_stick_y;
-
         slidesMotorPosition += (int) (10 * -gamepad2.left_stick_y);
         if (gamepad2.right_trigger >= 0) {
             armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER;
