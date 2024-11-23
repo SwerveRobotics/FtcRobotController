@@ -41,7 +41,7 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-48, 36, Math.toRadians(-90)), Math.toRadians(90))
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-62,62,Math.toRadians(-90)),Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-63.5,62,Math.toRadians(-90)),Math.toRadians(90))
 
                 // go collect sample to obs zone
 
