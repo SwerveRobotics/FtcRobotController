@@ -5,6 +5,7 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
@@ -16,6 +17,7 @@ public class CompetitionAutoXDrivePush extends BaseOpMode{
     }
 
     @Autonomous(name = "AutoSpecimenXDrivePush", group = "Competition", preselectTeleOp = "CompetitionTeleOp")
+    @Disabled
     public class CompeitionSpecimenAutoXDrive extends BaseOpMode{
         @Override
         public void runOpMode () {

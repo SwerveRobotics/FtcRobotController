@@ -56,7 +56,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     static double ARM_COLLAPSED_INTO_ROBOT = 0;
     static double LIFT_COLLECT = 0;
-    static double ARM_COLLECT = 254 * ARM_TICKS_PER_DEGREE;
+    static double ARM_COLLECT = 255.5 * ARM_TICKS_PER_DEGREE;
     static double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
     static double ARM_AUTO_REST_POSITION = 170 * ARM_TICKS_PER_DEGREE;
     static double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
@@ -83,7 +83,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     final static double X_WRIST_FOLDED_OUT = 0; //not known yet
 
     //position used to score specimens in auto
-    public final static double Y_SCORE_POSE = 41.5;
+    public final static double Y_SCORE_POSE = 41;
     public final static double XDRIVE_Y_SCORE_POSE = 33;
     /* A number in degrees that the triggers can adjust the arm position by */
     final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
