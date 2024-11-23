@@ -35,16 +35,18 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpMode {
                 .stopAndAdd(new ScoreSample())
                 .setTangent(Math.toRadians(90))
 
-                .splineToLinearHeading(new Pose2d(-39.5,24,Math.toRadians(-90)),Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-37,24,Math.toRadians(-90)),Math.toRadians(-90))
                 .setTangent(Math.toRadians(-90))
-                .splineToLinearHeading(new Pose2d(-48,12,Math.toRadians(-90)),Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-42,13,Math.toRadians(-90)),Math.toRadians(180))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-48, 36, Math.toRadians(-90)), Math.toRadians(90))
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-62,62,Math.toRadians(-90)),Math.toRadians(90))
 
                 // go collect sample to obs zone
 
                 .setTangent(Math.toRadians(-90))
-                .afterDisp(15 ,new MoveArm((255.5*ARM_TICKS_PER_DEGREE),WRIST_FOLDED_OUT))
+                .afterDisp(15 ,new MoveArm((255*ARM_TICKS_PER_DEGREE),WRIST_FOLDED_OUT))
                 .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(180)),Math.toRadians(90))
                 .setTangent(Math.toRadians(180))
 
@@ -63,7 +65,7 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpMode {
                 .stopAndAdd(new ScoreSample())
                 .setTangent(Math.toRadians(90))
                 .setTangent(Math.toRadians(-90))
-                .afterDisp(15 ,new MoveArm((255.5*ARM_TICKS_PER_DEGREE),WRIST_FOLDED_OUT))
+                .afterDisp(15 ,new MoveArm((255*ARM_TICKS_PER_DEGREE),WRIST_FOLDED_OUT))
                 .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(180)),Math.toRadians(90))
                 .setTangent(Math.toRadians(180))
 
