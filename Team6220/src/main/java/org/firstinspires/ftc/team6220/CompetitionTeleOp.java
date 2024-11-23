@@ -7,6 +7,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 
@@ -53,7 +54,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             }*/
 
 
-            controls.update();
+            controls.update(getRuntime());
 
             armBaseMotor.setPower(1.0);
             slidesMotor.setPower(1.0);
@@ -65,6 +66,12 @@ public class CompetitionTeleOp extends BaseOpMode {
             dumperServo.setPosition(controls.getDumperServoPosition());
             armElbowServo.setPosition(controls.getArmElbowServoPosition());
             telemetry.addLine("Arm Elbow Servo Current Position: " + armElbowServo.getPosition());
+
+            // in case slides get freaky mid-game
+            if (controls.shouldResetSlideEncoder()) {
+                slidesMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                slidesMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            }
 
             // janky speed modifier
             float speedModifier = 1 - (gamepad1.right_trigger * 0.5f);
