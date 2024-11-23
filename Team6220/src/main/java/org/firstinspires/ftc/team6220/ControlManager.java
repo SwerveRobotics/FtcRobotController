@@ -58,6 +58,9 @@ public class ControlManager {
         if (gamepad2.dpad_up && !gamepad2.dpad_down) {
             slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_POSITION_TWO;
         }
+        if (gamepad2.dpad_right && !gamepad2.dpad_left) {
+            slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_POSITION_ONE;
+        }
 
 
         // protection against holding it down :>
