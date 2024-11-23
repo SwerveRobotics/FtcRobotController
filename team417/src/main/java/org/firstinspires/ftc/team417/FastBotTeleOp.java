@@ -65,18 +65,23 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             // Draw the robot and field:
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
-            Pose2d oldPose = new Pose2d(
-                    drive.pose.position.x - drive.distanceLocalizer.correction.x,
-                    drive.pose.position.y - drive.distanceLocalizer.correction.y,
-                    drive.pose.heading.log());
-            packet.fieldOverlay().setStroke("#FF0000");
-            packet.fieldOverlay().strokeLine(
-                    oldPose.position.x,
-                    oldPose.position.y,
-                    drive.pose.position.x,
-                    drive.pose.position.y
-                    );
-            Drawing.drawRobot(packet.fieldOverlay(), oldPose);
+
+            // Draw the uncorrected pose in green if it's correcting and red if it's not:
+            if (drive.distanceLocalizer != null) {
+                Pose2d oldPose = new Pose2d(
+                        drive.pose.position.x - drive.distanceLocalizer.correction.x,
+                        drive.pose.position.y - drive.distanceLocalizer.correction.y,
+                        drive.pose.heading.log());
+                packet.fieldOverlay().setStroke("#FF0000");
+                packet.fieldOverlay().strokeLine(
+                        oldPose.position.x,
+                        oldPose.position.y,
+                        drive.pose.position.x,
+                        drive.pose.position.y
+                );
+                Drawing.drawRobot(packet.fieldOverlay(), oldPose);
+            }
+
             MecanumDrive.sendTelemetryPacket(packet);
         }
     }
