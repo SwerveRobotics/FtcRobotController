@@ -35,7 +35,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 
 
         initializeHardware();
-        armElbowServo.setPosition(0);
+        //armElbowServo.setPosition(0);
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);

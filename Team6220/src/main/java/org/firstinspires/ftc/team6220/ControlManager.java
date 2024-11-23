@@ -7,7 +7,7 @@ public class ControlManager {
     private Gamepad gamepad1 = null;
     private Gamepad gamepad2 = null;
 
-    private int armBaseMotorPosition;
+    private int armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_OUT;
     private int slidesMotorPosition;
     private double intakeServoPower;
     private double dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_INIT;
@@ -33,13 +33,12 @@ public class ControlManager {
 
         // Lowering arm all the way to ground (NOT BEING USED)
        if(gamepad2.x && !gamepad2.y) {
+           armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER;
            armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_TRANSFER;
         }
 
         // Raises the arm up to its initial position (against the hubs)
         if (gamepad2.y && !gamepad2.x) {
-            armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_OUT;
-            dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER;
             armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_OVER_BAR;
         }
 
@@ -60,6 +59,7 @@ public class ControlManager {
             slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_POSITION_TWO;
         }
 
+
         // protection against holding it down :>
         if (gamepad2.left_bumper && !leftBumperWasPressed) {
             // really crappy mode swapper
@@ -68,17 +68,18 @@ public class ControlManager {
                      ? DRIFTConstants.DUMPER_SERVO_POSITION_DUMP
                             : DRIFTConstants.DUMPER_SERVO_POSITION_INIT;
         }
-
-        /*
+/*
         leftBumperWasPressed = gamepad2.left_bumper;
 
-        armElbowServoPosition = -gamepad1.left_stick_y;
+        armElbowServoPosition = Math.abs(gamepad1.left_stick_y);
         intakeServoPower = -gamepad1.right_stick_y;
-        */
+
         slidesMotorPosition += (int) (10 * -gamepad2.left_stick_y);
         if (gamepad2.right_trigger >= 0) {
             armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER;
         }
+
+ */
     }
 
     public int getArmBaseMotorPosition() {
