@@ -83,7 +83,7 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpMode {
                 .splineToLinearHeading(new Pose2d(-7, Y_SCORE_POSE+6, Math.toRadians(-90)), Math.toRadians(90),new TranslationalVelConstraint(20))
                 .stopAndAdd(new ScoreSample())
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-60,60,Math.toRadians(-90)),Math.toRadians(90),new TranslationalVelConstraint(60))
+                .splineToLinearHeading(new Pose2d(-60,69-(ROBOT_LENGTH/2),Math.toRadians(-90)),Math.toRadians(180),new TranslationalVelConstraint(60))
                 .build();
 
 
