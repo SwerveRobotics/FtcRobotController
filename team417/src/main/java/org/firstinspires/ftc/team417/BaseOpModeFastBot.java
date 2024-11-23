@@ -20,8 +20,8 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
  * Autonomous logic. All TeleOp and Autonomous classes should derive from this class.
  */
 @Config
-abstract public class BaseOpMode extends LinearOpMode {
-    public static final boolean USE_DISTANCE = true;
+abstract public class BaseOpModeFastBot extends LinearOpMode {
+    public static final boolean USE_DISTANCE = false;
 
     final double ARM_VELOCITY = 2100; // The ticks-per-second constant that Go-Bilda gave us
 
@@ -60,15 +60,9 @@ abstract public class BaseOpMode extends LinearOpMode {
     static double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
     static double ARM_AUTO_REST_POSITION = 170 * ARM_TICKS_PER_DEGREE;
     static double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
-    static double LIFT_SAMPLE_LOW = 0 ; // not known yet
-    static double LIFT_SAMPLE_HIGH = 0; //not known yet
-    static double ARM_SCORE_SPECIMEN = 149* ARM_TICKS_PER_DEGREE;
-    static double LIFT_SPECIMEN = 0 ; // not known yet
+    static double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
     static double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
     static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
-    static double LINEAR_SLIDES_OUT =0; // not known yet
-    static double LINEAR_SLIDES_IN = 0;
-
 
     /* Variables to store the speed the intake servo should be set at to intake, and deposit game elements. */
     final static double INTAKE_COLLECT = -1.0;
@@ -77,10 +71,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
     final static double WRIST_FOLDED_IN = 1;
-    final static double WRIST_SCORE_SPECIMEN = 0.85;
-    final static double X_WRIST_FOLDED_IN = 0; //not known yet
     final static double WRIST_FOLDED_OUT = 0.5;
-    final static double X_WRIST_FOLDED_OUT = 0; //not known yet
 
     //position used to score specimens in auto
     public final static double Y_SCORE_POSE = 41;
@@ -123,6 +114,8 @@ abstract public class BaseOpMode extends LinearOpMode {
             case COMPETITION_ROBOT:
                 initCompBot();
             case FASTBOT_MECANUM:
+                initFastBot();
+            case DEVBOT_MECANUM:
                 initFastBot();
         }
     }
