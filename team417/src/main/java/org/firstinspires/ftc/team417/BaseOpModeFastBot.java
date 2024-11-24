@@ -56,7 +56,7 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
 
     public static double ARM_COLLAPSED_INTO_ROBOT = 0;
     public static double LIFT_COLLECT = 0;
-    public static double ARM_COLLECT = 254 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_COLLECT = 256.5 * ARM_TICKS_PER_DEGREE;
     public static double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
     public static double ARM_AUTO_REST_POSITION = 170 * ARM_TICKS_PER_DEGREE;
     public static double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
