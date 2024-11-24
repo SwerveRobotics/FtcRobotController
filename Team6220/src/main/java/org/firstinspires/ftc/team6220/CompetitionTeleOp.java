@@ -70,13 +70,13 @@ public class CompetitionTeleOp extends BaseOpMode {
             float speedModifier = 1 - (gamepad1.right_trigger * 0.5f);
 
             // Set the drive motor powers according to the gamepad input:
-            /*drive.setDrivePowers(new PoseVelocity2d(
+            drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
                             -gamepad1.left_stick_y * speedModifier,
                             -gamepad1.left_stick_x * speedModifier
                     ),
                     -gamepad1.right_stick_x * speedModifier
-            )); */
+            ));
 
             // Update the current pose:
             drive.updatePoseEstimate();

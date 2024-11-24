@@ -8,19 +8,19 @@ import com.acmerobotics.roadrunner.Vector2d;
 public abstract class DRIFTConstants {
     public static double ARM_ELBOW_SERVO_POSITION_OVER_BAR = 0.55;
     public static double ARM_ELBOW_SERVO_POSITION_GROUND = 0.7;
-    public static double ARM_ELBOW_SERVO_POSITION_TRANSFER = 0.48;
+    public static double ARM_ELBOW_SERVO_POSITION_TRANSFER = 0.50;
     public static int ARM_BASE_MOTOR_POSITION_GROUND = -840;
     public static int ARM_BASE_MOTOR_POSITION_INIT = 0;
     public static int ARM_BASE_MOTOR_POSITION_OUT = -400;
     public static int ARM_BASE_MOTOR_POSITION_TRANSFER = -270;
-    public static int ARM_BASE_MOTOR_POSITION_OVER_BAR = -1200; //changed on 11/15, was -1500
+    public static int ARM_BASE_MOTOR_POSITION_OVER_BAR = -1420; //changed on 11/15, was -1500
     public static int SLIDES_MOTOR_GROUND_POSITION = 0;
     public static int SLIDES_MOTOR_POSITION_ONE = 3700;
-    public static int SLIDES_MOTOR_POSITION_TWO = 3800;
+    public static int SLIDES_MOTOR_POSITION_TWO = 3950;
     public static int SLIDES_MOTOR_VELOCITY = 8;
     public static int ARM_BASE_MOTOR_VELOCITY = 6;
     public static double DUMPER_SERVO_POSITION_DUMP = 0.9;
-    public static double DUMPER_SERVO_POSITION_TRANSFER = 0.5; // placeholder value
+    public static double DUMPER_SERVO_POSITION_TRANSFER = 0.40; // placeholder value
     public static double DUMPER_SERVO_POSITION_INIT = 0.5;
     public static final float[] RED_COLOR_SENSOR_RANGES = {0.025f, 1f};
     public static final float[] BLUE_COLOR_SENSOR_RANGES = {0.025f, 1f};

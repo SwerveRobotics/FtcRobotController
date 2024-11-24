@@ -35,6 +35,7 @@ public class ControlManager {
        if(gamepad2.x && !gamepad2.y) {
            armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER;
            armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_TRANSFER;
+           dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER;
         }
 
         // Raises the arm up to its initial position (against the hubs)
@@ -43,7 +44,7 @@ public class ControlManager {
         }
 
         // Powers the intake
-        intakeServoPower = -gamepad2.right_stick_y;
+        intakeServoPower = -gamepad2.left_stick_y;
         // Lowers the arm to go over the submersible
         if (gamepad2.right_bumper && !gamepad2.left_bumper) {
             armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_OVER_BAR;
@@ -73,7 +74,7 @@ public class ControlManager {
         }
 
         leftBumperWasPressed = gamepad2.left_bumper;
-        slidesMotorPosition += (int) (10 * -gamepad2.left_stick_y);
+        slidesMotorPosition += (int) (10 * -gamepad2.right_stick_y);
 
 
 /*
