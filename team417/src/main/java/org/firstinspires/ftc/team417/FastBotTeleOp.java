@@ -231,13 +231,13 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             } else if (gamepad2.dpad_left) {
                         /* This turns off the intake, folds in the wrist, and moves the arm
                         back to folded inside the robot. This is also the starting configuration */
-                armPosition = ARM_COLLAPSED_INTO_ROBOT;
                 intake1.setPower(INTAKE_OFF);
+                armPosition = ARM_COLLAPSED_INTO_ROBOT;
                 wrist.setPosition(WRIST_FOLDED_IN);
             } else if (gamepad2.dpad_right) {
                 /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
                 armPosition = ARM_SCORE_SPECIMEN;
-                wrist.setPosition(WRIST_FOLDED_OUT);
+                wrist.setPosition(WRIST_SCORE_SPECIMEN);
             } else if (gamepad2.dpad_up) {
                 /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
                 armPosition = ARM_ATTACH_HANGING_HOOK;

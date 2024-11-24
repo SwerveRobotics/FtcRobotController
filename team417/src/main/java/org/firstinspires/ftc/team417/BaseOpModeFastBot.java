@@ -70,9 +70,9 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     final static double INTAKE_DEPOSIT = 0.5;
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
-    final static double WRIST_FOLDED_IN = 1;
-    final static double WRIST_FOLDED_OUT = 0.5;
-    final static double WRIST_SCORE_SPECIMEN = 0.85;
+    public static double WRIST_FOLDED_IN = 0.9;
+    public static double WRIST_FOLDED_OUT = 0.49;
+    public static double WRIST_SCORE_SPECIMEN = 0.82;
 
     //position used to score specimens in auto
     public final static double Y_SCORE_POSE = 41;
@@ -83,7 +83,6 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     /* Variables that are used to set the arm to a specific position */
     // Fast Bot variables
     static double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
-    double armPositionFudgeFactor;
 
     //Create a central time value
     public static ElapsedTime TIME = new ElapsedTime();
