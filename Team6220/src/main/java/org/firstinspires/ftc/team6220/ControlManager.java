@@ -19,6 +19,8 @@ public class ControlManager {
 
     private double currentRunTime;
 
+    boolean oldLeftBumperToggleState = false;
+
     private ProtectedButton slideEncoderResetToggle;
 
     private ArrayList<DelayedAction> delayedActions = new ArrayList<>();
@@ -89,15 +91,18 @@ public class ControlManager {
         // Resets slide encoder if left stick button is pressed
         shouldResetSlideEncoder = slideEncoderResetToggle.getToggleState(gamepad2.left_stick_button);
 
-        double interimDumperServoPosition = dumperServoPosition;
-        dumperServoPosition = gamepad2.left_bumper ? DRIFTConstants.DUMPER_SERVO_POSITION_DUMP : DRIFTConstants.DUMPER_SERVO_POSITION_INIT;
-        if (interimDumperServoPosition != dumperServoPosition) {
-            clearList(dumperServoPosition);
+        if (oldLeftBumperToggleState != gamepad2.left_bumper) {
+            double interimDumperServoPosition = dumperServoPosition;
+            dumperServoPosition = gamepad2.left_bumper ? DRIFTConstants.DUMPER_SERVO_POSITION_DUMP : DRIFTConstants.DUMPER_SERVO_POSITION_INIT;
+            if (interimDumperServoPosition != dumperServoPosition) {
+                clearList(dumperServoPosition);
+            }
         }
+        oldLeftBumperToggleState = gamepad2.left_bumper;
+
 
         slidesMotorPosition += (int) (10 * -gamepad2.right_stick_y);
 
-        slidesMotorPosition += (int) (10 * -gamepad2.left_stick_y);
         if (gamepad2.right_stick_y != 0) {
             clearList(slidesMotorPosition);
         }
