@@ -20,9 +20,6 @@ public class ControlManager {
     private double currentRunTime;
 
     private ProtectedButton slideEncoderResetToggle;
-    private ProtectedButton dumperServoPositionToggle;
-
-    boolean leftBumperWasPressed = false;
 
     private ArrayList<DelayedAction> delayedActions = new ArrayList<>();
 
@@ -31,7 +28,6 @@ public class ControlManager {
         this.gamepad2 = gamepad2;
 
         this.slideEncoderResetToggle = new ProtectedButton();
-        this.dumperServoPositionToggle = new ProtectedButton();
     }
 
     public void update(double currentRunTime) {
@@ -90,22 +86,15 @@ public class ControlManager {
             clearList(slidesMotorPosition);
         }
 
-        delayedActions.add(new DelayedAction(slidesMotorPosition, () -> {
-            slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_POSITION_ONE;
-        }, 3, (a) -> {return a;}));
-
         // Resets slide encoder if left stick button is pressed
         shouldResetSlideEncoder = slideEncoderResetToggle.getToggleState(gamepad2.left_stick_button);
 
         double interimDumperServoPosition = dumperServoPosition;
-
         dumperServoPosition = gamepad2.left_bumper ? DRIFTConstants.DUMPER_SERVO_POSITION_DUMP : DRIFTConstants.DUMPER_SERVO_POSITION_INIT;
-
         if (interimDumperServoPosition != dumperServoPosition) {
             clearList(dumperServoPosition);
         }
 
-        leftBumperWasPressed = gamepad2.left_bumper;
         slidesMotorPosition += (int) (10 * -gamepad2.right_stick_y);
 
         slidesMotorPosition += (int) (10 * -gamepad2.left_stick_y);
@@ -194,10 +183,6 @@ public class ControlManager {
     }
 
     private void clearList(Object trackedObject) {
-        for (DelayedAction action : delayedActions) {
-            if (action.getTrackedObject().equals(trackedObject)) {
-                delayedActions.remove(action);
-            }
-        }
+        delayedActions.removeIf(action -> action.getTrackedObject().equals(trackedObject));
     }
 }
