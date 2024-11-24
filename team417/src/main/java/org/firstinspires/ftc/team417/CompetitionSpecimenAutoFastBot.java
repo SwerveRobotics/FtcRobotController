@@ -31,7 +31,7 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
                 .stopAndAdd(new WaitAction(foldOutArm))
                 .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN + 20 * ARM_TICKS_PER_DEGREE, WRIST_SCORE_SPECIMEN))       //scores the specimen with slight downward force
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(7, Y_SCORE_POSE + 6, Math.toRadians(-90)), Math.toRadians(90), new TranslationalVelConstraint(20))
+                .splineToLinearHeading(new Pose2d(7, Y_SCORE_POSE + 8, Math.toRadians(-90)), Math.toRadians(90), new TranslationalVelConstraint(20))
                 .stopAndAdd(new ScoreSample())
                 .setTangent(Math.toRadians(90))
 
