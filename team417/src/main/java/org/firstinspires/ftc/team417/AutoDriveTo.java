@@ -27,21 +27,7 @@ public class AutoDriveTo {
 
     double radialSpeed;
     double lastRotationalSpeed;
-    double lastTangentialSpeed;
-
-    private double listOfItems[];
-
-    public void init(double goalX, double goalY) {
-        Vector2d linearVector =  new Vector2d(goalX - drive.pose.position.x, goalY - drive.pose.position.y);
-        currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
-        initTime = BaseOpMode.TIME.seconds();
-        radialSpeed = 0;
-        lastTangentialSpeed = 0;
-        lastRotationalSpeed = currentVelocity.angVel;
-        radialSpeed = findRadialSpeed(linearVector, currentVelocity.linearVel);
-        lastTangentialSpeed = findTangentialSpeed(linearVector, currentVelocity.linearVel);
-        lastTime = 0;
-    }
+    double tangentialSpeed;
 
     public AutoDriveTo(MecanumDrive drive) {
         this.drive = drive;
@@ -49,6 +35,16 @@ public class AutoDriveTo {
         finalLinearVelocity = new Vector2d(0, 0);
         radialSpeed = 0;
         lastRotationalSpeed = 0;
+    }
+
+    public void init(double goalX, double goalY) {
+        Vector2d linearVector =  new Vector2d(goalX - drive.pose.position.x, goalY - drive.pose.position.y);
+        currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
+        initTime = BaseOpModeFastBot.TIME.seconds();
+        lastRotationalSpeed = currentVelocity.angVel;
+        radialSpeed = findRadialSpeed(linearVector, currentVelocity.linearVel);
+        tangentialSpeed = findTangentialSpeed(linearVector, currentVelocity.linearVel);
+        lastTime = 0;
     }
 
     //returns the speed of the radial portion of a vector.
@@ -94,9 +90,6 @@ public class AutoDriveTo {
 
     private Vector2d tangentialVectorCalculations(Vector2d distVector, double deltaTime) {
         Vector2d tangentialVelocity;
-        double tangentialSpeed;
-
-        tangentialSpeed = lastTangentialSpeed;
 
         //If tangential speed is positive, decrease until zero, else increase it until zero.
         if (tangentialSpeed > 0) {
@@ -113,8 +106,6 @@ public class AutoDriveTo {
         tangentialVelocity = tangentialVelocity.div(tangentialVelocity.norm());
 
         tangentialVelocity = tangentialVelocity.times(tangentialSpeed);
-
-        lastTangentialSpeed = tangentialSpeed;
 
         return tangentialVelocity;
     }

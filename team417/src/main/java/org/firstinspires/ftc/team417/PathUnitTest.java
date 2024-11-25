@@ -13,7 +13,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 @Config
 @TeleOp(name = "PathUnitTest")
-public class PathUnitTest extends BaseOpMode{
+public class PathUnitTest extends BaseOpModeFastBot{
 
     private boolean xPressed;
     public double startHeading;
