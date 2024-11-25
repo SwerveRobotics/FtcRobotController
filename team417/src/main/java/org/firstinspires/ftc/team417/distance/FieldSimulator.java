@@ -20,7 +20,7 @@ public class FieldSimulator {
         double newHeading = (base.heading.log() + relative.heading.log()) % (2 * Math.PI);
         if (newHeading < 0) newHeading += (2 * Math.PI);
 
-        return new Pose2d(rotated, newHeading);
+        return new Pose2d(sum, newHeading);
     }
 
     /** @noinspection UnnecessaryLocalVariable*/
