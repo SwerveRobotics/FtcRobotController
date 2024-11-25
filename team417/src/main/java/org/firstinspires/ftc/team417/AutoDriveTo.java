@@ -10,6 +10,7 @@ import org.firstinspires.ftc.team417.BaseOpMode;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.wilyworks.common.WilyWorks;
 
 @Config
 public class AutoDriveTo {
@@ -26,17 +27,29 @@ public class AutoDriveTo {
     MecanumDrive drive;
     Vector2d finalLinearVelocity;
 
-    double lastRadialSpeed;
+    double radialSpeed;
     double lastRotationalSpeed;
     double lastTangentialSpeed;
 
     private double listOfItems[];
 
+    public void init(double goalX, double goalY) {
+        Vector2d linearVector =  new Vector2d(goalX - drive.pose.position.x, goalY - drive.pose.position.y);
+        currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
+        initTime = BaseOpMode.TIME.seconds();
+        radialSpeed = 0;
+        lastTangentialSpeed = 0;
+        lastRotationalSpeed = currentVelocity.angVel;
+        radialSpeed = findRadialSpeed(linearVector, currentVelocity.linearVel);
+        lastTangentialSpeed = findTangentialSpeed(linearVector, currentVelocity.linearVel);
+        lastTime = 0;
+    }
+
     public AutoDriveTo(MecanumDrive drive) {
         this.drive = drive;
         lastTime = 0;
         finalLinearVelocity = new Vector2d(0, 0);
-        lastRadialSpeed = 0;
+        radialSpeed = 0;
         lastRotationalSpeed = 0;
     }
 
@@ -61,9 +74,6 @@ public class AutoDriveTo {
     private Vector2d radialVectorCalculations(Vector2d distVector, double deltaTime) {
         Vector2d radialVelocity;
         double distRemaining;
-        double radialSpeed;
-
-        radialSpeed = lastRadialSpeed;
 
         //Distance to goal.
         distRemaining = Math.hypot(distVector.x, distVector.y);
@@ -77,7 +87,6 @@ public class AutoDriveTo {
         //Cap the speed at it's max speed or the speed it needs to be decelerating
         radialSpeed = Math.min(radialSpeed, maxLinearSpeed);
         radialSpeed = Math.min(radialSpeed, Math.sqrt(Math.abs(2.0 * linearDriveDeccel * distRemaining)));
-        lastRadialSpeed = radialSpeed;
 
         //set radial velocity's theta to be the same as dist vector's
         radialVelocity = distVector.div(distVector.norm());
@@ -164,63 +173,45 @@ public class AutoDriveTo {
     private double initTime = 0, lastTime = 0;
     boolean finished = false;
 
-    public PoseVelocity2d motionProfileWithVector(Vector2d linearVector, double goalRotation, boolean hasInit, TelemetryPacket packet){
+    public PoseVelocity2d motionProfileWithVector(Vector2d linearVector, double goalRotation, boolean hasInit, TelemetryPacket packet, double deltaT){
         Vector2d tangentialVelocity;
         Vector2d radialVelocity;
         double rotationalSpeed;
 
         final double velocityEpsilon = 7.5;
         final double distEpsilon = 1;
-        double timeSinceInit, deltaTime;
 
         Canvas canvas = packet.fieldOverlay();
 
-        currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
+        radialVelocity = radialVectorCalculations(linearVector, deltaT);
+        tangentialVelocity = tangentialVectorCalculations(linearVector, deltaT);
 
-        if (hasInit) {
-            initTime = BaseOpMode.TIME.seconds();
-            lastRadialSpeed = 0;
-            lastTangentialSpeed = 0;
-            lastRotationalSpeed = currentVelocity.angVel;
-            lastRadialSpeed = findRadialSpeed(currentVelocity.linearVel, linearVector);
-            lastTangentialSpeed = findTangentialSpeed(currentVelocity.linearVel, linearVector);
-            lastTime = 0;
-        }
+        rotationalSpeed = rotationalSpeedCalculations(goalRotation, deltaT);
 
-        timeSinceInit = BaseOpMode.TIME.seconds() - initTime;
-        deltaTime = timeSinceInit - lastTime;
+        finalLinearVelocity = radialVelocity.plus(tangentialVelocity);
+
+        drawVectors(linearVector.x, linearVector.y, canvas);
+        drawVectors(radialVelocity.x, radialVelocity.y, canvas);
+        drawVectors(tangentialVelocity.x, tangentialVelocity.y, canvas);
+        drawVectors(finalLinearVelocity.x, finalLinearVelocity.y, canvas);
 
         if (Math.hypot(finalLinearVelocity.x, finalLinearVelocity.y) < velocityEpsilon && Math.abs(linearVector.x) < distEpsilon && Math.abs(linearVector.y) < distEpsilon){
-            radialVelocity = new Vector2d(0, 0);
-            tangentialVelocity = new Vector2d(0, 0);
+            finalLinearVelocity = new Vector2d(0, 0);
             packet.put("currentX", drive.pose.position.x);
             packet.put("currentY", drive.pose.position.y);
             packet.put("currentTheta", Math.toDegrees(drive.pose.heading.log()));
             packet.put("errorX", 48.0 - drive.pose.position.x);
             packet.put("errorY", -36.0 - drive.pose.position.y);
             packet.put("errorTheta", 180.0 - Math.toDegrees(drive.pose.heading.log()));
-        } else {
-            radialVelocity = radialVectorCalculations(linearVector, deltaTime);
-            tangentialVelocity = tangentialVectorCalculations(linearVector, deltaTime);
         }
-        rotationalSpeed = rotationalSpeedCalculations(goalRotation, deltaTime);
-
-        finalLinearVelocity = radialVelocity.plus(tangentialVelocity);
-
-        drawVectors(linearVector.x, linearVector.y, canvas);
-        /*drawVectors(radialVelocity.x, radialVelocity.y);
-        drawVectors(tangentialVelocity.x, tangentialVelocity.y);
-        drawVectors(finalLinearVelocity.x, finalLinearVelocity.y);*/
-
-        lastTime = timeSinceInit;
 
         return new PoseVelocity2d(finalLinearVelocity, rotationalSpeed);
     }
 
-    public void linearDriveTo(double goalX, double goalY, double goalRotation, boolean hasDriveToInit, TelemetryPacket packet) {
+    public void linearDriveTo(double goalX, double goalY, double goalRotation, boolean hasDriveToInit, TelemetryPacket packet, double deltaT) {
         PoseVelocity2d motionProfileVel = motionProfileWithVector(new Vector2d(goalX - drive.pose.position.x,
                         goalY - drive.pose.position.y),
-                goalRotation, hasDriveToInit, packet);
+                goalRotation, hasDriveToInit, packet, deltaT);
         drive.setDrivePowers(null, motionProfileVel, null, null);
     }
 }

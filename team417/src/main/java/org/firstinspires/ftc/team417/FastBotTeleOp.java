@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PwmControl;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
@@ -32,30 +33,23 @@ public class FastBotTeleOp extends BaseOpMode {
     /* A number in degrees that the triggers can adjust the arm position by */
     final double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
-    private boolean xPressed;
-
     /** @noinspection ConstantValue*/
     /* Variables that are used to set the arm to a specific position */
     double armPositionFudgeFactor;
     boolean intakeEnabled = false;
 
-    Vector2d driveToPos = new Vector2d(48, 48);
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
         prepareRobot();
 
-        AutoDriveTo driveTo = new AutoDriveTo(drive);
-
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
 
         // Only move wrist after start
-        wrist.setPosition(WRIST_FOLDED_IN);
+        //wrist.setPosition(WRIST_FOLDED_IN);
 
         TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
-
-        driveTo.motionProfileWithVector(driveToPos, 0, true, packet);
 
         while (opModeIsActive()) {
             toggleFieldCentricity();
@@ -68,12 +62,6 @@ public class FastBotTeleOp extends BaseOpMode {
 
             // 'packet' is the object used to send data to FTC Dashboard:
             packet = MecanumDrive.getTelemetryPacket();
-
-            if (gamepad1.x && !xPressed) {
-
-                driveTo.motionProfileWithVector(driveToPos, 0, false, packet);
-            }
-            xPressed = gamepad1.x;
 
             // Do the work now for all active Road Runner actions, if any:
             drive.doActionsWork(packet);
@@ -169,7 +157,7 @@ public class FastBotTeleOp extends BaseOpMode {
             one cycle. Which can cause strange behavior. */
 
 
-            // In the loop if 'a' is clicked intakeEnabled is set to true which will be stored to memory
+            // In the loop if 'a' xis clicked intakeEnabled is set to true which will be stored to memory
             if (gamepad2.right_bumper) {
                 intakeEnabled = true;
             }
