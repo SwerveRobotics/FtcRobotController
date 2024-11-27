@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PwmControl;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
@@ -36,6 +37,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
     /* Variables that are used to set the arm to a specific position */
     double armPositionFudgeFactor;
     boolean intakeEnabled = false;
+
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
@@ -45,7 +47,9 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
         waitForStart();
 
         // Only move wrist after start
-        wrist.setPosition(WRIST_FOLDED_IN);
+        //wrist.setPosition(WRIST_FOLDED_IN);
+
+        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
 
         while (opModeIsActive()) {
             toggleFieldCentricity();
@@ -57,7 +61,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             telemeterData();
 
             // 'packet' is the object used to send data to FTC Dashboard:
-            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+            packet = MecanumDrive.getTelemetryPacket();
 
             // Do the work now for all active Road Runner actions, if any:
             drive.doActionsWork(packet);
@@ -170,7 +174,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             one cycle. Which can cause strange behavior. */
 
 
-            // In the loop if 'a' is clicked intakeEnabled is set to true which will be stored to memory
+            // In the loop if 'a' xis clicked intakeEnabled is set to true which will be stored to memory
             if (gamepad2.right_bumper) {
                 intakeEnabled = true;
             }

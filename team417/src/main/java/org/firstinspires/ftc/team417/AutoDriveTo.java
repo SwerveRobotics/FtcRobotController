@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.wilyworks.common.WilyWorks;
 
 @Config
 public class AutoDriveTo {
@@ -24,18 +25,26 @@ public class AutoDriveTo {
     MecanumDrive drive;
     Vector2d finalLinearVelocity;
 
-    double lastRadialSpeed;
+    double radialSpeed;
     double lastRotationalSpeed;
-    double lastTangentialSpeed;
-
-    private double listOfItems[];
+    double tangentialSpeed;
 
     public AutoDriveTo(MecanumDrive drive) {
         this.drive = drive;
         lastTime = 0;
         finalLinearVelocity = new Vector2d(0, 0);
-        lastRadialSpeed = 0;
+        radialSpeed = 0;
         lastRotationalSpeed = 0;
+    }
+
+    public void init(double goalX, double goalY) {
+        Vector2d linearVector =  new Vector2d(goalX - drive.pose.position.x, goalY - drive.pose.position.y);
+        currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
+        initTime = BaseOpModeFastBot.TIME.seconds();
+        lastRotationalSpeed = currentVelocity.angVel;
+        radialSpeed = findRadialSpeed(linearVector, currentVelocity.linearVel);
+        tangentialSpeed = findTangentialSpeed(linearVector, currentVelocity.linearVel);
+        lastTime = 0;
     }
 
     //returns the speed of the radial portion of a vector.
@@ -59,21 +68,9 @@ public class AutoDriveTo {
     private Vector2d radialVectorCalculations(Vector2d distVector, double deltaTime) {
         Vector2d radialVelocity;
         double distRemaining;
-        double differenceOfSpeeds;
-        double radialSpeed;
-        final double epsilon = 7.5;
 
         //Distance to goal.
         distRemaining = Math.hypot(distVector.x, distVector.y);
-
-        //The magnitude of the radial portion of the robot's current velocity.
-        radialSpeed = findRadialSpeed(distVector, currentVelocity.linearVel);
-
-        //Find the differance between the last speed and the actual speed to correct for the robot
-        //having not finished accelerating.
-        differenceOfSpeeds = lastRadialSpeed - radialSpeed;
-        if (Math.abs(differenceOfSpeeds) > epsilon)
-            differenceOfSpeeds = 0;
 
         //If radial speed is going toward the goal or is stationary increase it, else decrease it
         if (radialSpeed >= 0)
@@ -83,8 +80,7 @@ public class AutoDriveTo {
 
         //Cap the speed at it's max speed or the speed it needs to be decelerating
         radialSpeed = Math.min(radialSpeed, maxLinearSpeed);
-        radialSpeed = Math.min(radialSpeed, Math.sqrt(Math.abs(2.0 * linearDriveDeccel * distRemaining))) + differenceOfSpeeds;
-        lastRadialSpeed = radialSpeed;
+        radialSpeed = Math.min(radialSpeed, Math.sqrt(Math.abs(2.0 * linearDriveDeccel * distRemaining)));
 
         //set radial velocity's theta to be the same as dist vector's
         radialVelocity = distVector.div(distVector.norm());
@@ -94,26 +90,14 @@ public class AutoDriveTo {
 
     private Vector2d tangentialVectorCalculations(Vector2d distVector, double deltaTime) {
         Vector2d tangentialVelocity;
-        double tangentialSpeed;
-        double differenceOfSpeeds;
-        final double epsilon  = 7.5;
-
-        //Set tangentialSpeed to the tangential portion of the current velocity
-        tangentialSpeed = findTangentialSpeed(distVector, currentVelocity.linearVel);
-
-        //Find the difference between the last tangentialSpeed and the current tangential speed for it can be corrected.
-        differenceOfSpeeds = lastTangentialSpeed - tangentialSpeed;
-        //If difference of speeds is greater then epsilon, the robot was probably pushed so don't correct.
-        if (Math.abs(differenceOfSpeeds) > epsilon)
-            differenceOfSpeeds = 0;
 
         //If tangential speed is positive, decrease until zero, else increase it until zero.
         if (tangentialSpeed > 0) {
             tangentialSpeed = tangentialSpeed + (linearDriveDeccel * deltaTime);
-            tangentialSpeed = Math.min(tangentialSpeed, 0.0) + differenceOfSpeeds;
+            tangentialSpeed = Math.min(tangentialSpeed, 0.0);
         } else if (tangentialSpeed < 0) {
             tangentialSpeed = tangentialSpeed - (linearDriveDeccel * deltaTime);
-            tangentialSpeed = Math.max(tangentialSpeed, 0.0) + differenceOfSpeeds;
+            tangentialSpeed = Math.max(tangentialSpeed, 0.0);
         }
 
         //rotate distance vector by 90 degrees.
@@ -178,61 +162,45 @@ public class AutoDriveTo {
     private double initTime = 0, lastTime = 0;
     boolean finished = false;
 
-    public PoseVelocity2d motionProfileWithVector(Vector2d linearVector, double goalRotation, boolean hasInit, TelemetryPacket packet){
+    public PoseVelocity2d motionProfileWithVector(Vector2d linearVector, double goalRotation, boolean hasInit, TelemetryPacket packet, double deltaT){
         Vector2d tangentialVelocity;
         Vector2d radialVelocity;
         double rotationalSpeed;
 
         final double velocityEpsilon = 7.5;
         final double distEpsilon = 1;
-        double timeSinceInit, deltaTime;
 
         Canvas canvas = packet.fieldOverlay();
 
-        currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
+        radialVelocity = radialVectorCalculations(linearVector, deltaT);
+        tangentialVelocity = tangentialVectorCalculations(linearVector, deltaT);
 
-        if (hasInit) {
-            initTime = BaseOpModeFastBot.TIME.seconds();
-            lastRadialSpeed = 0;
-            lastTangentialSpeed = 0;
-            lastRotationalSpeed = currentVelocity.angVel;
-            lastTime = 0;
-        }
+        rotationalSpeed = rotationalSpeedCalculations(goalRotation, deltaT);
 
-        timeSinceInit = BaseOpModeFastBot.TIME.seconds() - initTime;
-        deltaTime = timeSinceInit - lastTime;
+        finalLinearVelocity = radialVelocity.plus(tangentialVelocity);
+
+        drawVectors(linearVector.x, linearVector.y, canvas);
+        drawVectors(radialVelocity.x, radialVelocity.y, canvas);
+        drawVectors(tangentialVelocity.x, tangentialVelocity.y, canvas);
+        drawVectors(finalLinearVelocity.x, finalLinearVelocity.y, canvas);
 
         if (Math.hypot(finalLinearVelocity.x, finalLinearVelocity.y) < velocityEpsilon && Math.abs(linearVector.x) < distEpsilon && Math.abs(linearVector.y) < distEpsilon){
-            radialVelocity = new Vector2d(0, 0);
-            tangentialVelocity = new Vector2d(0, 0);
+            finalLinearVelocity = new Vector2d(0, 0);
             packet.put("currentX", drive.pose.position.x);
             packet.put("currentY", drive.pose.position.y);
             packet.put("currentTheta", Math.toDegrees(drive.pose.heading.log()));
             packet.put("errorX", 48.0 - drive.pose.position.x);
             packet.put("errorY", -36.0 - drive.pose.position.y);
             packet.put("errorTheta", 180.0 - Math.toDegrees(drive.pose.heading.log()));
-        } else {
-            radialVelocity = radialVectorCalculations(linearVector, deltaTime);
-            tangentialVelocity = tangentialVectorCalculations(linearVector, deltaTime);
         }
-        rotationalSpeed = rotationalSpeedCalculations(goalRotation, deltaTime);
-
-        finalLinearVelocity = radialVelocity.plus(tangentialVelocity);
-
-        drawVectors(linearVector.x, linearVector.y, canvas);
-        /*drawVectors(radialVelocity.x, radialVelocity.y);
-        drawVectors(tangentialVelocity.x, tangentialVelocity.y);
-        drawVectors(finalLinearVelocity.x, finalLinearVelocity.y);*/
-
-        lastTime = timeSinceInit;
 
         return new PoseVelocity2d(finalLinearVelocity, rotationalSpeed);
     }
 
-    public void linearDriveTo(double goalX, double goalY, double goalRotation, boolean hasDriveToInit, TelemetryPacket packet) {
+    public void linearDriveTo(double goalX, double goalY, double goalRotation, boolean hasDriveToInit, TelemetryPacket packet, double deltaT) {
         PoseVelocity2d motionProfileVel = motionProfileWithVector(new Vector2d(goalX - drive.pose.position.x,
                         goalY - drive.pose.position.y),
-                goalRotation, hasDriveToInit, packet);
+                goalRotation, hasDriveToInit, packet, deltaT);
         drive.setDrivePowers(null, motionProfileVel, null, null);
     }
 }
