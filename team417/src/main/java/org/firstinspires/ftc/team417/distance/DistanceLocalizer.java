@@ -38,32 +38,18 @@ public class DistanceLocalizer {
 
     final DistanceUnit unit = DistanceUnit.INCH;
 
-    final double ANGLE_OF_POSITIVE_CORNER = 0.25 * Math.PI; // Angle facing (72, 72)
     final double RELIABLE_DISTANCE = 48; // Corner is defined as this distance away from walls
-    final double MIN_RELIABLE_ANGLE = -Math.PI / 6; // In radians
-    final double MAX_RELIABLE_ANGLE = Math.PI / 9; // In radians
+    final double MAX_RELIABLE_ANGLE = Math.PI / 6; // In radians
 
     final ElapsedTime clock = new ElapsedTime();
 
-    private static final Map<FieldSide, Map<FieldSide, Double>> angleMap = new EnumMap<>(FieldSide.class);
+    private static final Map<FieldSide, Double> angleMap = new EnumMap<>(FieldSide.class);
 
     static {
-        // Initializing inner maps for each adjacent FieldSide pair with respective angles
-        EnumMap<FieldSide, Double> topMap = new EnumMap<>(FieldSide.class);
-        topMap.put(FieldSide.RIGHT, 0.0); // 0 degrees
-        angleMap.put(FieldSide.TOP, topMap);
-
-        EnumMap<FieldSide, Double> leftMap = new EnumMap<>(FieldSide.class);
-        leftMap.put(FieldSide.TOP, Math.PI / 2); // 90 degrees
-        angleMap.put(FieldSide.LEFT, leftMap);
-
-        EnumMap<FieldSide, Double> bottomMap = new EnumMap<>(FieldSide.class);
-        bottomMap.put(FieldSide.LEFT, Math.PI); // 180 degrees
-        angleMap.put(FieldSide.BOTTOM, bottomMap);
-
-        EnumMap<FieldSide, Double> rightMap = new EnumMap<>(FieldSide.class);
-        rightMap.put(FieldSide.BOTTOM, 3 * Math.PI / 2); // 270 degrees
-        angleMap.put(FieldSide.RIGHT, rightMap);
+        angleMap.put(FieldSide.TOP, 0.0); // 0 degrees
+        angleMap.put(FieldSide.RIGHT, Math.PI / 2); // 90 degrees
+        angleMap.put(FieldSide.BOTTOM, Math.PI); // 180 degrees
+        angleMap.put(FieldSide.LEFT, 3 * Math.PI / 2); // 270 degrees
     }
 
     public DistanceLocalizer(UltrasonicDistanceSensor leftDistance,
@@ -93,37 +79,97 @@ public class DistanceLocalizer {
         IntersectionResult leftIntersection = FieldSimulator.findIntersection(drive.pose, leftInfo.getPose());
         IntersectionResult rightIntersection = FieldSimulator.findIntersection(drive.pose, rightInfo.getPose());
 
-        double theta = calculateTheta(leftIntersection.side, rightIntersection.side);
-
         // Since distance sensors can't tell you which quadrant you're in
-        // Since the "top" is considered to be PI / 2
-        double heading = drive.pose.heading.log() - theta - Math.PI / 2;
+        // Since the "top" is considered to be PI / 2 in theta
+        // Heading has top as 0, while theta has top as Math.PI / 2
+        double rawHeading = drive.pose.heading.log();
+        double theta = Math.floor(rawHeading / (Math.PI / 2)) * (Math.PI / 2);
+        double heading = rawHeading - theta - Math.PI / 2;
 
         heading = heading % (2 * Math.PI);
 
         boolean sameSide = leftIntersection.side == rightIntersection.side;
-        boolean closeEnough = leftIntersection.distance < RELIABLE_DISTANCE && rightIntersection.distance < RELIABLE_DISTANCE;
-        boolean angleIsEnough = MIN_RELIABLE_ANGLE <= heading && heading <= MAX_RELIABLE_ANGLE;
+        boolean leftCloseEnough = leftIntersection.distance < RELIABLE_DISTANCE;
+        boolean rightCloseEnough = rightIntersection.distance < RELIABLE_DISTANCE;
+        double leftRelativeAngle = normalizeToPiOver4(heading + leftInfo.getThetaOffset());
+        double rightRelativeAngle = normalizeToPiOver4(heading + rightInfo.getThetaOffset());
 
-        Vector2d detectedRelativePosition, detectedPosition, detectedCorrection;
-        if (!sameSide && closeEnough && angleIsEnough && latestRight != 0 && latestLeft != 0) {
-            // Detected position relative to the corner
-            detectedRelativePosition = new Vector2d(
-                    calculateDistance(latestRight, heading, rightInfo, false),
-                    calculateDistance(latestLeft, heading, leftInfo, true));
-            correcting = true;
-        } else {
-            correcting = false;
-            return correction;
+        double[] leftFactor = angleToUnitVectorWithEpsilon(angleMap.get(leftIntersection.side));
+        double[] rightFactor = angleToUnitVectorWithEpsilon(angleMap.get(rightIntersection.side));
+
+        Double xRelativePosition = null;
+        Double yRelativePosition = null;
+
+        // If sensors face the same side
+        if (sameSide) {
+            // If both are close enough, choose the one that's more straight on
+            if (leftCloseEnough && rightCloseEnough) {
+                // If the left sensor is more straight on to the field wall
+                if (Math.abs(leftRelativeAngle) < Math.abs(rightRelativeAngle)) {
+                    // If left sensor satisfies angle requirement
+                    if (Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                        if (leftFactor[0] * latestLeft != 0)
+                            xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false);
+                        else if (leftFactor[1] * latestLeft != 0) {
+                            yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true);
+                        }
+                    }
+                } else {
+                    // If right sensor satisfies angle requirement
+                    if (Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                        if (rightFactor[0] * latestRight != 0)
+                            xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false);
+                        else if (rightFactor[1] * latestRight != 0)
+                            yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true);
+                    }
+                }
+            } else if (leftCloseEnough) {
+                // If left sensor satisfies angle requirement
+                if (Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                    if (leftFactor[0] * latestLeft != 0)
+                        xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false);
+                    else if (leftFactor[1] * latestLeft != 0) {
+                        yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true);
+                    }
+                }
+            } else if (rightCloseEnough) {
+                // If right sensor satisfies angle requirement
+                if (Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                    if (rightFactor[0] * latestRight != 0)
+                        xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false);
+                    else if (rightFactor[1] * latestRight != 0)
+                        yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true);
+                }
+            }
+        } else { // If sensors don't face the same side
+            // If left sensor is close enough and satisfies angle requirement
+            if (leftCloseEnough && Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                if (leftFactor[0] * latestLeft != 0)
+                    xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false);
+                else if (leftFactor[1] * latestLeft != 0) {
+                    yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true);
+                }
+            }
+            // If right sensor is close enough and satisfies angle requirement
+            if (Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                if (rightFactor[0] * latestRight != 0)
+                    xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false);
+                else if (rightFactor[1] * latestRight != 0)
+                    yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true);
+            }
         }
 
-        Vector2d fieldVector = new Vector2d(FieldSimulator.FIELD_SIZE / 2, FieldSimulator.FIELD_SIZE / 2);
+        // Changing from distance from corner to distance from origin
+        Double xUnrotatedPosition = xRelativePosition == null ? null
+                : FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
+        Double yUnrotatedPosition = yRelativePosition == null ? null
+                : FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
 
-        // Position relative to the center, but doesn't account for which corner it is
-        Vector2d unrotatedPosition = (fieldVector).minus(detectedRelativePosition);
+        double cosTheta = Math.cos(theta);
+        double sinTheta = Math.sin(theta);
 
-        // Position detected by this iteration of the loop
-        detectedPosition = rotate(unrotatedPosition, theta);
+        double xRotatedPosition = xUnrotatedPosition * cosTheta - yUnrotatedPosition * sinTheta;
+        double yRotatedPosition = xUnrotatedPosition * sinTheta + yUnrotatedPosition * cosTheta;
 
         // Correction recommended by this iteration of the loop
         detectedCorrection = detectedPosition.minus(drive.pose.position);
@@ -134,7 +180,9 @@ public class DistanceLocalizer {
             history.remove(0);
         }
 
-        targetCorrection = calculateAverage(history);
+        targetCorrection =
+
+                calculateAverage(history);
 
         double xDiff = targetCorrection.x - correction.x;
         double yDiff = targetCorrection.y - correction.y;
@@ -142,33 +190,27 @@ public class DistanceLocalizer {
         // Delta is in milliseconds
         double maxCorrection = MAXIMUM_CORRECTION_VELOCITY * delta / 1000.0;
 
-        correction = new Vector2d(
+        correction = new
+
+                Vector2d(
                 // Correction x and max correction, whichever is absolutely larger,
                 // taking the sign of the correction
                 correction.x +
-                        (Math.abs(xDiff) < Math.abs(maxCorrection)
+                        (Math.abs(xDiff) < Math.
+
+                                abs(maxCorrection)
                                 ? xDiff : Math.copySign(maxCorrection, xDiff)),
                 // Correction y and max correction, whichever is absolutely larger,
                 // taking the sign of the correction
                 correction.y +
-                        (Math.abs(yDiff) < Math.abs(maxCorrection)
+                        (Math.abs(yDiff) < Math.
+
+                                abs(maxCorrection)
                                 ? yDiff : Math.copySign(maxCorrection, yDiff))
         );
 
         return correction;
-    }
 
-    // Method to calculate theta based on two FieldSide values
-    public static double calculateTheta(FieldSide side1, FieldSide side2) {
-        // First, try to get the angle by treating side1 as the primary key
-        Double angle = Objects.requireNonNull(angleMap.getOrDefault(side1, new EnumMap<>(FieldSide.class))).get(side2);
-
-        // If not found, try the reverse order (side2 as the primary key)
-        if (angle == null) {
-            angle = Objects.requireNonNull(angleMap.getOrDefault(side2, new EnumMap<>(FieldSide.class))).get(side1);
-        }
-
-        return (angle != null) ? angle : -1; // Return -1 if no valid angle is found
     }
 
     // Ultrasound sensors have been found to disrupt each other.
@@ -184,7 +226,8 @@ public class DistanceLocalizer {
         leftTurn = !leftTurn;
     }
 
-    public static double calculateDistance(double distance, double heading, DistanceSensorInfo info, boolean gettingY) {
+    public static double calculateDistance(double distance, double heading, DistanceSensorInfo
+            info, boolean gettingY) {
         // Because I'm using right is positive, where RoadRunner uses left is positive
         double relative = -heading + info.getThetaOffset();
 
@@ -223,5 +266,38 @@ public class DistanceLocalizer {
         theta = theta % (Math.PI / 2);
 
         return theta;
+    }
+
+    public static double normalizeToPiOver4(double angle) {
+        // Normalize to -π to π
+        angle = ((angle + Math.PI) % (2 * Math.PI)) - Math.PI;
+
+        // Now, ensure the angle is in the range -π/4 to π/4
+        if (angle > Math.PI / 4) {
+            return angle - Math.PI / 2;  // Shift by -π/2 if greater
+        } else if (angle < -Math.PI / 4) {
+            return angle + Math.PI / 2;  // Shift by π/2 if less
+        }
+
+        return angle;  // Already within range
+    }
+
+    static final double EPSILON = 0.1;
+
+    public static double[] angleToUnitVectorWithEpsilon(double angle) {
+        double x = Math.sin(angle);  // Calculate x-component
+        double y = Math.cos(angle);  // Calculate y-component
+
+        // Check if x is close to zero, then reset to zero
+        if (Math.abs(x) < EPSILON) {
+            x = 0;
+        }
+
+        // Check if y is close to zero, then reset to zero
+        if (Math.abs(y) < EPSILON) {
+            y = 0;
+        }
+
+        return new double[]{x, y};
     }
 }
