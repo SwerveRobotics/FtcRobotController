@@ -41,11 +41,11 @@ public class AutoDriveTo {
     public final double linearDistEpsilon = 1;
 
     //rotational motion constants
-    public final double rotationalDriveAccel = MecanumDrive.PARAMS.maxAngAccel;
-    public final double rotationalDriveDeccel = -MecanumDrive.PARAMS.maxAngAccel;
-    public final double maxRotationalSpeed = MecanumDrive.PARAMS.maxAngVel;
-    public final double rotationalVelEpsilon = Math.toRadians(5.0);
-    public final double rotationalDistEpsilon = Math.toRadians(5.0);
+    public final double rotationalDriveAccel = Math.PI;
+    public final double rotationalDriveDeccel = -Math.PI;
+    public final double maxRotationalSpeed = Math.PI;
+    public final double rotationalVelEpsilon = Math.toRadians(1);
+    public final double rotationalDistEpsilon = Math.toRadians(2.5);
 
     //target pose
     DPoint goal;
@@ -56,6 +56,7 @@ public class AutoDriveTo {
     double rotationalSpeed;
     double tangentialSpeed;
     DPoint currentPos;
+    double currentRot;
 
     public AutoDriveTo(MecanumDrive drive) {
         this.drive = drive;
@@ -67,16 +68,17 @@ public class AutoDriveTo {
         this.goal = goal;
         this.goalRotation = goalRotation;
 
+        currentPos = DPoint.to(drive.pose.position);
+        currentRot = drive.pose.heading.log();
+
         //find target change in position
-        Vector2d deltaDist =  new Vector2d(goal.x - drive.pose.position.x, goal.y - drive.pose.position.y);
-        double deltaRot = confineToScope(goalRotation - drive.pose.heading.log());
+        Vector2d deltaDist =  goal.minus(currentPos).toVector2d();
+        double deltaRot = confineToScope(goalRotation - currentRot);
 
         //Convert from velocity vectors to speed scalars relative to goal pose.
         rotationalSpeed = currentVelocity.angVel * Math.signum(deltaRot);
         radialSpeed = findParSpeed(deltaDist, currentVelocity.linearVel);
         tangentialSpeed = findPerpSpeed(deltaDist, currentVelocity.linearVel);
-
-        currentPos = DPoint.to(drive.pose.position);
     }
 
     //returns the speed of the portion of the current vel vector that is parallel to the distance vector.
@@ -155,20 +157,20 @@ public class AutoDriveTo {
         return linearVelocity;
     }
 
-    public double rotationalVelocity(double deltaTime) {
+    public double rotationalVelocity(double deltaT) {
         double rotRemaining;
         double rotationalVel;
 
-        rotRemaining = confineToScope(goalRotation - drive.pose.heading.log());
+        rotRemaining = confineToScope(goalRotation - currentRot);
 
         if (rotationalSpeed >= 0) {
-            rotationalSpeed += (rotationalDriveAccel * deltaTime);
+            rotationalSpeed += rotationalDriveAccel * deltaT;
         } else {
-            rotationalSpeed -= (rotationalDriveDeccel * deltaTime);
+            rotationalSpeed -= rotationalDriveDeccel * deltaT;
         }
 
         rotationalSpeed = Math.min(rotationalSpeed, maxRotationalSpeed);
-        rotationalSpeed = Math.min(rotationalSpeed, Math.sqrt(Math.abs(2.0 * rotationalDriveDeccel * Math.abs(rotRemaining))));
+        rotationalSpeed = Math.min(rotationalSpeed, Math.sqrt(Math.abs(2.0 * rotationalDriveDeccel * rotRemaining)));
 
 
         rotationalVel = rotationalSpeed * Math.signum(rotRemaining);
@@ -187,16 +189,19 @@ public class AutoDriveTo {
     }
 
     public boolean linearDriveTo(double deltaT, TelemetryPacket packet, Canvas canvas) {
-        Vector2d currentVel;
+        Vector2d currentLinearVel;
+        double currentRotVel;
         this.canvas = canvas;
         this.packet = packet;
 
         DPoint deltaDist = goal.minus(currentPos);
 
-        currentVel = linearVelocity(deltaDist.toVector2d(), deltaT);
-        PoseVelocity2d motionProfileVel = new PoseVelocity2d(currentVel, rotationalVelocity(deltaT));
+        currentLinearVel = linearVelocity(deltaDist.toVector2d(), deltaT);
+        currentRotVel = rotationalVelocity(deltaT);
+        PoseVelocity2d motionProfileVel = new PoseVelocity2d(currentLinearVel, rotationalVelocity(deltaT));
 
-        currentPos = currentPos.plus(currentVel.times(deltaT));
+        currentPos = currentPos.plus(currentLinearVel.times(deltaT));
+        currentRot += currentRotVel * deltaT;
 
         drive.setDrivePowers(null, null, null, motionProfileVel);
 
