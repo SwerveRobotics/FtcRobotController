@@ -28,8 +28,8 @@ public class AutoDriveTo {
     public final double rotationalDriveAccel = MecanumDrive.PARAMS.maxAngAccel;
     public final double rotationalDriveDeccel = -MecanumDrive.PARAMS.maxAngAccel;
     public final double maxRotationalSpeed = MecanumDrive.PARAMS.maxAngVel;
-    public final double rotationalVelEpsilon = Math.toRadians(1);
-    public final double rotationalDistEpsilon = 5.0;
+    public final double rotationalVelEpsilon = Math.toRadians(5.0);
+    public final double rotationalDistEpsilon = Math.toRadians(5.0);
 
     //target pose
     double goalX;

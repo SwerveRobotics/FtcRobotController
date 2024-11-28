@@ -31,17 +31,19 @@ public class PathUnitTest extends BaseOpModeFastBot{
 
         waitForStart();
 
+        boolean pathing = false;
+
         while (opModeIsActive()) {
             double deltaT = 0.02;
 
             TelemetryPacket packet = new TelemetryPacket();
             Canvas canvas = packet.fieldOverlay();
 
-            if (gamepad1.x && !xPressed) {
+            if (gamepad1.x && !xPressed && !pathing) {
                 driveTo.init(0, 0, Math.PI / 2);
             }
-            if (gamepad1.x) {
-                driveTo.linearDriveTo(deltaT, packet, canvas);
+            if (gamepad1.x || pathing) {
+                pathing = !driveTo.linearDriveTo(deltaT, packet, canvas);
             } else {
                 // Set the drive motor powers according to the gamepad input:
                 drive.setDrivePowers(new PoseVelocity2d(new Vector2d(
