@@ -40,7 +40,7 @@ public class PathUnitTest extends BaseOpModeFastBot{
             Canvas canvas = packet.fieldOverlay();
 
             if (gamepad1.x && !xPressed && !pathing) {
-                driveTo.init(0, 0, Math.PI / 2);
+                driveTo.init(new DPoint(0, 0), Math.PI / 2);
             }
             if (gamepad1.x || pathing) {
                 pathing = !driveTo.linearDriveTo(deltaT, packet, canvas);
