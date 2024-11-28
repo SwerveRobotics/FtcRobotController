@@ -26,25 +26,35 @@ public class AutoDriveTo {
     Vector2d finalLinearVelocity;
 
     double radialSpeed;
-    double lastRotationalSpeed;
+    double rotationalSpeed;
     double tangentialSpeed;
+
+    double goalX;
+    double goalY;
+    double goalRotation;
+    TelemetryPacket packet;
 
     public AutoDriveTo(MecanumDrive drive) {
         this.drive = drive;
         lastTime = 0;
         finalLinearVelocity = new Vector2d(0, 0);
-        radialSpeed = 0;
-        lastRotationalSpeed = 0;
     }
 
-    public void init(double goalX, double goalY) {
+    public void init(double goalX, double goalY, double goalRotation, TelemetryPacket packet) {
         Vector2d linearVector =  new Vector2d(goalX - drive.pose.position.x, goalY - drive.pose.position.y);
+        double rotRemaining = confineToScope(goalRotation - drive.pose.heading.log());
+
         currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
         initTime = BaseOpModeFastBot.TIME.seconds();
-        lastRotationalSpeed = currentVelocity.angVel;
+        rotationalSpeed = currentVelocity.angVel * Math.signum(rotRemaining);
         radialSpeed = findRadialSpeed(linearVector, currentVelocity.linearVel);
         tangentialSpeed = findTangentialSpeed(linearVector, currentVelocity.linearVel);
         lastTime = 0;
+
+        this.goalX = goalX;
+        this.goalY = goalY;
+        this.goalRotation = goalRotation;
+        this.packet = packet;
     }
 
     //returns the speed of the radial portion of a vector.
@@ -74,9 +84,9 @@ public class AutoDriveTo {
 
         //If radial speed is going toward the goal or is stationary increase it, else decrease it
         if (radialSpeed >= 0)
-            radialSpeed = radialSpeed + (linearDriveAccel * deltaTime);
+            radialSpeed += linearDriveAccel * deltaTime;
         else
-            radialSpeed = radialSpeed - (linearDriveDeccel * deltaTime);
+            radialSpeed -= linearDriveDeccel * deltaTime;
 
         //Cap the speed at it's max speed or the speed it needs to be decelerating
         radialSpeed = Math.min(radialSpeed, maxLinearSpeed);
@@ -93,10 +103,10 @@ public class AutoDriveTo {
 
         //If tangential speed is positive, decrease until zero, else increase it until zero.
         if (tangentialSpeed > 0) {
-            tangentialSpeed = tangentialSpeed + (linearDriveDeccel * deltaTime);
+            tangentialSpeed += (linearDriveDeccel * deltaTime);
             tangentialSpeed = Math.min(tangentialSpeed, 0.0);
         } else if (tangentialSpeed < 0) {
-            tangentialSpeed = tangentialSpeed - (linearDriveDeccel * deltaTime);
+            tangentialSpeed -= (linearDriveDeccel * deltaTime);
             tangentialSpeed = Math.max(tangentialSpeed, 0.0);
         }
 
@@ -118,27 +128,16 @@ public class AutoDriveTo {
         return num;
     }
 
-    public static double currentSpeed = 0;
-
     public double rotationalSpeedCalculations(double goalRotation, double deltaTime) {
         double rotRemaining;
-        double differenceOfSpeeds;
-        double rotationalSpeed;
-        double rotationDirection;
         final double rotationalEpsilon = Math.toRadians(1);
         final double velocityEpsilon = 5.0;
-        final double epsilon  = 3;
 
         rotRemaining = confineToScope(goalRotation - drive.pose.heading.log());
-
-        rotationalSpeed = lastRotationalSpeed;
 
         if (Math.abs(rotRemaining) < rotationalEpsilon && Math.abs(rotationalSpeed) < velocityEpsilon)
             return 0;
 
-        rotationDirection = Math.signum(rotRemaining);
-
-        rotationalSpeed *= rotationDirection;
         if (rotationalSpeed >= 0) {
             rotationalSpeed += (rotationalDriveAccel * deltaTime);
         } else {
@@ -146,11 +145,9 @@ public class AutoDriveTo {
         }
 
         rotationalSpeed = Math.min(rotationalSpeed, maxRotationalSpeed);
-        rotationalSpeed = Math.min(rotationalSpeed, Math.sqrt(Math.abs(2.0 * rotationalDriveDeccel * rotRemaining)));
-        rotationalSpeed = rotationalSpeed * rotationDirection;
-        lastRotationalSpeed = rotationalSpeed;
+        rotationalSpeed = Math.min(rotationalSpeed, Math.sqrt(Math.abs(2.0 * rotationalDriveDeccel * Math.abs(rotRemaining))));
 
-        return rotationalSpeed;
+        return rotationalSpeed * Math.signum(rotRemaining);
     }
 
     private void drawVectors(double x, double y, Canvas canvas) {
@@ -162,7 +159,7 @@ public class AutoDriveTo {
     private double initTime = 0, lastTime = 0;
     boolean finished = false;
 
-    public PoseVelocity2d motionProfileWithVector(Vector2d linearVector, double goalRotation, boolean hasInit, TelemetryPacket packet, double deltaT){
+    public PoseVelocity2d motionProfileWithVector(Vector2d linearVector, double goalRotation, TelemetryPacket packet, double deltaT){
         Vector2d tangentialVelocity;
         Vector2d radialVelocity;
         double rotationalSpeed;
@@ -197,10 +194,10 @@ public class AutoDriveTo {
         return new PoseVelocity2d(finalLinearVelocity, rotationalSpeed);
     }
 
-    public void linearDriveTo(double goalX, double goalY, double goalRotation, boolean hasDriveToInit, TelemetryPacket packet, double deltaT) {
+    public void linearDriveTo(double deltaT) {
         PoseVelocity2d motionProfileVel = motionProfileWithVector(new Vector2d(goalX - drive.pose.position.x,
-                        goalY - drive.pose.position.y),
-                goalRotation, hasDriveToInit, packet, deltaT);
-        drive.setDrivePowers(null, motionProfileVel, null, null);
+                        goalY - drive.pose.position.y), goalRotation, packet, deltaT);
+
+        drive.setDrivePowers(null, null, null, motionProfileVel);
     }
 }
