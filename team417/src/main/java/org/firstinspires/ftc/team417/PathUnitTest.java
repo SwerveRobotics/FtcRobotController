@@ -25,7 +25,7 @@ public class PathUnitTest extends BaseOpModeFastBot{
         prepareRobot(new Pose2d(-0, -48, 0));
         FtcDashboard dashboard = FtcDashboard.getInstance();
 
-        drive.updatePoseEstimate();
+        PoseVelocity2d currentPoseVel = drive.updatePoseEstimate();
 
         AutoDriveTo driveTo = new AutoDriveTo(drive);
 
@@ -39,11 +39,13 @@ public class PathUnitTest extends BaseOpModeFastBot{
             TelemetryPacket packet = new TelemetryPacket();
             Canvas canvas = packet.fieldOverlay();
 
+            currentPoseVel = drive.updatePoseEstimate();
+
             if (gamepad1.x && !xPressed && !pathing) {
                 driveTo.init(new DPoint(0, 0), Math.PI / 2);
             }
             if (gamepad1.x || pathing) {
-                pathing = !driveTo.linearDriveTo(deltaT, packet, canvas);
+                pathing = !driveTo.linearDriveTo(currentPoseVel, deltaT, packet, canvas);
             } else {
                 // Set the drive motor powers according to the gamepad input:
                 drive.setDrivePowers(new PoseVelocity2d(new Vector2d(
@@ -61,8 +63,6 @@ public class PathUnitTest extends BaseOpModeFastBot{
             } catch (InterruptedException e) {
 
             }
-
-            drive.updatePoseEstimate();
 
             telemetry.addData("x", drive.pose.position.x);
             telemetry.addData("y", drive.pose.position.y);

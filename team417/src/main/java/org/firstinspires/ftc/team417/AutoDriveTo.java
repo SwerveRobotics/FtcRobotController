@@ -2,11 +2,9 @@ package org.firstinspires.ftc.team417;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
-import com.acmerobotics.roadrunner.Actions;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.HolonomicController;
 import com.acmerobotics.roadrunner.MotorFeedforward;
-import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Pose2dDual;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.PoseVelocity2dDual;
@@ -14,12 +12,8 @@ import com.acmerobotics.roadrunner.Rotation2dDual;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.Vector2d;
 
-import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.HolonomicKinematics;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
-import org.firstinspires.ftc.team417.roadrunner.messages.DriveCommandMessage;
-import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
-import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Vector2dDual;
@@ -41,9 +35,9 @@ public class AutoDriveTo {
     public final double linearDistEpsilon = 1;
 
     //rotational motion constants
-    public final double rotationalDriveAccel = Math.PI;
-    public final double rotationalDriveDeccel = -Math.PI;
-    public final double maxRotationalSpeed = Math.PI;
+    public final double rotationalDriveAccel = MecanumDrive.PARAMS.maxAngAccel;
+    public final double rotationalDriveDeccel = -MecanumDrive.PARAMS.maxAngAccel;
+    public final double maxRotationalSpeed = MecanumDrive.PARAMS.maxAngVel;
     public final double rotationalVelEpsilon = Math.toRadians(1);
     public final double rotationalDistEpsilon = Math.toRadians(2.5);
 
@@ -57,6 +51,10 @@ public class AutoDriveTo {
     double tangentialSpeed;
     DPoint currentPos;
     double currentRot;
+
+    Vector2d lastLinearVel;
+    double lastRotVel;
+    PoseVelocity2d currentRobotVel;
 
     public AutoDriveTo(MecanumDrive drive) {
         this.drive = drive;
@@ -79,6 +77,9 @@ public class AutoDriveTo {
         rotationalSpeed = currentVelocity.angVel * Math.signum(deltaRot);
         radialSpeed = findParSpeed(deltaDist, currentVelocity.linearVel);
         tangentialSpeed = findPerpSpeed(deltaDist, currentVelocity.linearVel);
+
+        lastLinearVel = new Vector2d(0, 0);
+        lastRotVel = 0;
     }
 
     //returns the speed of the portion of the current vel vector that is parallel to the distance vector.
@@ -188,11 +189,12 @@ public class AutoDriveTo {
                 x + drive.pose.position.x, y + drive.pose.position.y);
     }
 
-    public boolean linearDriveTo(double deltaT, TelemetryPacket packet, Canvas canvas) {
+    public boolean linearDriveTo(PoseVelocity2d currentRobotVel, double deltaT, TelemetryPacket packet, Canvas canvas) {
         Vector2d currentLinearVel;
         double currentRotVel;
         this.canvas = canvas;
         this.packet = packet;
+        this.currentRobotVel = currentRobotVel;
 
         DPoint deltaDist = goal.minus(currentPos);
 
@@ -202,9 +204,51 @@ public class AutoDriveTo {
 
         currentPos = currentPos.plus(currentLinearVel.times(deltaT));
         currentRot += currentRotVel * deltaT;
+        double foo = drive.pose.heading.log();
 
-        drive.setDrivePowers(null, null, null, motionProfileVel);
+        Vector2d currentLinearAccel = currentLinearVel.minus(lastLinearVel).div(deltaT);
+        lastLinearVel = currentLinearVel;
+
+        double currentRotAccel = (currentRotVel - lastRotVel) / deltaT;
+        lastRotVel = currentRotVel;
+
+        double[] x = {currentPos.x, currentLinearVel.x, currentLinearAccel.x };
+        double[] y = {currentPos.y, currentLinearVel.y, currentLinearAccel.y };
+        double[] angular = {currentRot, currentRotVel, currentRotAccel};
+
+        setDriveVel(x, y, angular);
 
         return motionProfileVel.linearVel.x == 0 && motionProfileVel.linearVel.y == 0 && motionProfileVel.angVel == 0;
+    }
+
+    public void setDriveVel(double[] x, double[] y, double[] angular) {
+        Pose2dDual<Time> txWorldTarget = new Pose2dDual<>(
+                new Vector2dDual<>(new DualNum<>(x), new DualNum<>(y)),
+                Rotation2dDual.exp(new DualNum<>(angular)));
+
+        PoseVelocity2dDual<Time> command = new HolonomicController(
+                MecanumDrive.PARAMS.axialGain, MecanumDrive.PARAMS.lateralGain, MecanumDrive.PARAMS.headingGain,
+                MecanumDrive.PARAMS.axialVelGain, MecanumDrive.PARAMS.lateralVelGain, MecanumDrive.PARAMS.headingVelGain
+                ).compute(txWorldTarget, drive.pose, currentRobotVel);
+
+        // Enlighten Wily Works as to where we should be:
+        WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
+
+        HolonomicKinematics.WheelVelocities<Time> wheelVels = drive.kinematics.inverse(command);
+
+        double voltage = drive.getVoltage();
+
+        final MotorFeedforward feedforward = new MotorFeedforward(MecanumDrive.PARAMS.kS,
+                MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
+                MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick);
+        double leftFrontPower = feedforward.compute(wheelVels.leftFront) / voltage;
+        double leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
+        double rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;
+        double rightFrontPower = feedforward.compute(wheelVels.rightFront) / voltage;
+
+        drive.leftFront.setPower(leftFrontPower);
+        drive.leftBack.setPower(leftBackPower);
+        drive.rightBack.setPower(rightBackPower);
+        drive.rightFront.setPower(rightFrontPower);
     }
 }
