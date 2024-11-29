@@ -40,8 +40,8 @@ public class AutoDriveTo {
     public final double rotationalDriveAccel = MecanumDrive.PARAMS.maxAngAccel;
     public final double rotationalDriveDeccel = -MecanumDrive.PARAMS.maxAngAccel;
     public final double maxRotationalSpeed = MecanumDrive.PARAMS.maxAngVel;
-    public final double rotationalVelEpsilon = Math.toRadians(1);
-    public final double rotationalDistEpsilon = Math.toRadians(2.5);
+    public final double rotationalVelEpsilon = Math.toRadians(3);
+    public final double rotationalDistEpsilon = Math.toRadians(3);
 
     //target pose
     DPoint goal;
@@ -203,11 +203,9 @@ public class AutoDriveTo {
 
         currentLinearVel = linearVelocity(deltaDist.toVector2d(), deltaT);
         currentRotVel = rotationalVelocity(deltaT);
-        PoseVelocity2d motionProfileVel = new PoseVelocity2d(currentLinearVel, rotationalVelocity(deltaT));
 
         currentPos = currentPos.plus(currentLinearVel.times(deltaT));
         currentRot += currentRotVel * deltaT;
-        double foo = drive.pose.heading.log();
 
         Vector2d currentLinearAccel = currentLinearVel.minus(lastLinearVel).div(deltaT);
         lastLinearVel = currentLinearVel;
@@ -221,7 +219,7 @@ public class AutoDriveTo {
 
         setDriveVel(x, y, angular);
 
-        return motionProfileVel.linearVel.x == 0 && motionProfileVel.linearVel.y == 0 && motionProfileVel.angVel == 0;
+        return currentLinearVel.x == 0 && currentLinearVel.y == 0 && currentRotVel == 0;
     }
 
     public void setDriveVel(double[] x, double[] y, double[] angular) {
