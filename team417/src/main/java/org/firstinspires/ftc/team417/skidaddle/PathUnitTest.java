@@ -22,6 +22,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 public class PathUnitTest extends BaseOpModeFastBot {
 
     private boolean yPressed;
+    private boolean upPressed;
     public double startHeading;
 
     private int ARM_COLLECT = 4830;
@@ -44,6 +45,7 @@ public class PathUnitTest extends BaseOpModeFastBot {
         AutoDriveTo driveTo = new AutoDriveTo(drive);
 
         yPressed = false;
+        upPressed = false;
 
         waitForStart();
 
@@ -56,13 +58,28 @@ public class PathUnitTest extends BaseOpModeFastBot {
 
             currentPoseVel = drive.updatePoseEstimate();
 
-
             if (gamepad1.y && !yPressed) {
                 pathing = true;
-                driveTo.init(new DPoint(0, -48), 0, currentPoseVel, telemetry);
+                driveTo.init(new DPoint(26, -62), 0, currentPoseVel, telemetry);
+            } else if (gamepad1.dpad_up && !upPressed) {
+                pathing = true;
+                driveTo.init(new DPoint(17, -47), Math.PI / 2.0, currentPoseVel, telemetry);
             }
+
             if (gamepad1.y && pathing) {
                 pathing = !driveTo.linearDriveTo(currentPoseVel, deltaTime, packet, canvas);
+                armPosition = ARM_COLLECT;
+                wrist.setPosition(WRIST_FOLDED_OUT);
+                intake1.setPower(INTAKE_COLLECT);
+                armMotor1.setTargetPosition((int) (armPosition));
+                armMotor1.setVelocity(ARM_VELOCITY);
+                intakeEnabled = true;
+            } else if (gamepad1.dpad_up && pathing) {
+                pathing = !driveTo.linearDriveTo(currentPoseVel, deltaTime, packet, canvas);
+                armPosition = ARM_SCORE_SPECIMEN;
+                wrist.setPosition(WRIST_SCORE_SPECIMEN);
+                armMotor1.setTargetPosition((int) (armPosition));
+                armMotor1.setVelocity(ARM_VELOCITY);
             } else {
                 // Set the drive motor powers according to the gamepad input:
                 drive.setDrivePowers(new PoseVelocity2d(new Vector2d(
@@ -74,6 +91,7 @@ public class PathUnitTest extends BaseOpModeFastBot {
             }
 
             yPressed = gamepad1.y;
+            upPressed = gamepad1.dpad_up;
 
             WilyWorks.updateSimulation(deltaTime);
             try {
@@ -178,6 +196,7 @@ public class PathUnitTest extends BaseOpModeFastBot {
             armPosition = ARM_COLLECT;
             wrist.setPosition(WRIST_FOLDED_OUT);
             intake1.setPower(INTAKE_COLLECT);
+            intakeEnabled = true;
         } else if (gamepad1.left_bumper) {
             /* This is about 20° up from the collecting position to clear the barrier
             Note here that we don't set the wrist position or the intake power when we
