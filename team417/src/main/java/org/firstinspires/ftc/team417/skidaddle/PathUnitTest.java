@@ -9,11 +9,9 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.PwmControl;
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.BaseOpModeFastBot;
-import org.firstinspires.ftc.team417.FastBotTeleOp;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
@@ -21,13 +19,12 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 @TeleOp(name = "PathUnitTest")
 public class PathUnitTest extends BaseOpModeFastBot {
 
-    private boolean yPressed;
     public double startHeading;
 
-    private int ARM_COLLECT = 4830;
-    private int ARM_CLEAR_BARRIER = 4660;
-    private int ARM_COLLAPSED_INTO_ROBOT = 20;
-    private int ARM_SCORE_SPECIMEN = 3030;
+    private final int ARM_COLLECT = 4830;
+    private final int ARM_CLEAR_BARRIER = 4660;
+    private final int ARM_COLLAPSED_INTO_ROBOT = 20;
+    private final int ARM_SCORE_SPECIMEN = 3030;
 
     @Override
     public void runOpMode() {
@@ -39,11 +36,12 @@ public class PathUnitTest extends BaseOpModeFastBot {
         prepareRobot(new Pose2d(63, -63, 0));
         FtcDashboard dashboard = FtcDashboard.getInstance();
 
-        PoseVelocity2d currentPoseVel = drive.updatePoseEstimate();
+        PoseVelocity2d currentPoseVel;
 
         AutoDriveTo driveTo = new AutoDriveTo(drive);
 
-        yPressed = false;
+        boolean yPressed = false;
+        boolean upPressed = false;
 
         waitForStart();
 
@@ -56,13 +54,28 @@ public class PathUnitTest extends BaseOpModeFastBot {
 
             currentPoseVel = drive.updatePoseEstimate();
 
-
             if (gamepad1.y && !yPressed) {
                 pathing = true;
                 driveTo.init(new DPoint(0, -48), 0, currentPoseVel, telemetry);
+            } else if (gamepad1.dpad_up && !upPressed) {
+                pathing = true;
+                driveTo.init(new DPoint(17, -47), Math.PI / 2.0, currentPoseVel, telemetry);
             }
+
             if (gamepad1.y && pathing) {
                 pathing = !driveTo.linearDriveTo(currentPoseVel, deltaTime, packet, canvas);
+                /*armPosition = ARM_COLLECT;
+                wrist.setPosition(WRIST_FOLDED_OUT);
+                intake1.setPower(INTAKE_COLLECT);
+                armMotor1.setTargetPosition((int) (armPosition));
+                armMotor1.setVelocity(ARM_VELOCITY);
+                intakeEnabled = true;*/
+            } else if (gamepad1.dpad_up && pathing) {
+                pathing = !driveTo.linearDriveTo(currentPoseVel, deltaTime, packet, canvas);
+                armPosition = ARM_SCORE_SPECIMEN;
+                wrist.setPosition(WRIST_SCORE_SPECIMEN);
+                armMotor1.setTargetPosition((int) (armPosition));
+                armMotor1.setVelocity(ARM_VELOCITY);
             } else {
                 // Set the drive motor powers according to the gamepad input:
                 drive.setDrivePowers(new PoseVelocity2d(new Vector2d(
@@ -74,14 +87,9 @@ public class PathUnitTest extends BaseOpModeFastBot {
             }
 
             yPressed = gamepad1.y;
+            upPressed = gamepad1.dpad_up;
 
             WilyWorks.updateSimulation(deltaTime);
-            try {
-                //Thread.sleep((int) Constants.DELTA_T * 1000);
-                Thread.sleep(20);
-            } catch (InterruptedException e) {
-
-            }
 
             telemetry.addData("x", drive.pose.position.x);
             telemetry.addData("y", drive.pose.position.y);
@@ -178,6 +186,7 @@ public class PathUnitTest extends BaseOpModeFastBot {
             armPosition = ARM_COLLECT;
             wrist.setPosition(WRIST_FOLDED_OUT);
             intake1.setPower(INTAKE_COLLECT);
+            intakeEnabled = true;
         } else if (gamepad1.left_bumper) {
             /* This is about 20° up from the collecting position to clear the barrier
             Note here that we don't set the wrist position or the intake power when we
