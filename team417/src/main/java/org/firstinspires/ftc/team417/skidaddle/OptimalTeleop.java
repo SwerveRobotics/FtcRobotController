@@ -16,15 +16,15 @@ import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 @Config
-@TeleOp(name = "PathUnitTest")
-public class PathUnitTest extends BaseOpModeFastBot {
-
+@TeleOp(name = "OptimalTeleop")
+public class OptimalTeleop extends BaseOpModeFastBot {
     public double startHeading;
 
-    private final int ARM_COLLECT = 4830;
-    private final int ARM_CLEAR_BARRIER = 4660;
-    private final int ARM_COLLAPSED_INTO_ROBOT = 20;
-    private final int ARM_SCORE_SPECIMEN = 3030;
+    private int ARM_COLLECT = 4813;
+    private int ARM_CLEAR_BARRIER = 4660;
+    private int ARM_COLLAPSED_INTO_ROBOT = 20;
+    private int ARM_SCORE_SPECIMEN = 3030;
+    private int ARM_VERTICAL = 2320;
 
     @Override
     public void runOpMode() {
@@ -36,14 +36,18 @@ public class PathUnitTest extends BaseOpModeFastBot {
         prepareRobot(new Pose2d(63, -63, 0));
         FtcDashboard dashboard = FtcDashboard.getInstance();
 
-        PoseVelocity2d currentPoseVel;
+        PoseVelocity2d currentPoseVel = drive.updatePoseEstimate();
 
         AutoDriveTo driveTo = new AutoDriveTo(drive);
 
         boolean yPressed = false;
         boolean upPressed = false;
+        boolean downPressed = false;
 
         waitForStart();
+
+        boolean doAuto = false;
+        int step = 1;
 
         while (opModeIsActive()) {
             currentTime = TIME.seconds();
@@ -54,25 +58,53 @@ public class PathUnitTest extends BaseOpModeFastBot {
 
             currentPoseVel = drive.updatePoseEstimate();
 
-            if (gamepad1.y && !pathing) {
-                pathing = true;
-                driveTo.init(new DPoint(0, -48), Math.PI/2, currentPoseVel, telemetry);
-            }
-
-            if (pathing) {
-                pathing = !driveTo.linearDriveTo(currentPoseVel, deltaTime, packet, canvas);
+            if (doAuto) {
             } else {
-                // Set the drive motor powers according to the gamepad input:
-                drive.setDrivePowers(new PoseVelocity2d(new Vector2d(
-                        -gamepad1.left_stick_y / 2.0,
-                        -gamepad1.left_stick_x / 2.0),
-                        -gamepad1.right_stick_x / 2.0));
+                if (!pathing) {
+                    if (gamepad1.dpad_up && !upPressed) {
+                        driveTo.init(new DPoint(0, -45), Math.PI / 2.0, currentPoseVel, telemetry);
 
-                controlMechanismsWithGamepads();
+                        armPosition = ARM_VERTICAL;
+                        wrist.setPosition(WRIST_FOLDED_IN);
+                        intakeEnabled = false;
+
+                        pathing = true;
+                    }
+                    if (gamepad1.dpad_down && downPressed) {
+                        driveTo.init(new DPoint(0, -45), Math.PI / 2.0, currentPoseVel, telemetry);
+
+                        armPosition = ARM_CLEAR_BARRIER;
+                        wrist.setPosition(WRIST_FOLDED_OUT);
+                        intakeEnabled = true;
+
+                        pathing = true;
+                    }
+                    if (gamepad1.y && yPressed) {
+                        driveTo.init(new DPoint(24, -63), 0, currentPoseVel, telemetry);
+
+                        armPosition = ARM_COLLECT;
+                        wrist.setPosition(WRIST_FOLDED_OUT);
+                        intakeEnabled = true;
+
+                        pathing = true;
+                    }
+
+                    drive.setDrivePowers(new PoseVelocity2d(new Vector2d(
+                            -gamepad1.left_stick_y / 2.0,
+                            -gamepad1.left_stick_x / 2.0),
+                            -gamepad1.right_stick_x / 2.0));
+
+                    controlMechanismsWithGamepads();
+                }
             }
 
-            yPressed = gamepad1.y;
             upPressed = gamepad1.dpad_up;
+            yPressed = gamepad1.y;
+            downPressed= gamepad1.dpad_down;
+
+            if (pathing)
+                pathing = !driveTo.linearDriveTo(currentPoseVel, deltaTime, packet, canvas) || !driveArm();
+
 
             WilyWorks.updateSimulation(deltaTime);
 
@@ -106,6 +138,27 @@ public class PathUnitTest extends BaseOpModeFastBot {
     boolean intakeEnabled = false;
     double armPositionFudgeFactor = 0;
     double armPosition = 0;
+    double armPosEpsilon = 20;
+    boolean reversed = false;
+
+    public boolean driveArm() {
+        // When 'b' is HELD down, it will deposit
+        if (reversed) {
+            intake1.setPower(INTAKE_DEPOSIT);
+        }
+        else if (intakeEnabled) {
+            intake1.setPower(INTAKE_COLLECT);
+        }
+        else {
+            intake1.setPower(INTAKE_OFF);
+        }
+
+        armMotor1.setTargetPosition((int) armPosition);
+        armMotor1.setVelocity(ARM_VELOCITY);
+
+        return armMotor1.getCurrentPosition() + armPosEpsilon > armPosition &&
+                armMotor1.getCurrentPosition() - armPosEpsilon < armPosition;
+    }
 
     public void controlMechanismsWithGamepads() {
         /* Here we handle the three buttons that have direct control of the intake speed.
@@ -132,7 +185,7 @@ public class PathUnitTest extends BaseOpModeFastBot {
             intakeEnabled = false;
         }
 
-        boolean reversed = gamepad1.b;
+        reversed = gamepad1.b;
 
         // When 'b' is HELD down, it will deposit
         if (reversed) {
