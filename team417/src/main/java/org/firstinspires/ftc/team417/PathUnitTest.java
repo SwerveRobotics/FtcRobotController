@@ -42,7 +42,7 @@ public class PathUnitTest extends BaseOpModeFastBot{
             currentPoseVel = drive.updatePoseEstimate();
 
             if (gamepad1.x && !xPressed && !pathing) {
-                driveTo.init(new DPoint(0, 0), Math.PI / 2);
+                driveTo.init(new DPoint(0, 0), Math.PI / 2, currentPoseVel);
             }
             if (gamepad1.x || pathing) {
                 pathing = !driveTo.linearDriveTo(currentPoseVel, deltaT, packet, canvas);

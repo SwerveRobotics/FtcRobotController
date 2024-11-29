@@ -60,8 +60,8 @@ public class AutoDriveTo {
         this.drive = drive;
     }
 
-    public void init(DPoint goal, double goalRotation) {
-        PoseVelocity2d currentVelocity = drive.pose.times(drive.poseVelocity); //Convert from robot relative to field relative
+    public void init(DPoint goal, double goalRotation, PoseVelocity2d currentPoseVel) {
+        PoseVelocity2d currentVelocity = drive.pose.times(currentPoseVel); //Convert from robot relative to field relative
 
         this.goal = goal;
         this.goalRotation = goalRotation;
