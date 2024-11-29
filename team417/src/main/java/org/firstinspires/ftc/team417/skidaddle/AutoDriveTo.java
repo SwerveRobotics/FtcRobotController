@@ -242,6 +242,10 @@ public class AutoDriveTo {
         final MotorFeedforward feedforward = new MotorFeedforward(MecanumDrive.PARAMS.kS,
                 MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
                 MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick);
+
+        /*final MotorFeedforward feedforward = new MotorFeedforward(0,
+                0,
+                0);*/
         double leftFrontPower = feedforward.compute(wheelVels.leftFront) / voltage;
         double leftBackPower = feedforward.compute(wheelVels.leftBack) / voltage;
         double rightBackPower = feedforward.compute(wheelVels.rightBack) / voltage;

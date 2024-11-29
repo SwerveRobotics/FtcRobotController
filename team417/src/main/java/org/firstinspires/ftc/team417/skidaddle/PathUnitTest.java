@@ -23,41 +23,51 @@ public class PathUnitTest extends BaseOpModeFastBot {
 
     @Override
     public void runOpMode() {
-        prepareRobot(new Pose2d(-48, -48, 0));
+        boolean pathing = false;
+        double currentTime = TIME.seconds();
+        double lastTime = currentTime;
+        double deltaTime;
+
+        prepareRobot(new Pose2d(63, -63, 0));
         FtcDashboard dashboard = FtcDashboard.getInstance();
 
         PoseVelocity2d currentPoseVel = drive.updatePoseEstimate();
 
         AutoDriveTo driveTo = new AutoDriveTo(drive);
 
+        xPressed = false;
+
         waitForStart();
 
-        boolean pathing = false;
-
         while (opModeIsActive()) {
-            double deltaT = 0.02;
+            currentTime = TIME.seconds();
+            deltaTime = currentTime - lastTime;
 
             TelemetryPacket packet = new TelemetryPacket();
             Canvas canvas = packet.fieldOverlay();
 
             currentPoseVel = drive.updatePoseEstimate();
 
-            if (gamepad1.x && !xPressed && !pathing) {
-                driveTo.init(new DPoint(0, 0), Math.PI / 2, currentPoseVel, telemetry);
+
+            if (gamepad1.x && !xPressed) {
+                pathing = true;
+                driveTo.init(new DPoint(0, -48), 0, currentPoseVel, telemetry);
             }
-            if (gamepad1.x || pathing) {
-                pathing = !driveTo.linearDriveTo(currentPoseVel, deltaT, packet, canvas);
+            if (gamepad1.x && pathing) {
+                pathing = !driveTo.linearDriveTo(currentPoseVel, deltaTime, packet, canvas);
             } else {
                 // Set the drive motor powers according to the gamepad input:
                 drive.setDrivePowers(new PoseVelocity2d(new Vector2d(
                         -gamepad1.left_stick_y,
                         -gamepad1.left_stick_x),
                         -gamepad1.right_stick_x));
+
+
             }
 
             xPressed = gamepad1.x;
 
-            WilyWorks.updateSimulation(deltaT);
+            WilyWorks.updateSimulation(deltaTime);
             try {
                 //Thread.sleep((int) Constants.DELTA_T * 1000);
                 Thread.sleep(20);
@@ -76,6 +86,8 @@ public class PathUnitTest extends BaseOpModeFastBot {
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
             dashboard.sendTelemetryPacket(packet);
             telemetry.update();
+
+            lastTime = currentTime;
         }
     }
 
