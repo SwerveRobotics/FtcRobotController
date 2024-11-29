@@ -85,7 +85,7 @@ public final class MecanumDrive {
 
     public static class Params {
         Params() {
-            maxWheelVel = 50; // was 50
+            maxWheelVel = 50; // was 55
             minProfileAccel = -30;
             maxProfileAccel = 50;
 
@@ -167,24 +167,24 @@ public final class MecanumDrive {
 
                     inPerTick = 1;
                     lateralInPerTick = 0.819;
-                    trackWidthTicks = 14.89;
+                    trackWidthTicks = 14.63;
 
-                    kS = 0.695; // Was 0.759
+                    kS = 0.667; // Was 0.759
                     kV = 0.194; // Was 0.192
                     kA = 0.0200;
 
-                    axialGain = 11.0;
-                    axialVelGain = 2.70;
+                    axialGain = 9.0;
+                    axialVelGain = 2.0;
                     lateralGain = 2.0;
                     lateralVelGain = 0.40;
-                    headingGain = 2.27;
+                    headingGain = 15.00;
                     headingVelGain = 0.0;
 
-                    otos.offset.x = 6.016;
-                    otos.offset.y = -2.511;
-                    otos.offset.h = Math.toRadians(88.550); // Was 91.19
-                    otos.linearScalar = 1.007; // Was 0.989
-                    otos.angularScalar = 1.0019;
+                    otos.offset.x = 6.011;
+                    otos.offset.y = -2.784;
+                    otos.offset.h = Math.toRadians(90.50); // Was 91.19
+                    otos.linearScalar = 0.9801; // Was 0.989
+                    otos.angularScalar = 0.9928;
 
                     pinpoint.ticksPerMm = 0;
                     pinpoint.xReversed = false;

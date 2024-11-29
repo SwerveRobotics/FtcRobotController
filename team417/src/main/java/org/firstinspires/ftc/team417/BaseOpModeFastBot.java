@@ -54,14 +54,15 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     If you'd like it to move further, increase that number. If you'd like it to not move
     as far from the starting position, decrease it. */
 
-    static double ARM_COLLAPSED_INTO_ROBOT = 0;
-    static double ARM_COLLECT = 254 * ARM_TICKS_PER_DEGREE;
-    static double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
-    static double ARM_AUTO_REST_POSITION = 170 * ARM_TICKS_PER_DEGREE;
-    static double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
-    static double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
-    static double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
-    static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_COLLAPSED_INTO_ROBOT = 0;
+    public static double LIFT_COLLECT = 0;
+    public static double ARM_COLLECT = 256.5 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_CLEAR_BARRIER = 234 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_AUTO_REST_POSITION = 170 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_SCORE_SAMPLE_IN_LOW = 155 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
+    public static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
 
     /* Variables to store the speed the intake servo should be set at to intake, and deposit game elements. */
     final static double INTAKE_COLLECT = -1.0;
@@ -69,12 +70,12 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     final static double INTAKE_DEPOSIT = 0.5;
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
-    final static double WRIST_FOLDED_IN = 1;
-    final static double WRIST_FOLDED_OUT = 0.5;
+    public static double WRIST_FOLDED_IN = 0.9;
+    public static double WRIST_FOLDED_OUT = 0.49;
+    public static double WRIST_SCORE_SPECIMEN = 0.81;
 
     //position used to score specimens in auto
     public final static double Y_SCORE_POSE = 41;
-    public final static double XDRIVE_Y_SCORE_POSE = 33;
     /* A number in degrees that the triggers can adjust the arm position by */
     final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
@@ -82,7 +83,6 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     /* Variables that are used to set the arm to a specific position */
     // Fast Bot variables
     static double armPosition = (int) ARM_COLLAPSED_INTO_ROBOT;
-    double armPositionFudgeFactor;
 
     //Create a central time value
     public static ElapsedTime TIME = new ElapsedTime();

@@ -69,18 +69,23 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             // Draw the robot and field:
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
-            Pose2d oldPose = new Pose2d(
-                    drive.pose.position.x - drive.distanceLocalizer.correction.x,
-                    drive.pose.position.y - drive.distanceLocalizer.correction.y,
-                    drive.pose.heading.log());
-            packet.fieldOverlay().setStroke("#FF0000");
-            packet.fieldOverlay().strokeLine(
-                    oldPose.position.x,
-                    oldPose.position.y,
-                    drive.pose.position.x,
-                    drive.pose.position.y
-                    );
-            Drawing.drawRobot(packet.fieldOverlay(), oldPose);
+
+            // Draw the uncorrected pose in green if it's correcting and red if it's not:
+            if (drive.distanceLocalizer != null) {
+                Pose2d oldPose = new Pose2d(
+                        drive.pose.position.x - drive.distanceLocalizer.correction.x,
+                        drive.pose.position.y - drive.distanceLocalizer.correction.y,
+                        drive.pose.heading.log());
+                packet.fieldOverlay().setStroke("#FF0000");
+                packet.fieldOverlay().strokeLine(
+                        oldPose.position.x,
+                        oldPose.position.y,
+                        drive.pose.position.x,
+                        drive.pose.position.y
+                );
+                Drawing.drawRobot(packet.fieldOverlay(), oldPose);
+            }
+
             MecanumDrive.sendTelemetryPacket(packet);
         }
     }
@@ -230,13 +235,13 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             } else if (gamepad2.dpad_left) {
                         /* This turns off the intake, folds in the wrist, and moves the arm
                         back to folded inside the robot. This is also the starting configuration */
-                armPosition = ARM_COLLAPSED_INTO_ROBOT;
                 intake1.setPower(INTAKE_OFF);
+                armPosition = ARM_COLLAPSED_INTO_ROBOT;
                 wrist.setPosition(WRIST_FOLDED_IN);
             } else if (gamepad2.dpad_right) {
                 /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
                 armPosition = ARM_SCORE_SPECIMEN;
-                wrist.setPosition(WRIST_FOLDED_OUT);
+                wrist.setPosition(WRIST_SCORE_SPECIMEN);
             } else if (gamepad2.dpad_up) {
                 /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
                 armPosition = ARM_ATTACH_HANGING_HOOK;

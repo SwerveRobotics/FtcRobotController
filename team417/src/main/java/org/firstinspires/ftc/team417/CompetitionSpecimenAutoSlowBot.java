@@ -5,11 +5,14 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 @Autonomous (name = "AutoSpecimenXDrive", group = "SlowBot", preselectTeleOp = "CompetitionTeleOp")
-public class CompetitionSpecimenAutoSlowBot extends BaseOpModeFastBot {
+@Disabled
+public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
     @Override
     public void runOpMode () {
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(-90));  // sets the beginning pose relative to the robot and  cxc

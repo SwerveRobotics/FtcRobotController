@@ -93,23 +93,26 @@ public class CompetitionBasketAutoFastBot extends BaseOpModeFastBot {
             packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
             more = trajectoryAction.run(packet);
 
-            Pose2d oldPose = new Pose2d(
-                    drive.pose.position.x - drive.distanceLocalizer.correction.x,
-                    drive.pose.position.y - drive.distanceLocalizer.correction.y,
-                    drive.pose.heading.log()
-            );
-            if (drive.distanceLocalizer.correcting) {
-                packet.fieldOverlay().setStroke("#00FF00");
-            } else {
-                packet.fieldOverlay().setStroke("#FF0000");
+            // Draw the uncorrected pose in green if it's correcting and red if it's not:
+            if (drive.distanceLocalizer != null) {
+                Pose2d oldPose = new Pose2d(
+                        drive.pose.position.x - drive.distanceLocalizer.correction.x,
+                        drive.pose.position.y - drive.distanceLocalizer.correction.y,
+                        drive.pose.heading.log()
+                );
+                if (drive.distanceLocalizer.correcting) {
+                    packet.fieldOverlay().setStroke("#00FF00");
+                } else {
+                    packet.fieldOverlay().setStroke("#FF0000");
+                }
+                packet.fieldOverlay().strokeLine(
+                        oldPose.position.x,
+                        oldPose.position.y,
+                        drive.pose.position.x,
+                        drive.pose.position.y
+                );
+                Drawing.drawRobot(packet.fieldOverlay(), oldPose);
             }
-            packet.fieldOverlay().strokeLine(
-                    oldPose.position.x,
-                    oldPose.position.y,
-                    drive.pose.position.x,
-                    drive.pose.position.y
-            );
-            Drawing.drawRobot(packet.fieldOverlay(), oldPose);
 
             // Only send the packet if there's more to do in order to keep the very last
             // drawing up on the field once the robot is done:
