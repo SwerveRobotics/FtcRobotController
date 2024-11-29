@@ -9,11 +9,9 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.PwmControl;
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.BaseOpModeFastBot;
-import org.firstinspires.ftc.team417.FastBotTeleOp;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
@@ -21,14 +19,12 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 @TeleOp(name = "PathUnitTest")
 public class PathUnitTest extends BaseOpModeFastBot {
 
-    private boolean yPressed;
-    private boolean upPressed;
     public double startHeading;
 
-    private int ARM_COLLECT = 4830;
-    private int ARM_CLEAR_BARRIER = 4660;
-    private int ARM_COLLAPSED_INTO_ROBOT = 20;
-    private int ARM_SCORE_SPECIMEN = 3030;
+    private final int ARM_COLLECT = 4830;
+    private final int ARM_CLEAR_BARRIER = 4660;
+    private final int ARM_COLLAPSED_INTO_ROBOT = 20;
+    private final int ARM_SCORE_SPECIMEN = 3030;
 
     @Override
     public void runOpMode() {
@@ -40,12 +36,12 @@ public class PathUnitTest extends BaseOpModeFastBot {
         prepareRobot(new Pose2d(63, -63, 0));
         FtcDashboard dashboard = FtcDashboard.getInstance();
 
-        PoseVelocity2d currentPoseVel = drive.updatePoseEstimate();
+        PoseVelocity2d currentPoseVel;
 
         AutoDriveTo driveTo = new AutoDriveTo(drive);
 
-        yPressed = false;
-        upPressed = false;
+        boolean yPressed = false;
+        boolean upPressed = false;
 
         waitForStart();
 
@@ -94,12 +90,6 @@ public class PathUnitTest extends BaseOpModeFastBot {
             upPressed = gamepad1.dpad_up;
 
             WilyWorks.updateSimulation(deltaTime);
-            try {
-                //Thread.sleep((int) Constants.DELTA_T * 1000);
-                Thread.sleep(20);
-            } catch (InterruptedException e) {
-
-            }
 
             telemetry.addData("x", drive.pose.position.x);
             telemetry.addData("y", drive.pose.position.y);
