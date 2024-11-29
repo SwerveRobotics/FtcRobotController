@@ -12,6 +12,7 @@ import com.acmerobotics.roadrunner.Rotation2dDual;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.Vector2d;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.team417.roadrunner.HolonomicKinematics;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
@@ -25,6 +26,7 @@ public class AutoDriveTo {
 
     MecanumDrive drive;
     TelemetryPacket packet;
+    Telemetry telemetry;
     Canvas canvas;
 
     //linear motion constants
@@ -60,11 +62,12 @@ public class AutoDriveTo {
         this.drive = drive;
     }
 
-    public void init(DPoint goal, double goalRotation, PoseVelocity2d currentPoseVel) {
+    public void init(DPoint goal, double goalRotation, PoseVelocity2d currentPoseVel, Telemetry telemetry) {
         PoseVelocity2d currentVelocity = drive.pose.times(currentPoseVel); //Convert from robot relative to field relative
 
         this.goal = goal;
         this.goalRotation = goalRotation;
+        this.telemetry = telemetry;
 
         currentPos = DPoint.to(drive.pose.position);
         currentRot = drive.pose.heading.log();
@@ -78,14 +81,14 @@ public class AutoDriveTo {
         radialSpeed = findParSpeed(deltaDist, currentVelocity.linearVel);
         tangentialSpeed = findPerpSpeed(deltaDist, currentVelocity.linearVel);
 
-        lastLinearVel = new Vector2d(0, 0);
+        lastLinearVel = currentPoseVel.linearVel;
         lastRotVel = 0;
     }
 
     //returns the speed of the portion of the current vel vector that is parallel to the distance vector.
     private double findParSpeed(Vector2d goalVector, Vector2d currentVector) {
-        double goalTheta = Math.atan2(goalVector.x, goalVector.y);
-        double currentTheta = Math.atan2(currentVector.x, currentVector.y);
+        double goalTheta = Math.atan2(goalVector.y, goalVector.x);
+        double currentTheta = Math.atan2(currentVector.y, currentVector.x);
         double differenceOfTheta = goalTheta - currentTheta;
 
         return Math.hypot(currentVector.x, currentVector.y) * Math.cos(differenceOfTheta);
@@ -93,8 +96,8 @@ public class AutoDriveTo {
 
     //returns the speed of the tangential portion of a vector.
     private double findPerpSpeed(Vector2d goalVector, Vector2d currentVector) {
-        double goalTheta = Math.atan2(goalVector.x, goalVector.y);
-        double currentTheta = Math.atan2(currentVector.x, currentVector.y);
+        double goalTheta = Math.atan2(goalVector.y, goalVector.x);
+        double currentTheta = Math.atan2(currentVector.y, currentVector.x);
         double differenceOfTheta = goalTheta - currentTheta;
 
         return Math.hypot(currentVector.x, currentVector.y) * Math.sin(differenceOfTheta);
@@ -135,11 +138,11 @@ public class AutoDriveTo {
 
         //If tangential speed is positive, decrease until zero, else increase it until zero.
         if (tangentialSpeed > 0) {
-            tangentialSpeed += (linearDriveDeccel * deltaT);
-            tangentialSpeed = Math.min(tangentialSpeed, 0.0);
-        } else if (tangentialSpeed < 0) {
-            tangentialSpeed -= (linearDriveDeccel * deltaT);
+            tangentialSpeed += linearDriveDeccel * deltaT;
             tangentialSpeed = Math.max(tangentialSpeed, 0.0);
+        } else if (tangentialSpeed < 0) {
+            tangentialSpeed -= linearDriveDeccel * deltaT;
+            tangentialSpeed = Math.min(tangentialSpeed, 0.0);
         }
 
         //rotate distance vector by 90 degrees.
