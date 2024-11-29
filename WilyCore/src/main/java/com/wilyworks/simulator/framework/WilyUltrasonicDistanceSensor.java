@@ -3,6 +3,7 @@ package com.wilyworks.simulator.framework;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.wilyworks.common.WilyWorks;
 import com.wilyworks.simulator.WilyCore;
+import com.wilyworks.simulator.helpers.Globals;
 import com.wilyworks.simulator.helpers.Point;
 
 import java.util.Random;
@@ -27,8 +28,9 @@ class Ray {
 }
 
 public class WilyUltrasonicDistanceSensor extends UltrasonicDistanceSensor {
-    final double DETECTION_ANGLE = Math.toRadians(80); // 80 degree spread according to the specs
+    final double FIELD_OF_VIEW = Math.toRadians(40); // Specs say 80 degrees but real is less
     final double MAX_DISTANCE = 75; // 150 inches is the theoretical maximum range
+    final double MIN_REFLECTION_ANGLE = Math.toRadians(45); // Reflection angle must be more than this
 
     static final Segment[] WALL_SEGMENTS = {
             // Clockwise starting in the upper-right corner:
@@ -53,7 +55,6 @@ public class WilyUltrasonicDistanceSensor extends UltrasonicDistanceSensor {
             throw new IllegalArgumentException(String.format("Couldn't find '%s' in WilyConfig.distanceSensors.", deviceName));
         }
     }
-
 
     // A method to check if a ray intersects a line segment and return the intersection point or null
     // Courtesy of Copilot.
@@ -82,8 +83,33 @@ public class WilyUltrasonicDistanceSensor extends UltrasonicDistanceSensor {
         return null;
     }
 
+    // Calculate the hit point of the ray to the segment if the reflection angle is within
+    // acceptable range. Returns Double.MAX_VALUE if there's no intersection:
+    private double distanceToSegment(Segment segment, Point sensorPoint, double sensorAngle) {
+        double distance = Double.MAX_VALUE;
+        double segmentAngle = segment.p2.subtract(segment.p1).atan2();
+        double reflectionAngle = Math.abs(Globals.normalizeAngle(segmentAngle - sensorAngle));
+        if ((reflectionAngle > MIN_REFLECTION_ANGLE) && (reflectionAngle < Math.PI - MIN_REFLECTION_ANGLE)) {
+            Point sensorDirectionVector = new Point(Math.cos(sensorAngle), Math.sin(sensorAngle));
+            Ray sensorRay = new Ray(sensorPoint, sensorDirectionVector);
+
+            // Add this sensor and segment to the eligible list if the sensor points at it
+            // and the distance is less than MAX_DISTANCE:
+            Point hitPoint = raySegmentIntersection(sensorRay, segment);
+            if (hitPoint != null) {
+                distance = sensorPoint.distance(hitPoint);
+                if (WilyCore.enableSensorError) {
+                    // 95% (2 standard deviations) of error comes within +/- 0.5 inches:
+                    distance += WilyCore.config.distanceSensorError / 2 * random.nextGaussian();
+                }
+            }
+        }
+        return distance;
+    }
+
     @Override
     public double getDistance(DistanceUnit distanceUnit) {
+        // Return zero if we have no WilyConfig description about the placement of the sensor:
         if (descriptor == null)
             return 0;
 
@@ -94,30 +120,18 @@ public class WilyUltrasonicDistanceSensor extends UltrasonicDistanceSensor {
                 .add(new Point(truePose.position));
         double sensorAngle = descriptor.orientation + truePose.heading.log();
 
-        Point sensorDirection = new Point(Math.cos(sensorAngle), Math.sin(sensorAngle));
-        Ray sensorRay = new Ray(sensorPoint, sensorDirection);
-
         // Find the first wall segment that the sensor is pointing straight at, according to
         // the current pose:
-        double distance = 0;
+        double distance = Double.MAX_VALUE;
+        double halfFov = FIELD_OF_VIEW / 2.0;
         for (Segment segment : WALL_SEGMENTS) {
-            // Add this sensor and segment to the eligible list if the sensor points at it
-            // and the distance is less than MAX_DISTANCE:
-            Point hitPoint = raySegmentIntersection(sensorRay, segment);
-            if (hitPoint != null) {
-                double hitPointDistance = sensorPoint.distance(hitPoint);
-                if (hitPointDistance < MAX_DISTANCE) {
-                    distance = hitPointDistance;
-                    if (WilyCore.enableSensorError) {
-                        // 95% (2 standard deviations) of error comes within +/- 0.5 inches:
-                        distance += WilyCore.config.distanceSensorError / 2 * random.nextGaussian();
-                    }
-                    break;
-                }
-            }
+            // Take the closest distance reading of any intersection:
+            distance = Math.min(distance, distanceToSegment(segment, sensorPoint, sensorAngle - halfFov));
+            distance = Math.min(distance, distanceToSegment(segment, sensorPoint, sensorAngle));
+            distance = Math.min(distance, distanceToSegment(segment, sensorPoint, sensorAngle + halfFov));
         }
 
         // Return the distance:
-        return distanceUnit.fromUnit(DistanceUnit.INCH, distance);
+        return (distance > MAX_DISTANCE) ? 0 : distanceUnit.fromUnit(DistanceUnit.INCH, distance);
     }
 }
