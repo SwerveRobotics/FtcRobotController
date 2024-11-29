@@ -68,7 +68,6 @@ public class AutoDriveTo {
         PoseVelocity2d currentVelocity = drive.pose.times(currentPoseVel); //Convert from robot relative to field relative
 
         this.endPos = endPos;
-        this.endRot = endRot;
         this.telemetry = telemetry;
         this.safeDist = safeDist;
 
@@ -233,7 +232,7 @@ public class AutoDriveTo {
         PoseVelocity2dDual<Time> command = new HolonomicController(
                 MecanumDrive.PARAMS.axialGain, MecanumDrive.PARAMS.lateralGain, MecanumDrive.PARAMS.headingGain,
                 MecanumDrive.PARAMS.axialVelGain, MecanumDrive.PARAMS.lateralVelGain, MecanumDrive.PARAMS.headingVelGain
-                ).compute(txWorldTarget, drive.pose, currentRobotVel);
+        ).compute(txWorldTarget, drive.pose, currentRobotVel);
 
         // Enlighten Wily Works as to where we should be:
         WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
