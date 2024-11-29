@@ -33,8 +33,8 @@ public class AutoDriveTo {
     public final double linearDriveAccel = MecanumDrive.PARAMS.maxProfileAccel;
     public final double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel;
     public final double maxLinearSpeed = MecanumDrive.PARAMS.maxWheelVel;
-    public final double linearVelEpsilon = 7.5;
-    public final double linearDistEpsilon = 1;
+    public final double linearVelEpsilon = 5;
+    public final double linearDistEpsilon = 0.5;
 
     //rotational motion constants
     public final double rotationalDriveAccel = MecanumDrive.PARAMS.maxAngAccel;
@@ -44,8 +44,8 @@ public class AutoDriveTo {
     public final double rotationalDistEpsilon = Math.toRadians(3);
 
     //target pose
-    DPoint goal;
-    double goalRotation;
+    DPoint endPos;
+    double endRot;
 
     //current pose
     double radialSpeed;
@@ -58,23 +58,26 @@ public class AutoDriveTo {
     double lastRotVel;
     PoseVelocity2d currentRobotVel;
 
+    double safeDist;
+
     public AutoDriveTo(MecanumDrive drive) {
         this.drive = drive;
     }
 
-    public void init(DPoint goal, double goalRotation, PoseVelocity2d currentPoseVel, Telemetry telemetry) {
+    public void init(DPoint endPos, double endRot, double safeDist, PoseVelocity2d currentPoseVel, Telemetry telemetry) {
         PoseVelocity2d currentVelocity = drive.pose.times(currentPoseVel); //Convert from robot relative to field relative
 
-        this.goal = goal;
-        this.goalRotation = goalRotation;
+        this.endPos = endPos;
+        this.endRot = endRot;
         this.telemetry = telemetry;
+        this.safeDist = safeDist;
 
         targetPos = DPoint.to(drive.pose.position);
         targetRot = drive.pose.heading.log();
 
         //find target change in position
-        Vector2d deltaDist =  goal.minus(targetPos).toVector2d();
-        double deltaRot = confineToScope(goalRotation - targetRot);
+        Vector2d deltaDist =  endPos.minus(targetPos).toVector2d();
+        double deltaRot = confineToScope(endRot - targetRot);
 
         //Convert from velocity vectors to speed scalars relative to goal pose.
         rotationalSpeed = currentVelocity.angVel * Math.signum(deltaRot);
@@ -165,7 +168,7 @@ public class AutoDriveTo {
         double rotRemaining;
         double rotationalVel;
 
-        rotRemaining = confineToScope(goalRotation - targetRot);
+        rotRemaining = confineToScope(endRot - targetRot);
 
         if (rotationalSpeed >= 0) {
             rotationalSpeed += rotationalDriveAccel * deltaT;
@@ -199,7 +202,7 @@ public class AutoDriveTo {
         this.packet = packet;
         this.currentRobotVel = currentRobotVel;
 
-        DPoint deltaDist = goal.minus(targetPos);
+        DPoint deltaDist = endPos.minus(targetPos);
 
         targetLinVel = linearVelocity(deltaDist.toVector2d(), deltaT);
         targetRotVel = rotationalVelocity(deltaT);
