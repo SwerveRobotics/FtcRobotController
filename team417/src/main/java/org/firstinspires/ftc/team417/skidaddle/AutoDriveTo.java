@@ -64,7 +64,7 @@ public class AutoDriveTo {
         this.drive = drive;
     }
 
-    public void init(DPoint endPos, double endRot, double safeDist, PoseVelocity2d currentPoseVel, Telemetry telemetry) {
+    public void init(DPoint endPos, double safeDist, PoseVelocity2d currentPoseVel, Telemetry telemetry) {
         PoseVelocity2d currentVelocity = drive.pose.times(currentPoseVel); //Convert from robot relative to field relative
 
         this.endPos = endPos;

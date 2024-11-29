@@ -56,7 +56,7 @@ public class PathUnitTest extends BaseOpModeFastBot {
 
             if (gamepad1.y && !yPressed) {
                 pathing = true;
-                driveTo.init(new DPoint(26, -62), 0, currentPoseVel, telemetry);
+                driveTo.init(new DPoint(0, -48), 0, currentPoseVel, telemetry);
             } else if (gamepad1.dpad_up && !upPressed) {
                 pathing = true;
                 driveTo.init(new DPoint(17, -47), Math.PI / 2.0, currentPoseVel, telemetry);
@@ -64,12 +64,12 @@ public class PathUnitTest extends BaseOpModeFastBot {
 
             if (gamepad1.y && pathing) {
                 pathing = !driveTo.linearDriveTo(currentPoseVel, deltaTime, packet, canvas);
-                armPosition = ARM_COLLECT;
+                /*armPosition = ARM_COLLECT;
                 wrist.setPosition(WRIST_FOLDED_OUT);
                 intake1.setPower(INTAKE_COLLECT);
                 armMotor1.setTargetPosition((int) (armPosition));
                 armMotor1.setVelocity(ARM_VELOCITY);
-                intakeEnabled = true;
+                intakeEnabled = true;*/
             } else if (gamepad1.dpad_up && pathing) {
                 pathing = !driveTo.linearDriveTo(currentPoseVel, deltaTime, packet, canvas);
                 armPosition = ARM_SCORE_SPECIMEN;
