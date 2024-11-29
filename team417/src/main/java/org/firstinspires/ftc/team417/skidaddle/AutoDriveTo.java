@@ -51,8 +51,8 @@ public class AutoDriveTo {
     double radialSpeed;
     double rotationalSpeed;
     double tangentialSpeed;
-    DPoint currentPos;
-    double currentRot;
+    DPoint targetPos;
+    double targetRot;
 
     Vector2d lastLinearVel;
     double lastRotVel;
@@ -69,12 +69,12 @@ public class AutoDriveTo {
         this.goalRotation = goalRotation;
         this.telemetry = telemetry;
 
-        currentPos = DPoint.to(drive.pose.position);
-        currentRot = drive.pose.heading.log();
+        targetPos = DPoint.to(drive.pose.position);
+        targetRot = drive.pose.heading.log();
 
         //find target change in position
-        Vector2d deltaDist =  goal.minus(currentPos).toVector2d();
-        double deltaRot = confineToScope(goalRotation - currentRot);
+        Vector2d deltaDist =  goal.minus(targetPos).toVector2d();
+        double deltaRot = confineToScope(goalRotation - targetRot);
 
         //Convert from velocity vectors to speed scalars relative to goal pose.
         rotationalSpeed = currentVelocity.angVel * Math.signum(deltaRot);
@@ -165,7 +165,7 @@ public class AutoDriveTo {
         double rotRemaining;
         double rotationalVel;
 
-        rotRemaining = confineToScope(goalRotation - currentRot);
+        rotRemaining = confineToScope(goalRotation - targetRot);
 
         if (rotationalSpeed >= 0) {
             rotationalSpeed += rotationalDriveAccel * deltaT;
@@ -193,33 +193,33 @@ public class AutoDriveTo {
     }
 
     public boolean linearDriveTo(PoseVelocity2d currentRobotVel, double deltaT, TelemetryPacket packet, Canvas canvas) {
-        Vector2d currentLinearVel;
-        double currentRotVel;
+        Vector2d targetLinVel;
+        double targetRotVel;
         this.canvas = canvas;
         this.packet = packet;
         this.currentRobotVel = currentRobotVel;
 
-        DPoint deltaDist = goal.minus(currentPos);
+        DPoint deltaDist = goal.minus(targetPos);
 
-        currentLinearVel = linearVelocity(deltaDist.toVector2d(), deltaT);
-        currentRotVel = rotationalVelocity(deltaT);
+        targetLinVel = linearVelocity(deltaDist.toVector2d(), deltaT);
+        targetRotVel = rotationalVelocity(deltaT);
 
-        currentPos = currentPos.plus(currentLinearVel.times(deltaT));
-        currentRot += currentRotVel * deltaT;
+        Vector2d targetLinAccel = targetLinVel.minus(lastLinearVel).div(deltaT);
+        lastLinearVel = targetLinVel;
 
-        Vector2d currentLinearAccel = currentLinearVel.minus(lastLinearVel).div(deltaT);
-        lastLinearVel = currentLinearVel;
+        double targetRotAccel = confineToScope(targetRotVel - lastRotVel) / deltaT;
+        lastRotVel = targetRotVel;
 
-        double currentRotAccel = (currentRotVel - lastRotVel) / deltaT;
-        lastRotVel = currentRotVel;
-
-        double[] x = {currentPos.x, currentLinearVel.x, currentLinearAccel.x };
-        double[] y = {currentPos.y, currentLinearVel.y, currentLinearAccel.y };
-        double[] angular = {currentRot, currentRotVel, currentRotAccel};
+        double[] x = {targetPos.x, targetLinVel.x, targetLinAccel.x };
+        double[] y = {targetPos.y, targetLinVel.y, targetLinAccel.y };
+        double[] angular = {targetRot, targetRotVel, targetRotAccel};
 
         setDriveVel(x, y, angular);
 
-        return currentLinearVel.x == 0 && currentLinearVel.y == 0 && currentRotVel == 0;
+        targetPos = targetPos.plus(targetLinVel.times(deltaT));
+        targetRot += targetRotVel * deltaT;
+
+        return targetLinVel.x == 0 && targetLinVel.y == 0 && targetRotVel == 0;
     }
 
     public void setDriveVel(double[] x, double[] y, double[] angular) {
