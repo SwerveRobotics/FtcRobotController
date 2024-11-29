@@ -23,7 +23,7 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 abstract public class BaseOpModeFastBot extends LinearOpMode {
     public static final boolean USE_DISTANCE = false;
 
-    final double ARM_VELOCITY = 2100; // The ticks-per-second constant that Go-Bilda gave us
+    public final double ARM_VELOCITY = 2100; // The ticks-per-second constant that Go-Bilda gave us
 
     /* This constant is the number of encoder ticks for each degree of rotation of the arm.
     To find this, we first need to consider the total gear reduction powering our arm.
@@ -65,9 +65,9 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     public static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
 
     /* Variables to store the speed the intake servo should be set at to intake, and deposit game elements. */
-    final static double INTAKE_COLLECT = -1.0;
-    final static double INTAKE_OFF = 0.0;
-    final static double INTAKE_DEPOSIT = 0.5;
+    public final static double INTAKE_COLLECT = -1.0;
+    public final static double INTAKE_OFF = 0.0;
+    public final static double INTAKE_DEPOSIT = 0.5;
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
     public static double WRIST_FOLDED_IN = 0.9;
@@ -77,7 +77,7 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     //position used to score specimens in auto
     public final static double Y_SCORE_POSE = 41;
     /* A number in degrees that the triggers can adjust the arm position by */
-    final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
+    public final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
     /** @noinspection ConstantValue*/
     /* Variables that are used to set the arm to a specific position */
@@ -93,14 +93,14 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     // Sharing these objects between CompetitionTeleOp and CompetitionAuto for arm controls
 
     //motors
-    static DcMotorEx armMotor1;
-    static DcMotorEx armMotor2;
-    static DcMotorEx slideMotor;
+    public static DcMotorEx armMotor1;
+    public static DcMotorEx armMotor2;
+    public static DcMotorEx slideMotor;
 
     //servos
-    CRServo intake1;
-    CRServo intake2;
-    Servo wrist;
+    public CRServo intake1;
+    public CRServo intake2;
+    public Servo wrist;
 
     public boolean hasMechanisms = MecanumDrive.driveParameters == DriveParameters.COMPETITION_ROBOT
             || MecanumDrive.driveParameters == DriveParameters.FASTBOT_MECANUM;
