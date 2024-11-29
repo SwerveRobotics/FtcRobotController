@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.team417;
+package org.firstinspires.ftc.team417.skidaddle;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.canvas.Canvas;
@@ -10,12 +10,13 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.wilyworks.common.WilyWorks;
 
+import org.firstinspires.ftc.team417.BaseOpModeFastBot;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 @Config
 @TeleOp(name = "PathUnitTest")
-public class PathUnitTest extends BaseOpModeFastBot{
+public class PathUnitTest extends BaseOpModeFastBot {
 
     private boolean xPressed;
     public double startHeading;

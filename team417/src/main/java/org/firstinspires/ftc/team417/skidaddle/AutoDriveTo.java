@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.team417;
+package org.firstinspires.ftc.team417.skidaddle;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
