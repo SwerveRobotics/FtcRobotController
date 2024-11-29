@@ -457,7 +457,7 @@ public final class MecanumDrive {
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         switch (driveParameters) {
             case DEVBOT_MECANUM:
-                //otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
+                otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
 
                 if (BaseOpModeFastBot.USE_DISTANCE) {
                     UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
