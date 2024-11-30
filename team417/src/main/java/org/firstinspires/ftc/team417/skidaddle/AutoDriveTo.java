@@ -33,7 +33,7 @@ public class AutoDriveTo {
     public final double linearDriveAccel = MecanumDrive.PARAMS.maxProfileAccel;
     public final double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel;
     public final double maxLinearSpeed = MecanumDrive.PARAMS.maxWheelVel;
-    public final double linearVelEpsilon = 5;
+    public final double linearVelEpsilon = 2;
     public final double linearDistEpsilon = 0.5;
 
     //rotational motion constants
@@ -41,7 +41,7 @@ public class AutoDriveTo {
     public final double rotationalDriveDeccel = -MecanumDrive.PARAMS.maxAngAccel;
     public final double maxRotationalSpeed = MecanumDrive.PARAMS.maxAngVel;
     public final double rotationalVelEpsilon = Math.toRadians(3);
-    public final double rotationalDistEpsilon = Math.toRadians(3);
+    public final double rotationalDistEpsilon = Math.toRadians(1);
 
     //target pose
     DPoint endPos;
@@ -64,13 +64,12 @@ public class AutoDriveTo {
         this.drive = drive;
     }
 
-    public void init(DPoint endPos, double safeDist, PoseVelocity2d currentPoseVel, Telemetry telemetry) {
+    public void init(DPoint endPos, double endRot, PoseVelocity2d currentPoseVel, Telemetry telemetry) {
         PoseVelocity2d currentVelocity = drive.pose.times(currentPoseVel); //Convert from robot relative to field relative
 
         this.endPos = endPos;
-        this.endRot = endRot;
         this.telemetry = telemetry;
-        this.safeDist = safeDist;
+        this.endRot = endRot;
 
         targetPos = DPoint.to(drive.pose.position);
         targetRot = drive.pose.heading.log();
@@ -233,7 +232,7 @@ public class AutoDriveTo {
         PoseVelocity2dDual<Time> command = new HolonomicController(
                 MecanumDrive.PARAMS.axialGain, MecanumDrive.PARAMS.lateralGain, MecanumDrive.PARAMS.headingGain,
                 MecanumDrive.PARAMS.axialVelGain, MecanumDrive.PARAMS.lateralVelGain, MecanumDrive.PARAMS.headingVelGain
-                ).compute(txWorldTarget, drive.pose, currentRobotVel);
+        ).compute(txWorldTarget, drive.pose, currentRobotVel);
 
         // Enlighten Wily Works as to where we should be:
         WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
