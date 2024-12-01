@@ -82,6 +82,9 @@ abstract public class BaseOpMode extends LinearOpMode {
         armBaseMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
         slidesMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
 
+        armBaseMotor.setPower(1.0);
+        slidesMotor.setPower(1.0);
+
         //armBaseMotor.setVelocity(Constants.ARM_BASE_MOTOR_VELOCITY);
         //slidesMotor.setVelocity(Constants.SLIDES_MOTOR_VELOCITY);
     }
@@ -171,8 +174,6 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
 
     public class ArmMoveAction extends RobotAction {
-        final int EPSILON = 3;
-
         ArmActionState armActionState;
 
         public ArmMoveAction(ArmActionState armActionState) {
@@ -189,10 +190,8 @@ abstract public class BaseOpMode extends LinearOpMode {
             // update motor many times because it goofy
             armBaseMotor.setTargetPosition(armActionState.armBaseMotorTargetPositionTicks);
 
-            int currentArmError = Math.abs(armBaseMotor.getCurrentPosition() - armActionState.armBaseMotorTargetPositionTicks);
-
             // if it hasnt passed target position, run this again :)
-            return currentArmError > EPSILON;
+            return armBaseMotor.isBusy();
         }
     }
 
@@ -211,7 +210,6 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
 
     public class SlideMoveAction extends RobotAction {
-        final int EPSILON = 3;
 
         final SlideActionState actionState;
 
@@ -225,12 +223,8 @@ abstract public class BaseOpMode extends LinearOpMode {
             // update motor many times because it goofy
             slidesMotor.setTargetPosition(actionState.slidesMotorTargetPositionTicks);
 
-            int currentSlideMotorError = Math.abs(getSlideMotorPosition() - actionState.slidesMotorTargetPositionTicks);
-
-            System.out.println("MODE: " + actionState.name());
-
             // if it hasnt passed target position, run this again :)
-            return currentSlideMotorError > EPSILON;
+            return slidesMotor.isBusy();
         }
     }
 
@@ -263,7 +257,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
 
     public enum DumperActionState {
-        DUMP(DRIFTConstants.DUMPER_SERVO_POSITION_DUMP);
+        DUMP(DRIFTConstants.DUMPER_SERVO_POSITION_DUMP),
+        INIT(DRIFTConstants.DUMPER_SERVO_POSITION_INIT);
 
         final double dumperServoPosition;
 

@@ -146,22 +146,16 @@ public class CompetitionAuto extends BaseOpMode {
                     actionBuilder = actionBuilder
                             // strafe to scoring area
                             //.strafeTo(new Vector2d(60, 60))
-                            .splineToLinearHeading(new Pose2d(50, 50, Math.PI / 4), 0)
+                            .splineToLinearHeading(new Pose2d(50, 50, 5 * Math.PI / 4), 0)
                             .endTrajectory()
                             // weeee slides LETSO YEAAA WOOO POGGERS
-                            /*.stopAndAdd(new RobotAction() {
-                                final SlideMoveAction upAction = new SlideMoveAction(SlideActionState.HIGH_BASKET);
-                                final SlideMoveAction downAction = new SlideMoveAction(SlideActionState.GROUND);
-                                final DumperMoveAction dumperAction = new DumperMoveAction(DumperActionState.DUMP);
-
-                                @Override
-                                public boolean run(double elapsedTime) {
-
-                                    // this should just shortcircuit and work itd be really funny
-                                    return upAction.run(elapsedTime) || dumperAction.run(elapsedTime) || downAction.run(elapsedTime);
-                                }
-                            })*/
                             .stopAndAdd(new SlideMoveAction(SlideActionState.HIGH_BASKET))
+                            .stopAndAdd(new DumperMoveAction(DumperActionState.DUMP))
+                            // wait for dumper to finish moving
+                            .waitSeconds(1.2)
+                            .stopAndAdd(new DumperMoveAction(DumperActionState.INIT))
+                            .waitSeconds(0.5)
+                            .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND))
                             .setTangent(Math.toRadians(-180))
                             // spline to prepare to collect first sample
                             .splineToLinearHeading(new Pose2d(48, 10, Math.toRadians(-90)),  Math.toRadians(-40))
