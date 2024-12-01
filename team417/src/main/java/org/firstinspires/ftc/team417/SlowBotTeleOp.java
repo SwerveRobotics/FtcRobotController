@@ -13,7 +13,6 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
 @TeleOp(name = "TeleOp", group = "SlowBot")
-@Disabled
 @Config
 public class SlowBotTeleOp extends BaseOpModeSlowBot {
     private double speedMultiplier = 1;
@@ -97,6 +96,11 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             speedMultiplier *= 2;
         }
 
+        // When slides are out, slow down robot
+        if(getSlidePosition() > (SLIDE_HOME_POSITION + TICKS_EPSILON)){
+            speedMultiplier *= 0.5;
+        }
+
         double theta, x, y, rot, rotatedX, rotatedY;
 
         if (fieldCentric) {
@@ -116,9 +120,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             rot = gamepad1.right_stick_x;
         }
 
-
-
-
         // Rotate the movement direction counter to the bot's rotation
         rotatedX = x * Math.cos(theta) - y * Math.sin(theta);
         rotatedY = x * Math.sin(theta) + y * Math.cos(theta);
@@ -134,14 +135,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
         // Update the current pose:
         drive.updatePoseEstimate();
-    }
-
-    // In case action needs to be changed, call this function to override the previous action and run the newest action
-    public void runAction(RobotAction action) {
-        // Abort any previous action that still might be running:
-        drive.abortActions();
-        // Run the action:
-        drive.runParallel(action);
     }
 
     public void controlMechanismsWithGamepads() {
@@ -180,21 +173,10 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             }
             buttonAPressed = gamepad2.a;
 
-            boolean reversed = gamepad2.b;
-            // When 'b' is HELD down, it will deposit
-            if (reversed) {
-                intakeControl(INTAKE_DEPOSIT);
-            } else if (intakeEnabled) {
-                // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
-                intakeControl(INTAKE_COLLECT);
-            } else {
-                intakeControl(INTAKE_OFF);
-            }
-
             // Collecting Sample
             if (gamepad2.right_bumper) {
                 liftPosition = LIFT_COLLECT;
-                wristPosition = WRIST_IN;
+                wristPosition = WRIST_OUT;
                 slidePosition = SLIDE_COLLECT;
                 intakeEnabled = true;
             }
@@ -211,6 +193,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 liftPosition = LIFT_HOME_POSITION;
                 wristPosition = WRIST_IN;
                 slidePosition = SLIDE_HOME_POSITION;
+                intakeEnabled = false;
             }
 
             // Correct height for specimen (High)
@@ -251,7 +234,16 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             // If lift is travelling through 'no mans land', pull in arm and wrist, then perform the lift action.
             // Else, perform all the actions
             double liftPositionWithFudge = liftPosition + liftPositionFudgeFactor;
-            if(isCrossingNoSlideZone(liftPositionWithFudge)) {
+
+            // In case position is over max or min, set position to the max or min
+            if(liftPositionWithFudge > LIFT_MAX){
+                liftPositionWithFudge = LIFT_MAX;
+            }
+            if(liftPositionWithFudge < LIFT_MIN){
+                liftPositionWithFudge = LIFT_MIN;
+            }
+
+            if(isCrossingNoSlideZone(liftPositionWithFudge )) {
                 if(getSlidePosition() <= SLIDE_HOME_POSITION + TICKS_EPSILON) {
                     moveWrist(WRIST_IN);
                     moveSlide(SLIDE_HOME_POSITION);
@@ -264,15 +256,24 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 moveSlide(slidePosition);
                 moveLift(liftPositionWithFudge);
             }
-        }
 
-
+            // Reverse intake when b-button is held down
+            boolean reversed = gamepad2.b;
+            // When 'b' is HELD down, it will deposit
+            if (reversed) {
+                intakeControl(INTAKE_DEPOSIT);
+            } else if (intakeEnabled) {
+                // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
+                intakeControl(INTAKE_COLLECT);
+            } else {
+                intakeControl(INTAKE_OFF);
+            }
+    }
 
     // Applies a curve to the joystick input to give finer control at lower speeds
     public double curveStick(double rawSpeed) {
         return Math.copySign(Math.pow(rawSpeed, 2), rawSpeed);
     }
-
 
     boolean startWasPressed = false;
     public void toggleFieldCentricity() {
@@ -289,25 +290,10 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         telemetry.addData("Field-Centric", fieldCentered);
         telemetry.addData("Speed Multiplier", speedMultiplier);
 
+        telemetry.addData("Lift Motor 1 ticks: ", liftMotor1.getCurrentPosition());
+        telemetry.addData("Lift Motor 2 ticks: ", liftMotor2.getCurrentPosition());
 
-
-        // These telemetry.addLine() calls will inform the user of what each button does
-        telemetry.addLine("Low Basket Score: Y-Button");
-        telemetry.addLine("Intake Deposit: B-Button");
-        telemetry.addLine("On Intake: A-Button");
-        telemetry.addLine("Off Intake: X-Button: ");
-        telemetry.addLine();
-
-        telemetry.addLine("Low rung hang orientation: Up D-Pad");
-        telemetry.addLine("High Chamber Orientation: Right D-Pad");
-        telemetry.addLine("Fold wrist & folds arm, intake off: Left D-Pad:");
-        telemetry.addLine("Ascent robot: Down D-Pad");
-        telemetry.addLine();
-
-        telemetry.addLine("Clear floor for intake: left-bumper");
-        telemetry.addLine("Sample collection: right-bumper");
-        telemetry.addLine("Negative fudge position: left-trigger");
-        telemetry.addLine("Positive fudge position: right-trigger");
+        telemetry.addData("Slide Motor in ticks: ", getSlidePosition());
 
         telemetry.update();
     }
