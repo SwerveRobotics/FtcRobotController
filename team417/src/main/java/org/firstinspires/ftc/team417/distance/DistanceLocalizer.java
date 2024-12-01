@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.team417.distance;
 
-import static org.firstinspires.ftc.team417.distance.VectorUtils.calculateAverage;
-import static org.firstinspires.ftc.team417.distance.VectorUtils.rotate;
-
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -13,7 +10,6 @@ import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.Objects;
 
 // Localizes and returns a pose estimate based on two distance sensors.
 public class DistanceLocalizer {
@@ -25,8 +21,10 @@ public class DistanceLocalizer {
     public boolean correcting = false;
 
     public Vector2d correction;
-    public Vector2d targetCorrection;
-    public ArrayList<Vector2d> history = new ArrayList<>();
+    public Double xTargetCorrection;
+    public Double yTargetCorrection;
+    public ArrayList<Double> xHistory = new ArrayList<Double>();
+    public ArrayList<Double> yHistory = new ArrayList<Double>();
     final int MAX_HISTORY_SIZE = 10;
 
     final double MAXIMUM_CORRECTION_VELOCITY = 5; // Inches per second
@@ -168,24 +166,52 @@ public class DistanceLocalizer {
         double cosTheta = Math.cos(theta);
         double sinTheta = Math.sin(theta);
 
-        double xRotatedPosition = xUnrotatedPosition * cosTheta - yUnrotatedPosition * sinTheta;
-        double yRotatedPosition = xUnrotatedPosition * sinTheta + yUnrotatedPosition * cosTheta;
+        Double xRotatedPosition, yRotatedPosition;
 
-        // Correction recommended by this iteration of the loop
-        detectedCorrection = detectedPosition.minus(drive.pose.position);
-
-        history.add(detectedCorrection);
-
-        while (history.size() > MAX_HISTORY_SIZE) {
-            history.remove(0);
+        if (isEpsilonEqual(cosTheta, 0)) {
+            xRotatedPosition = yUnrotatedPosition == null ? null
+                    : -yUnrotatedPosition * sinTheta;
+            yRotatedPosition = xUnrotatedPosition == null ? null
+                    : xUnrotatedPosition * sinTheta;
+        } else {
+            xRotatedPosition = xUnrotatedPosition == null ? null
+                    : xUnrotatedPosition * cosTheta;
+            yRotatedPosition = yUnrotatedPosition == null ? null
+                    : yUnrotatedPosition * cosTheta;
         }
 
-        targetCorrection =
+        Double xDetectedCorrection = xRotatedPosition == null ? null
+                : xRotatedPosition - drive.pose.position.x;
+        Double yDetectedCorrection = yRotatedPosition == null ? null
+                : yRotatedPosition - drive.pose.position.y;
 
-                calculateAverage(history);
+        if (xDetectedCorrection != null) {
+            xHistory.add(xDetectedCorrection);
 
-        double xDiff = targetCorrection.x - correction.x;
-        double yDiff = targetCorrection.y - correction.y;
+            while (xHistory.size() > MAX_HISTORY_SIZE) {
+                xHistory.remove(0);
+            }
+        }
+
+        if (yDetectedCorrection != null) {
+            yHistory.add(yDetectedCorrection);
+
+            while (yHistory.size() > MAX_HISTORY_SIZE) {
+                yHistory.remove(0);
+            }
+        }
+
+        xTargetCorrection = xHistory.stream()
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0.0);
+        yTargetCorrection = yHistory.stream()
+                .mapToDouble(Double::doubleValue)
+                .average()
+                .orElse(0.0);
+
+        double xDiff = xTargetCorrection - correction.x;
+        double yDiff = yTargetCorrection - correction.y;
 
         // Delta is in milliseconds
         double maxCorrection = MAXIMUM_CORRECTION_VELOCITY * delta / 1000.0;
@@ -195,14 +221,14 @@ public class DistanceLocalizer {
                 Vector2d(
                 // Correction x and max correction, whichever is absolutely larger,
                 // taking the sign of the correction
-                correction.x +
+                correction.x -
                         (Math.abs(xDiff) < Math.
 
                                 abs(maxCorrection)
                                 ? xDiff : Math.copySign(maxCorrection, xDiff)),
                 // Correction y and max correction, whichever is absolutely larger,
                 // taking the sign of the correction
-                correction.y +
+                correction.y -
                         (Math.abs(yDiff) < Math.
 
                                 abs(maxCorrection)
@@ -299,5 +325,9 @@ public class DistanceLocalizer {
         }
 
         return new double[]{x, y};
+    }
+
+    public static boolean isEpsilonEqual(double a, double b) {
+        return Math.abs(a - b) <= EPSILON;
     }
 }
