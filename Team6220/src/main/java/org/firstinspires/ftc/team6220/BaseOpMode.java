@@ -209,4 +209,40 @@ abstract public class BaseOpMode extends LinearOpMode {
             this.armElbowServoPosition = armElbowServoPosition;
         }
     }
+
+    public class SlideMoveAction extends RobotAction {
+        final int EPSILON = 3;
+
+        final SlideActionState actionState;
+
+        public SlideMoveAction(SlideActionState actionState) {
+            this.actionState = actionState;
+        }
+
+        @Override
+        public boolean run(double elapsedTime) {
+
+            // update motor many times because it goofy
+            slidesMotor.setTargetPosition(actionState.slidesMotorTargetPositionTicks);
+
+            int currentSlideMotorError = Math.abs(getSlideMotorPosition() - actionState.slidesMotorTargetPositionTicks);
+
+            System.out.println("MODE: " + actionState.name());
+
+            // if it hasnt passed target position, run this again :)
+            return currentSlideMotorError > EPSILON;
+        }
+    }
+
+    public enum SlideActionState {
+        GROUND(DRIFTConstants.SLIDES_MOTOR_GROUND_POSITION),
+        LOW_BASKET(DRIFTConstants.SLIDES_MOTOR_LOW_BASKET_POSITION),
+        HIGH_BASKET(DRIFTConstants.SLIDES_MOTOR_HIGH_BASKET_POSITION);
+
+        final int slidesMotorTargetPositionTicks;
+
+        SlideActionState(int slidesMotorTargetPositionTicks) {
+            this.slidesMotorTargetPositionTicks = slidesMotorTargetPositionTicks;
+        }
+    }
 }

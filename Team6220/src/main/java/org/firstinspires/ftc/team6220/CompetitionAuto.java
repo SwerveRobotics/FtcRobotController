@@ -24,10 +24,10 @@ import java.util.Objects;
 public class CompetitionAuto extends BaseOpMode {
 
     // defaults so it doesnt explode if you skip the text menu
-    private AutonomousEnums.AutoStartPosition autoStartPosition = null;
-    private AutonomousEnums.AutoType autoType = null;
-    private AutonomousEnums.ParkPosition parkPosition = null;
-    private AutonomousEnums.SpikeMarkSide spikeMarkSide = null;
+    private AutonomousEnums.AutoStartPosition autoStartPosition = AutonomousEnums.AutoStartPosition.LEFT;
+    private AutonomousEnums.AutoType autoType = AutonomousEnums.AutoType.SCORING;
+    private AutonomousEnums.ParkPosition parkPosition = AutonomousEnums.ParkPosition.OBSERVATION;
+    private AutonomousEnums.SpikeMarkSide spikeMarkSide = AutonomousEnums.SpikeMarkSide.LEFT;
 
     @Override
     public void runOpMode() {
@@ -145,8 +145,20 @@ public class CompetitionAuto extends BaseOpMode {
                 case LEFT: {
                     actionBuilder = actionBuilder
                             // strafe to scoring area
-                            .strafeTo(new Vector2d(55, 60))
+                            .splineToLinearHeading(new Pose2d(50, 50, Math.PI / 4), 0)
                             .endTrajectory()
+                            // weeee slides LETSO YEAAA WOOO POGGERS
+                            .stopAndAdd(new RobotAction() {
+                                final SlideMoveAction upAction = new SlideMoveAction(SlideActionState.HIGH_BASKET);
+                                final SlideMoveAction downAction = new SlideMoveAction(SlideActionState.GROUND);
+
+                                @Override
+                                public boolean run(double elapsedTime) {
+
+                                    // this should just shortcircuit and work itd be really funny
+                                    return upAction.run(elapsedTime) || downAction.run(elapsedTime);
+                                }
+                            })
                             .setTangent(Math.toRadians(-180))
                             // spline to prepare to collect first sample
                             .splineToLinearHeading(new Pose2d(45, 10, Math.toRadians(-90)),  Math.toRadians(-40))

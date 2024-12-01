@@ -56,6 +56,7 @@ public class ControlManager {
            clearList(armElbowServoPosition);
            clearList(armBaseMotorPosition);
            clearList(dumperServoPosition);
+
         }
 
         // Raises the arm up to its initial position (against the hubs)
@@ -80,11 +81,11 @@ public class ControlManager {
 
         // Raises the slides to reach the high basket
         if (gamepad2.dpad_up && !gamepad2.dpad_down) {
-            slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_POSITION_TWO;
+            slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_HIGH_BASKET_POSITION;
             clearList(slidesMotorPosition);
         }
         if (gamepad2.dpad_right && !gamepad2.dpad_left) {
-            slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_POSITION_ONE;
+            slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_LOW_BASKET_POSITION;
             clearList(slidesMotorPosition);
         }
 
@@ -169,6 +170,7 @@ public class ControlManager {
        private final Object trackedObject;
 
         public DelayedAction(Object trackedObject, Runnable runnableAction, double delaySeconds, Predicate<Boolean> completionCondition) {
+            clearList(trackedObject);
             this.completionCondition = completionCondition;
             this.runnableAction = runnableAction;
             this.targetRunTime = currentRunTime + delaySeconds;
@@ -185,6 +187,10 @@ public class ControlManager {
                 delayedActions.remove(this);
             }
         }
+    }
+
+    private void addDelayedAction(Object trackedObject, Runnable runnableAction, double delaySeconds, Predicate<Boolean> completionCondition) {
+        delayedActions.add(new DelayedAction(trackedObject, runnableAction, delaySeconds, completionCondition));
     }
 
     private void clearList(Object trackedObject) {

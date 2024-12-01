@@ -31,6 +31,13 @@ public class AutonomousEnums {
 
         public final Vector2d parkingPosition;
 
+        @NonNull
+        @Override
+        public String toString() {
+            // haven't implemented this yet, so ternary operator override go brrrt
+            return this.equals(ParkPosition.SUBMERSIBLE) ? "DISABLED" : super.toString();
+        }
+
         ParkPosition(Vector2d parkingPosition) {
             this.parkingPosition = parkingPosition;
         }
