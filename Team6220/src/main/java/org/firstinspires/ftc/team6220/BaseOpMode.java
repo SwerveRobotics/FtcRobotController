@@ -53,6 +53,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     // putting more hardware initialization stuff into baseopmode go brrr
     protected DcMotorEx armBaseMotor;
     protected CRServo intakeCRServo;
+    protected armSimulator = new ArmSimulator();
     protected Servo armElbowServo;
     protected DcMotorEx slidesMotor;
     protected Servo dumperServo;
@@ -244,5 +245,56 @@ abstract public class BaseOpMode extends LinearOpMode {
         SlideActionState(int slidesMotorTargetPositionTicks) {
             this.slidesMotorTargetPositionTicks = slidesMotorTargetPositionTicks;
         }
+    }
+
+    public class DumperMoveAction extends RobotAction {
+        DumperActionState dumperActionState;
+
+        public DumperMoveAction(DumperActionState dumperActionState) {
+            this.dumperActionState = dumperActionState;
+        }
+
+        public boolean run(double elapsedTime) {
+            dumperServo.setPosition(dumperActionState.dumperServoPosition);
+
+            return false;
+        }
+
+
+    }
+
+    public enum DumperActionState {
+        DUMP(DRIFTConstants.DUMPER_SERVO_POSITION_DUMP),
+        ;
+
+        final double dumperServoPosition;
+
+        DumperActionState(double dumperServoPosition) {
+            this.dumperServoPosition = dumperServoPosition;
+        }
+    }
+    // Helper function for settings the arm position, in ticks:
+    void setArmPosition(int targetInTicks) {
+        if ((targetInTicks < ARM_HOME) || (targetInTicks > ARM_COLLECT)) {
+            throw new IllegalArgumentException("Invalid setArmPosition() request.");
+        }
+        armMotor.setTargetPosition(targetInTicks);
+        armSimulator.setArmPosition(targetInTicks);
+    }
+    // Helper function for querying the arm position, in ticks. Uses the simulator when running
+    // under Wily Works.
+    int getArmPosition() {
+        if (WilyWorks.isSimulating)
+            return armSimulator.getArmPosition();
+        else
+            return armMotor.getCurrentPosition();
+    }
+    // Helper function to set the power on the intake.
+    void setIntakePower(double power) { // Positive is intake, negative is out-take, zero is stop
+        if ((power > INTAKE_COLLECT) || (power < INTAKE_DEPOSIT)) {
+            throw new IllegalArgumentException("Invalid setIntakePower() request.");
+        }
+        intakeCRServo.setPower(power);
+        armSimulator.setIntakePower(power);
     }
 }

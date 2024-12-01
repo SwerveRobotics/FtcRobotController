@@ -151,12 +151,13 @@ public class CompetitionAuto extends BaseOpMode {
                             .stopAndAdd(new RobotAction() {
                                 final SlideMoveAction upAction = new SlideMoveAction(SlideActionState.HIGH_BASKET);
                                 final SlideMoveAction downAction = new SlideMoveAction(SlideActionState.GROUND);
+                                final DumperMoveAction dumperAction = new DumperMoveAction(DumperActionState.DUMP);
 
                                 @Override
                                 public boolean run(double elapsedTime) {
 
                                     // this should just shortcircuit and work itd be really funny
-                                    return upAction.run(elapsedTime) || downAction.run(elapsedTime);
+                                    return upAction.run(elapsedTime) || dumperAction.run(elapsedTime) || downAction.run(elapsedTime);
                                 }
                             })
                             .setTangent(Math.toRadians(-180))
@@ -209,6 +210,7 @@ public class CompetitionAuto extends BaseOpMode {
                     }
                 }
             }
+
             case SUBMERSIBLE: {
 
                 switch (autoType) {
@@ -221,6 +223,7 @@ public class CompetitionAuto extends BaseOpMode {
                 }
             }
         }
+
 
         return actionBuilder.endTrajectory().build();
     }
