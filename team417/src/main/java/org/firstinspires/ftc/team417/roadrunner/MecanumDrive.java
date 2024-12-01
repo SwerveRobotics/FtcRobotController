@@ -291,7 +291,7 @@ public final class MecanumDrive {
                 return DriveParameters.DEVBOT_X;
             case "417-RC":
                 return DriveParameters.FASTBOT_MECANUM;
-            case "417-S-RC":
+            case "FTC-ERDN":
                 return DriveParameters.COMPETITION_ROBOT;
         }
         return null; // Not one of 417's robots
@@ -1026,16 +1026,16 @@ public final class MecanumDrive {
             poseVelocity = new PoseVelocity2d(
                     rotateVector(new Vector2d(velocity.x, velocity.y), -pose.heading.toDouble()),
                     velocity.h);
-        } else {
-            // Use the wheel odometry to update the pose:
-            Twist2dDual<Time> twist = WilyWorks.localizerUpdate();
-            if (twist == null) {
-                twist = localizer.update();
-            }
-
-            pose = pose.plus(twist.value());
-            poseVelocity = twist.velocity().value();
-        }
+        } //else {
+//            // Use the wheel odometry to update the pose:
+//            Twist2dDual<Time> twist = WilyWorks.localizerUpdate();
+//            if (twist == null) {
+//                twist = localizer.update();
+//            }
+//
+//            pose = pose.plus(twist.value());
+//            poseVelocity = twist.velocity().value();
+        // }
 
         if (distanceLocalizer != null) {
             pose = new Pose2d(pose.position.plus(distanceLocalizer.updateIfPossible()), pose.heading.log());

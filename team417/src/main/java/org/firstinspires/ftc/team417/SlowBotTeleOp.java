@@ -102,7 +102,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         }
 
         double theta, x, y, rot, rotatedX, rotatedY;
-
         if (fieldCentric) {
             theta = drive.pose.heading.log() - startHeading;
         } else {
