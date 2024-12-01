@@ -1,4 +1,4 @@
-// Action for controlling the arm in Auto trajectories.
+/*// Action for controlling the arm in Auto trajectories.
 class ArmAction extends RobotAction {
     final double EPSILON = 3; // Ticks
 
@@ -58,4 +58,4 @@ class ArmAction extends RobotAction {
         intakeCRServo.setPower(power);
         armSimulator.setIntakePower(power);
     }
-}
+}*/

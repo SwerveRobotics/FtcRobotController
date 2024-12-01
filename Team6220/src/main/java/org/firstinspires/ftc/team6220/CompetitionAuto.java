@@ -149,7 +149,7 @@ public class CompetitionAuto extends BaseOpMode {
                             .splineToLinearHeading(new Pose2d(50, 50, Math.PI / 4), 0)
                             .endTrajectory()
                             // weeee slides LETSO YEAAA WOOO POGGERS
-                            .stopAndAdd(new RobotAction() {
+                            /*.stopAndAdd(new RobotAction() {
                                 final SlideMoveAction upAction = new SlideMoveAction(SlideActionState.HIGH_BASKET);
                                 final SlideMoveAction downAction = new SlideMoveAction(SlideActionState.GROUND);
                                 final DumperMoveAction dumperAction = new DumperMoveAction(DumperActionState.DUMP);
@@ -160,7 +160,8 @@ public class CompetitionAuto extends BaseOpMode {
                                     // this should just shortcircuit and work itd be really funny
                                     return upAction.run(elapsedTime) || dumperAction.run(elapsedTime) || downAction.run(elapsedTime);
                                 }
-                            })
+                            })*/
+                            .stopAndAdd(new SlideMoveAction(SlideActionState.HIGH_BASKET))
                             .setTangent(Math.toRadians(-180))
                             // spline to prepare to collect first sample
                             .splineToLinearHeading(new Pose2d(48, 10, Math.toRadians(-90)),  Math.toRadians(-40))

@@ -1,5 +1,9 @@
+/*package org.firstinspires.ftc.team6220.roadrunner.tuning;
+
+import com.acmerobotics.roadrunner.Vector2d;
+
 // Class for simulating the arm and drawing it to the field view of FTC Dashboard.
-static class ArmSimulator {
+class ArmSimulator {
     final double ARM_LENGTH = 18; // Arm length, in inches
     final Vector2d ARM_BASE_OFFSET = new Vector2d(8, 0); // Base of arm on robot, relative to
     //   center of rotation
@@ -92,4 +96,4 @@ static class ArmSimulator {
         canvas.fillCircle(intakePoint.x, intakePoint.y, 2);
         canvas.fillCircle(xArmEnd, yArmEnd, 2);
     }
-}
+}*/
