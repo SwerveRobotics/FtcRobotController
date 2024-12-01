@@ -23,8 +23,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double INTAKE_COLLECT = 0.0;
     final static double INTAKE_OFF = 0.0;
 
-    final static double LIFT_MAX = 1.0;
-    final static double LIFT_SCORE_HIGH_BASKET = 0.0;
+    final static double LIFT_MAX = 120.0;
+    final static double LIFT_SCORE_HIGH_BASKET = 120.0;
     final static double LIFT_SCORE_HIGH_SPECIMEN = 0.0;
     final static double LIFT_SCORE_LOW_BASKET = 0.0;
     final static double LIFT_COLLECT = 0.0;
@@ -33,6 +33,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double LIFT_HOME_POSITION = 0;
     final static double LIFT_NO_SLIDE_ZONE_MIN = 0;
     final static double LIFT_NO_SLIDE_ZONE_MAX = 0;
+
+    public static double f_coefficient = 0.5;
 
     final static double SLIDE_MAX = 1.0;
     final static double SLIDE_COLLECT = 0.0;
@@ -121,13 +123,23 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     }
 
     // This method controls the 4bar to desired height
+    static double f_value = 0.5;
     public void moveLift(double heightInTicks) {
+        telemetry.addLine(String.format("Height in ticks: %.1f", heightInTicks));
         if (heightInTicks >= LIFT_MIN && heightInTicks <= LIFT_MAX) {
             if (liftMotor1 != null) {
+                liftMotor1.setPower(1.0);
                 liftMotor1.setTargetPosition((int) heightInTicks);
+                liftMotor1.setVelocity(2120); // TEMPORARY
+                liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
             if (liftMotor2 != null) {
+                liftMotor2.setPower(1.0);
                 liftMotor2.setTargetPosition((int) heightInTicks);
+                liftMotor2.setVelocity(2120); // TEMPORARY
+                liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
             }
         }
     }
@@ -180,7 +192,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public void initializeHardware() {
         // Only initialize arm if it's not already initialized.
         // This is CRUCIAL for transitioning between Auto and TeleOp.
-        if (liftMotor1 == null && liftMotor2 == null && slideMotor == null) {
+        if (true) { // liftMotor1 == null && liftMotor2 == null && slideMotor == null) {
             liftMotor1 = hardwareMap.get(DcMotorEx.class, "lift1");
             liftMotor2 = hardwareMap.get(DcMotorEx.class, "lift2");
             slideMotor = hardwareMap.get(DcMotorEx.class, "slides");
