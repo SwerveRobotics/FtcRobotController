@@ -106,8 +106,10 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
             telemetry.addLine("Running Auto!");
             telemetry.addData("Kinematic Type", kinematicType);
 
+
             // 'packet' is the object used to send data to FTC Dashboard:
             packet = MecanumDrive.getTelemetryPacket();
+
 
             // Draw the preview and then run the next step of the trajectory on top:
             packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());

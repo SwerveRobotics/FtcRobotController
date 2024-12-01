@@ -18,14 +18,6 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
     static MecanumDrive drive;
 
-    //TODO: tune for correct value
-    final static double SLIDE_HOME_POSITION = 0;
-    final static double LIFT_HOME_POSITION = 0;
-
-    //TODO: find the range where the sizes CANNOT be out
-    final static double LIFT_NO_SLIDE_ZONE_MIN = 0;
-    final static double LIFT_NO_SLIDE_ZONE_MAX = 0;
-
     // TODO: implement this
     final static double INTAKE_DEPOSIT = 0.0;
     final static double INTAKE_COLLECT = 0.0;
@@ -38,11 +30,15 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double LIFT_COLLECT = 0.0;
     final static double LIFT_MIN = 0.0;
     final static double LIFT_CLEAR_BARRIER = 0.0;
+    final static double LIFT_HOME_POSITION = 0;
+    final static double LIFT_NO_SLIDE_ZONE_MIN = 0;
+    final static double LIFT_NO_SLIDE_ZONE_MAX = 0;
 
     final static double SLIDE_MAX = 1.0;
     final static double SLIDE_COLLECT = 0.0;
     final static double SLIDE_SCORE_IN_BASKET = 0;
     final static double SLIDE_MIN = 0.0;
+    final static double SLIDE_HOME_POSITION = 0;
 
     final static double WRIST_MAX = 0.0;
     final static double WRIST_OUT = 0.0;
