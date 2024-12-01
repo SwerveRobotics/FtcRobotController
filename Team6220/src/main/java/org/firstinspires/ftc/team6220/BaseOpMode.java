@@ -266,4 +266,39 @@ abstract public class BaseOpMode extends LinearOpMode {
             this.dumperServoPosition = dumperServoPosition;
         }
     }
+
+    public enum ArmElbowServoState {
+        GROUND(DRIFTConstants.ARM_ELBOW_SERVO_POSITION_GROUND),
+        TRANSFER(DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER),
+        OVERBAR(DRIFTConstants.ARM_ELBOW_SERVO_POSITION_GROUND);
+
+        final double armElbowServoPosition;
+
+        ArmElbowServoState(double armElbowServoPosition) {
+            this.armElbowServoPosition = armElbowServoPosition;
+        }
+    }
+    public class ArmElbowMoveAction extends RobotAction {
+        ArmElbowServoState armElbowServoState;
+
+        public ArmElbowMoveAction(ArmElbowServoState armElbowServoState) {
+            this.armElbowServoState = armElbowServoState;
+        }
+
+        public boolean run(double elapsedTime) {
+            armElbowServo.setPosition(armElbowServoState.armElbowServoPosition);
+
+            return false;
+        }
+
+
+    }
+
+    public class IntakeCRServoAction extends RobotAction {
+        public boolean run(double elapsedTime) {
+            intakeCRServo.setPower(1.0);
+
+            return false;
+        }
+    }
 }
