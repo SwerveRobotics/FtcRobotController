@@ -145,6 +145,7 @@ public class CompetitionAuto extends BaseOpMode {
                 case LEFT: {
                     actionBuilder = actionBuilder
                             // strafe to scoring area
+                            //.strafeTo(new Vector2d(60, 60))
                             .splineToLinearHeading(new Pose2d(50, 50, Math.PI / 4), 0)
                             .endTrajectory()
                             // weeee slides LETSO YEAAA WOOO POGGERS
@@ -162,28 +163,30 @@ public class CompetitionAuto extends BaseOpMode {
                             })
                             .setTangent(Math.toRadians(-180))
                             // spline to prepare to collect first sample
-                            .splineToLinearHeading(new Pose2d(45, 10, Math.toRadians(-90)),  Math.toRadians(-40))
+                            .splineToLinearHeading(new Pose2d(48, 10, Math.toRadians(-90)),  Math.toRadians(-40))
                             .endTrajectory()
                             .setTangent(Math.toRadians(90))
                             // spline to deposit first sample in scoring area
-                            .splineToLinearHeading(new Pose2d(55, 55, Math.toRadians(-140)),  Math.toRadians(40))
+                            .splineToLinearHeading(new Pose2d(55, 60, Math.toRadians(-140)),  Math.toRadians(40))
                             .endTrajectory()
                             .setTangent(Math.toRadians(-180))
                             // spline to prepare to collect second sample
-                            .splineToLinearHeading(new Pose2d(55, 10, Math.toRadians(-90)),  Math.toRadians(-40))
+                            .splineToLinearHeading(new Pose2d(58, 10, Math.toRadians(-90)),  Math.toRadians(-40))
                             .endTrajectory()
                             .setTangent(Math.toRadians(90))
                             // spline to deposit second sample in scoring area
-                            .splineToLinearHeading(new Pose2d(55, 61, Math.toRadians(-140)),  Math.toRadians(40))
+                            .splineToLinearHeading(new Pose2d(61, 55, Math.toRadians(-140)),  Math.toRadians(40))
                             .endTrajectory()
                             .setTangent(Math.toRadians(-180))
                             // spline to prepare to collect third sample
-                            .splineToLinearHeading(new Pose2d(62, 10, Math.toRadians(-90)),  Math.toRadians(40))
+                            .splineToLinearHeading(new Pose2d(68, 10, Math.toRadians(-90)),  Math.toRadians(40))
                             .endTrajectory()
                             // strafe to deposit third sample
-                            .strafeTo(new Vector2d(62, 55))
+                            .strafeTo(new Vector2d(62, 52))
                             // prepare to move to park position
-                            .strafeTo(new Vector2d(62, 50));
+                            .strafeTo(new Vector2d(62, 50))
+                            .endTrajectory()
+                            .setTangent(Math.toRadians(200));
                 }
                 case RIGHT: {
                     // to be implemented
@@ -205,7 +208,7 @@ public class CompetitionAuto extends BaseOpMode {
                                 .endTrajectory();
                     }
                     case SCORING: {
-                        actionBuilder = actionBuilder.splineTo(parkPosition.parkingPosition, Math.PI)
+                        actionBuilder = actionBuilder.splineTo(parkPosition.parkingPosition, Math.toRadians(170))
                                 .endTrajectory();
                     }
                 }
