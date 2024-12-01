@@ -23,8 +23,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double INTAKE_COLLECT = 0.0;
     final static double INTAKE_OFF = 0.0;
 
-    final static double LIFT_MAX = 120.0;
-    final static double LIFT_SCORE_HIGH_BASKET = 120.0;
+    final static double LIFT_MAX = 240;
+    final static double LIFT_SCORE_HIGH_BASKET = 240;
     final static double LIFT_SCORE_HIGH_SPECIMEN = 0.0;
     final static double LIFT_SCORE_LOW_BASKET = 0.0;
     final static double LIFT_COLLECT = 0.0;
@@ -127,18 +127,25 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public void moveLift(double heightInTicks) {
         telemetry.addLine(String.format("Height in ticks: %.1f", heightInTicks));
         if (heightInTicks >= LIFT_MIN && heightInTicks <= LIFT_MAX) {
+            double velocity;
+            if(getLiftPosition() > heightInTicks){
+                // lift going down
+                velocity = 200;
+            } else {
+                velocity = 2120;
+            }
+
             if (liftMotor1 != null) {
                 liftMotor1.setPower(1.0);
                 liftMotor1.setTargetPosition((int) heightInTicks);
-                liftMotor1.setVelocity(2120); // TEMPORARY
+                liftMotor1.setVelocity(velocity);
                 liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
             if (liftMotor2 != null) {
                 liftMotor2.setPower(1.0);
                 liftMotor2.setTargetPosition((int) heightInTicks);
-                liftMotor2.setVelocity(2120); // TEMPORARY
+                liftMotor2.setVelocity(velocity);
                 liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
 
             }
         }
