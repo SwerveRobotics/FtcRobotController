@@ -7,6 +7,8 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
@@ -102,7 +104,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         }
 
         double theta, x, y, rot, rotatedX, rotatedY;
-
         if (fieldCentric) {
             theta = drive.pose.heading.log() - startHeading;
         } else {
@@ -242,11 +243,21 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             if(liftPositionWithFudge < LIFT_MIN){
                 liftPositionWithFudge = LIFT_MIN;
             }
+            // TEMPORARY
+            PIDFCoefficients pidf = liftMotor1.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+            pidf.f = f_coefficient;
+            liftMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
+
+            PIDFCoefficients pidf2 = liftMotor2.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+            pidf2.f = f_coefficient;
+            liftMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf2);
+            telemetry.addLine(String.format("F value: %.1f", f_coefficient ));
 
             if(isCrossingNoSlideZone(liftPositionWithFudge )) {
                 if(getSlidePosition() <= SLIDE_HOME_POSITION + TICKS_EPSILON) {
                     moveWrist(WRIST_IN);
                     moveSlide(SLIDE_HOME_POSITION);
+                    moveLift(liftPositionWithFudge);
                 } else {
                     moveWrist(WRIST_IN);
                     moveLift(liftPositionWithFudge);

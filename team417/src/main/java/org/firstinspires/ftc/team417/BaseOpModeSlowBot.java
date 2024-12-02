@@ -23,16 +23,18 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double INTAKE_COLLECT = 0.0;
     final static double INTAKE_OFF = 0.0;
 
-    final static double LIFT_MAX = 1.0;
-    final static double LIFT_SCORE_HIGH_BASKET = 0.0;
+    final static double LIFT_MAX = 1200;
+    final static double LIFT_SCORE_HIGH_BASKET = 1200;
+    final static double LIFT_SCORE_LOW_BASKET = 750;
     final static double LIFT_SCORE_HIGH_SPECIMEN = 0.0;
-    final static double LIFT_SCORE_LOW_BASKET = 0.0;
     final static double LIFT_COLLECT = 0.0;
     final static double LIFT_MIN = 0.0;
     final static double LIFT_CLEAR_BARRIER = 0.0;
     final static double LIFT_HOME_POSITION = 0;
     final static double LIFT_NO_SLIDE_ZONE_MIN = 0;
     final static double LIFT_NO_SLIDE_ZONE_MAX = 0;
+
+    public static double f_coefficient = 0.5;
 
     final static double SLIDE_MAX = 1.0;
     final static double SLIDE_COLLECT = 0.0;
@@ -121,13 +123,30 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     }
 
     // This method controls the 4bar to desired height
+    static double f_value = 0.5;
     public void moveLift(double heightInTicks) {
+        telemetry.addLine(String.format("Height in ticks: %.1f", heightInTicks));
         if (heightInTicks >= LIFT_MIN && heightInTicks <= LIFT_MAX) {
+            double velocity;
+            if(getLiftPosition() > heightInTicks){
+                // lift going down
+                velocity = 550;
+            } else {
+                velocity = 2120;
+            }
+
             if (liftMotor1 != null) {
+                liftMotor1.setPower(1.0);
                 liftMotor1.setTargetPosition((int) heightInTicks);
+                liftMotor1.setVelocity(velocity);
+                liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
             if (liftMotor2 != null) {
+                liftMotor2.setPower(1.0);
                 liftMotor2.setTargetPosition((int) heightInTicks);
+                liftMotor2.setVelocity(velocity);
+                liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
             }
         }
     }
@@ -148,10 +167,11 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         }
         // get the current position of both motors
         int position1 = liftMotor1.getCurrentPosition();
-        int position2 = liftMotor2.getCurrentPosition();
+        int position2 = liftMotor2.getCurrentPosition(); // Negate the motor being in reverse
         // return the average of the two positions
         return (position1 + position2) / 2.0;
     }
+
     public double getSlidePosition() {
         // ensure the slide motor is initialized
         if (slideMotor == null) {
@@ -179,7 +199,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public void initializeHardware() {
         // Only initialize arm if it's not already initialized.
         // This is CRUCIAL for transitioning between Auto and TeleOp.
-        if (liftMotor1 == null && liftMotor2 == null && slideMotor == null) {
+        if (true) { // liftMotor1 == null && liftMotor2 == null && slideMotor == null) {
             liftMotor1 = hardwareMap.get(DcMotorEx.class, "lift1");
             liftMotor2 = hardwareMap.get(DcMotorEx.class, "lift2");
             slideMotor = hardwareMap.get(DcMotorEx.class, "slides");
@@ -196,17 +216,13 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            liftMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
 
             liftMotor2.setTargetPosition(0);
             liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            liftMotor2.setDirection(DcMotorSimple.Direction.REVERSE);
 
-            liftMotor1.setTargetPosition(0);
-            liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         }
 
         intake1 = hardwareMap.get(CRServo.class, "intake1");
@@ -218,7 +234,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         intake1.setPower(INTAKE_OFF);
         intake2.setPower(INTAKE_OFF);
     }
-
 
     public static final KinematicType kinematicType = KinematicType.X;
 }
