@@ -146,7 +146,7 @@ public class CompetitionAuto extends BaseOpMode {
                     actionBuilder = actionBuilder
                             // strafe to scoring area
                             //.strafeTo(new Vector2d(60, 60))
-                            .splineToLinearHeading(new Pose2d(50, 50, 5 * Math.PI / 4), 0)
+                            .splineToLinearHeading(new Pose2d(60, 56, 5 * Math.PI / 4), 0)
                             .endTrajectory()
                             // weeee slides LETSO YEAAA WOOO POGGERS
                             .stopAndAdd(new SlideMoveAction(SlideActionState.HIGH_BASKET))

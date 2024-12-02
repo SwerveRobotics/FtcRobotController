@@ -190,6 +190,8 @@ abstract public class BaseOpMode extends LinearOpMode {
             // update motor many times because it goofy
             armBaseMotor.setTargetPosition(armActionState.armBaseMotorTargetPositionTicks);
 
+            telemetry.addData("armBaseMotorIsBusy", armBaseMotor.isBusy());
+
             // if it hasnt passed target position, run this again :)
             return armBaseMotor.isBusy();
         }
@@ -211,6 +213,8 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     public class SlideMoveAction extends RobotAction {
 
+        // set to 0 as a placeholder
+        private double timeoutTime = 0;
         final SlideActionState actionState;
 
         public SlideMoveAction(SlideActionState actionState) {
@@ -220,18 +224,26 @@ abstract public class BaseOpMode extends LinearOpMode {
         @Override
         public boolean run(double elapsedTime) {
 
+            final double TIMEOUT_DELAY_SECONDS = 3;
+
+            if (timeoutTime == 0) {
+                timeoutTime = elapsedTime + TIMEOUT_DELAY_SECONDS;
+            }
+
             // update motor many times because it goofy
             slidesMotor.setTargetPosition(actionState.slidesMotorTargetPositionTicks);
 
+            telemetry.addData("slidesMotorIsBusy", slidesMotor.isBusy());
+
             // if it hasnt passed target position, run this again :)
-            return slidesMotor.isBusy();
+            return slidesMotor.isBusy() && elapsedTime < timeoutTime;
         }
     }
 
     public enum SlideActionState {
         GROUND(DRIFTConstants.SLIDES_MOTOR_GROUND_POSITION),
         LOW_BASKET(DRIFTConstants.SLIDES_MOTOR_LOW_BASKET_POSITION),
-        HIGH_BASKET(DRIFTConstants.SLIDES_MOTOR_HIGH_BASKET_POSITION);
+        HIGH_BASKET(DRIFTConstants.SLIDES_MOTOR_HIGH_BASKET_POSITION - 100);
 
         final int slidesMotorTargetPositionTicks;
 
