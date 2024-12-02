@@ -221,14 +221,14 @@ public class DistanceLocalizer {
                 Vector2d(
                 // Correction x and max correction, whichever is absolutely larger,
                 // taking the sign of the correction
-                correction.x -
+                correction.x +
                         (Math.abs(xDiff) < Math.
 
                                 abs(maxCorrection)
                                 ? xDiff : Math.copySign(maxCorrection, xDiff)),
                 // Correction y and max correction, whichever is absolutely larger,
                 // taking the sign of the correction
-                correction.y -
+                correction.y +
                         (Math.abs(yDiff) < Math.
 
                                 abs(maxCorrection)
