@@ -18,6 +18,7 @@ import org.firstinspires.ftc.team6220.javatextmenu.TextMenu;
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team6220.roadrunner.RobotAction;
 
+import java.util.ArrayList;
 import java.util.Objects;
 
 @Autonomous(name="CompetitionAuto", group="Competition", preselectTeleOp="CompetitionTeleOp")
@@ -143,6 +144,13 @@ public class CompetitionAuto extends BaseOpMode {
         if (Objects.requireNonNull(autoType) == AutonomousEnums.AutoType.SCORING) {
             switch (spikeMarkSide) {
                 case LEFT: {
+
+                    // declarations for the compound arm actions
+                    ArrayList<RobotAction> GRAB = new ArrayList<>();
+                    // GRAB.add();
+                    ArrayList<RobotAction> TRANSFER = new ArrayList<>();
+                    ArrayList<RobotAction> IDLE = new ArrayList<>();
+
                     actionBuilder = actionBuilder
                             // strafe to scoring area
                             //.strafeTo(new Vector2d(60, 60))

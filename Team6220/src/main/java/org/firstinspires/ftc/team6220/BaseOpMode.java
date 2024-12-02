@@ -13,6 +13,8 @@ import com.wilyworks.common.WilyWorks;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team6220.roadrunner.RobotAction;
 
+import java.util.ArrayList;
+
 /**
  * This class contains all of the base logic that is shared between all of the TeleOp and
  * Autonomous logic. All TeleOp and Autonomous classes should derive from this class.
@@ -264,12 +266,11 @@ abstract public class BaseOpMode extends LinearOpMode {
 
             return false;
         }
-
-
     }
 
     public enum DumperActionState {
         DUMP(DRIFTConstants.DUMPER_SERVO_POSITION_DUMP),
+        TRANSFER(DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER),
         INIT(DRIFTConstants.DUMPER_SERVO_POSITION_INIT);
 
         final double dumperServoPosition;
@@ -282,7 +283,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public enum ArmElbowServoState {
         GROUND(DRIFTConstants.ARM_ELBOW_SERVO_POSITION_GROUND),
         TRANSFER(DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER),
-        OVERBAR(DRIFTConstants.ARM_ELBOW_SERVO_POSITION_GROUND);
+        OVER_BAR(DRIFTConstants.ARM_ELBOW_SERVO_POSITION_OVER_BAR);
 
         final double armElbowServoPosition;
 
@@ -290,6 +291,7 @@ abstract public class BaseOpMode extends LinearOpMode {
             this.armElbowServoPosition = armElbowServoPosition;
         }
     }
+
     public class ArmElbowMoveAction extends RobotAction {
         ArmElbowServoState armElbowServoState;
 
@@ -302,15 +304,43 @@ abstract public class BaseOpMode extends LinearOpMode {
 
             return false;
         }
-
-
     }
 
-    public class IntakeCRServoAction extends RobotAction {
+    public class IntakeMoveAction extends RobotAction {
+        final double intakeServoPower;
+
+        public IntakeMoveAction(double intakeServoPower, double delayDuration) {
+            this.intakeServoPower = intakeServoPower;
+        }
+
         public boolean run(double elapsedTime) {
-            intakeCRServo.setPower(1.0);
+            intakeCRServo.setPower(intakeServoPower);
 
             return false;
+        }
+    }
+
+    // this is super cooked rn, dont use
+    public class CompoundArmAction extends RobotAction {
+
+        ArrayList<RobotAction> compoundActionList;
+
+        public CompoundArmAction(ArrayList<RobotAction> compoundActionList) {
+            this.compoundActionList = compoundActionList;
+        }
+
+        @Override
+        public boolean run(double elapsedTime) {
+            // grab the first action in the list
+            RobotAction currentAction = compoundActionList.get(0);
+
+            // if the current action returned false, omit it from the list so that it moves to the next action in the queue
+            if (!currentAction.run(elapsedTime)) {
+                compoundActionList.remove(0);
+            }
+
+            // if the list isn't empty, there's more actions to run
+            return !compoundActionList.isEmpty();
         }
     }
 }
