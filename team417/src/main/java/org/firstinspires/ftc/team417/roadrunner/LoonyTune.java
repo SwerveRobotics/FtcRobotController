@@ -4220,33 +4220,33 @@ public class LoonyTune extends LinearOpMode {
             io.end();
         }
 
-        if ((drive.otosDriver == null) && (drive.pinpointDriver == null)) {
-            dialog.warning("Either a SparkFun OTOS or goBilda Pinpoint sensor must be initialized. ");
-            return; // ====>
-        }
+//        if ((drive.otosDriver == null) && (drive.pinpointDriver == null)) {
+//            dialog.warning("Either a SparkFun OTOS or goBilda Pinpoint sensor must be initialized. ");
+//            return; // ====>
+//        }
 
-        if (usePinpoint) {
-            drive.pinpointDriver.update(); // Call update() to read the status register
-            GoBildaPinpointDriver.DeviceStatus status = drive.pinpointDriver.getDeviceStatus();
-
-            if (status == NOT_READY) {
-                dialog.warning("The Pinpoint computer isn't responding. Check your I2C wiring.");
-                return; // ====>
-            }
-
-            if ((status == FAULT_X_POD_NOT_DETECTED) ||
-                (status == FAULT_Y_POD_NOT_DETECTED) ||
-                (status == FAULT_NO_PODS_DETECTED)) {
-                dialog.warning("The Pinpoint computer indicates that pods aren't connected. " +
-                        "Check your encoder wiring.");
-                return; // ====>
-            }
-        } else {
-            if (!isOpticalTrackerResponsive()) {
-                dialog.warning("The SparkFun OTOS sensor is not responding. Check your wiring.");
-                return; // ====>
-            }
-        }
+//        if (usePinpoint) {
+//            drive.pinpointDriver.update(); // Call update() to read the status register
+//            GoBildaPinpointDriver.DeviceStatus status = drive.pinpointDriver.getDeviceStatus();
+//
+//            if (status == NOT_READY) {
+//                dialog.warning("The Pinpoint computer isn't responding. Check your I2C wiring.");
+//                return; // ====>
+//            }
+//
+//            if ((status == FAULT_X_POD_NOT_DETECTED) ||
+//                (status == FAULT_Y_POD_NOT_DETECTED) ||
+//                (status == FAULT_NO_PODS_DETECTED)) {
+//                dialog.warning("The Pinpoint computer indicates that pods aren't connected. " +
+//                        "Check your encoder wiring.");
+//                return; // ====>
+//            }
+//        } else {
+//            if (!isOpticalTrackerResponsive()) {
+//                dialog.warning("The SparkFun OTOS sensor is not responding. Check your wiring.");
+//                return; // ====>
+//            }
+       // }
 
         // Require that a button be pressed on the gamepad to continue. We require this
         // because enabling the gamepad on the DS after it's been booted causes an A press to

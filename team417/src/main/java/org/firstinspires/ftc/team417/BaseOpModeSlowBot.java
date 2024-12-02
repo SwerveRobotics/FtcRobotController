@@ -23,8 +23,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double INTAKE_COLLECT = 0.0;
     final static double INTAKE_OFF = 0.0;
 
-    final static double LIFT_MAX = 240;
-    final static double LIFT_SCORE_HIGH_BASKET = 240;
+    final static double LIFT_MAX = 500;
+    final static double LIFT_SCORE_HIGH_BASKET = 500;
     final static double LIFT_SCORE_HIGH_SPECIMEN = 0.0;
     final static double LIFT_SCORE_LOW_BASKET = 0.0;
     final static double LIFT_COLLECT = 0.0;
@@ -130,7 +130,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             double velocity;
             if(getLiftPosition() > heightInTicks){
                 // lift going down
-                velocity = 200;
+                velocity = 550;
             } else {
                 velocity = 2120;
             }
