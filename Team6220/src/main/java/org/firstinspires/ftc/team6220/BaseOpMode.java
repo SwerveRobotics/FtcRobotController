@@ -325,8 +325,8 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         ArrayList<RobotAction> compoundActionList;
 
-        public CompoundArmAction(CompoundArmMovement compoundArmMovement) {
-            this.compoundActionList = compoundArmMovement.actionList;
+        public CompoundArmAction(ArrayList<RobotAction> compoundActionList) {
+            this.compoundActionList = compoundActionList;
         }
 
         @Override
@@ -341,26 +341,6 @@ abstract public class BaseOpMode extends LinearOpMode {
 
             // if the list isn't empty, there's more actions to run
             return !compoundActionList.isEmpty();
-        }
-    }
-
-
-    // this is cooked, dont use
-    public enum CompoundArmMovement {
-        GRAB(new ArrayList<RobotAction>(
-
-        )),
-        TRANSFER(new ArrayList<RobotAction>(
-
-        )),
-        IDLE(new ArrayList<RobotAction>(
-
-        ));
-
-        final ArrayList<RobotAction> actionList;
-
-        CompoundArmMovement(ArrayList<RobotAction> actionList) {
-            this.actionList = actionList;
         }
     }
 }
