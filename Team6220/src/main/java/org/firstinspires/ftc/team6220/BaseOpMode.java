@@ -320,12 +320,12 @@ abstract public class BaseOpMode extends LinearOpMode {
         }
     }
 
-    // this is super cooked rn, dont use
-    public class CompoundArmAction extends RobotAction {
+    // this is super not cooked rn, please use
+    public class CompoundRobotAction extends RobotAction {
 
         ArrayList<RobotAction> compoundActionList;
 
-        public CompoundArmAction(ArrayList<RobotAction> compoundActionList) {
+        public CompoundRobotAction(ArrayList<RobotAction> compoundActionList) {
             this.compoundActionList = compoundActionList;
         }
 
