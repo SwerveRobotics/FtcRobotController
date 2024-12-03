@@ -20,6 +20,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.LED;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoController;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
@@ -443,19 +444,21 @@ class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
     }
 
     @Override
-    public void setVelocityPIDFCoefficients(double p, double i, double d, double f) {
+    public void setPIDFCoefficients(RunMode mode, PIDFCoefficients pidfCoefficients) throws UnsupportedOperationException { }
 
+    @Override
+    public void setVelocityPIDFCoefficients(double p, double i, double d, double f) { }
+
+    @Override
+    public void setPositionPIDFCoefficients(double p) { }
+
+    @Override
+    public PIDFCoefficients getPIDFCoefficients(RunMode mode) {
+        return null;
     }
 
     @Override
-    public void setPositionPIDFCoefficients(double p) {
-
-    }
-
-    @Override
-    public void setTargetPositionTolerance(int tolerance) {
-
-    }
+    public void setTargetPositionTolerance(int tolerance) { }
 
     @Override
     public int getTargetPositionTolerance() {
@@ -473,9 +476,7 @@ class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
     }
 
     @Override
-    public void setCurrentAlert(double current, CurrentUnit unit) {
-
-    }
+    public void setCurrentAlert(double current, CurrentUnit unit) { }
 
     @Override
     public boolean isOverCurrent() {

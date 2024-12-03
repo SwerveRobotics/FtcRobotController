@@ -11,10 +11,10 @@ public interface DcMotorEx extends DcMotor {
     void setVelocity(double angularRate, AngleUnit unit);
     double getVelocity();
     double getVelocity(AngleUnit unit);
-    // ### void setPIDFCoefficients(RunMode mode, PIDFCoefficients pidfCoefficients) throws UnsupportedOperationException;
+    void setPIDFCoefficients(RunMode mode, PIDFCoefficients pidfCoefficients) throws UnsupportedOperationException;
     void setVelocityPIDFCoefficients(double p, double i, double d, double f);
     void setPositionPIDFCoefficients(double p);
-    // ### PIDFCoefficients getPIDFCoefficients(RunMode mode);
+    PIDFCoefficients getPIDFCoefficients(RunMode mode);
     void setTargetPositionTolerance(int tolerance);
     int getTargetPositionTolerance();
     double getCurrent(CurrentUnit unit);
