@@ -154,7 +154,7 @@ public class CompetitionAuto extends BaseOpMode {
                     actionBuilder = actionBuilder
                             // strafe to scoring area
                             //.strafeTo(new Vector2d(60, 60))
-                            .splineToLinearHeading(new Pose2d(60, 56, 5 * Math.PI / 4), 0)
+                            .splineToLinearHeading(new Pose2d(58, 56, 5 * Math.PI / 4), 0)
                             .endTrajectory()
                             // weeee slides LETSO YEAAA WOOO POGGERS
                             .stopAndAdd(new SlideMoveAction(SlideActionState.HIGH_BASKET))
@@ -163,8 +163,9 @@ public class CompetitionAuto extends BaseOpMode {
                             .waitSeconds(1.2)
                             .stopAndAdd(new DumperMoveAction(DumperActionState.INIT))
                             .waitSeconds(0.5)
-                            .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND))
-                            .setTangent(Math.toRadians(-180))
+                            .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND));
+
+                            /*.setTangent(Math.toRadians(-180))
                             // spline to prepare to collect first sample
                             .splineToLinearHeading(new Pose2d(48, 10, Math.toRadians(-90)),  Math.toRadians(-40))
                             .endTrajectory()
@@ -190,6 +191,8 @@ public class CompetitionAuto extends BaseOpMode {
                             .strafeTo(new Vector2d(62, 50))
                             .endTrajectory()
                             .setTangent(Math.toRadians(200));
+
+                             */
                 }
                 case RIGHT: {
                     // to be implemented
