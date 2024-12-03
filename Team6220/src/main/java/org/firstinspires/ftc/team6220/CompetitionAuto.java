@@ -120,7 +120,7 @@ public class CompetitionAuto extends BaseOpMode {
     }
 
     private void textMenuUpdateUntilComplete(TextMenu textMenu, MenuInput input) {
-        while (!textMenu.isCompleted() && !isStopRequested()) {
+        while (!textMenu.isCompleted() && !isStopRequested() && !this.isStarted()) {
             for (String line : textMenu.toListOfStrings()) {
                 telemetry.addLine(line);
             }
