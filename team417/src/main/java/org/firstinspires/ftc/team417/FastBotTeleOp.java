@@ -412,7 +412,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
         telemetry.addLine("Sample collection: right-bumper");
         telemetry.addLine("Negative fudge position: left-trigger");
         telemetry.addLine("Positive fudge position: right-trigger");
-
+        telemetry.addData("Arm motor ticks ", armMotor1.getCurrentPosition());
         telemetry.update();
     }
 }

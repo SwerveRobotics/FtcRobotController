@@ -75,7 +75,7 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     public static double WRIST_SCORE_SPECIMEN = 0.81;
 
     //position used to score specimens in auto
-    public final static double Y_SCORE_POSE = 41;
+    public final static double Y_SCORE_POSE = 41.5;
     /* A number in degrees that the triggers can adjust the arm position by */
     final static double FUDGE_FACTOR = 15 * ARM_TICKS_PER_DEGREE;
 
