@@ -48,7 +48,7 @@ public class DistanceLocalizer {
         angleMap.put(FieldSide.RIGHT, Math.PI / 2); // 90 degrees
         angleMap.put(FieldSide.BOTTOM, Math.PI); // 180 degrees
         angleMap.put(FieldSide.LEFT, 3 * Math.PI / 2); // 270 degrees
-        angleMap.put(FieldSide.NONE, 0.0); // 270 degrees
+        angleMap.put(FieldSide.NONE, null); // Robot should not be outside of the field
     }
 
     public DistanceLocalizer(UltrasonicDistanceSensor leftDistance,
@@ -314,7 +314,11 @@ public class DistanceLocalizer {
 
     static final double EPSILON = 0.1;
 
-    public static double[] angleToUnitVectorWithEpsilon(double angle) {
+    public static double[] angleToUnitVectorWithEpsilon(Double angle) {
+        if (angle == null) {
+            return new double[]{0, 0};
+        }
+
         double x = Math.sin(angle);  // Calculate x-component
         double y = Math.cos(angle);  // Calculate y-component
 
