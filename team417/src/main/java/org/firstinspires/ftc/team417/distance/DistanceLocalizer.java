@@ -112,70 +112,68 @@ public class DistanceLocalizer {
                 if (Math.abs(leftRelativeAngle) < Math.abs(rightRelativeAngle)) {
                     // If left sensor satisfies angle requirement
                     if (Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                        if (leftFactor[0] * latestLeft != 0) {
-                            xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false ^ switchXY(theta));
-                            xAbsolutePosition = leftFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
-                            }
-                        else if (leftFactor[1] * latestLeft != 0) {
-                            yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true ^ switchXY(theta));
-                            yAbsolutePosition = leftFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
+                        Double[] absolutePosition = calculatePosition(leftFactor, latestLeft, heading, theta, leftInfo);
+                        if (xAbsolutePosition == null) {
+                            xAbsolutePosition = absolutePosition[0];
+                        }
+                        if (yAbsolutePosition == null) {
+                            yAbsolutePosition = absolutePosition[1];
                         }
                     }
                 } else {
                     // If right sensor satisfies angle requirement
                     if (Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                        if (rightFactor[0] * latestRight != 0) {
-                            xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false ^ switchXY(theta));
-                            xAbsolutePosition = rightFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
+                        Double[] absolutePosition = calculatePosition(rightFactor, latestRight, heading, theta, rightInfo);
+                        if (xAbsolutePosition == null) {
+                            xAbsolutePosition = absolutePosition[0];
                         }
-                        else if (rightFactor[1] * latestRight != 0) {
-                            yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true ^ switchXY(theta));
-                            yAbsolutePosition = rightFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
+                        if (yAbsolutePosition == null) {
+                            yAbsolutePosition = absolutePosition[1];
                         }
                     }
                 }
             } else if (leftCloseEnough) {
                 // If left sensor satisfies angle requirement
                 if (Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                    if (leftFactor[0] * latestLeft != 0) {
-                        xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false ^ switchXY(theta));
-                        xAbsolutePosition = leftFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
-                    } else if (leftFactor[1] * latestLeft != 0) {
-                        yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true ^ switchXY(theta));
-                        yAbsolutePosition = leftFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
+                    Double[] absolutePosition = calculatePosition(leftFactor, latestLeft, heading, theta, leftInfo);
+                    if (xAbsolutePosition == null) {
+                        xAbsolutePosition = absolutePosition[0];
+                    }
+                    if (yAbsolutePosition == null) {
+                        yAbsolutePosition = absolutePosition[1];
                     }
                 }
             } else if (rightCloseEnough) {
                 // If right sensor satisfies angle requirement
                 if (Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                    if (rightFactor[0] * latestRight != 0) {
-                        xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false ^ switchXY(theta));
-                        xAbsolutePosition = rightFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
-                    } else if (rightFactor[1] * latestRight != 0) {
-                        yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true ^ switchXY(theta));
-                        yAbsolutePosition = rightFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
+                    Double[] absolutePosition = calculatePosition(rightFactor, latestRight, heading, theta, rightInfo);
+                    if (xAbsolutePosition == null) {
+                        xAbsolutePosition = absolutePosition[0];
+                    }
+                    if (yAbsolutePosition == null) {
+                        yAbsolutePosition = absolutePosition[1];
                     }
                 }
             }
         } else { // If sensors don't face the same side
             // If left sensor is close enough and satisfies angle requirement
             if (leftCloseEnough && Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                if (leftFactor[0] * latestLeft != 0) {
-                    xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false ^ switchXY(theta));
-                    xAbsolutePosition = leftFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
-                } else if (leftFactor[1] * latestLeft != 0) {
-                    yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true ^ switchXY(theta));
-                    yAbsolutePosition = leftFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
+                Double[] absolutePosition = calculatePosition(leftFactor, latestLeft, heading, theta, leftInfo);
+                if (xAbsolutePosition == null) {
+                    xAbsolutePosition = absolutePosition[0];
+                }
+                if (yAbsolutePosition == null) {
+                    yAbsolutePosition = absolutePosition[1];
                 }
             }
             // If right sensor is close enough and satisfies angle requirement
             if (rightCloseEnough && Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                if (rightFactor[0] * latestRight != 0) {
-                    xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false ^ switchXY(theta));
-                    xAbsolutePosition = rightFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
-                } else if (rightFactor[1] * latestRight != 0) {
-                    yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true ^ switchXY(theta));
-                    yAbsolutePosition = rightFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
+                Double[] absolutePosition = calculatePosition(rightFactor, latestRight, heading, theta, rightInfo);
+                if (xAbsolutePosition == null) {
+                    xAbsolutePosition = absolutePosition[0];
+                }
+                if (yAbsolutePosition == null) {
+                    yAbsolutePosition = absolutePosition[1];
                 }
             }
         }
@@ -200,6 +198,8 @@ public class DistanceLocalizer {
                 yHistory.remove(0);
             }
         }
+
+        correcting = xDetectedCorrection != null || yDetectedCorrection != null;
 
         xTargetCorrection = xHistory.stream()
                 .mapToDouble(Double::doubleValue)
@@ -237,6 +237,23 @@ public class DistanceLocalizer {
 
         return correction;
 
+    }
+
+    Double[] calculatePosition(double[] factor, double latest, double heading, double theta, DistanceSensorInfo info) {
+        double xRelativePosition, yRelativePosition;
+        Double xAbsolutePosition = null, yAbsolutePosition = null;
+        if (factor[0] * latest != 0) {
+            xRelativePosition = calculateDistance(latest, heading, info, false ^ switchXY(theta));
+            double xField = (factor[0] * FieldSimulator.FIELD_SIZE / 2);
+            double xDirectionalPosition = (switchXY(theta) ? factor[0] * xRelativePosition : xRelativePosition);
+            xAbsolutePosition = xField - xDirectionalPosition;
+        } else if (factor[1] * latest != 0) {
+            yRelativePosition = calculateDistance(latest, heading, info, true ^ switchXY(theta));
+            double yField = factor[1] * FieldSimulator.FIELD_SIZE / 2;
+            double yDirectionalPosition = switchXY(theta) ? factor[1] * yRelativePosition : yRelativePosition;
+            yAbsolutePosition = yField - yDirectionalPosition;
+        }
+        return new Double[]{xAbsolutePosition, yAbsolutePosition};
     }
 
     boolean switchXY(double theta) {
