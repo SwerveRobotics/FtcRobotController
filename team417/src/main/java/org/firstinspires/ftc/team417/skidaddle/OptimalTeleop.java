@@ -61,7 +61,7 @@ public class OptimalTeleop extends BaseOpModeFastBot {
             if (doAuto) {
             } else {
                 if (!pathing) {
-                    if (gamepad1.dpad_up && !upPressed) {
+                    if (gamepad2.dpad_up && !upPressed) {
                         driveTo.init(new DPoint(0, -45), Math.PI / 2.0, currentPoseVel, telemetry);
 
                         armPosition = ARM_VERTICAL;
@@ -70,16 +70,7 @@ public class OptimalTeleop extends BaseOpModeFastBot {
 
                         pathing = true;
                     }
-                    if (gamepad1.dpad_down && downPressed) {
-                        driveTo.init(new DPoint(0, -45), Math.PI / 2.0, currentPoseVel, telemetry);
-
-                        armPosition = ARM_CLEAR_BARRIER;
-                        wrist.setPosition(WRIST_FOLDED_OUT);
-                        intakeEnabled = true;
-
-                        pathing = true;
-                    }
-                    if (gamepad1.y && yPressed) {
+                    if (gamepad2.y && yPressed) {
                         driveTo.init(new DPoint(24, -63), 0, currentPoseVel, telemetry);
 
                         armPosition = ARM_COLLECT;

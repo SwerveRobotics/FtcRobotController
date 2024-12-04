@@ -36,7 +36,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
     public static double f_coefficient = 0.5;
 
-    final static double SLIDE_MAX = 1.0;
+    final static double SLIDE_MAX = 200.0;
     final static double SLIDE_COLLECT = 0.0;
     final static double SLIDE_SCORE_IN_BASKET = 0;
     final static double SLIDE_MIN = 0.0;
@@ -116,8 +116,12 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     // This helper method controls the linear slides and tells motor to go to desired position in ticks
     public void moveSlide(double positionInTicks){
         if (slideMotor != null) {
+            telemetry.addData("Slide target: ", positionInTicks);
             if(positionInTicks >= SLIDE_MIN && positionInTicks <= SLIDE_MAX){
+                slideMotor.setPower(1.0);
                 slideMotor.setTargetPosition((int) positionInTicks);
+                slideMotor.setVelocity(500); //TODO: make this a variable
+                slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
         }
     }
@@ -125,7 +129,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     // This method controls the 4bar to desired height
     static double f_value = 0.5;
     public void moveLift(double heightInTicks) {
-        telemetry.addLine(String.format("Height in ticks: %.1f", heightInTicks));
         if (heightInTicks >= LIFT_MIN && heightInTicks <= LIFT_MAX) {
             double velocity;
             if(getLiftPosition() > heightInTicks){
@@ -134,7 +137,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             } else {
                 velocity = 2120;
             }
-
             if (liftMotor1 != null) {
                 liftMotor1.setPower(1.0);
                 liftMotor1.setTargetPosition((int) heightInTicks);
@@ -146,7 +148,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
                 liftMotor2.setTargetPosition((int) heightInTicks);
                 liftMotor2.setVelocity(velocity);
                 liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
             }
         }
     }

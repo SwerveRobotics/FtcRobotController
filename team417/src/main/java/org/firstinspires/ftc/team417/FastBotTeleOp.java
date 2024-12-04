@@ -7,11 +7,14 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PwmControl;
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team417.skidaddle.AutoDriveTo;
+import org.firstinspires.ftc.team417.skidaddle.DPoint;
 
 /**
  * This class exposes the competition version of TeleOp. As a general rule, add code to the
@@ -20,6 +23,13 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 @TeleOp(name = "TeleOp", group = "FastBot")
 @Config
 public class FastBotTeleOp extends BaseOpModeFastBot {
+
+    public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(24, -63);
+    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, -45);
+    public double SPECIMEN_DRIVE_TO_HEADING = Math.PI / 2.0;
+    boolean pathing = false;
+    double lastTime = TIME.seconds();
+
     private double speedMultiplier = 0.5;
     boolean curve = true;
     boolean fieldCentered = false;
@@ -38,6 +48,11 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
     double armPositionFudgeFactor;
     boolean intakeEnabled = false;
 
+    boolean a1Pressed = false;
+    boolean b1Pressed = false;
+
+    AutoDriveTo driveTo;
+
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
@@ -49,19 +64,17 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
         // Only move wrist after start
         //wrist.setPosition(WRIST_FOLDED_IN);
 
-        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
-
         while (opModeIsActive()) {
+            // 'packet' is the object used to send data to FTC Dashboard:
+            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+
             toggleFieldCentricity();
 
-            controlDrivebaseWithGamepads(curve, fieldCentered);
+            controlDrivebaseWithGamepads(curve, fieldCentered, packet);
 
             controlMechanismsWithGamepads();
 
             telemeterData();
-
-            // 'packet' is the object used to send data to FTC Dashboard:
-            packet = MecanumDrive.getTelemetryPacket();
 
             // Do the work now for all active Road Runner actions, if any:
             drive.doActionsWork(packet);
@@ -96,6 +109,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
 
     public void prepareRobot(Pose2d startingPose) {
         drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
+        driveTo = new AutoDriveTo(drive);
         initializeHardware();
 
         startHeading = startingPose.heading.log();
@@ -105,7 +119,40 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
         telemetry.update();
     }
 
-    public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
+    public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric, TelemetryPacket packet) {
+        // Update the current pose:
+        PoseVelocity2d currentPoseVelocity = drive.updatePoseEstimate();
+
+        double currentTime = TIME.seconds();
+        double deltaTime = currentTime - lastTime;
+        lastTime = currentTime;
+
+
+        if(gamepad1.a){
+            if(!a1Pressed){
+                driveTo.init(HUMAN_ZONE_DRIVE_TO, 0, currentPoseVelocity, telemetry);
+                armPosition = ARM_COLLECT;
+                wrist.setPosition(WRIST_FOLDED_OUT);
+                intakeEnabled = true;
+                pathing = true;
+            } else if (pathing) {
+                pathing = driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
+            }
+        } else if(gamepad1.b){
+            if(!b1Pressed){
+                driveTo.init(SPECIMEN_DRIVE_TO, SPECIMEN_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
+                armPosition = ARM_VERTICAL;
+                wrist.setPosition(WRIST_FOLDED_IN);
+                intakeEnabled = false;
+                pathing = true;
+            }
+        } else {
+            pathing = false;
+        }
+
+        a1Pressed = gamepad1.a;
+        b1Pressed = gamepad1.b;
+
         // If the left bumper is pressed, slow down, and if the right bumper is pressed, speed up.
         speedMultiplier = 0.5;
         if (gamepad1.left_bumper) {
@@ -144,17 +191,16 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
         rotatedX = x * Math.cos(theta) - y * Math.sin(theta);
         rotatedY = x * Math.sin(theta) + y * Math.cos(theta);
 
-        // Set the drive motor powers according to the gamepad input:
-        drive.setDrivePowers(new PoseVelocity2d(
-                new Vector2d(
-                        -rotatedY * speedMultiplier,
-                        -rotatedX * speedMultiplier
-                ),
-                -rot * speedMultiplier
-        ));
-
-        // Update the current pose:
-        drive.updatePoseEstimate();
+        if(!pathing) {
+            // Set the drive motor powers according to the gamepad input:
+            drive.setDrivePowers(new PoseVelocity2d(
+                    new Vector2d(
+                            -rotatedY * speedMultiplier,
+                            -rotatedX * speedMultiplier
+                    ),
+                    -rot * speedMultiplier
+            ));
+        }
     }
 
     public void controlMechanismsWithGamepads() {

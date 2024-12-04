@@ -304,7 +304,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         telemetry.addData("Lift Motor 1 ticks: ", liftMotor1.getCurrentPosition());
         telemetry.addData("Lift Motor 2 ticks: ", liftMotor2.getCurrentPosition());
 
-        telemetry.addData("Slide Motor in ticks: ", getSlidePosition());
+        telemetry.addData("Slide motor ticks: ", slideMotor.getCurrentPosition());
 
         telemetry.update();
     }

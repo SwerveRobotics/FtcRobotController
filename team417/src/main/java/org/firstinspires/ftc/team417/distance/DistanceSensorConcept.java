@@ -38,6 +38,9 @@ public class DistanceSensorConcept extends FastBotTeleOp {
         waitForStart();
 
         while (opModeIsActive()) {
+            // 'packet' is the object used to send data to FTC Dashboard:
+            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+
             double h = drive.otosDriver.getPosition().h;
 
             double dL = leftSonic.getDistance(DistanceUnit.INCH);
@@ -46,14 +49,11 @@ public class DistanceSensorConcept extends FastBotTeleOp {
             telemetry.addData("X distance", calculateDistance(dR, h, rightInfo, false));
             telemetry.addData("Y distance", calculateDistance(dL, h, leftInfo, true));
 
-            controlDrivebaseWithGamepads(true, false);
+            controlDrivebaseWithGamepads(true, false, packet);
 
             controlMechanismsWithGamepads();
 
             telemeterData();
-
-            // 'packet' is the object used to send data to FTC Dashboard:
-            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
 
             // Do the work now for all active Road Runner actions, if any:
             drive.doActionsWork(packet);
