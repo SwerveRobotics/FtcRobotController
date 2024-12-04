@@ -48,6 +48,7 @@ public class DistanceLocalizer {
         angleMap.put(FieldSide.RIGHT, Math.PI / 2); // 90 degrees
         angleMap.put(FieldSide.BOTTOM, Math.PI); // 180 degrees
         angleMap.put(FieldSide.LEFT, 3 * Math.PI / 2); // 270 degrees
+        angleMap.put(FieldSide.NONE, 0.0); // 270 degrees
     }
 
     public DistanceLocalizer(UltrasonicDistanceSensor leftDistance,
@@ -81,9 +82,14 @@ public class DistanceLocalizer {
         // Since the "top" is considered to be PI / 2 in theta
         // Heading has top as 0, while theta has top as Math.PI / 2
         double rawHeading = drive.pose.heading.log();
-        double theta = Math.floor(rawHeading / (Math.PI / 2)) * (Math.PI / 2);
-        double heading = rawHeading - theta - Math.PI / 2;
+        double num1 = (rawHeading - (Math.PI / 4)) / (Math.PI / 2);
+        double num2 = Math.floor(num1);
+        double theta = (num2 * (Math.PI / 2)) % (2 * Math.PI);
+        if (theta < 0) {
+            theta += 2 * Math.PI;
+        }
 
+        double heading = rawHeading - theta - Math.PI / 2;
         heading = heading % (2 * Math.PI);
 
         boolean sameSide = leftIntersection.side == rightIntersection.side;
@@ -95,8 +101,8 @@ public class DistanceLocalizer {
         double[] leftFactor = angleToUnitVectorWithEpsilon(angleMap.get(leftIntersection.side));
         double[] rightFactor = angleToUnitVectorWithEpsilon(angleMap.get(rightIntersection.side));
 
-        Double xRelativePosition = null;
-        Double yRelativePosition = null;
+        Double xRelativePosition, yRelativePosition;
+        Double xAbsolutePosition = null, yAbsolutePosition = null;
 
         // If sensors face the same side
         if (sameSide) {
@@ -106,84 +112,78 @@ public class DistanceLocalizer {
                 if (Math.abs(leftRelativeAngle) < Math.abs(rightRelativeAngle)) {
                     // If left sensor satisfies angle requirement
                     if (Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                        if (leftFactor[0] * latestLeft != 0)
-                            xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false);
+                        if (leftFactor[0] * latestLeft != 0) {
+                            xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false ^ switchXY(theta));
+                            xAbsolutePosition = leftFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
+                            }
                         else if (leftFactor[1] * latestLeft != 0) {
-                            yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true);
+                            yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true ^ switchXY(theta));
+                            yAbsolutePosition = leftFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
                         }
                     }
                 } else {
                     // If right sensor satisfies angle requirement
                     if (Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                        if (rightFactor[0] * latestRight != 0)
-                            xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false);
-                        else if (rightFactor[1] * latestRight != 0)
-                            yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true);
+                        if (rightFactor[0] * latestRight != 0) {
+                            xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false ^ switchXY(theta));
+                            xAbsolutePosition = rightFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
+                        }
+                        else if (rightFactor[1] * latestRight != 0) {
+                            yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true ^ switchXY(theta));
+                            yAbsolutePosition = rightFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
+                        }
                     }
                 }
             } else if (leftCloseEnough) {
                 // If left sensor satisfies angle requirement
                 if (Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                    if (leftFactor[0] * latestLeft != 0)
-                        xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false);
-                    else if (leftFactor[1] * latestLeft != 0) {
-                        yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true);
+                    if (leftFactor[0] * latestLeft != 0) {
+                        xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false ^ switchXY(theta));
+                        xAbsolutePosition = leftFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
+                    } else if (leftFactor[1] * latestLeft != 0) {
+                        yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true ^ switchXY(theta));
+                        yAbsolutePosition = leftFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
                     }
                 }
             } else if (rightCloseEnough) {
                 // If right sensor satisfies angle requirement
                 if (Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                    if (rightFactor[0] * latestRight != 0)
-                        xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false);
-                    else if (rightFactor[1] * latestRight != 0)
-                        yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true);
+                    if (rightFactor[0] * latestRight != 0) {
+                        xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false ^ switchXY(theta));
+                        xAbsolutePosition = rightFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
+                    } else if (rightFactor[1] * latestRight != 0) {
+                        yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true ^ switchXY(theta));
+                        yAbsolutePosition = rightFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
+                    }
                 }
             }
         } else { // If sensors don't face the same side
             // If left sensor is close enough and satisfies angle requirement
             if (leftCloseEnough && Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                if (leftFactor[0] * latestLeft != 0)
-                    xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false);
-                else if (leftFactor[1] * latestLeft != 0) {
-                    yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true);
+                if (leftFactor[0] * latestLeft != 0) {
+                    xRelativePosition = calculateDistance(latestLeft, heading, leftInfo, false ^ switchXY(theta));
+                    xAbsolutePosition = leftFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
+                } else if (leftFactor[1] * latestLeft != 0) {
+                    yRelativePosition = calculateDistance(latestLeft, heading, leftInfo, true ^ switchXY(theta));
+                    yAbsolutePosition = leftFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
                 }
             }
             // If right sensor is close enough and satisfies angle requirement
-            if (Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                if (rightFactor[0] * latestRight != 0)
-                    xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false);
-                else if (rightFactor[1] * latestRight != 0)
-                    yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true);
+            if (rightCloseEnough && Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                if (rightFactor[0] * latestRight != 0) {
+                    xRelativePosition = calculateDistance(latestRight, heading, rightInfo, false ^ switchXY(theta));
+                    xAbsolutePosition = rightFactor[0] * FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
+                } else if (rightFactor[1] * latestRight != 0) {
+                    yRelativePosition = calculateDistance(latestRight, heading, rightInfo, true ^ switchXY(theta));
+                    yAbsolutePosition = rightFactor[1] * FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
+                }
             }
         }
 
-        // Changing from distance from corner to distance from origin
-        Double xUnrotatedPosition = xRelativePosition == null ? null
-                : FieldSimulator.FIELD_SIZE / 2 - xRelativePosition;
-        Double yUnrotatedPosition = yRelativePosition == null ? null
-                : FieldSimulator.FIELD_SIZE / 2 - yRelativePosition;
-
-        double cosTheta = Math.cos(theta);
-        double sinTheta = Math.sin(theta);
-
-        Double xRotatedPosition, yRotatedPosition;
-
-        if (isEpsilonEqual(cosTheta, 0)) {
-            xRotatedPosition = yUnrotatedPosition == null ? null
-                    : -yUnrotatedPosition * sinTheta;
-            yRotatedPosition = xUnrotatedPosition == null ? null
-                    : xUnrotatedPosition * sinTheta;
-        } else {
-            xRotatedPosition = xUnrotatedPosition == null ? null
-                    : xUnrotatedPosition * cosTheta;
-            yRotatedPosition = yUnrotatedPosition == null ? null
-                    : yUnrotatedPosition * cosTheta;
-        }
-
-        Double xDetectedCorrection = xRotatedPosition == null ? null
-                : xRotatedPosition - drive.pose.position.x;
-        Double yDetectedCorrection = yRotatedPosition == null ? null
-                : yRotatedPosition - drive.pose.position.y;
+        Double xDetectedCorrection = xAbsolutePosition == null ? null
+                : xAbsolutePosition - drive.pose.position.x;
+        Double yDetectedCorrection = yAbsolutePosition == null ? null
+                : yAbsolutePosition - drive.pose.position.y;
 
         if (xDetectedCorrection != null) {
             xHistory.add(xDetectedCorrection);
@@ -237,6 +237,10 @@ public class DistanceLocalizer {
 
         return correction;
 
+    }
+
+    boolean switchXY(double theta) {
+        return isEpsilonEqual(theta, Math.PI / 2) || isEpsilonEqual(theta, 3 * Math.PI / 2);
     }
 
     // Ultrasound sensors have been found to disrupt each other.
