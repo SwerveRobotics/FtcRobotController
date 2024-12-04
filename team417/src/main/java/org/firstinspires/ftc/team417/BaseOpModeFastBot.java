@@ -21,7 +21,7 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
  */
 @Config
 abstract public class BaseOpModeFastBot extends LinearOpMode {
-    public static final boolean USE_DISTANCE = false;
+    public static final boolean USE_DISTANCE = true;
 
     public final double ARM_VELOCITY = 2100; // The ticks-per-second constant that Go-Bilda gave us
 
