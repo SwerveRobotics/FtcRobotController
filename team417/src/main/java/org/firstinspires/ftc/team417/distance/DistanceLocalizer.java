@@ -37,7 +37,7 @@ public class DistanceLocalizer {
     final DistanceUnit unit = DistanceUnit.INCH;
 
     final double RELIABLE_DISTANCE = 48; // Corner is defined as this distance away from walls
-    final double MAX_RELIABLE_ANGLE = Math.PI / 6; // In radians
+    final double MAX_RELIABLE_ANGLE = Math.PI / 12; // In radians
 
     final ElapsedTime clock = new ElapsedTime();
 
