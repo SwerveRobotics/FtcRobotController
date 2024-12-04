@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team6220;
 
+//import android.transition.Slide;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
@@ -152,18 +154,66 @@ public class CompetitionAuto extends BaseOpMode {
                     ArrayList<RobotAction> IDLE = new ArrayList<>();
 
                     actionBuilder = actionBuilder
-                            // strafe to scoring area
-                            //.strafeTo(new Vector2d(60, 60))
-                            .splineToLinearHeading(new Pose2d(58, 56, 5 * Math.PI / 4), 0)
-                            .endTrajectory()
-                            // weeee slides LETSO YEAAA WOOO POGGERS
+                            // Go to high basket and dump preloaded sample
+                            .splineToLinearHeading(new Pose2d(59, 57, 5 * Math.PI / 4), 0)
                             .stopAndAdd(new SlideMoveAction(SlideActionState.HIGH_BASKET))
                             .stopAndAdd(new DumperMoveAction(DumperActionState.DUMP))
-                            // wait for dumper to finish moving
+
+                            // Wait and reset dumper/lower slides
+                            .waitSeconds(1.5)
+                            .stopAndAdd(new DumperMoveAction(DumperActionState.TRANSFER))
+                            .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND))
+
+                            // Go to 1st spike mark sample. Turn left, then right to turn the sample and intake
+                            .splineToLinearHeading(new Pose2d(28, 31, Math.toRadians(340)), 0)
+                            .waitSeconds(5)
+//                            .splineToLinearHeading(new Pose2d(48, 48, Math.toRadians(250)), 0)
+//                            .waitSeconds(2)
+//                            .stopAndAdd(new ArmElbowMoveAction(ArmElbowServoState.OVER_BAR))
+//                            .waitSeconds(2)
+//                            .splineToLinearHeading(new Pose2d(48, 48, Math.toRadians(280)), 0)
+//                            .waitSeconds(2)
+                            .stopAndAdd(new ArmMoveAction(ArmActionState.OVER_BAR))
+                            .stopAndAdd(new ArmElbowMoveAction(ArmElbowServoState.GROUND))
+
+                            // Intake sample and lift arm elbow and arm to transfer
+//                            .waitSeconds(4)
+//                            .splineToLinearHeading(new Pose2d(20, 36, Math.toRadians(340))
+                            .stopAndAdd(new IntakeMoveAction(1.0))
+//                            .afterDisp(0, new IntakeMoveAction(1.0))
+                            .waitSeconds(2)
+                            .stopAndAdd(new IntakeMoveAction(0.0))
+                            .stopAndAdd(new ArmMoveAction(ArmActionState.TRANSFER))
+                            .stopAndAdd(new ArmElbowMoveAction(ArmElbowServoState.TRANSFER))
+                            .waitSeconds(2)
+
+                            // Transfer sample to dumper and go to high basket
+                            .stopAndAdd(new IntakeMoveAction(-1.0)) //NOTE: Might have to slow this down if sample is flung
+                            .waitSeconds(2)
+                            .splineToLinearHeading(new Pose2d(57, 54, 5 * Math.PI / 4), 0)
+
+                            // Raise slides, dump in high basket, reset dumper, and lower slides
+                            .stopAndAdd(new SlideMoveAction(SlideActionState.HIGH_BASKET))
+                            .stopAndAdd(new DumperMoveAction(DumperActionState.DUMP))
                             .waitSeconds(1.2)
-                            .stopAndAdd(new DumperMoveAction(DumperActionState.INIT))
-                            .waitSeconds(0.5)
+                            .stopAndAdd(new DumperMoveAction(DumperActionState.TRANSFER))
                             .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND));
+
+
+
+
+//                            .waitSeconds(5)
+//                            .endTrajectory()
+//
+//                            .stopAndAdd(new ArmMoveAction(ArmActionState.OVER_BAR))
+//
+//                            // weeee slides LETSO YEAAA WOOO POGGERS
+//
+//                            // wait for dumper to finish moving
+//                            .waitSeconds(1.2)
+//                            .stopAndAdd(new DumperMoveAction(DumperActionState.INIT))
+//                            .waitSeconds(0.5)
+//                            .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND));
 
                             /*.setTangent(Math.toRadians(-180))
                             // spline to prepare to collect first sample

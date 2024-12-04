@@ -56,7 +56,6 @@ public class ControlManager {
            clearList(armElbowServoPosition);
            clearList(armBaseMotorPosition);
            clearList(dumperServoPosition);
-
         }
 
         // Raises the arm up to its initial position (against the hubs)

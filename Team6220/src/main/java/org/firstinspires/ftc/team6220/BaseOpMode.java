@@ -185,9 +185,9 @@ abstract public class BaseOpMode extends LinearOpMode {
         @Override
         public boolean run(double elapsedTime) {
             // only call servo once
-            if (elapsedTime == 0) {
-                armElbowServo.setPosition(armActionState.armElbowServoPosition);
-            }
+//            if (elapsedTime == 0) {
+//                armElbowServo.setPosition(armActionState.armElbowServoPosition);
+//            }
 
             // update motor many times because it goofy
             armBaseMotor.setTargetPosition(armActionState.armBaseMotorTargetPositionTicks);
@@ -202,7 +202,9 @@ abstract public class BaseOpMode extends LinearOpMode {
     public enum ArmActionState {
         PICKUP(DRIFTConstants.ARM_BASE_MOTOR_POSITION_GROUND, DRIFTConstants.ARM_ELBOW_SERVO_POSITION_GROUND),
         OVER_BAR(DRIFTConstants.ARM_BASE_MOTOR_POSITION_OVER_BAR, DRIFTConstants.ARM_ELBOW_SERVO_POSITION_OVER_BAR),
-        VERTICAL(DRIFTConstants.ARM_BASE_MOTOR_POSITION_INIT, DRIFTConstants.ARM_ELBOW_SERVO_POSITION_OVER_BAR);
+        INIT(DRIFTConstants.ARM_BASE_MOTOR_POSITION_INIT, DRIFTConstants.ARM_ELBOW_SERVO_POSITION_OVER_BAR),
+        OUT(DRIFTConstants.ARM_BASE_MOTOR_POSITION_OUT, DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER),
+        TRANSFER(DRIFTConstants.ARM_BASE_MOTOR_POSITION_TRANSFER, DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER);
 
         final int armBaseMotorTargetPositionTicks;
         final double armElbowServoPosition;
@@ -309,7 +311,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public class IntakeMoveAction extends RobotAction {
         final double intakeServoPower;
 
-        public IntakeMoveAction(double intakeServoPower, double delayDuration) {
+        public IntakeMoveAction(double intakeServoPower) {
             this.intakeServoPower = intakeServoPower;
         }
 
