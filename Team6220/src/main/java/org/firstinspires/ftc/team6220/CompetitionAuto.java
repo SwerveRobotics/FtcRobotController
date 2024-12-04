@@ -160,12 +160,12 @@ public class CompetitionAuto extends BaseOpMode {
                             .stopAndAdd(new DumperMoveAction(DumperActionState.DUMP))
 
                             // Wait and reset dumper/lower slides
-                            .waitSeconds(1.5)
+                            .waitSeconds(2)
                             .stopAndAdd(new DumperMoveAction(DumperActionState.TRANSFER))
                             .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND))
 
                             // Go to 1st spike mark sample. Turn left, then right to turn the sample and intake
-                            .splineToLinearHeading(new Pose2d(28, 31, Math.toRadians(340)), 0)
+                            .splineToLinearHeading(new Pose2d(25, 31, Math.toRadians(340)), 0)
                             .waitSeconds(5)
 //                            .splineToLinearHeading(new Pose2d(48, 48, Math.toRadians(250)), 0)
 //                            .waitSeconds(2)
@@ -179,10 +179,10 @@ public class CompetitionAuto extends BaseOpMode {
                             // Intake sample and lift arm elbow and arm to transfer
 //                            .waitSeconds(4)
 //                            .splineToLinearHeading(new Pose2d(20, 36, Math.toRadians(340))
+//                            .stopAndAdd(new IntakeMoveAction(1.0))
                             .stopAndAdd(new IntakeMoveAction(1.0))
-                            .afterDisp(0, new IntakeMoveAction(1.0))
-                            .splineToLinearHeading(new Pose2d(29, 32, Math.toRadians(340)), 0)
-                            .waitSeconds(2)
+                            .splineToLinearHeading(new Pose2d(28, 32, Math.toRadians(340)), 0)
+                            .waitSeconds(3)
                             .stopAndAdd(new IntakeMoveAction(0.0))
                             .stopAndAdd(new ArmMoveAction(ArmActionState.TRANSFER))
                             .stopAndAdd(new ArmElbowMoveAction(ArmElbowServoState.TRANSFER))
