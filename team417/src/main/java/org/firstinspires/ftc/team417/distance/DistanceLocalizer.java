@@ -37,7 +37,7 @@ public class DistanceLocalizer {
     final DistanceUnit unit = DistanceUnit.INCH;
 
     final double RELIABLE_DISTANCE = 48; // Corner is defined as this distance away from walls
-    final double MAX_RELIABLE_ANGLE = Math.PI / 12; // In radians
+    final double MAX_RELIABLE_ANGLE = Math.PI / 8; // In radians
 
     final ElapsedTime clock = new ElapsedTime();
 
@@ -90,14 +90,14 @@ public class DistanceLocalizer {
 //        }
         Double leftAngle = angleMap.get(leftIntersection.side);
 
-        Double leftTheta = leftAngle == null ? null : (2 * Math.PI) - leftAngle;
+        Double leftTheta = leftAngle == null ? null : ((2 * Math.PI) - leftAngle) % (2 * Math.PI);
 
         Double leftHeading = leftTheta == null ? null : rawHeading - leftTheta - Math.PI / 2;
         leftHeading = leftHeading == null ? null : leftHeading % (2 * Math.PI);
 
         Double rightAngle = angleMap.get(rightIntersection.side);
 
-        Double rightTheta = rightAngle == null ? null : (2 * Math.PI) - rightAngle;
+        Double rightTheta = rightAngle == null ? null : ((2 * Math.PI) - rightAngle)  % (2 * Math.PI);
 
         Double rightHeading = rightTheta == null ? null : rawHeading - rightTheta - Math.PI / 2;
         rightHeading = rightHeading == null ? null : rightHeading % (2 * Math.PI);
@@ -105,8 +105,8 @@ public class DistanceLocalizer {
         boolean sameSide = leftIntersection.side == rightIntersection.side;
         boolean leftCloseEnough = leftIntersection.distance < RELIABLE_DISTANCE;
         boolean rightCloseEnough = rightIntersection.distance < RELIABLE_DISTANCE;
-        Double leftRelativeAngle = leftHeading == null ? null : normalizeToPiOver4(leftTheta - (rawHeading - leftInfo.getThetaOffset()));
-        Double rightRelativeAngle = rightHeading == null ? null : normalizeToPiOver4(rightTheta - (rawHeading - rightInfo.getThetaOffset()));
+        Double leftRelativeAngle = leftTheta == null ? null : normalizeToPiOver2(leftTheta + Math.PI / 2 - (rawHeading - leftInfo.getThetaOffset()));
+        Double rightRelativeAngle = rightTheta == null ? null : normalizeToPiOver2(rightTheta + Math.PI / 2 - (rawHeading - rightInfo.getThetaOffset()));
 
         double[] leftFactor = angleToUnitVectorWithEpsilon(angleMap.get(leftIntersection.side));
         double[] rightFactor = angleToUnitVectorWithEpsilon(angleMap.get(rightIntersection.side));
@@ -330,20 +330,19 @@ public class DistanceLocalizer {
         return theta;
     }
 
-    public static double normalizeToPiOver4(double angle) {
-        // Normalize to -π to π
+    public static double normalizeToPiOver2(double angle) {
+        // Normalize to -π to π first
         angle = ((angle + Math.PI) % (2 * Math.PI)) - Math.PI;
 
-        // Now, ensure the angle is in the range -π/4 to π/4
-        if (angle > Math.PI / 4) {
-            return angle - Math.PI / 2;  // Shift by -π/2 if greater
-        } else if (angle < -Math.PI / 4) {
-            return angle + Math.PI / 2;  // Shift by π/2 if less
+        // Now normalize to -π/2 to π/2 by checking if angle is outside that range
+        if (angle > Math.PI / 2) {
+            return angle - Math.PI;  // If > π/2, subtract π to bring into range
+        } else if (angle < -Math.PI / 2) {
+            return angle + Math.PI;  // If < -π/2, add π to bring into range
         }
 
         return angle;  // Already within range
     }
-
     static final double EPSILON = 0.1;
 
     public static double[] angleToUnitVectorWithEpsilon(Double angle) {
