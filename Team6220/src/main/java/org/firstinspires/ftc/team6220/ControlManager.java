@@ -76,7 +76,9 @@ public class ControlManager {
         // Lowers the slides to their initial position
         if (gamepad2.dpad_down && !gamepad2.dpad_up) {
             slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_GROUND_POSITION;
+            dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER;
             clearList(slidesMotorPosition);
+            clearList(dumperServoPosition);
         }
 
         // Raises the slides to reach the high basket
