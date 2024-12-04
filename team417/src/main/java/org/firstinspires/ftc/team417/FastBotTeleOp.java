@@ -8,7 +8,6 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PwmControl;
-import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
@@ -76,7 +75,11 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
                         drive.pose.position.x - drive.distanceLocalizer.correction.x,
                         drive.pose.position.y - drive.distanceLocalizer.correction.y,
                         drive.pose.heading.log());
-                packet.fieldOverlay().setStroke("#FF0000");
+                if (drive.distanceLocalizer.correcting) {
+                    packet.fieldOverlay().setStroke("#00FF00");
+                } else {
+                    packet.fieldOverlay().setStroke("#FF0000");
+                }
                 packet.fieldOverlay().strokeLine(
                         oldPose.position.x,
                         oldPose.position.y,

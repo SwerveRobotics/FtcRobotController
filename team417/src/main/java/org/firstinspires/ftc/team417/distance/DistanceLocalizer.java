@@ -27,7 +27,7 @@ public class DistanceLocalizer {
     public ArrayList<Double> yHistory = new ArrayList<Double>();
     final int MAX_HISTORY_SIZE = 10;
 
-    final double MAXIMUM_CORRECTION_VELOCITY = 5; // Inches per second
+    final double MAXIMUM_CORRECTION_VELOCITY = 10; // Inches per second
 
     // Ultrasonic sensors tend to interfere with each other when fired at the same time.
     double latestLeft = 0; // Latest distance from left sensor
@@ -82,21 +82,31 @@ public class DistanceLocalizer {
         // Since the "top" is considered to be PI / 2 in theta
         // Heading has top as 0, while theta has top as Math.PI / 2
         double rawHeading = drive.pose.heading.log();
-        double num1 = (rawHeading - (Math.PI / 4)) / (Math.PI / 2);
-        double num2 = Math.floor(num1);
-        double theta = (num2 * (Math.PI / 2)) % (2 * Math.PI);
-        if (theta < 0) {
-            theta += 2 * Math.PI;
-        }
+//        double num1 = (rawHeading - (Math.PI / 4)) / (Math.PI / 2);
+//        double num2 = Math.floor(num1);
+//        double theta = (num2 * (Math.PI / 2)) % (2 * Math.PI);
+//        if (theta < 0) {
+//            theta += 2 * Math.PI;
+//        }
+        Double leftAngle = angleMap.get(leftIntersection.side);
 
-        double heading = rawHeading - theta - Math.PI / 2;
-        heading = heading % (2 * Math.PI);
+        Double leftTheta = leftAngle == null ? null : (2 * Math.PI) - leftAngle;
+
+        Double leftHeading = leftTheta == null ? null : rawHeading - leftTheta - Math.PI / 2;
+        leftHeading = leftHeading == null ? null : leftHeading % (2 * Math.PI);
+
+        Double rightAngle = angleMap.get(rightIntersection.side);
+
+        Double rightTheta = rightAngle == null ? null : (2 * Math.PI) - rightAngle;
+
+        Double rightHeading = rightTheta == null ? null : rawHeading - rightTheta - Math.PI / 2;
+        rightHeading = rightHeading == null ? null : rightHeading % (2 * Math.PI);
 
         boolean sameSide = leftIntersection.side == rightIntersection.side;
         boolean leftCloseEnough = leftIntersection.distance < RELIABLE_DISTANCE;
         boolean rightCloseEnough = rightIntersection.distance < RELIABLE_DISTANCE;
-        double leftRelativeAngle = normalizeToPiOver4(heading + leftInfo.getThetaOffset());
-        double rightRelativeAngle = normalizeToPiOver4(heading + rightInfo.getThetaOffset());
+        Double leftRelativeAngle = leftHeading == null ? null : normalizeToPiOver4(leftTheta - (rawHeading - leftInfo.getThetaOffset()));
+        Double rightRelativeAngle = rightHeading == null ? null : normalizeToPiOver4(rightTheta - (rawHeading - rightInfo.getThetaOffset()));
 
         double[] leftFactor = angleToUnitVectorWithEpsilon(angleMap.get(leftIntersection.side));
         double[] rightFactor = angleToUnitVectorWithEpsilon(angleMap.get(rightIntersection.side));
@@ -109,10 +119,10 @@ public class DistanceLocalizer {
             // If both are close enough, choose the one that's more straight on
             if (leftCloseEnough && rightCloseEnough) {
                 // If the left sensor is more straight on to the field wall
-                if (Math.abs(leftRelativeAngle) < Math.abs(rightRelativeAngle)) {
+                if (leftRelativeAngle != null && rightRelativeAngle != null && Math.abs(leftRelativeAngle) < Math.abs(rightRelativeAngle)) {
                     // If left sensor satisfies angle requirement
                     if (Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                        Double[] absolutePosition = calculatePosition(leftFactor, latestLeft, heading, theta, leftInfo);
+                        Double[] absolutePosition = calculatePosition(leftFactor, latestLeft, leftHeading, leftTheta, leftInfo);
                         if (xAbsolutePosition == null) {
                             xAbsolutePosition = absolutePosition[0];
                         }
@@ -122,8 +132,8 @@ public class DistanceLocalizer {
                     }
                 } else {
                     // If right sensor satisfies angle requirement
-                    if (Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                        Double[] absolutePosition = calculatePosition(rightFactor, latestRight, heading, theta, rightInfo);
+                    if (rightRelativeAngle != null && Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                        Double[] absolutePosition = calculatePosition(rightFactor, latestRight, rightHeading, rightTheta, rightInfo);
                         if (xAbsolutePosition == null) {
                             xAbsolutePosition = absolutePosition[0];
                         }
@@ -134,8 +144,8 @@ public class DistanceLocalizer {
                 }
             } else if (leftCloseEnough) {
                 // If left sensor satisfies angle requirement
-                if (Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                    Double[] absolutePosition = calculatePosition(leftFactor, latestLeft, heading, theta, leftInfo);
+                if (leftRelativeAngle != null && Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                    Double[] absolutePosition = calculatePosition(leftFactor, latestLeft, leftHeading, leftTheta, leftInfo);
                     if (xAbsolutePosition == null) {
                         xAbsolutePosition = absolutePosition[0];
                     }
@@ -145,8 +155,8 @@ public class DistanceLocalizer {
                 }
             } else if (rightCloseEnough) {
                 // If right sensor satisfies angle requirement
-                if (Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                    Double[] absolutePosition = calculatePosition(rightFactor, latestRight, heading, theta, rightInfo);
+                if (rightRelativeAngle != null && Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                    Double[] absolutePosition = calculatePosition(rightFactor, latestRight, rightHeading, rightTheta, rightInfo);
                     if (xAbsolutePosition == null) {
                         xAbsolutePosition = absolutePosition[0];
                     }
@@ -157,8 +167,8 @@ public class DistanceLocalizer {
             }
         } else { // If sensors don't face the same side
             // If left sensor is close enough and satisfies angle requirement
-            if (leftCloseEnough && Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                Double[] absolutePosition = calculatePosition(leftFactor, latestLeft, heading, theta, leftInfo);
+            if (leftRelativeAngle != null && leftCloseEnough && Math.abs(leftRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                Double[] absolutePosition = calculatePosition(leftFactor, latestLeft, leftHeading, leftTheta, leftInfo);
                 if (xAbsolutePosition == null) {
                     xAbsolutePosition = absolutePosition[0];
                 }
@@ -167,8 +177,8 @@ public class DistanceLocalizer {
                 }
             }
             // If right sensor is close enough and satisfies angle requirement
-            if (rightCloseEnough && Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
-                Double[] absolutePosition = calculatePosition(rightFactor, latestRight, heading, theta, rightInfo);
+            if (rightRelativeAngle != null && rightCloseEnough && Math.abs(rightRelativeAngle) < MAX_RELIABLE_ANGLE) {
+                Double[] absolutePosition = calculatePosition(rightFactor, latestRight, rightHeading, rightTheta, rightInfo);
                 if (xAbsolutePosition == null) {
                     xAbsolutePosition = absolutePosition[0];
                 }
@@ -182,6 +192,11 @@ public class DistanceLocalizer {
                 : xAbsolutePosition - drive.pose.position.x;
         Double yDetectedCorrection = yAbsolutePosition == null ? null
                 : yAbsolutePosition - drive.pose.position.y;
+
+        if (drive.pose.position.y < 0) {
+            xDetectedCorrection = null;
+            yDetectedCorrection = null;
+        }
 
         if (xDetectedCorrection != null) {
             xHistory.add(xDetectedCorrection);
