@@ -63,7 +63,7 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     public static double ARM_SCORE_SPECIMEN = 150 * ARM_TICKS_PER_DEGREE;
     public static double ARM_ATTACH_HANGING_HOOK = 120 * ARM_TICKS_PER_DEGREE;
     public static double ARM_WINCH_ROBOT = 15 * ARM_TICKS_PER_DEGREE;
-    public static double ARM_VERTICAL = 100;
+    public static double ARM_VERTICAL = 100 * ARM_TICKS_PER_DEGREE;
 
     /* Variables to store the speed the intake servo should be set at to intake, and deposit game elements. */
     public final static double INTAKE_COLLECT = -1.0;
