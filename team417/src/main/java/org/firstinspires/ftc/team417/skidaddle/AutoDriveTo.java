@@ -2,6 +2,7 @@ package org.firstinspires.ftc.team417.skidaddle;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.DualNum;
 import com.acmerobotics.roadrunner.HolonomicController;
 import com.acmerobotics.roadrunner.MotorFeedforward;
@@ -11,14 +12,12 @@ import com.acmerobotics.roadrunner.PoseVelocity2dDual;
 import com.acmerobotics.roadrunner.Rotation2dDual;
 import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.Vector2dDual;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.team417.roadrunner.HolonomicKinematics;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
-
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
-import com.acmerobotics.roadrunner.Vector2dDual;
-import com.wilyworks.common.WilyWorks;
 
 /** @noinspection SuspiciousNameCombination*/
 @Config
@@ -84,7 +83,7 @@ public class AutoDriveTo {
         tangentialSpeed = findPerpSpeed(deltaDist, currentVelocity.linearVel);
 
         lastLinearVel = currentPoseVel.linearVel;
-        lastRotVel = 0;
+        lastRotVel = currentPoseVel.angVel;
     }
 
     //returns the speed of the portion of the current vel vector that is parallel to the distance vector.

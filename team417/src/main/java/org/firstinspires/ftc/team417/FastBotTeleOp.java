@@ -21,9 +21,10 @@ import org.firstinspires.ftc.team417.skidaddle.DPoint;
 @TeleOp(name = "TeleOp", group = "FastBot")
 @Config
 public class FastBotTeleOp extends BaseOpModeFastBot {
-    public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(24, -63);
-    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, -45);
-    public double SPECIMEN_DRIVE_TO_HEADING = Math.PI / 2.0;
+    public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(-24, 63);
+    public double HUMAN_ZONE_DRIVE_TO_HEADING = Math.PI;
+    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 45);
+    public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
     boolean pathing = false;
     double lastTime = TIME.seconds();
 
@@ -137,13 +138,14 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
 
         if(gamepad1.a){
             if(!a1Pressed){
-                driveTo.init(HUMAN_ZONE_DRIVE_TO, 0, currentPoseVelocity, telemetry);
+                driveTo.init(HUMAN_ZONE_DRIVE_TO, HUMAN_ZONE_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
                 armPosition = ARM_COLLECT;
                 wrist.setPosition(WRIST_FOLDED_OUT);
                 intakeEnabled = true;
                 pathing = true;
-            } else if (pathing) {
-                pathing = driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
+            }
+            if (pathing) {
+                pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
             }
         } else if(gamepad1.b){
             if(!b1Pressed){
@@ -152,6 +154,9 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
                 wrist.setPosition(WRIST_FOLDED_IN);
                 intakeEnabled = false;
                 pathing = true;
+            }
+            if (pathing) {
+                pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
             }
         } else {
             pathing = false;
