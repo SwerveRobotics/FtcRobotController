@@ -66,18 +66,27 @@ public class ControlManager {
 
         // Powers the intake
         intakeServoPower = -gamepad2.left_stick_y;
+        // slows it down if its in transfer position
+        if (dumperServoPosition == DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER) {
+            intakeServoPower *= 0.4;
+        }
+
         // Lowers the arm to go over the submersible
         if (gamepad2.right_bumper && !gamepad2.left_bumper) {
             armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_OVER_BAR;
             clearList(armBaseMotorPosition);
         }
 
-        // Lowers the slides to their initial position
+        // Lowers the slides to the ground position
         if (gamepad2.dpad_down && !gamepad2.dpad_up) {
             slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_GROUND_POSITION;
+            // move dumper out of the way of the buckets
             dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER;
+            // move intake out of the way of the dumper
+            armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_OVER_BAR;
             clearList(slidesMotorPosition);
             clearList(dumperServoPosition);
+            clearList(armElbowServoPosition);
         }
 
         // Raises the slides to reach the high basket
@@ -91,7 +100,7 @@ public class ControlManager {
         }
 
         // Resets slide encoder if left stick button is pressed
-        shouldResetSlideEncoder = slideEncoderResetToggle.getToggleState(gamepad2.left_stick_button);
+        //shouldResetSlideEncoder = slideEncoderResetToggle.getToggleState(gamepad2.left_stick_button);
 
         if (oldLeftBumperToggleState != gamepad2.left_bumper) {
             double interimDumperServoPosition = dumperServoPosition;

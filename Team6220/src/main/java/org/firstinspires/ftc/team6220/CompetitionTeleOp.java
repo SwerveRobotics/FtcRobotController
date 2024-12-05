@@ -57,13 +57,10 @@ public class CompetitionTeleOp extends BaseOpMode {
             controls.update(getRuntime());
 
             armBaseMotor.setTargetPosition(controls.getArmBaseMotorPosition());
-            telemetry.addLine("Arm Target Position: " + controls.getArmBaseMotorPosition());
             slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
-            telemetry.addLine("Slides Target Position: " + controls.getSlidesMotorPosition());
             intakeCRServo.setPower(controls.getIntakeServoPower());
             dumperServo.setPosition(controls.getDumperServoPosition());
             armElbowServo.setPosition(controls.getArmElbowServoPosition());
-            telemetry.addLine("Arm Elbow Servo Current Position: " + armElbowServo.getPosition());
 
             // in case slides get freaky mid-game
             if (controls.shouldResetSlideEncoder()) {
