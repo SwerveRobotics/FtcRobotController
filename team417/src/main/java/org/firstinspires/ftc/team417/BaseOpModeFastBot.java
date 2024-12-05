@@ -67,7 +67,7 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
     /* Variables to store the speed the intake servo should be set at to intake, and deposit game elements. */
     final static double INTAKE_COLLECT = -1.0;
     final static double INTAKE_OFF = 0.0;
-    final static double INTAKE_DEPOSIT = 0.5;
+    final static double INTAKE_DEPOSIT = 1;
 
     /* Variables to store the positions that the wrist should be set to when folding in, or folding out. */
     public static double WRIST_FOLDED_IN = 0.9;
@@ -267,7 +267,7 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
         @Override
         public boolean run(double elapsedTime) {
             // Keep the intake deposit on until the 2 seconds are over
-            if (elapsedTime <= 1) {
+            if (elapsedTime <= 0.625) {
                 intake1.setPower(INTAKE_DEPOSIT);
                 return true;
             }
