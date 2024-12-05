@@ -268,7 +268,7 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
         @Override
         public boolean run(double elapsedTime) {
             // Keep the intake deposit on until the 2 seconds are over
-            if (elapsedTime <= 0.625) {
+            if (elapsedTime <= 0.75) {
                 intake1.setPower(INTAKE_DEPOSIT);
                 return true;
             }

@@ -60,15 +60,15 @@ public class AutoTwoSpecimen extends BaseOpModeFastBot {
                 .splineToLinearHeading(new Pose2d(-42, 13, Math.toRadians(-90)), Math.toRadians(180))
                 .setTangent(Math.toRadians(90))
 
-                .splineToLinearHeading(new Pose2d(-48, 62, Math.toRadians(-90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-48, 60, Math.toRadians(-90)), Math.toRadians(90))
                 .setTangent(Math.toRadians(-90))
                 .splineToLinearHeading(new Pose2d(-54, 12, Math.toRadians(-90)),Math.toRadians(180))
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-54 , 62, Math.toRadians(-90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-54 , 60, Math.toRadians(-90)), Math.toRadians(90))
                 .setTangent(Math.toRadians(-90))
                 .splineToLinearHeading(new Pose2d(-60,12, Math.toRadians(-90)), Math.toRadians(180))
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-60, 62, Math.toRadians(-90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-60, 60 , Math.toRadians(-90)), Math.toRadians(90))
                 // go collect sample to obs zone
 
                 .build();
