@@ -109,7 +109,9 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
     }
 
     public void prepareRobot(Pose2d startingPose) {
-        drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
+        if (drive == null) {
+            drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
+        }
         drive.distanceLocalizer.enabled = true;
         driveTo = new AutoDriveTo(drive);
         initializeHardware();
