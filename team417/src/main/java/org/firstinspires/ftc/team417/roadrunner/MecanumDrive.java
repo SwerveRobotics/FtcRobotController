@@ -1134,6 +1134,10 @@ public final class MecanumDrive {
                     DistanceUnit.INCH, pose.position.x, pose.position.y,
                     AngleUnit.RADIANS, pose.heading.toDouble()));
         }
+
+        if (distanceLocalizer != null) {
+            distanceLocalizer.reset();
+        }
     }
 
     // Get the current voltage, amortized for performance:

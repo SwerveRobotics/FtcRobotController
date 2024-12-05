@@ -53,6 +53,18 @@ public class DistanceLocalizer {
         angleMap.put(FieldSide.NONE, null); // Robot should not be outside of the field
     }
 
+    public void reset() {
+        correction = new Vector2d(0, 0);
+        xTargetCorrection = null;
+        yTargetCorrection = null;
+        xHistory = new ArrayList<Double>();
+        yHistory = new ArrayList<Double>();
+        correcting = false;
+        latestLeft = 0; // Latest distance from left sensor
+        latestRight = 0; // Latest distance from right sensor
+        leftTurn = true;
+    }
+
     public DistanceLocalizer(UltrasonicDistanceSensor leftDistance,
                              DistanceSensorInfo leftInfo,
                              UltrasonicDistanceSensor rightDistance,

@@ -48,6 +48,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
 
     boolean a1Pressed = false;
     boolean b1Pressed = false;
+    boolean y1Pressed = false;
 
     AutoDriveTo driveTo;
 
@@ -66,7 +67,8 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             // 'packet' is the object used to send data to FTC Dashboard:
             TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
 
-            toggleFieldCentricity();
+            // Disable field-centric in all cases:
+            //toggleFieldCentricity();
 
             controlDrivebaseWithGamepads(curve, fieldCentered, packet);
 
@@ -106,7 +108,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
     }
 
     public void prepareRobot() {
-        prepareRobot(new Pose2d(-60, 60, 0));
+        prepareRobot(new Pose2d(-63.125, 63.75, 0));
     }
 
     public void prepareRobot(Pose2d startingPose) {
@@ -135,6 +137,9 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
         double deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
+        if (gamepad1.y && !y1Pressed) {
+            drive.setPose(new Pose2d(-63.125, 63.75, 0));
+        }
 
         if(gamepad1.a){
             if(!a1Pressed){
@@ -164,6 +169,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
 
         a1Pressed = gamepad1.a;
         b1Pressed = gamepad1.b;
+        y1Pressed = gamepad1.y;
 
         // If the left bumper is pressed, slow down, and if the right bumper is pressed, speed up.
         speedMultiplier = 0.5;
