@@ -26,9 +26,9 @@ public class CompetitionBasketAutoFastBot extends BaseOpModeFastBot {
 
         // BeginPose is the 2nd tile away from the basket, facing the basket, lined up with the tile boundary
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / 2) + 24, 72 - (ROBOT_WIDTH / 2), 0);
-        MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
+        drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
+        drive.distanceLocalizer.enabled = false;
         initializeHardware();
-
 
         // Build the trajectory *before* the start button is pressed because Road Runner
         // can take multiple seconds for this operation. We wouldn't want to have to wait

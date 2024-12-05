@@ -7,7 +7,6 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PwmControl;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
@@ -22,7 +21,6 @@ import org.firstinspires.ftc.team417.skidaddle.DPoint;
 @TeleOp(name = "TeleOp", group = "FastBot")
 @Config
 public class FastBotTeleOp extends BaseOpModeFastBot {
-
     public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(24, -63);
     public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, -45);
     public double SPECIMEN_DRIVE_TO_HEADING = Math.PI / 2.0;
@@ -112,6 +110,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
 
     public void prepareRobot(Pose2d startingPose) {
         drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
+        drive.distanceLocalizer.enabled = true;
         driveTo = new AutoDriveTo(drive);
         initializeHardware();
 
