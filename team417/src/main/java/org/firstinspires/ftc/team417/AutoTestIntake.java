@@ -11,8 +11,8 @@ import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
-@Autonomous(name = "AutoSpecimen", group = "FastBot", preselectTeleOp = "CompetitionTeleOp")
-public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
+@Autonomous(name = "AutoIntake", group = "FastBot", preselectTeleOp = "CompetitionTeleOp")
+public class AutoTestIntake extends BaseOpModeFastBot {
     @Override
 
     public void runOpMode() {
@@ -20,71 +20,28 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
 
         armPosition = 0;
 
-        Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2), 72 - (ROBOT_WIDTH / 2), Math.toRadians(0));
-        drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
-        drive.distanceLocalizer.enabled = false;
+        Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2), 72 - (ROBOT_WIDTH / 2), Math.toRadians(180));
+        MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
         initFastBot();
         RobotAction foldOutArm = new MoveArm(ARM_SCORE_SPECIMEN, WRIST_SCORE_SPECIMEN);
         Action trajectoryAction = drive.actionBuilder(beginPose)
-                .setTangent(Math.toRadians(-90))
-                .afterDisp(0, foldOutArm)
-                .splineToLinearHeading(new Pose2d(0, Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
-                .stopAndAdd(new WaitAction(foldOutArm))
-                .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN + 20 * ARM_TICKS_PER_DEGREE, WRIST_SCORE_SPECIMEN))       //scores the specimen with slight downward force
-                .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(0, Y_SCORE_POSE + 8, Math.toRadians(-90)), Math.toRadians(90), new TranslationalVelConstraint(20))
-                .stopAndAdd(new ScoreSample())
-                .setTangent(Math.toRadians(90))
 
-                .splineToLinearHeading(new Pose2d(-37, 24, Math.toRadians(-90)), Math.toRadians(-90))
-                .setTangent(Math.toRadians(-90))
-                .afterDisp(0, new MoveArm(ARM_COLLAPSED_INTO_ROBOT, WRIST_FOLDED_IN))
-                .splineToLinearHeading(new Pose2d(-42, 13, Math.toRadians(-90)), Math.toRadians(180))
-                .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-48, 36, Math.toRadians(-90)), Math.toRadians(90))
-
-                .splineToLinearHeading(new Pose2d(-63.5, 62, Math.toRadians(-90)), Math.toRadians(90))
-
-                // go collect sample to obs zone
-
-                .setTangent(Math.toRadians(-90))
-                .afterDisp(15, new MoveArm(ARM_COLLECT, WRIST_FOLDED_OUT))
-                .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2), 72 - (ROBOT_WIDTH / 2), Math.toRadians(180)), Math.toRadians(90))
+                .stopAndAdd(new MoveArm(ARM_COLLECT, WRIST_FOLDED_OUT))
                 .setTangent(Math.toRadians(180))
-
                 .afterDisp(0, new RunIntake(INTAKE_COLLECT))
                 .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2) - 26, 72 - (ROBOT_WIDTH / 2), Math.toRadians(180)), Math.toRadians(180), new TranslationalVelConstraint(10))
                 .setTangent(Math.toRadians(0))
                 .afterDisp(0, foldOutArm)
+                
 
-
-                .splineToLinearHeading(new Pose2d(-3, Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(0, Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))
                 .stopAndAdd(new WaitAction(foldOutArm))
                 .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN + 20 * ARM_TICKS_PER_DEGREE, WRIST_SCORE_SPECIMEN))
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-3, Y_SCORE_POSE + 6, Math.toRadians(-90)), Math.toRadians(90), new TranslationalVelConstraint(10))
+                .splineToLinearHeading(new Pose2d(0, Y_SCORE_POSE + 8 , Math.toRadians(-90)), Math.toRadians(90), new TranslationalVelConstraint(20))
                 .stopAndAdd(new ScoreSample())
                 .setTangent(Math.toRadians(90))
-
-                .afterDisp(15, new MoveArm(ARM_COLLECT, WRIST_FOLDED_OUT))
-                .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2), 72 - (ROBOT_WIDTH / 2), Math.toRadians(180)), Math.toRadians(90))
-                .setTangent(Math.toRadians(180))
-
-
-                .afterDisp(0, new RunIntake(INTAKE_COLLECT))
-                .splineToLinearHeading(new Pose2d((ROBOT_LENGTH / -2) - 26, 72 - (ROBOT_WIDTH / 2), Math.toRadians(180)), Math.toRadians(180), new TranslationalVelConstraint(10))
-                .setTangent(Math.toRadians(0))
-                .afterDisp(0, foldOutArm)
-
-
-                .splineToLinearHeading(new Pose2d(-6, Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))
-                .stopAndAdd(new WaitAction(foldOutArm))
-                .stopAndAdd(new MoveArm(ARM_SCORE_SPECIMEN + 20 * ARM_TICKS_PER_DEGREE, WRIST_SCORE_SPECIMEN))
-                .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-6, Y_SCORE_POSE + 6, Math.toRadians(-90)), Math.toRadians(90), new TranslationalVelConstraint(20))
-                .stopAndAdd(new ScoreSample())
-                .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-60, 69 - (ROBOT_LENGTH / 2), Math.toRadians(-90)), Math.toRadians(180), new TranslationalVelConstraint(60))
+                .splineToLinearHeading(beginPose, Math.toRadians(90))
                 .build();
 
 
@@ -107,10 +64,8 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
             telemetry.addLine("Running Auto!");
             telemetry.addData("Kinematic Type", kinematicType);
 
-
             // 'packet' is the object used to send data to FTC Dashboard:
             packet = MecanumDrive.getTelemetryPacket();
-
 
             // Draw the preview and then run the next step of the trajectory on top:
             packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
@@ -147,3 +102,4 @@ public class CompetitionSpecimenAutoFastBot extends BaseOpModeFastBot {
 
 
 }
+
