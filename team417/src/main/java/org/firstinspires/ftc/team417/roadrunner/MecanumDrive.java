@@ -462,8 +462,8 @@ public final class MecanumDrive {
                 if (BaseOpModeFastBot.USE_DISTANCE) {
                     UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
                     UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
-                    DistanceSensorInfo leftInfo = new DistanceSensorInfo(-4.5, 7, -Math.PI / 9);
-                    DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.5, 0, Math.PI / 2);
+                    DistanceSensorInfo leftInfo = new DistanceSensorInfo(-5.40625, 7.8125, -Math.PI / 9);
+                    DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.34375, 0, Math.PI / 2);
                     distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this, true);
                 }
 
@@ -505,8 +505,8 @@ public final class MecanumDrive {
                 if (BaseOpModeFastBot.USE_DISTANCE) {
                     UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
                     UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
-                    DistanceSensorInfo leftInfo = new DistanceSensorInfo(-4.5, 7, -Math.PI / 9);
-                    DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.5, 0, Math.PI / 2);
+                    DistanceSensorInfo leftInfo = new DistanceSensorInfo(-5.40625, 7.8125, -Math.PI / 9);
+                    DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.34375, 0, Math.PI / 2);
                     distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this, true);
                 }
 

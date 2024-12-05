@@ -109,9 +109,12 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
     }
 
     public void prepareRobot(Pose2d startingPose) {
-        if (drive == null) {
-            drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
+        // If drive is not null (that is, an Auto or TeleOp has run before),
+        // copy the pose and use it as a starting pose
+        if (drive != null) {
+            startingPose = new Pose2d(drive.pose.position.x, drive.pose.position.y, drive.pose.heading.log());
         }
+        drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
         drive.distanceLocalizer.enabled = true;
         driveTo = new AutoDriveTo(drive);
         initializeHardware();
