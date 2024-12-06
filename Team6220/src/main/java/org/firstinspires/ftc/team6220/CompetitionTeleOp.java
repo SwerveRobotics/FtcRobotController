@@ -65,13 +65,13 @@ public class CompetitionTeleOp extends BaseOpMode {
             armElbowServo.setPosition(controls.getArmElbowServoPosition());
             telemetry.addLine("Arm Elbow Servo Current Position: " + armElbowServo.getPosition());
 
-            // in case slides get freaky mid-game
+            // Backup control in case slides stop working mid-game
             if (controls.shouldResetSlideEncoder()) {
                 slidesMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 slidesMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
 
-            // janky speed modifier
+            // speed modifier
             float speedModifier = 1 - (gamepad1.right_trigger * 0.5f);
 
             // Set the drive motor powers according to the gamepad input:

@@ -48,7 +48,7 @@ public class ControlManager {
             clearList(armElbowServoPosition);
         }
 
-        // Lowering arm all the way to ground (NOT BEING USED)
+        // Transfer sequence for intake to dumper
        if(gamepad2.x && !gamepad2.y) {
            armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER;
            armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_TRANSFER;

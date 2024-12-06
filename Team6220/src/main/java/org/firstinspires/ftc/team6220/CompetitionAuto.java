@@ -38,6 +38,9 @@ public class CompetitionAuto extends BaseOpMode {
         // initialize hardware :>
         initializeHardware();
 
+        // lock dumper servo to init position
+        dumperServo.setPosition(DRIFTConstants.DUMPER_SERVO_POSITION_INIT);
+
         // TextMenu implementation yoinked from valsei's GitHub
         TextMenu startingConditionMenu = new TextMenu();
         MenuInput input = new MenuInput(MenuInput.InputType.CONTROLLER);
@@ -95,6 +98,9 @@ public class CompetitionAuto extends BaseOpMode {
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
+
+        dumperServo.setPosition(DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER / 2);
+        dumperServo.setPosition(DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER);
 
         // commented out so nothing's borked on accident :)
         // drive.runParallel(elbowAction.setTargetPosition(DRIFTConstants.ARM_ELBOW_SERVO_PRESET_POSITION_OVER_BARRIER));
@@ -154,69 +160,62 @@ public class CompetitionAuto extends BaseOpMode {
                     ArrayList<RobotAction> IDLE = new ArrayList<>();
 
                     actionBuilder = actionBuilder
-                            // Go to high basket and dump preloaded sample
-                            .splineToLinearHeading(new Pose2d(59, 57, 5 * Math.PI / 4), 0)
-                            .stopAndAdd(new SlideMoveAction(SlideActionState.HIGH_BASKET))
+                            // Go to high basket and raise slides
+                            .afterDisp(0, new SlideMoveAction(SlideActionState.HIGH_BASKET))
+                            .splineToLinearHeading(new Pose2d(59, 57, Math.toRadians(225)), 0)
+
+                            // Lift slides and dump
                             .stopAndAdd(new DumperMoveAction(DumperActionState.DUMP))
 
-                            // Wait and reset dumper/lower slides
+                            // Reset dumper and lower slides
                             .waitSeconds(2)
                             .stopAndAdd(new DumperMoveAction(DumperActionState.TRANSFER))
-                            .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND))
+                            .afterDisp(0, new SlideMoveAction(SlideActionState.GROUND))
 
-                            // Go to 1st spike mark sample. Turn left, then right to turn the sample and intake
-                            .splineToLinearHeading(new Pose2d(25, 31, Math.toRadians(340)), 0)
-                            .waitSeconds(5)
-//                            .splineToLinearHeading(new Pose2d(48, 48, Math.toRadians(250)), 0)
-//                            .waitSeconds(2)
-//                            .stopAndAdd(new ArmElbowMoveAction(ArmElbowServoState.OVER_BAR))
-//                            .waitSeconds(2)
-//                            .splineToLinearHeading(new Pose2d(48, 48, Math.toRadians(280)), 0)
-//                            .waitSeconds(2)
-                            .stopAndAdd(new ArmMoveAction(ArmActionState.OVER_BAR))
-                            .stopAndAdd(new ArmElbowMoveAction(ArmElbowServoState.GROUND))
+                            // spline to prepare to collect first sample
+                            .setTangent(Math.toRadians(180))
+                            .splineToLinearHeading(new Pose2d(40, 24, Math.toRadians(270)),  3 * Math.PI / 2)
+                            .splineToLinearHeading(new Pose2d(50, 6, Math.toRadians(270)),  Math.toRadians(340))
+                            .endTrajectory()
+                            .setTangent(Math.toRadians(90))
 
-                            // Intake sample and lift arm elbow and arm to transfer
-//                            .waitSeconds(4)
-//                            .splineToLinearHeading(new Pose2d(20, 36, Math.toRadians(340))
-//                            .stopAndAdd(new IntakeMoveAction(1.0))
-                            .stopAndAdd(new IntakeMoveAction(1.0))
-                            .splineToLinearHeading(new Pose2d(28, 32, Math.toRadians(340)), 0)
-                            .waitSeconds(3)
-                            .stopAndAdd(new IntakeMoveAction(0.0))
-                            .stopAndAdd(new ArmMoveAction(ArmActionState.TRANSFER))
-                            .stopAndAdd(new ArmElbowMoveAction(ArmElbowServoState.TRANSFER))
-                            .waitSeconds(2)
+                            // spline to deposit first sample in scoring area
+                            .splineToLinearHeading(new Pose2d(55, 60, Math.toRadians(220)),  Math.toRadians(40))
+                            .endTrajectory()
+                            .setTangent(Math.toRadians(180))
 
-                            // Transfer sample to dumper and go to high basket
-                            .stopAndAdd(new IntakeMoveAction(-1.0)) //NOTE: Might have to slow this down if sample is flung
-                            .waitSeconds(2)
-                            .splineToLinearHeading(new Pose2d(57, 54, 5 * Math.PI / 4), 0)
+                            // spline to prepare to collect second sample
+                            .splineToLinearHeading(new Pose2d(60, 7, Math.toRadians(270)),  Math.toRadians(330))
+                            .endTrajectory()
+                            .setTangent(Math.toRadians(90))
 
-                            // Raise slides, dump in high basket, reset dumper, and lower slides
-                            .stopAndAdd(new SlideMoveAction(SlideActionState.HIGH_BASKET))
-                            .stopAndAdd(new DumperMoveAction(DumperActionState.DUMP))
-                            .waitSeconds(1.2)
-                            .stopAndAdd(new DumperMoveAction(DumperActionState.TRANSFER))
-                            .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND));
+                            // spline to deposit second sample in scoring area
+                            .splineToLinearHeading(new Pose2d(61, 55, Math.toRadians(220)),  Math.toRadians(40))
+                            .endTrajectory()
+                            .setTangent(Math.toRadians(-80))
+
+                            // spline to prepare to collect third sample
+                            .splineToLinearHeading(new Pose2d(70, 8, Math.toRadians(270)),  Math.toRadians(40))
+                            .endTrajectory()
+
+                            // strafe to deposit third sample
+                            .strafeTo(new Vector2d(70, 52))
+
+                            // prepare to move to park position
+                            .splineToLinearHeading(new Pose2d(62, 50, Math.PI), 0) //change this in backup code too if it works!
+                            .endTrajectory()
+                            .setTangent(Math.toRadians(200));
 
 
 
 
-//                            .waitSeconds(5)
-//                            .endTrajectory()
-//
-//                            .stopAndAdd(new ArmMoveAction(ArmActionState.OVER_BAR))
-//
-//                            // weeee slides LETSO YEAAA WOOO POGGERS
-//
-//                            // wait for dumper to finish moving
-//                            .waitSeconds(1.2)
-//                            .stopAndAdd(new DumperMoveAction(DumperActionState.INIT))
-//                            .waitSeconds(0.5)
-//                            .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND));
 
-                            /*.setTangent(Math.toRadians(-180))
+
+                    // BACKUP CODE - Pushes 3 samples + 1 preloaded into NET ZONE (no slides/dumper)
+                            /*
+                            // strafe and drop off preloaded sample in net zone
+                            .strafeTo(new Vector2d(60, 60))
+                            .setTangent(Math.toRadians(-180))
                             // spline to prepare to collect first sample
                             .splineToLinearHeading(new Pose2d(48, 10, Math.toRadians(-90)),  Math.toRadians(-40))
                             .endTrajectory()
@@ -242,16 +241,13 @@ public class CompetitionAuto extends BaseOpMode {
                             .strafeTo(new Vector2d(62, 50))
                             .endTrajectory()
                             .setTangent(Math.toRadians(200));
+                            */
 
-                             */
                 }
                 case RIGHT: {
                     // to be implemented
                 }
             }
-
-            // still putting the wait here because yeah
-            actionBuilder = actionBuilder.waitSeconds(3);
         }
 
 
