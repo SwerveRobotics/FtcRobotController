@@ -38,6 +38,7 @@ abstract public class BaseOpModeFastBot extends LinearOpMode {
 
     /*This constant is the number of encoder ticks for each inch of the four bar.
     The four bar has a total travel range of 42 inches.
+    The four bar has a total travel range of 42 inches.
 
     */
 

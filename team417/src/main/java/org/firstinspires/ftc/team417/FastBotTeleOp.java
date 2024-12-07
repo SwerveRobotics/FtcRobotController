@@ -105,6 +105,9 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
 
             MecanumDrive.sendTelemetryPacket(packet);
         }
+
+        // Reset the wrist position to avoid "breaking" the servo:
+        wrist.setPosition(WRIST_FOLDED_IN);
     }
 
     public void prepareRobot() {

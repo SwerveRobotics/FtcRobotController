@@ -70,6 +70,9 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
             MecanumDrive.sendTelemetryPacket(packet);
         }
+
+        // Reset the wrist position to avoid "breaking" the servo:
+        wrist.setPosition(WRIST_IN);
     }
 
     public void prepareRobot() {
