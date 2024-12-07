@@ -6,7 +6,6 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
@@ -22,7 +21,7 @@ public class AutoTwoSpecimen extends BaseOpModeFastBot {
         armPosition = 0;
 
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2), 72 - (ROBOT_WIDTH / 2), Math.toRadians(0));
-        MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
+        drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
         drive.distanceLocalizer.enabled = false;
         initFastBot();
         RobotAction foldOutArm = new MoveArm(ARM_SCORE_SPECIMEN, WRIST_SCORE_SPECIMEN);
