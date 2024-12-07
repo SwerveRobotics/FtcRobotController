@@ -92,19 +92,25 @@ public class ControlManager {
         // Raises the slides to reach the high basket
         if (gamepad2.dpad_up && !gamepad2.dpad_down) {
             slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_HIGH_BASKET_POSITION;
+            dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_HORIZONTAL;
             clearList(slidesMotorPosition);
+            clearList(dumperServoPosition);
         }
         if (gamepad2.dpad_right && !gamepad2.dpad_left) {
             slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_LOW_BASKET_POSITION;
+            dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_HORIZONTAL;
             clearList(slidesMotorPosition);
+            clearList(dumperServoPosition);
         }
 
         // Resets slide encoder if left stick button is pressed
         //shouldResetSlideEncoder = slideEncoderResetToggle.getToggleState(gamepad2.left_stick_button);
 
+
+        // hacky crap code
         if (oldLeftBumperToggleState != gamepad2.left_bumper) {
             double interimDumperServoPosition = dumperServoPosition;
-            dumperServoPosition = gamepad2.left_bumper ? DRIFTConstants.DUMPER_SERVO_POSITION_DUMP : DRIFTConstants.DUMPER_SERVO_POSITION_INIT;
+            dumperServoPosition = gamepad2.left_bumper ? DRIFTConstants.DUMPER_SERVO_POSITION_DUMP : DRIFTConstants.DUMPER_SERVO_POSITION_HORIZONTAL;
             if (interimDumperServoPosition != dumperServoPosition) {
                 clearList(dumperServoPosition);
             }

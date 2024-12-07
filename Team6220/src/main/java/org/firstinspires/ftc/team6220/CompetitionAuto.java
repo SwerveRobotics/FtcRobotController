@@ -195,13 +195,13 @@ public class CompetitionAuto extends BaseOpMode {
                             .setTangent(Math.toRadians(-80))
 
                             // spline to prepare to collect third sample
-                            .splineToLinearHeading(new Pose2d(70, 8, Math.toRadians(270)),  Math.toRadians(40))
+                            .splineToLinearHeading(new Pose2d(70, 4, Math.toRadians(270)),  Math.toRadians(40))
                             .endTrajectory()
 
                             // strafe to deposit third sample
                             .strafeTo(new Vector2d(70, 52))
 
-                            // prepare to move to park position
+                            // prepare to move to park position and move dumper and arm to init position for teleop
                             .splineToLinearHeading(new Pose2d(62, 50, Math.PI), 0) //change this in backup code too if it works!
                             .endTrajectory()
                             .setTangent(Math.toRadians(200));

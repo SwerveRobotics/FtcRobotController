@@ -21,7 +21,8 @@ public abstract class DRIFTConstants {
     public static int SLIDES_MOTOR_VELOCITY = 8;
     public static int ARM_BASE_MOTOR_VELOCITY = 6;
     public static double DUMPER_SERVO_POSITION_DUMP = 0.9;
-    public static double DUMPER_SERVO_POSITION_TRANSFER = 0.43; // placeholder value
+    public static double DUMPER_SERVO_POSITION_TRANSFER = 0.43;
+    public static double DUMPER_SERVO_POSITION_HORIZONTAL = 0.5;
     public static double DUMPER_SERVO_POSITION_INIT = 0.2;
     public static final float[] RED_COLOR_SENSOR_RANGES = {0.025f, 1f};
     public static final float[] BLUE_COLOR_SENSOR_RANGES = {0.025f, 1f};
