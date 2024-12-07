@@ -29,6 +29,8 @@ public class DistanceLocalizer {
     public ArrayList<Double> yHistory = new ArrayList<Double>();
     final int MAX_HISTORY_SIZE = 10;
 
+    final double MAX_CORRECTION_CHANGE = 12;
+
     final double MAXIMUM_CORRECTION_VELOCITY = 10; // Inches per second
 
     // Ultrasonic sensors tend to interfere with each other when fired at the same time.
@@ -127,7 +129,6 @@ public class DistanceLocalizer {
             double[] leftFactor = angleToUnitVectorWithEpsilon(angleMap.get(leftIntersection.side));
             double[] rightFactor = angleToUnitVectorWithEpsilon(angleMap.get(rightIntersection.side));
 
-            Double xRelativePosition, yRelativePosition;
             Double xAbsolutePosition = null, yAbsolutePosition = null;
 
             // If sensors face the same side
@@ -215,18 +216,27 @@ public class DistanceLocalizer {
             }
 
             if (xDetectedCorrection != null) {
-                xHistory.add(xDetectedCorrection);
+                // Throw out corrections if too outlandish (too big of a change)
+                if (Math.abs(xDetectedCorrection - xTargetCorrection) > MAX_CORRECTION_CHANGE) {
+                    xDetectedCorrection = null;
+                } else {
+                    xHistory.add(xDetectedCorrection);
 
-                while (xHistory.size() > MAX_HISTORY_SIZE) {
-                    xHistory.remove(0);
+                    while (xHistory.size() > MAX_HISTORY_SIZE) {
+                        xHistory.remove(0);
+                    }
                 }
             }
 
             if (yDetectedCorrection != null) {
-                yHistory.add(yDetectedCorrection);
+                if (Math.abs(yDetectedCorrection - yTargetCorrection) > MAX_CORRECTION_CHANGE) {
+                    yDetectedCorrection = null;
+                } else {
+                    yHistory.add(yDetectedCorrection);
 
-                while (yHistory.size() > MAX_HISTORY_SIZE) {
-                    yHistory.remove(0);
+                    while (yHistory.size() > MAX_HISTORY_SIZE) {
+                        yHistory.remove(0);
+                    }
                 }
             }
 
@@ -360,6 +370,7 @@ public class DistanceLocalizer {
 
         return angle;  // Already within range
     }
+
     static final double EPSILON = 0.1;
 
     public static double[] angleToUnitVectorWithEpsilon(Double angle) {
