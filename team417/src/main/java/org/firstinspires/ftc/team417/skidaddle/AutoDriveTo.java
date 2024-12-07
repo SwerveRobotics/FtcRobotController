@@ -29,16 +29,16 @@ public class AutoDriveTo {
     Canvas canvas;
 
     //linear motion constants
-    public final double linearDriveAccel = MecanumDrive.PARAMS.maxProfileAccel;
-    public final double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel;
-    public final double maxLinearSpeed = MecanumDrive.PARAMS.maxWheelVel;
+    public final double linearDriveAccel = MecanumDrive.PARAMS.maxProfileAccel * 1.5; // Was maxProfileAccel * 1
+    public final double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel * 1.5; // Was minProfileAccel * 1
+    public final double maxLinearSpeed = MecanumDrive.PARAMS.maxWheelVel * 1.5; // Was maxWheelVel * 1
     public final double linearVelEpsilon = 2;
     public final double linearDistEpsilon = 0.5;
 
     //rotational motion constants
-    public final double rotationalDriveAccel = MecanumDrive.PARAMS.maxAngAccel;
-    public final double rotationalDriveDeccel = -MecanumDrive.PARAMS.maxAngAccel;
-    public final double maxRotationalSpeed = MecanumDrive.PARAMS.maxAngVel;
+    public final double rotationalDriveAccel = MecanumDrive.PARAMS.maxAngAccel * 1.5; // Was maxAngAccel * 1
+    public final double rotationalDriveDeccel = -MecanumDrive.PARAMS.maxAngAccel * 1.5; // Was -maxAngAccel * 1
+    public final double maxRotationalSpeed = MecanumDrive.PARAMS.maxAngVel * 1.5; // Was maxAngVel * 1
     public final double rotationalVelEpsilon = Math.toRadians(3);
     public final double rotationalDistEpsilon = Math.toRadians(1);
 
@@ -133,9 +133,18 @@ public class AutoDriveTo {
         radialSpeed = Math.min(radialSpeed, maxLinearSpeed);
         radialSpeed = Math.min(radialSpeed, Math.sqrt(Math.abs(2.0 * linearDriveDeccel * distRemaining)));
 
-        //set radial velocity's theta to be the same as dist vector's
-        radialVelocity = distVector.div(distVector.norm()).times(radialSpeed);
+        // Make sure the code doesn't go too far
+        if (radialSpeed * deltaT > distRemaining) {
+            radialSpeed = distRemaining / deltaT;
+        }
 
+        //Set radial velocity's theta to be the same as dist vector's
+        // Account for the fact that distVector might be zero-length when dividing by its norm()
+        if (distVector.norm() == 0) {
+            radialVelocity = new Vector2d(0, 0);
+        } else {
+            radialVelocity = distVector.div(distVector.norm()).times(radialSpeed);
+        }
 
         //If tangential speed is positive, decrease until zero, else increase it until zero.
         if (tangentialSpeed > 0) {
@@ -149,15 +158,14 @@ public class AutoDriveTo {
         //rotate distance vector by 90 degrees.
         tangentialVelocity = new Vector2d(distVector.y, distVector.x * -1);
 
-        tangentialVelocity = tangentialVelocity.div(tangentialVelocity.norm()).times(tangentialSpeed);
-
+        // Account for the fact that tangentialVelocity might be zero-length when dividing by its norm()
+        if (tangentialVelocity.norm() != 0) {
+            tangentialVelocity = tangentialVelocity.div(tangentialVelocity.norm()).times(tangentialSpeed);
+        }
 
         linearVelocity = tangentialVelocity.plus(radialVelocity);
 
         drawVectors(linearVelocity.x, linearVelocity.y, canvas);
-
-        if (linearVelocity.norm() < linearVelEpsilon && distVector.norm() < linearDistEpsilon)
-            return new Vector2d(0, 0);
 
         return linearVelocity;
     }
@@ -177,13 +185,14 @@ public class AutoDriveTo {
         rotationalSpeed = Math.min(rotationalSpeed, maxRotationalSpeed);
         rotationalSpeed = Math.min(rotationalSpeed, Math.sqrt(Math.abs(2.0 * rotationalDriveDeccel * rotRemaining)));
 
+        // Make sure the code doesn't go too far
+        if (rotationalSpeed * deltaT > Math.abs(rotRemaining)) {
+            rotationalSpeed = Math.abs(rotRemaining) / deltaT;
+        }
 
         rotationalVel = rotationalSpeed * Math.signum(rotRemaining);
 
         packet.put("rotationalVel", rotationalVel);
-
-        if (Math.abs(rotRemaining) < rotationalDistEpsilon && Math.abs(rotationalVel) < rotationalVelEpsilon)
-            return 0;
 
         return rotationalVel;
     }
@@ -220,7 +229,8 @@ public class AutoDriveTo {
         targetPos = targetPos.plus(targetLinVel.times(deltaT));
         targetRot += targetRotVel * deltaT;
 
-        return targetLinVel.x == 0 && targetLinVel.y == 0 && targetRotVel == 0;
+        // Give the PID extra time to work and get as close as possible to the exact target location
+        return false;
     }
 
     public void setDriveVel(double[] x, double[] y, double[] angular) {
