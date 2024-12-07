@@ -46,9 +46,9 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
     double armPositionFudgeFactor;
     boolean intakeEnabled = false;
 
-    boolean a1Pressed = false;
-    boolean b1Pressed = false;
+    boolean x1Pressed = false;
     boolean y1Pressed = false;
+    boolean back1Pressed = false;
 
     AutoDriveTo driveTo;
 
@@ -137,27 +137,29 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
         double deltaTime = currentTime - lastTime;
         lastTime = currentTime;
 
-        if (gamepad1.y && !y1Pressed) {
+        if (gamepad1.back && !back1Pressed) {
             drive.setPose(new Pose2d(-63.125, 63.75, 0));
         }
 
-        if(gamepad1.a){
-            if(!a1Pressed){
+        if(gamepad1.x){
+            if(!x1Pressed){
                 driveTo.init(HUMAN_ZONE_DRIVE_TO, HUMAN_ZONE_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
-                armPosition = ARM_COLLECT;
-                wrist.setPosition(WRIST_FOLDED_OUT);
-                intakeEnabled = true;
+                // We should not move the arm, wrist, or intake for Drive-To.
+//                armPosition = ARM_COLLECT;
+//                wrist.setPosition(WRIST_FOLDED_OUT);
+//                intakeEnabled = true;
                 pathing = true;
             }
             if (pathing) {
                 pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
             }
-        } else if(gamepad1.b){
-            if(!b1Pressed){
+        } else if(gamepad1.y){
+            if(!y1Pressed){
                 driveTo.init(SPECIMEN_DRIVE_TO, SPECIMEN_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
-                armPosition = ARM_VERTICAL;
-                wrist.setPosition(WRIST_FOLDED_IN);
-                intakeEnabled = false;
+                // We should not move the arm, wrist, or intake for Drive-To.
+//                armPosition = ARM_VERTICAL;
+//                wrist.setPosition(WRIST_FOLDED_IN);
+//                intakeEnabled = false;
                 pathing = true;
             }
             if (pathing) {
@@ -167,9 +169,9 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             pathing = false;
         }
 
-        a1Pressed = gamepad1.a;
-        b1Pressed = gamepad1.b;
+        x1Pressed = gamepad1.x;
         y1Pressed = gamepad1.y;
+        back1Pressed = gamepad1.back;
 
         // If the left bumper is pressed, slow down, and if the right bumper is pressed, speed up.
         speedMultiplier = 0.5;
@@ -263,7 +265,6 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             }
 
 
-
             /* Here we create a "fudge factor" for the arm position.
             This allows you to adjust (or "fudge") the arm position slightly with the gamepad triggers.
             We want the left trigger to move the arm up, and right trigger to move the arm down.
@@ -305,7 +306,7 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             } else if (gamepad2.dpad_right) {
                 /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
                 armPosition = ARM_SCORE_SPECIMEN;
-                wrist.setPosition(WRIST_FOLDED_IN);
+                wrist.setPosition(WRIST_SCORE_SPECIMEN);
             } else if (gamepad2.dpad_up) {
                 /* This sets the arm to vertical to hook onto the LOW RUNG for hanging */
                 armPosition = ARM_ATTACH_HANGING_HOOK;
