@@ -71,6 +71,11 @@ public class CompetitionTeleOp extends BaseOpMode {
             // speed modifier
             float speedModifier = 1 - (gamepad1.right_trigger * 0.5f);
 
+            // if transferring, halve drive speed
+            if (controls.isTransferring()) {
+                speedModifier *= 0.5F;
+            }
+
             // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(

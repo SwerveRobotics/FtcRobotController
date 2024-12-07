@@ -138,6 +138,14 @@ public class ControlManager {
         }
     }
 
+    public boolean isTransferring() {
+        return armElbowServoPosition == DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER
+                && slidesMotorPosition == DRIFTConstants.SLIDES_MOTOR_GROUND_POSITION
+                && dumperServoPosition == DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER
+                // check if it's running but account for stick drift error (OMG 6220 DRIFT SO ON BRAND YOO)
+                && Math.abs(intakeServoPower) > 0.05;
+    }
+
     public int getArmBaseMotorPosition() {
         return armBaseMotorPosition;
     }
