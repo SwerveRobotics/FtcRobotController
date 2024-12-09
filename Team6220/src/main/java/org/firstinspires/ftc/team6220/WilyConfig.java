@@ -12,10 +12,10 @@ import com.wilyworks.common.WilyWorks;
 public class WilyConfig extends WilyWorks.Config {
     WilyConfig() {
         // Impersonate the DevBot when running the simulator:
-        deviceName = "DevBot";
+        deviceName = "6220-D-RC";
 
         // Use these dimensions for the robot:
-        robotWidth = 18.0;
-        robotLength = 18.0;
+        robotWidth = 17.0;
+        robotLength = 17.0;
     }
 }
