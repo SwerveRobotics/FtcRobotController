@@ -83,7 +83,9 @@ public class CompetitionBasketAutoFastBot extends BaseOpModeFastBot {
         while (opModeIsActive() && more) {
             telemetry.addLine("Running Auto!");
             telemetry.addData("Kinematic Type", kinematicType);
-
+            if (drive.distanceLocalizer != null) {
+                telemetry.addData("Distance sensors enabled", drive.distanceLocalizer.enabled);
+            }
 
             // 'packet' is the object used to send data to FTC Dashboard:
             packet = MecanumDrive.getTelemetryPacket();

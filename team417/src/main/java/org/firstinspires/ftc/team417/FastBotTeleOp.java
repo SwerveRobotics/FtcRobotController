@@ -449,8 +449,12 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
         telemetry.addData("Stick Curve On", curve);
         telemetry.addData("Field-Centric", fieldCentered);
         telemetry.addData("Speed Multiplier", speedMultiplier);
+        if (drive.distanceLocalizer != null) {
+            telemetry.addData("Distance sensors enabled", drive.distanceLocalizer.enabled);
+            telemetry.addData("Distance sensors correcting", drive.distanceLocalizer.correcting);
+        }
 
-        telemetry.addData("Pose (x, y, h):",
+        telemetry.addData("Pose (x, y, h)",
                 String.format("(%.2f\", %.2f\", %.2f°)",
                         drive.pose.position.x,
                         drive.pose.position.y,
@@ -463,10 +467,13 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
 
 
         /* send telemetry to the driver of the arm's current position and target position */
-        telemetry.addData("armTarget: ", armMotor1.getTargetPosition());
-        telemetry.addData("arm Encoder: ", armMotor1.getCurrentPosition());
+        telemetry.addData("armTarget", armMotor1.getTargetPosition());
+        telemetry.addData("arm Encoder", armMotor1.getCurrentPosition());
 
         // These telemetry.addLine() calls will inform the user of what each button does
+
+        telemetry.addLine();
+        telemetry.addLine("-----INSTRUCTIONS-----");
 
         telemetry.addLine("Low Basket Score: Y-Button");
         telemetry.addLine("Intake Deposit: B-Button");
