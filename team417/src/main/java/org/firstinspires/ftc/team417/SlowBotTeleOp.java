@@ -25,7 +25,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
     /* A number in degrees that the triggers can adjust the arm position by */
     // TODO: needs tuning
-    final double MAX_SLIDE_VELOCITY = 200; // Ticks per second
+    final double MAX_SLIDE_VELOCITY = 2000 ; // Ticks per second
     final double FUDGE_FACTOR_LIFT = 200; // Ticks
 
     /* Variables that are used to set the arm to a specific position */
@@ -38,7 +38,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     boolean buttonAPressed = false;
 
     // These are variables that will be used for individual control actions
-    double slidePosition = SLIDE_HOME_POSITION;
+    double slidePosition = 0;
     double wristPosition = WRIST_IN;
     double liftPosition = LIFT_HOME_POSITION;
 
@@ -218,7 +218,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             liftPositionFudgeFactor = FUDGE_FACTOR_LIFT * (gamepad2.right_trigger - gamepad2.left_trigger);
 
             // Set the slide velocity to magnitude of the 'right stick y' multiplied by the speed multiplier (MAX_SLIDE_VELOCITY)
-            double slideVelocity = MAX_SLIDE_VELOCITY * gamepad2.right_stick_y;
+            double slideVelocity = -MAX_SLIDE_VELOCITY * gamepad2.right_stick_y;
 
             // DeltaTime will be the actual current time minus the currentTime of the last loop
             double deltaTime = currentTime() - previousTime;

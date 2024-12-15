@@ -36,7 +36,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
     public static double f_coefficient = 0.5;
 
-    final static double SLIDE_MAX = 200.0;
+    final static double SLIDE_MAX = 10000.0;
     final static double SLIDE_COLLECT = 0.0;
     final static double SLIDE_SCORE_IN_BASKET = 0;
     final static double SLIDE_MIN = 0.0;
@@ -120,7 +120,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             if(positionInTicks >= SLIDE_MIN && positionInTicks <= SLIDE_MAX){
                 slideMotor.setPower(1.0);
                 slideMotor.setTargetPosition((int) positionInTicks);
-                slideMotor.setVelocity(500); //TODO: make this a variable
+                slideMotor.setVelocity(2000); //TODO: make this a variable
                 slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
         }
