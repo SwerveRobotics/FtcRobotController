@@ -24,7 +24,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double INTAKE_OFF = 0.0;
 
     final static double LIFT_MAX = 1200;
-    final static double LIFT_SCORE_HIGH_BASKET = 1200;
+    final static double LIFT_SCORE_HIGH_BASKET = 1220;
     final static double LIFT_SCORE_LOW_BASKET = 750;
     final static double LIFT_SCORE_HIGH_SPECIMEN = 850;
     final static double LIFT_COLLECT = 0.0;
@@ -229,13 +229,13 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             liftMotor1.setTargetPosition(0);
             liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT); // was BREAK!!!
+            liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             liftMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
 
             liftMotor2.setTargetPosition(0);
             liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);   // was BREAK!!!!
+            liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         }
 
