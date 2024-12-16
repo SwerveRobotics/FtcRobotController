@@ -35,16 +35,16 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double INTAKE_OFF = 0.0;
 
     final static double LIFT_MAX = 1200;
-    final static double LIFT_SCORE_HIGH_BASKET = 1200;
+    final static double LIFT_SCORE_HIGH_BASKET = 1220;
     final static double LIFT_SCORE_LOW_BASKET = 750;
-    final static double LIFT_SCORE_HIGH_SPECIMEN = 0.0;
+    final static double LIFT_SCORE_HIGH_SPECIMEN = 850;
     final static double LIFT_GET_SPECIMEN = 650;
     final static double LIFT_COLLECT = 0.0;
     final static double LIFT_MIN = 0.0;
     final static double LIFT_CLEAR_BARRIER = 0.0;
     final static double LIFT_HOME_POSITION = 0;
-    final static double LIFT_NO_SLIDE_ZONE_MIN = 0;
-    final static double LIFT_NO_SLIDE_ZONE_MAX = 0;
+    final static double LIFT_NO_SLIDE_ZONE_MIN = 100;
+    final static double LIFT_NO_SLIDE_ZONE_MAX = 622;
 
     public static double f_coefficient = 0.5;
 
@@ -55,7 +55,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double SLIDE_HOME_POSITION = 0;
 
     final static double WRIST_MAX = 0.0;
-    final static double WRIST_OUT = 0.0;
+    final static double WRIST_OUT = 0.5;
     final static double WRIST_IN = 0.0;
     final static double WRIST_MIN = 0.0;
 
@@ -141,6 +141,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     // This method controls the 4bar to desired height
     static double f_value = 0.5;
     public void moveLift(double heightInTicks) {
+
         if (heightInTicks >= LIFT_MIN && heightInTicks <= LIFT_MAX) {
             double velocity;
             if(getLiftPosition() > heightInTicks){
@@ -203,7 +204,19 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             intake2.setPower(spinControl);
         }
     }
+    public void stopCrash() {
+        System.out.println("Inside StopCrash");
+        moveWrist(WRIST_IN);
+        moveSlide(SLIDE_HOME_POSITION);
+        System.out.printf("slide position: %.0f\n", getSlidePosition());
+        while(getSlidePosition() >= TICKS_EPSILON) {
+            System.out.printf("slide loop: %.0f\n", getSlidePosition());
+        }
+        moveLift(LIFT_HOME_POSITION);
+        while(getLiftPosition() >= TICKS_EPSILON) {
 
+        }
+     }
     // The time since the robot started in seconds
     public double currentTime() {
         return nanoTime() * 1e-9;
@@ -247,6 +260,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         intake1.setPower(INTAKE_OFF);
         intake2.setPower(INTAKE_OFF);
     }
+
 
     public static final KinematicType kinematicType = KinematicType.X;
 }

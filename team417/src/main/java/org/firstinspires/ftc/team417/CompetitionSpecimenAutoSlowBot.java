@@ -89,5 +89,6 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 MecanumDrive.sendTelemetryPacket(packet);
             telemetry.update();
         }
+        stopCrash();
     }
 }

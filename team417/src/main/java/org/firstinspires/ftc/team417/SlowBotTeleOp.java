@@ -72,10 +72,11 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
             MecanumDrive.sendTelemetryPacket(packet);
+
         }
 
         // Reset the wrist position to avoid "breaking" the servo:
-        wrist.setPosition(WRIST_IN);
+        stopCrash();
     }
 
     public void prepareRobot() {
@@ -267,12 +268,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             telemetry.addLine(String.format("F value: %.1f", f_coefficient ));
 
             if(isCrossingNoSlideZone(liftPositionWithFudge )) {
-                if(getSlidePosition() <= SLIDE_HOME_POSITION + TICKS_EPSILON) {
+                if(getSlidePosition() > SLIDE_HOME_POSITION + TICKS_EPSILON) {
+                    // moves the slides in if lift going up and not in home pos
                     moveWrist(WRIST_IN);
                     moveSlide(SLIDE_HOME_POSITION);
-                    moveLift(liftPositionWithFudge);
+
                 } else {
-                    moveWrist(WRIST_IN);
+                    // if slide in home position move lift up
                     moveLift(liftPositionWithFudge);
                 }
             } else {
