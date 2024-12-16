@@ -26,6 +26,8 @@ public class ColorSensorConcept extends LinearOpMode {
 
         sensor = hardwareMap.get(ColorSensor.class, "color");
 
+        sensor.enableLed(true);
+
         lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "lightStrip");
 
         lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
@@ -36,17 +38,26 @@ public class ColorSensorConcept extends LinearOpMode {
             color = senseColor();
             switch (color) {
                 case RED:
+                    telemetry.addLine("Detecting red!!!");
                     lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+                    break;
                 case BLUE:
+                    telemetry.addLine("Detecting blue!!!");
                     lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
+                    break;
                 case YELLOW:
+                    telemetry.addLine("Detecting yellow!!!");
                     lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
+                    break;
                 default:
+                    telemetry.addLine("Detecting white!!!");
                     lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
             }
             telemetry.addData("Color", color);
             telemetry.update();
         }
+
+        sensor.enableLed(false);
     }
 
     public Color senseColor() {
@@ -54,6 +65,8 @@ public class ColorSensorConcept extends LinearOpMode {
         int r = sensor.red();
         int g = sensor.green();
         int b = sensor.blue();
+
+        telemetry.addLine(String.format("(a = %d, r = %d, g = %d, b = %d)", a, r, g, b));
 
         if (a < 200) { // If the detection is too transparent
             return Color.UNDETECTED;
