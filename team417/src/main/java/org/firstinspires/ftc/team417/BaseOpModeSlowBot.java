@@ -18,6 +18,17 @@ import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
     static MecanumDrive drive;
 
+    /* This constant is the number of encoder ticks for each degree of rotation of the arm.
+    To find this, we first need to consider the total gear reduction powering our arm.
+    First, we have an external 20t:100t (5:1) reduction created by two spur gears.
+    But we also have an internal gear reduction in our motor.
+    The motor we use for this arm is a 117RPM Yellow Jacket. Which has an internal gear
+    reduction of ~50.9:1. (more precisely it is 250047/4913:1)
+    We can multiply these two ratios together to get our final reduction of ~254.47:1.
+    The motor's encoder counts 28 times per rotation. So in total you should see about 7125.16
+    counts per rotation of the arm. We divide that by 360 to get the counts per degree. */
+    final static double ARM_TICKS_PER_DEGREE = 19.7924893140647; //exact fraction is (194481/9826)
+
     // TODO: implement this
     final static double INTAKE_DEPOSIT = 0.0;
     final static double INTAKE_COLLECT = 0.0;
@@ -27,6 +38,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     final static double LIFT_SCORE_HIGH_BASKET = 1220;
     final static double LIFT_SCORE_LOW_BASKET = 750;
     final static double LIFT_SCORE_HIGH_SPECIMEN = 850;
+    final static double LIFT_GET_SPECIMEN = 650;
     final static double LIFT_COLLECT = 0.0;
     final static double LIFT_MIN = 0.0;
     final static double LIFT_CLEAR_BARRIER = 0.0;

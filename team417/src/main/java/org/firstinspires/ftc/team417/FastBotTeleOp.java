@@ -209,7 +209,6 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
             driveAssistHanging();
         }
 
-
         // Rotate the movement direction counter to the bot's rotation
         rotatedX = x * Math.cos(theta) - y * Math.sin(theta);
         rotatedY = x * Math.sin(theta) + y * Math.cos(theta);

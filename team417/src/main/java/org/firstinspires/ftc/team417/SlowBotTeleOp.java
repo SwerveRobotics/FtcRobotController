@@ -5,14 +5,14 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
-import org.firstinspires.ftc.team417.roadrunner.RobotAction;
+import org.firstinspires.ftc.team417.skidaddle.AutoDriveTo;
+import org.firstinspires.ftc.team417.skidaddle.DPoint;
 
 @TeleOp(name = "TeleOp", group = "SlowBot")
 @Config
@@ -31,7 +31,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     /* Variables that are used to set the arm to a specific position */
     double liftPositionFudgeFactor;
 
-    // This variable remembers the tixme in the previous loop to use for slide velocity
+    // This variable remembers the time in the previous loop to use for slide velocity
     double previousTime = 0.0;
 
     boolean intakeEnabled = false;
@@ -42,6 +42,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     double wristPosition = WRIST_IN;
     double liftPosition = LIFT_HOME_POSITION;
 
+    AutoDriveTo driveTo;
+
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
@@ -51,7 +53,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         waitForStart();
 
         while (opModeIsActive()) {
-            toggleFieldCentricity();
+            // Disable field-centric always!
+            // toggleFieldCentricity();
 
             controlDrivebaseWithGamepads(curve, fieldCentered);
 
@@ -87,6 +90,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         startHeading = startingPose.heading.log();
         previousTime = currentTime();
 
+        driveTo = new AutoDriveTo(drive);
+
         /* Send telemetry message to signify robot waiting */
         telemetry.addLine("Robot Ready.");
         telemetry.update();
@@ -103,7 +108,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         }
 
         // When slides are out, slow down robot
-        if(getSlidePosition() > (SLIDE_HOME_POSITION + TICKS_EPSILON)){
+        if (getSlidePosition() > (SLIDE_HOME_POSITION + TICKS_EPSILON)){
             speedMultiplier *= 0.5;
         }
 
@@ -137,6 +142,11 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 ),
                 -rot * speedMultiplier
         ));
+
+        // Press the D-Pad down button ONCE (do not hold)
+        if (gamepad1.dpad_down) {
+            driverAssistRetrieveSpecimen();
+        }
 
         // Update the current pose:
         drive.updatePoseEstimate();
@@ -221,7 +231,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             // Set the slide velocity to magnitude of the 'right stick y' multiplied by the speed multiplier (MAX_SLIDE_VELOCITY)
             double slideVelocity = -MAX_SLIDE_VELOCITY * gamepad2.right_stick_y;
 
-            // DeltaTime will be the actual current time minus the currentTime of the last loop
+            // deltaTime will be the actual current time minus the currentTime of the last loop
             double deltaTime = currentTime() - previousTime;
             previousTime = currentTime();
 
@@ -284,6 +294,49 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             } else {
                 intakeControl(INTAKE_OFF);
             }
+    }
+
+    // Angle of depression from parallel to the ground when the 4-bar is completely collapsed
+    final public double INITIAL_4_BAR_ANGLE = Math.PI / 6;
+
+    // Length of first segment of 4-bar (inches)
+    final public double FIRST_SEGMENT_4_BAR_LENGTH = 17;
+
+    // Raise the arm and move backwards simultaneously
+    public void driverAssistRetrieveSpecimen() {
+        Pose2d initialPose = new Pose2d(
+                drive.pose.position.x,
+                drive.pose.position.y,
+                drive.pose.heading.log()
+        );
+
+        // Move the lift to take the specimen off
+        moveLift(LIFT_GET_SPECIMEN);
+
+        while (liftMotor1.isBusy()) {
+            // 'packet' is the object used to send data to FTC Dashboard:
+            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+
+            PoseVelocity2d currentPoseVelocity = drive.updatePoseEstimate();
+
+            // deltaTime will be the actual current time minus the currentTime of the last loop
+            double deltaTime = currentTime() - previousTime;
+            previousTime = currentTime();
+
+            // Determine, based on the angle, the what place the driveTo should drive to
+            double angle = INITIAL_4_BAR_ANGLE -
+                    liftMotor1.getCurrentPosition() * ARM_TICKS_PER_DEGREE;
+            double targetDistance = FIRST_SEGMENT_4_BAR_LENGTH * Math.cos(angle);
+            DPoint targetPoint = new DPoint(
+                    initialPose.position.x,
+                    initialPose.position.y - targetDistance
+            );
+            double targetHeading = initialPose.heading.log();
+
+            // Actually drive there
+            driveTo.init(targetPoint, targetHeading, currentPoseVelocity, telemetry);
+            driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
+        }
     }
 
     // Applies a curve to the joystick input to give finer control at lower speeds
