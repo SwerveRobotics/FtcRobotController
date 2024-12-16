@@ -202,8 +202,8 @@ public final class MecanumDrive {
                     lateralInPerTick = 0.700; // Was 1.00
                     trackWidthTicks = 22.29; // Was 0.00
 
-                    kS = 0.608; // Was 0
-                    kV = 0.188; // Was 0
+                    kS = 2.231; // Was 0
+                    kV = 0.143; // Was 0
                     kA = 0;
 
                     axialGain = 6.00; // Was 0
@@ -219,9 +219,9 @@ public final class MecanumDrive {
                     otos.linearScalar = 1.000; // Was 0.000
                     otos.angularScalar = 1.0005;
 
-                    pinpoint.ticksPerMm = 0;
+                    pinpoint.ticksPerMm = 13.092;
                     pinpoint.xReversed = false;
-                    pinpoint.yReversed = false;
+                    pinpoint.yReversed = true;
                     pinpoint.xOffset = 0;
                     pinpoint.yOffset = 0;
                     break;
@@ -521,9 +521,7 @@ public final class MecanumDrive {
                 break;
 
             case COMPETITION_ROBOT:
-                //otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
-                //initializeOtosDriver();
-
+                pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
                 if (BaseOpModeFastBot.USE_DISTANCE) {
                     // TODO: Create the distance sensor tracking object:
                     //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
