@@ -291,10 +291,10 @@ public final class MecanumDrive {
                 return DriveParameters.DEVBOT_X;
             case "417-RC":
                 return DriveParameters.FASTBOT_MECANUM;
-            case "FTC-ERDN":
+            case "417-S-RC":
+            default:
                 return DriveParameters.COMPETITION_ROBOT;
         }
-        return null; // Not one of 417's robots
     }
 
     public static DriveParameters driveParameters = getDriveParameters();
