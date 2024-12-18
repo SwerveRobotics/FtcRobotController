@@ -375,7 +375,8 @@ public final class MecanumDrive {
             // TODO: Create the optical tracking object:
             //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
 
-            otosDriver = hardwareMap.get(SparkFunOTOS.class, DRIFTConstants.OTOS_HARDWARE_IDENTIFIER);
+            // otosDriver = hardwareMap.get(SparkFunOTOS.class, DRIFTConstants.OTOS_HARDWARE_IDENTIFIER);
+            pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, DRIFTConstants.PINPOINT_ODOMETRY_HARDWARE_IDENTIFIER);
 
             leftFront = hardwareMap.get(DcMotorEx.class, DRIFTConstants.LEFT_FRONT_MOTOR_HARDWARE_IDENTIFIER);
             leftBack = hardwareMap.get(DcMotorEx.class, DRIFTConstants.LEFT_BACK_MOTOR_HARDWARE_IDENTIFIER);

@@ -169,13 +169,14 @@ public class CompetitionAuto extends BaseOpMode {
 
                             // Reset dumper and lower slides
                             .waitSeconds(2)
+
                             .stopAndAdd(new DumperMoveAction(DumperActionState.TRANSFER))
                             .afterDisp(0, new SlideMoveAction(SlideActionState.GROUND))
 
                             // spline to prepare to collect first sample
                             .setTangent(Math.toRadians(180))
                             .splineToLinearHeading(new Pose2d(40, 24, Math.toRadians(270)),  3 * Math.PI / 2)
-                            .splineToLinearHeading(new Pose2d(54, 5, Math.toRadians(270)),  Math.toRadians(340))
+                            .splineToLinearHeading(new Pose2d(50, 9, Math.toRadians(270)),  Math.toRadians(340))
                             .endTrajectory()
                             .setTangent(Math.toRadians(90))
 
@@ -185,7 +186,7 @@ public class CompetitionAuto extends BaseOpMode {
                             .setTangent(Math.toRadians(180))
 
                             // spline to prepare to collect second sample
-                            .splineToLinearHeading(new Pose2d(61, 7, Math.toRadians(270)),  Math.toRadians(330))
+                            .splineToLinearHeading(new Pose2d(60, 10, Math.toRadians(270)),  Math.toRadians(330))
                             .endTrajectory()
                             .setTangent(Math.toRadians(90))
 
@@ -195,7 +196,7 @@ public class CompetitionAuto extends BaseOpMode {
                             .setTangent(Math.toRadians(-80))
 
                             // spline to prepare to collect third sample
-                            .splineToLinearHeading(new Pose2d(71, 9, Math.toRadians(270)),  Math.toRadians(40))
+                            .splineToLinearHeading(new Pose2d(70, 12, Math.toRadians(270)),  Math.toRadians(40))
                             .endTrajectory()
 
                             // strafe to deposit third sample

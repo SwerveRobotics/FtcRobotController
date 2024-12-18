@@ -41,6 +41,7 @@ public abstract class DRIFTConstants {
     public static final String INTAKE_SERVO_HARDWARE_IDENTIFIER = "intakeServo";
     public static final String DUMPER_SERVO_HARDWARE_IDENTIFIER = "dumperServo";
     public static final String OTOS_HARDWARE_IDENTIFIER = "otos";
+    public static final String PINPOINT_ODOMETRY_HARDWARE_IDENTIFIER = "pinpoint";
     public static final String LEFT_FRONT_MOTOR_HARDWARE_IDENTIFIER = "leftFront";
     public static final String LEFT_BACK_MOTOR_HARDWARE_IDENTIFIER = "leftBack";
     public static final String RIGHT_BACK_MOTOR_HARDWARE_IDENTIFIER = "rightBack";
