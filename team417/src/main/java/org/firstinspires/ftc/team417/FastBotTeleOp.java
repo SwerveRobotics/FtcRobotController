@@ -74,6 +74,10 @@ public class FastBotTeleOp extends BaseOpModeFastBot {
 
             controlMechanismsWithGamepads();
 
+            if (drive.colorProcessor != null) {
+                drive.colorProcessor.update();
+            }
+
             telemeterData();
 
             // Do the work now for all active Road Runner actions, if any:
