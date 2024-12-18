@@ -60,6 +60,10 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
             controlMechanismsWithGamepads();
 
+            if (drive.colorProcessor != null) {
+                drive.colorProcessor.update();
+            }
+
             telemeterData();
 
             // 'packet' is the object used to send data to FTC Dashboard:

@@ -16,6 +16,8 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 @Disabled
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
+    public final static boolean USE_DISTANCE = true;
+
     static MecanumDrive drive;
 
     /* This constant is the number of encoder ticks for each degree of rotation of the arm.
