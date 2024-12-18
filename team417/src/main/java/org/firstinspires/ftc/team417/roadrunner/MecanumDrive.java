@@ -48,8 +48,10 @@ import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
+import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -64,7 +66,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.team417.BaseOpModeFastBot;
+import org.firstinspires.ftc.team417.BaseOpModeSlowBot;
 import org.firstinspires.ftc.team417.DriveParameters;
+import org.firstinspires.ftc.team417.color.ColorProcessor;
 import org.firstinspires.ftc.team417.distance.DistanceLocalizer;
 import org.firstinspires.ftc.team417.distance.DistanceSensorInfo;
 import org.firstinspires.ftc.team417.roadrunner.messages.DriveCommandMessage;
@@ -72,8 +76,8 @@ import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
 import org.firstinspires.inspection.InspectionState;
-import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 import org.swerverobotics.ftc.GoBildaPinpointDriver;
+import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -327,6 +331,7 @@ public final class MecanumDrive {
     public double maxHeadingGainError = 0;
 
     public DistanceLocalizer distanceLocalizer;
+    public ColorProcessor colorProcessor;
 
     private final LinkedList<Pose2d> poseHistory = new LinkedList<>();
 
@@ -456,7 +461,7 @@ public final class MecanumDrive {
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         switch (driveParameters) {
-            case DEVBOT_MECANUM:
+            case DEVBOT_MECANUM: {
                 otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
 
                 if (BaseOpModeFastBot.USE_DISTANCE) {
@@ -467,6 +472,10 @@ public final class MecanumDrive {
                     distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this, true);
                 }
 
+                ColorSensor colorSensor = hardwareMap.get(ColorSensor.class, "color");
+                RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "lightStrip");
+                colorProcessor = new ColorProcessor(colorSensor, lightStrip);
+
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
                 rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
@@ -475,8 +484,9 @@ public final class MecanumDrive {
                 leftFront.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
+            }
 
-            case DEVBOT_X:
+            case DEVBOT_X: {
                 // TODO: Create the optical tracking object:
                 //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
                 //   initializeOtosDriver();
@@ -490,15 +500,22 @@ public final class MecanumDrive {
                     //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
                 }
 
+                // TODO: Create the color processing object:
+                //   ColorSensor colorSensor = hardwareMap.get(ColorSensor.class, "PLACEHOLDER");
+                //   RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "PLACEHOLDER");
+                //   colorProcessor = new ColorProcessor(colorSensor, lightStrip);
+
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
                 rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
                 rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+
                 leftFront.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
+            }
 
-            case FASTBOT_MECANUM:
+            case FASTBOT_MECANUM: {
                 // enable this when we have the optical tracker
                 otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
 
@@ -510,6 +527,11 @@ public final class MecanumDrive {
                     distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this, true);
                 }
 
+                // TODO: Create the color processing object:
+                //   ColorSensor colorSensor = hardwareMap.get(ColorSensor.class, "PLACEHOLDER");
+                //   RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "PLACEHOLDER");
+                //   colorProcessor = new ColorProcessor(colorSensor, lightStrip);
+
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
                 rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
@@ -519,12 +541,13 @@ public final class MecanumDrive {
                 rightBack.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
+            }
 
-            case COMPETITION_ROBOT:
+            case COMPETITION_ROBOT: {
                 //otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
                 //initializeOtosDriver();
 
-                if (BaseOpModeFastBot.USE_DISTANCE) {
+                if (BaseOpModeSlowBot.USE_DISTANCE) {
                     // TODO: Create the distance sensor tracking object:
                     //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
                     //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
@@ -532,6 +555,11 @@ public final class MecanumDrive {
                     //   DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
                     //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
                 }
+
+                // TODO: Create the color processing object:
+                //   ColorSensor colorSensor = hardwareMap.get(ColorSensor.class, "PLACEHOLDER");
+                //   RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "PLACEHOLDER");
+                //   colorProcessor = new ColorProcessor(colorSensor, lightStrip);
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -541,6 +569,7 @@ public final class MecanumDrive {
 //                leftFront.setDirection(DcMotorEx.Direction.REVERSE);
 //                leftBack.setDirection(DcMotorEx.Direction.REVERSE);
                 break;
+            }
         }
 
         // Initialize the tracking drivers, if any:

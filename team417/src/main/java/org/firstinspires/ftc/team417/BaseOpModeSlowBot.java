@@ -16,6 +16,8 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 @Disabled
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
+    public final static boolean USE_DISTANCE = true;
+
     static MecanumDrive drive;
 
     // TODO: implement this
