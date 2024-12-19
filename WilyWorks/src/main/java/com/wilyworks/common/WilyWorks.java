@@ -29,6 +29,11 @@ public class WilyWorks {
         // test their code paths:
         public String deviceName = "WilyWorks";
 
+        // Control the magnitude of error added to the pose when sensor error is enabled:
+        public double positionError = 1.0; // Percentage error as a function of distance traveled
+        public double headingError = 2.0; // Degrees of drift per minute
+        public double distanceSensorError = 0.5; // Range of error for distance sensors, in inches
+
         // Set these to the actual dimensions of your robot, in inches:
         public double robotWidth = 18.0;
         public double robotLength = 18.0;
@@ -114,14 +119,17 @@ public class WilyWorks {
             // Indicator's device name as specified in the robot's configuration:
             public String name;
 
+            // True if this is the red channel, false if it's the green channel:
+            public boolean isRed;
+
             // Sensor position in inches relative to the robot's center of rotation.
             // Positive 'x' is towards the front of the robot, negative towards the back.
             // Positive 'y' is towards the left of the robot, negative towards the right:
             public double x;
             public double y;
 
-            public LEDIndicator(String name, double x, double y) {
-                this.name = name; this.x = x; this.y = y;
+            public LEDIndicator(String name, boolean isRed, double x, double y) {
+                this.name = name; this.isRed = isRed; this.x = x; this.y = y;
             }
         }
     }
@@ -203,12 +211,12 @@ public class WilyWorks {
         return false;
     }
 
-    // Get the simulation's true pose:
+    // Get the simulation's introduced-error pose:
     static public Pose2d getPose() {
         if (wilyCore != null) {
             try {
-                Method getPose = wilyCore.getMethod("getPose");
-                return (Pose2d) getPose.invoke(null);
+                Method getPose = wilyCore.getMethod("getPose", boolean.class);
+                return (Pose2d) getPose.invoke(null, false);
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 throw new RuntimeException(e);
             }
@@ -216,7 +224,7 @@ public class WilyWorks {
         return null;
     }
 
-    // Get the simulation's true pose:
+    // Get the simulation's introduced-error pose:
     static public PoseVelocity2d getPoseVelocity() {
         if (wilyCore != null) {
             try {

@@ -33,13 +33,14 @@ package com.qualcomm.robotcore.eventloop.opmode;
 
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
+import com.wilyworks.simulator.WilyCore;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
-import org.firstinspires.ftc.teamcode.wilyworks.WilyTelemetry;
 
 abstract class OpModeInternal {
     public volatile Gamepad gamepad1 = null;
     public volatile Gamepad gamepad2 = null;
     public Telemetry telemetry = null;
     public volatile HardwareMap hardwareMap = null; // will be set in OpModeManager.runActiveOpMode
+    public double getRuntime() { return WilyCore.time(); }
 }

@@ -1,5 +1,7 @@
 package com.wilyworks.simulator.framework;
 
+import android.graphics.Canvas;
+
 import com.acmerobotics.roadrunner.Pose2d;
 import com.wilyworks.common.WilyWorks;
 import com.wilyworks.simulator.WilyCore;
@@ -11,12 +13,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagGameDatabase;
 import org.firstinspires.ftc.vision.apriltag.AprilTagLibrary;
 import org.firstinspires.ftc.vision.apriltag.AprilTagMetadata;
 import org.firstinspires.ftc.vision.apriltag.AprilTagPoseFtc;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+import org.opencv.core.Mat;
 
 import java.util.ArrayList;
 
@@ -91,12 +95,14 @@ public class WilyAprilTagProcessor extends AprilTagProcessor {
 
         // @@@ Check if enabled
         ArrayList<AprilTagDetection> detections = new ArrayList<>();
-        Pose2d pose = WilyCore.getPose(cameraDescriptor.latency);
+
+        // April tags reflect the true pose:
+        Pose2d truePose = WilyCore.getPose(cameraDescriptor.latency, true);
         for (AprilTagMetadata tag: tags) {
-            double poseHeading = pose.heading.log();
+            double poseHeading = truePose.heading.log();
             Point robotCameraOffset = new Point(cameraDescriptor.x, cameraDescriptor.y);
             Point fieldCameraOffset = robotCameraOffset.rotate(poseHeading);
-            Point fieldCameraPosition = new Point(pose.position).add(fieldCameraOffset);
+            Point fieldCameraPosition = new Point(truePose.position).add(fieldCameraOffset);
 
             Point vectorToTag = new Point(tag.fieldPosition).subtract(fieldCameraPosition);
             double tagAngle = vectorToTag.atan2();
@@ -123,5 +129,20 @@ public class WilyAprilTagProcessor extends AprilTagProcessor {
         if (detections == null)
             detections = lastDetections;
          return detections;
+    }
+
+    @Override
+    public void init(int width, int height, CameraCalibration calibration) {
+
+    }
+
+    @Override
+    public Object processFrame(Mat frame, long captureTimeNanos) {
+        return null;
+    }
+
+    @Override
+    public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
+
     }
 }

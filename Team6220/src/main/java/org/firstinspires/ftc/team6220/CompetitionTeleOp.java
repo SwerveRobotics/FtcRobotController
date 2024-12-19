@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.team6220;
 
-import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
@@ -20,8 +18,6 @@ public class CompetitionTeleOp extends BaseOpMode {
 
     @Override
     public void runOpMode() {
-        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
-
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
@@ -29,7 +25,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            telemetry.addLine("Running 6220 TeleOp!");
+            telemetry.addLine("Running TeleOp!");
             telemetry.update();
 
             // Set the drive motor powers according to the gamepad input:
