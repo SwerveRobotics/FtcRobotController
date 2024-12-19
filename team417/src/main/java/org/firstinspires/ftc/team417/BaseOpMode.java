@@ -5,10 +5,11 @@ import android.util.Size;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
-import org.firstinspires.ftc.team417.liveView.LiveViewProcessor;
+import org.firstinspires.ftc.team417.liveView.LiveView;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.opencv.core.Mat;
 import org.opencv.imgcodecs.Imgcodecs;
+
 
 /**
  * This class contains all of the base logic that is shared between all of the TeleOp and
@@ -19,7 +20,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     Mat testImage; // Our canonical test image
 
     // Do one-time initialization code:
-    void initializeTest() {
+    void initializeTest(LiveView view) {
         testImage = Imgcodecs.imread("/sdcard/live_view.jpg");
         if ((testImage.size().width != 0) && (testImage.size().height != 0)) {
             System.out.printf("Test image successfully loaded!\n");
@@ -41,7 +42,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         builder.enableLiveView(true);
 
         // Set and enable the live-view processor.
-        builder.addProcessor(new LiveViewProcessor());
+        builder.addProcessor(view);
 
         // Build the Vision Portal, using the above settings.
         VisionPortal visionPortal = builder.build();

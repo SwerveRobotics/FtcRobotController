@@ -2,14 +2,20 @@ package org.firstinspires.ftc.team417.liveView;
 
 import static java.lang.System.nanoTime;
 
+import android.graphics.Canvas;
+
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
+import org.firstinspires.ftc.vision.VisionProcessor;
+import org.opencv.core.Mat;
+import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 
 /** @noinspection StringConcatenationInLoop*/
-public class LiveView {
+public class LiveView implements VisionProcessor {
     Telemetry t;
     TelemetryPacket p;
     String message;
@@ -21,8 +27,8 @@ public class LiveView {
     private double currScreenWidth = defaultScreenWidth;
     private double currScreenHeight = defaultScreenHeight;
 
-    private final int intensityRangeMin = 0;
-    private final int intensityRangeMax = 255;
+    private final int intensityRangeMin = -128;
+    private final int intensityRangeMax = 127;
     private final int intensityRange = intensityRangeMax - intensityRangeMin;
 
     private final int redMin = 200;
@@ -30,8 +36,70 @@ public class LiveView {
 
     double lTime = 0;
 
-    public LiveView(Telemetry t) {
+    // Big memory buffers are very expensive to allocate so create them once and reuse
+    // rather than recreating them on every loop:
+    Mat smallRgb = new Mat();
+    Mat smallYCrCb = new Mat();
+    byte[] buffer = new byte[0]; // Will resize later...
+
+    int width;
+    int height;
+
+
+    public LiveView(Telemetry t, int width, int height) {
         this.t = t;
+        this.width = width;
+        this.height = height;
+    }
+
+    @Override
+    public void init(int width, int height, CameraCalibration calibration) {
+
+    }
+
+    // This routine shows how to get the raw pixels from the bitmap. As a test, it simply
+    // gathers some statistics about the bitmap's contents.
+    double[] mins = new double[4];
+    double[] maxes = new double[4];
+    byte[] inspect(Mat mat) {
+        return buffer;
+    }
+
+    // The system calls processFrame every time the camera acquires a new frame (typically 30
+    // frames per second). Note that this is on a different thread than the robot's primary loop:
+    @Override
+    public Object processFrame(Mat largeRgb, long captureTimeNanos) {
+        int pixelCount = smallYCrCb.height() * smallYCrCb.width();
+        int channelCount = smallYCrCb.channels();
+        int byteCount = pixelCount * channelCount;
+
+        // First resize the frame that came from the camera:
+        Imgproc.resize(largeRgb, smallRgb, new org.opencv.core.Size(width, height), 0, 0, Imgproc.INTER_AREA);
+
+        // Convert it to YCrCb (Y is luminance/intensity, Cr is red chroma, Cb is blue chroma):
+        Imgproc.cvtColor(smallRgb, smallYCrCb, Imgproc.COLOR_RGB2YCrCb);
+
+        if (buffer.length < byteCount)
+            buffer = new byte[byteCount];
+
+        // Initialize the min/max statistics to be extremely crossed:
+        for (int i = 0; i < channelCount; i++) {
+            mins[i] = Double.MAX_VALUE;
+            maxes[i] = 0;
+        }
+
+        // Read the pixels from the 'Mat' object into our buffer:
+        smallYCrCb.get(0, 0, buffer);
+
+        processYCrCb(buffer);
+
+        return null;
+    }
+
+    // I think this is called when the system wants us to preview our processing:
+    @Override
+    public void onDrawFrame(Canvas canvas, int onscreenWidth, int onscreenHeight, float scaleBmpPxToCanvasPx, float scaleCanvasDensity, Object userContext) {
+
     }
 
     public void initHTML() {
@@ -115,35 +183,23 @@ public class LiveView {
 
     private int[] lPixel = {0, 0, 0};
 
-    public void processBitmap(int[][][] bitMap) {
+    public void processYCrCb(byte[] bitMap) {
         message = "";
 
-        for (int[][] row : bitMap) {
-            for (int[] pixel : row) {
-                if (pixel[1] > blueMin && lPixel[1] < blueMin)
-                    message += "<blue>";
-                else if (pixel[1] < blueMin && lPixel[1] > blueMin)
-                    message += "</blue>";
-                else if (pixel[2] > redMin && lPixel[2] < redMin)
-                    message += "<red>";
-                else if (pixel[2] < redMin && lPixel[2] > redMin)
-                    message += "</red>";
+        for (int i = 0; i < bitMap.length; i += 3) {
+            if (bitMap[i] > intensityRange * 4.0 / 5.0 + intensityRangeMin)
+                message += "█";
+            else if (bitMap[i] > intensityRange * 3.0 / 5.0 + intensityRangeMin)
+                message += "▓";
+            else if (bitMap[i] > intensityRange * 2.0 / 5.0 + intensityRangeMin)
+                message += "▒";
+            else if (bitMap[i] > intensityRange / 5.0 + intensityRangeMin)
+                message += "░";
+            else
+                message += " ";
 
-
-                if (pixel[0] > intensityRange * 4.0 / 5.0 + intensityRangeMin)
-                    message += "█";
-                else if (pixel[0] > intensityRange * 3.0 / 5.0 + intensityRangeMin)
-                    message += "▓";
-                else if (pixel[0] > intensityRange * 2.0 / 5.0 + intensityRangeMin)
-                    message += "▒";
-                else if (pixel[0] > intensityRange / 5.0 + intensityRangeMin)
-                    message += "░";
-                else
-                    message += " ";
-
-                lPixel = pixel.clone();
-            }
-            message += "\n";
+            if (i % width == width - 1)
+                message += "\n";
         }
 
         sendImage();
