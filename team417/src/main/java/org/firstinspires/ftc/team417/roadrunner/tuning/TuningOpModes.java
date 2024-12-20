@@ -22,7 +22,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpModeManager;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeRegistrar;
 
 import org.firstinspires.ftc.robotcore.internal.opmode.OpModeMeta;
-import org.firstinspires.ftc.team417.CompetitionBasketAutoFastBot;
+import org.firstinspires.ftc.team417.CompetitionSampleAutoSlowBot;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.TankDrive;
 import org.firstinspires.ftc.team417.roadrunner.ThreeDeadWheelLocalizer;
@@ -56,7 +56,7 @@ public final class TuningOpModes {
         DriveViewFactory dvf;
         if (DRIVE_CLASS.equals(MecanumDrive.class)) {
             dvf = hardwareMap -> {
-                MecanumDrive md = new MecanumDrive(CompetitionBasketAutoFastBot.kinematicType, hardwareMap, null, null, new Pose2d(0, 0, 0));
+                MecanumDrive md = new MecanumDrive(CompetitionSampleAutoSlowBot.kinematicType, hardwareMap, null, null, new Pose2d(0, 0, 0));
 
                 List<Encoder> leftEncs = new ArrayList<>(), rightEncs = new ArrayList<>();
                 List<Encoder> parEncs = new ArrayList<>(), perpEncs = new ArrayList<>();

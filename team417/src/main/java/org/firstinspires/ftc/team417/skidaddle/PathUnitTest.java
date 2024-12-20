@@ -11,13 +11,13 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.wilyworks.common.WilyWorks;
 
-import org.firstinspires.ftc.team417.BaseOpModeFastBot;
+import org.firstinspires.ftc.team417.SlowBotTeleOp;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 @Config
 @TeleOp(name = "PathUnitTest")
-public class PathUnitTest extends BaseOpModeFastBot {
+public class PathUnitTest extends SlowBotTeleOp {
 
     public double startHeading;
 
@@ -29,7 +29,7 @@ public class PathUnitTest extends BaseOpModeFastBot {
     @Override
     public void runOpMode() {
         boolean pathing = false;
-        double currentTime = TIME.seconds();
+        double currentTime = currentTime();
         double lastTime = currentTime;
         double deltaTime;
 
@@ -46,7 +46,7 @@ public class PathUnitTest extends BaseOpModeFastBot {
         waitForStart();
 
         while (opModeIsActive()) {
-            currentTime = TIME.seconds();
+            currentTime = currentTime();
             deltaTime = currentTime - lastTime;
 
             TelemetryPacket packet = new TelemetryPacket();
@@ -157,7 +157,7 @@ public class PathUnitTest extends BaseOpModeFastBot {
         than the other, it "wins out". This variable is then multiplied by our FUDGE_FACTOR.
         The FUDGE_FACTOR is the number of degrees that we can adjust the arm by with this function. */
 
-        armPositionFudgeFactor = FUDGE_FACTOR * (gamepad1.right_trigger + (-gamepad1.left_trigger));
+        armPositionFudgeFactor = FUDGE_FACTOR_LIFT * (gamepad1.right_trigger + (-gamepad1.left_trigger));
 
         /* Here we implement a set of if else loops to set our arm to different scoring positions.
         We check to see if a specific button is pressed, and then move the arm (and sometimes
@@ -169,7 +169,7 @@ public class PathUnitTest extends BaseOpModeFastBot {
         if (gamepad1.right_bumper) {
             /* This is the intaking/collecting arm position */
             armPosition = ARM_COLLECT;
-            wrist.setPosition(WRIST_FOLDED_OUT);
+            wrist.setPosition(WRIST_OUT);
             intake1.setPower(INTAKE_COLLECT);
             intakeEnabled = true;
         } else if (gamepad1.left_bumper) {
@@ -183,21 +183,21 @@ public class PathUnitTest extends BaseOpModeFastBot {
             back to folded inside the robot. This is also the starting configuration */
             intake1.setPower(INTAKE_OFF);
             armPosition = ARM_COLLAPSED_INTO_ROBOT;
-            wrist.setPosition(WRIST_FOLDED_IN);
+            wrist.setPosition(WRIST_IN);
         } else if (gamepad1.dpad_right) {
             /* This is the correct height to score SPECIMEN on the HIGH CHAMBER */
             armPosition = ARM_SCORE_SPECIMEN;
-            wrist.setPosition(WRIST_SCORE_SPECIMEN);
+            wrist.setPosition(WRIST_IN);
         }
 
         /* Here we set the target position of our arm to match the variable that was selected
         by the driver.
         We also set the target velocity (speed) the motor runs at, and use setMode to run it.*/
-        armMotor1.setTargetPosition((int) (armPosition + armPositionFudgeFactor));
+        liftMotor1.setTargetPosition((int) (armPosition + armPositionFudgeFactor));
 
-        armMotor1.setVelocity(ARM_VELOCITY);
-        armMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor1.setVelocity(2120);
+        liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        telemetry.addData("armPosition", armMotor1.getCurrentPosition());
+        telemetry.addData("armPosition", liftMotor1.getCurrentPosition());
     }
 }
