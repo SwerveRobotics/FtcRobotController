@@ -147,7 +147,7 @@ public final class MecanumDrive {
                 otos.linearScalar = 1.07;
                 otos.angularScalar = 0.9998;
 
-                pinpoint.ticksPerMm = 0;
+                pinpoint.ticksPerMm = 19.66;
                 pinpoint.xReversed = false;
                 pinpoint.yReversed = false;
                 pinpoint.xOffset = 0;
