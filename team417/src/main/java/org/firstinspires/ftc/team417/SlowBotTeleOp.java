@@ -18,6 +18,7 @@ import org.firstinspires.ftc.team417.skidaddle.DPoint;
 @Config
 public class SlowBotTeleOp extends BaseOpModeSlowBot {
     private double speedMultiplier = 1;
+    public double targetHeading;
     boolean curve = true;
     boolean fieldCentered = false;
 
@@ -88,6 +89,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void prepareRobot(Pose2d startingPose) {
+        targetHeading = startingPose.heading.log();
+
         drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
         initializeHardware();
 
@@ -101,14 +104,31 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         telemetry.update();
     }
 
+    public final double HEADING_HOLD_EPSILON = 0.01;
+    public final double HEADING_HOLD_KP = 1;
+
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
-        // Only on GamePad1, the right and left bumpers are speed multipliers
+        // Only on GamePad1, the right and left triggers are speed multipliers
         speedMultiplier = 0.5;
-        if (gamepad1.left_bumper) {
+        if (gamepad1.left_trigger > 0.1) {
             speedMultiplier *= 0.5;
         }
-        if (gamepad1.right_bumper) {
+        if (gamepad1.right_trigger > 0.1) {
             speedMultiplier *= 2;
+        }
+
+        // Use the left and right bumpers as shortcuts to turn 90 degrees
+        if (gamepad1.left_bumper) {
+            targetHeading -= Math.PI / 2;
+        }
+        if (gamepad1.right_bumper) {
+            targetHeading += Math.PI / 2;
+        }
+
+        // Normal
+        targetHeading = ((targetHeading + Math.PI) % (2 * Math.PI)) - Math.PI;
+        if (targetHeading < -Math.PI) {
+            targetHeading += 2 * Math.PI;
         }
 
         // When slides are out, slow down robot
@@ -139,13 +159,26 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         rotatedY = x * Math.sin(theta) + y * Math.cos(theta);
 
         // Set the drive motor powers according to the gamepad input:
-        drive.setDrivePowers(new PoseVelocity2d(
-                new Vector2d(
-                        -rotatedY * speedMultiplier,
-                        -rotatedX * speedMultiplier
-                ),
-                -rot * speedMultiplier
-        ));
+        if (Math.abs(rot) > HEADING_HOLD_EPSILON) {
+            drive.setDrivePowers(new PoseVelocity2d(
+                    new Vector2d(
+                            -rotatedY * speedMultiplier,
+                            -rotatedX * speedMultiplier
+                    ),
+                    -rot * speedMultiplier
+            ));
+            targetHeading = drive.pose.heading.log();
+        } else {
+            double correction = shortestAngleDistance(drive.pose.heading.log(), targetHeading) * HEADING_HOLD_KP;
+
+            drive.setDrivePowers(new PoseVelocity2d(
+                    new Vector2d(
+                            -rotatedY * speedMultiplier,
+                            -rotatedX * speedMultiplier
+                    ),
+                    correction
+            ));
+        }
 
         // Press the D-Pad down button ONCE (do not hold)
         if (gamepad1.dpad_down) {
@@ -154,6 +187,22 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
         // Update the current pose:
         drive.updatePoseEstimate();
+    }
+
+    // Method to calculate signed shortest distance between two angles
+    public static double shortestAngleDistance(double theta1, double theta2) {
+        // Calculate the raw difference
+        double deltaTheta = theta2 - theta1;
+
+        // Wrap into the range [-pi, pi]
+        deltaTheta = (deltaTheta + Math.PI) % (2 * Math.PI) - Math.PI;
+
+        // Handle edge case due to negative modulo in Java
+        if (deltaTheta < -Math.PI) {
+            deltaTheta += 2 * Math.PI;
+        }
+
+        return deltaTheta;
     }
 
     public void controlMechanismsWithGamepads() {
