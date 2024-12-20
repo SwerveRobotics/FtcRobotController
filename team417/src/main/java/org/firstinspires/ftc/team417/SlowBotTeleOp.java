@@ -105,7 +105,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public final double HEADING_HOLD_EPSILON = 0.01;
-    public final double HEADING_HOLD_KP = 1;
+    public static double HEADING_HOLD_KP = 0; // Disable correction by setting kP to 0
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
         // Only on GamePad1, the right and left triggers are speed multipliers
