@@ -128,7 +128,7 @@ public final class MecanumDrive {
 
                 inPerTick = 1;
                 lateralInPerTick = 0.792;
-                trackWidthTicks = 14.4;
+                trackWidthTicks = 15.17;
 
                 kS = 0.719;
                 kV = 0.181;
@@ -150,8 +150,8 @@ public final class MecanumDrive {
                 pinpoint.ticksPerMm = 19.66;
                 pinpoint.xReversed = false;
                 pinpoint.yReversed = false;
-                pinpoint.xOffset = 0;
-                pinpoint.yOffset = 0;
+                pinpoint.xOffset = 15.2;
+                pinpoint.yOffset = 81.9;
             }
         }
 
