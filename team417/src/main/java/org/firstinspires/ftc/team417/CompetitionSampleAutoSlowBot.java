@@ -5,12 +5,10 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
-@Autonomous (name = "AutoSpecimenXDrive", group = "SlowBot", preselectTeleOp = "CompetitionTeleOp")
-@Disabled
+@Autonomous (name = "AutoSpecimen", group = "SlowBot", preselectTeleOp = "TeleOp")
 public class CompetitionSampleAutoSlowBot extends BaseOpModeSlowBot {
     @Override
     public void runOpMode () {
