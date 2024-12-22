@@ -7,14 +7,14 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.team417.FastBotTeleOp;
+import org.firstinspires.ftc.team417.SlowBotTeleOp;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 
 @TeleOp(name = "Distance", group = "Concept")
 @Config
-public class DistanceSensorConcept extends FastBotTeleOp {
+public class DistanceSensorConcept extends SlowBotTeleOp {
     UltrasonicDistanceSensor leftSonic;
     UltrasonicDistanceSensor rightSonic;
 
@@ -49,7 +49,7 @@ public class DistanceSensorConcept extends FastBotTeleOp {
             telemetry.addData("X distance", calculateDistance(dR, h, rightInfo, false));
             telemetry.addData("Y distance", calculateDistance(dL, h, leftInfo, true));
 
-            controlDrivebaseWithGamepads(true, false, packet);
+            controlDrivebaseWithGamepads(true, false);
 
             controlMechanismsWithGamepads();
 

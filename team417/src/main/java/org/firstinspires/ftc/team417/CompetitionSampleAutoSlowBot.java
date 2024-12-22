@@ -9,12 +9,14 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 @Autonomous (name = "AutoSpecimen", group = "SlowBot", preselectTeleOp = "TeleOp")
-public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
+public class CompetitionSampleAutoSlowBot extends BaseOpModeSlowBot {
     @Override
     public void runOpMode () {
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(-90));  // sets the beginning pose relative to the robot and  cxc
         MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
         initializeHardware();
+
+        // TODO: Write the trajectory code (current code is placeholder)
         Action trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-90))
                 // after disp arm up

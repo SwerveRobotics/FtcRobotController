@@ -16,7 +16,9 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 @Disabled
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
-    static MecanumDrive drive;
+    public final static boolean USE_DISTANCE = true;
+
+    public static MecanumDrive drive;
 
     /* This constant is the number of encoder ticks for each degree of rotation of the arm.
     To find this, we first need to consider the total gear reduction powering our arm.
@@ -27,24 +29,24 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     We can multiply these two ratios together to get our final reduction of ~254.47:1.
     The motor's encoder counts 28 times per rotation. So in total you should see about 7125.16
     counts per rotation of the arm. We divide that by 360 to get the counts per degree. */
-    final static double ARM_TICKS_PER_DEGREE = 19.7924893140647; //exact fraction is (194481/9826)
+    public final static double ARM_TICKS_PER_DEGREE = 19.7924893140647; //exact fraction is (194481/9826)
 
     // TODO: implement this
-    final static double INTAKE_DEPOSIT = 0.0;
-    final static double INTAKE_COLLECT = 0.0;
-    final static double INTAKE_OFF = 0.0;
+    public final static double INTAKE_DEPOSIT = 0.0;
+    public final static double INTAKE_COLLECT = 0.0;
+    public final static double INTAKE_OFF = 0.0;
 
-    final static double LIFT_MAX = 1200;
-    final static double LIFT_SCORE_HIGH_BASKET = 1220;
-    final static double LIFT_SCORE_LOW_BASKET = 750;
-    final static double LIFT_SCORE_HIGH_SPECIMEN = 850;
-    final static double LIFT_GET_SPECIMEN = 650;
-    final static double LIFT_COLLECT = 0.0;
-    final static double LIFT_MIN = 0.0;
-    final static double LIFT_CLEAR_BARRIER = 0.0;
-    final static double LIFT_HOME_POSITION = 0;
-    final static double LIFT_NO_SLIDE_ZONE_MIN = 100;
-    final static double LIFT_NO_SLIDE_ZONE_MAX = 622;
+    public final static double LIFT_MAX = 1200;
+    public final static double LIFT_SCORE_HIGH_BASKET = 1220;
+    public final static double LIFT_SCORE_LOW_BASKET = 750;
+    public final static double LIFT_SCORE_HIGH_SPECIMEN = 850;
+    public final static double LIFT_GET_SPECIMEN = 650;
+    public final static double LIFT_COLLECT = 0.0;
+    public final static double LIFT_MIN = 0.0;
+    public final static double LIFT_CLEAR_BARRIER = 0.0;
+    public final static double LIFT_HOME_POSITION = 0;
+    public final static double LIFT_NO_SLIDE_ZONE_MIN = 100;
+    public final static double LIFT_NO_SLIDE_ZONE_MAX = 622;
 
     public static double f_coefficient = 0.5;
 
@@ -66,22 +68,22 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public final static double XDRIVE_Y_SCORE_POSE = 33;
 
     // This provides an error tolerance for lift and slide
-    final static double TICKS_EPSILON = 3.00;
+    public final static double TICKS_EPSILON = 3.00;
 
     // RC 17.50
     // DEV 17.75
-    final static double ROBOT_LENGTH = 17.50;
+    public final static double ROBOT_LENGTH = 17.50;
     // RC 16.50
     // DEV 18.50
-    final static double ROBOT_WIDTH = 16.50;
+    public final static double ROBOT_WIDTH = 16.50;
 
     //motors
-    static CRServo intake1;
-    static CRServo intake2;
-    static Servo wrist;
-    static DcMotorEx liftMotor1;
-    static DcMotorEx liftMotor2;
-    static DcMotorEx slideMotor;
+    public static CRServo intake1;
+    public static CRServo intake2;
+    public static Servo wrist;
+    public static DcMotorEx liftMotor1;
+    public static DcMotorEx liftMotor2;
+    public static DcMotorEx slideMotor;
 
     class ControlAction extends RobotAction {
         double targetSlidePosition;
