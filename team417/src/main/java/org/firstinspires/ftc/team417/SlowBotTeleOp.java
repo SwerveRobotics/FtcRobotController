@@ -91,7 +91,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     public void prepareRobot(Pose2d startingPose) {
         targetHeading = startingPose.heading.log();
 
-        drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, startingPose);
+        drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
         initializeHardware();
 
         startHeading = startingPose.heading.log();

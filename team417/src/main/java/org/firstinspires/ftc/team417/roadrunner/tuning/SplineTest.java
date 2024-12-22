@@ -5,7 +5,6 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
-import org.firstinspires.ftc.team417.CompetitionSampleAutoSlowBot;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.TankDrive;
 
@@ -14,7 +13,7 @@ public final class SplineTest extends LinearOpMode {
     public void runOpMode() {
         Pose2d beginPose = new Pose2d(0, 0, 0);
         if (TuningOpModes.DRIVE_CLASS.equals(MecanumDrive.class)) {
-            MecanumDrive drive = new MecanumDrive(CompetitionSampleAutoSlowBot.kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
+            MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
             waitForStart();
 

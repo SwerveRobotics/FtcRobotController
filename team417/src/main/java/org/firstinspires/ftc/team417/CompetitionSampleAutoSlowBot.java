@@ -13,7 +13,7 @@ public class CompetitionSampleAutoSlowBot extends BaseOpModeSlowBot {
     @Override
     public void runOpMode () {
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(-90));  // sets the beginning pose relative to the robot and  cxc
-        MecanumDrive drive = new MecanumDrive(kinematicType, hardwareMap, telemetry, gamepad1, beginPose);
+        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
         initializeHardware();
 
         // TODO: Write the trajectory code (current code is placeholder)
