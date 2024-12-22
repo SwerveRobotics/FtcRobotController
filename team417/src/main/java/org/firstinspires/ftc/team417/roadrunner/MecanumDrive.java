@@ -84,7 +84,7 @@ import java.util.List;
 
 @Config
 public final class MecanumDrive {
-    public final KinematicType kinematicType;
+    public KinematicType kinematicType;
 
     public static class Params {
         Params() {
@@ -290,7 +290,7 @@ public final class MecanumDrive {
         switch (getBotName()) {
             case "DevBot":
                 return DriveParameters.DEVBOT_MECANUM;
-            case "We don't have this robot":
+            case "ROBOT NOT EXTANT":
                 return DriveParameters.DEVBOT_X;
             case "417-RC":
                 return DriveParameters.FASTBOT_MECANUM;
@@ -423,13 +423,10 @@ public final class MecanumDrive {
     }
 
     // Constructor for the Mecanum Drive object.
-    public MecanumDrive(KinematicType kinematicType, HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
-        this.kinematicType = kinematicType;
+    public MecanumDrive(HardwareMap hardwareMap, Telemetry telemetry, Gamepad gamepad, Pose2d pose) {
         initializeKinematics();
 
         this.pose = pose;
-
-        kinematics.kinematicType = kinematicType;
 
         WilyWorks.setStartPose(pose, new PoseVelocity2d(new Vector2d(0, 0), 0));
 
@@ -482,6 +479,8 @@ public final class MecanumDrive {
 
                 leftFront.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+
+                kinematicType = KinematicType.MECANUM;
                 break;
             }
 
@@ -511,6 +510,8 @@ public final class MecanumDrive {
 
                 leftFront.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+
+                kinematicType = KinematicType.X;
                 break;
             }
 
@@ -539,6 +540,8 @@ public final class MecanumDrive {
                 rightFront.setDirection(DcMotorEx.Direction.REVERSE);
                 rightBack.setDirection(DcMotorEx.Direction.REVERSE);
                 leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+
+                kinematicType = KinematicType.MECANUM;
                 break;
             }
 
@@ -565,9 +568,13 @@ public final class MecanumDrive {
 
 //                leftFront.setDirection(DcMotorEx.Direction.REVERSE);
 //                leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+
+                kinematicType = KinematicType.X;
                 break;
             }
         }
+
+        kinematics.kinematicType = kinematicType;
 
         // Initialize the tracking drivers, if any:
         initializeOtosDriver();
