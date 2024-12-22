@@ -26,7 +26,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
     /* A number in degrees that the triggers can adjust the arm position by */
     // TODO: needs tuning
-    public final double MAX_SLIDE_VELOCITY = 2000 ; // Ticks per second
     public final double FUDGE_FACTOR_LIFT = 200; // Ticks
 
     /* Variables that are used to set the arm to a specific position */
@@ -290,8 +289,10 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
             liftPositionFudgeFactor = FUDGE_FACTOR_LIFT * (gamepad2.right_trigger - gamepad2.left_trigger);
 
-            // Set the slide velocity to magnitude of the 'right stick y' multiplied by the speed multiplier (MAX_SLIDE_VELOCITY)
-            double slideVelocity = -MAX_SLIDE_VELOCITY * gamepad2.right_stick_y;
+            // Set the slide velocity to magnitude of the 'right stick y' multiplied by the speed multiplier (SLIDE_VELOCITY)
+            double slideVelocity = -SLIDE_VELOCITY_MAX * gamepad2.right_stick_y;
+            telemetry.addData("Slide target Velocity: ", slideVelocity);
+
 
 
 
@@ -423,7 +424,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         telemetry.addData("Lift Motor 2 ticks: ", liftMotor2.getCurrentPosition());
 
         telemetry.addData("Slide motor ticks: ", slideMotor.getCurrentPosition());
-
+        telemetry.addData("Slide motor velocity: ", slideMotor.getVelocity());
         telemetry.update();
     }
 }

@@ -138,10 +138,16 @@ public class HolonomicKinematics {
                 );
             case X:
                 return new WheelVelocities<>(
-                        (t.linearVel.x.minus(t.linearVel.y).minus(t.angVel.times(trackWidth))).times(sqrt(2.0)),
-                        (t.linearVel.x.plus(t.linearVel.y).minus(t.angVel.times(trackWidth))).times(sqrt(2.0)),
-                        (t.linearVel.x.minus(t.linearVel.y).plus(t.angVel.times(trackWidth))).times(sqrt(2.0)),
-                        (t.linearVel.x.plus(t.linearVel.y).plus(t.angVel.times(trackWidth))).times(sqrt(2.0))
+                        t.angVel.times(trackWidth).unaryMinus().times(1/sqrt(2.0)).plus(t.linearVel.x.minus(t.linearVel.y)),
+                        t.angVel.times(trackWidth).unaryMinus().times(1/sqrt(2.0)).plus(t.linearVel.x.plus(t.linearVel.y)),
+                        t.angVel.times(trackWidth).times(1/sqrt(2.0)).plus(t.linearVel.x.minus(t.linearVel.y)),
+                        t.angVel.times(trackWidth).times(1/sqrt(2.0)).plus(t.linearVel.x.plus(t.linearVel.y))
+
+
+//                        (t.linearVel.x.minus(t.linearVel.y).minus(t.angVel.times(trackWidth))),
+//                        (t.linearVel.x.plus(t.linearVel.y).minus(t.angVel.times(trackWidth))),
+//                        (t.linearVel.x.minus(t.linearVel.y).plus(t.angVel.times(trackWidth))),
+//                        (t.linearVel.x.plus(t.linearVel.y).plus(t.angVel.times(trackWidth)))
                 );
             default:
                 throw new IllegalStateException("Unexpected kinematicType: " + kinematicType);

@@ -50,11 +50,15 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
     public static double f_coefficient = 0.5;
 
+    // TODO: Rename variables to make it have a position indicator
     public final static double SLIDE_MAX = 10000.0;
     public final static double SLIDE_COLLECT = 0.0;
     public final static double SLIDE_SCORE_IN_BASKET = 0;
     public final static double SLIDE_MIN = 0.0;
     public final static double SLIDE_HOME_POSITION = 0;
+
+    // Both hardware and software slide velocity limit is set to 2000 ticks per second
+    public final static double SLIDE_VELOCITY_MAX = 2500;
 
     public final static double WRIST_MAX = 0.0;
     public final static double WRIST_OUT = 0.5;
@@ -134,7 +138,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             if(positionInTicks >= SLIDE_MIN && positionInTicks <= SLIDE_MAX){
                 slideMotor.setPower(1.0);
                 slideMotor.setTargetPosition((int) positionInTicks);
-                slideMotor.setVelocity(2000); //TODO: make this a variable
+                slideMotor.setVelocity(SLIDE_VELOCITY_MAX * 2);
                 slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
         }
