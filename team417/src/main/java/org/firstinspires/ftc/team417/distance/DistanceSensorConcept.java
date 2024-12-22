@@ -49,9 +49,13 @@ public class DistanceSensorConcept extends SlowBotTeleOp {
             telemetry.addData("X distance", calculateDistance(dR, h, rightInfo, false));
             telemetry.addData("Y distance", calculateDistance(dL, h, leftInfo, true));
 
-            controlDrivebaseWithGamepads(true, false);
+            // deltaTime will be the actual current time minus the currentTime of the last loop
+            double deltaTime = currentTime() - previousTime;
+            previousTime = currentTime();
 
-            controlMechanismsWithGamepads();
+            controlDrivebaseWithGamepads(true, false, deltaTime);
+
+            controlMechanismsWithGamepads(deltaTime);
 
             telemeterData();
 
