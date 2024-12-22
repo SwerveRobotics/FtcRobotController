@@ -51,19 +51,19 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static double f_coefficient = 0.5;
 
     // TODO: Rename variables to make it have a position indicator
-    final static double SLIDE_MAX = 10000.0;
-    final static double SLIDE_COLLECT = 0.0;
-    final static double SLIDE_SCORE_IN_BASKET = 0;
-    final static double SLIDE_MIN = 0.0;
-    final static double SLIDE_HOME_POSITION = 0;
+    public final static double SLIDE_MAX = 10000.0;
+    public final static double SLIDE_COLLECT = 0.0;
+    public final static double SLIDE_SCORE_IN_BASKET = 0;
+    public final static double SLIDE_MIN = 0.0;
+    public final static double SLIDE_HOME_POSITION = 0;
 
     // Both hardware and software slide velocity limit is set to 2000 ticks per second
-    final static double SLIDE_VELOCITY_MAX = 2500;
+    public final static double SLIDE_VELOCITY_MAX = 2500;
 
-    final static double WRIST_MAX = 0.0;
-    final static double WRIST_OUT = 0.5;
-    final static double WRIST_IN = 0.0;
-    final static double WRIST_MIN = 0.0;
+    public final static double WRIST_MAX = 0.0;
+    public final static double WRIST_OUT = 0.5;
+    public final static double WRIST_IN = 0.0;
+    public final static double WRIST_MIN = 0.0;
 
     public final static double XDRIVE_Y_SCORE_POSE = 33;
 

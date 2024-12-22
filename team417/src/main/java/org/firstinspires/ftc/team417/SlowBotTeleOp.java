@@ -26,7 +26,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
     /* A number in degrees that the triggers can adjust the arm position by */
     // TODO: needs tuning
-    final double FUDGE_FACTOR_LIFT = 200; // Ticks
+    public final double FUDGE_FACTOR_LIFT = 200; // Ticks
 
     /* Variables that are used to set the arm to a specific position */
     double liftPositionFudgeFactor;
