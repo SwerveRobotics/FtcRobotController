@@ -65,7 +65,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public final static double WRIST_IN = 0.0;
     public final static double WRIST_MIN = 0.0;
 
-    public final static double XDRIVE_Y_SCORE_POSE = 33;
+    public final static double XDRIVE_Y_SCORE_POSE = 39;
 
     // This provides an error tolerance for lift and slide
     public final static double TICKS_EPSILON = 3.00;
@@ -100,11 +100,12 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         public boolean run(double elapsedTime) {
             // Once lift is ABOVE the no slide zone, move the slide & wrist out at the same time
             if(isCrossingNoSlideZone(targetLiftPosition)) {
-                if(getSlidePosition() <= SLIDE_HOME_POSITION + TICKS_EPSILON) {
+                if (getSlidePosition() > SLIDE_HOME_POSITION + TICKS_EPSILON) {
+                    // moves the slides in if lift going up and not in home pos
                     moveWrist(WRIST_IN);
                     moveSlide(SLIDE_HOME_POSITION);
                 } else {
-                    moveWrist(WRIST_IN);
+                    // if slide in home position move lift up
                     moveLift(targetLiftPosition);
                 }
             } else {
@@ -117,12 +118,14 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             double liftError = Math.abs(getLiftPosition() - targetLiftPosition);
             double slideError = Math.abs(getSlidePosition() - targetSlidePosition);
 
+            telemetry.addData("Slide Position: ", getSlidePosition());
+            telemetry.addData("Target Slide Position: ", targetSlidePosition);
+
+
             // TODO: Check if the EPSILON is different for either of the errors
             // Checks if the slide or the lift is in the correct spot
-            if (liftError < TICKS_EPSILON || slideError < TICKS_EPSILON) {
-                return false;
-            }
-            return false;
+            // returns true to call again
+            return liftError > TICKS_EPSILON || slideError > TICKS_EPSILON;
         }
     }
 
@@ -220,7 +223,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         }
         moveLift(LIFT_HOME_POSITION);
         while(getLiftPosition() >= TICKS_EPSILON) {
-
+            System.out.printf("Lift loop: %.0f\n", getLiftPosition());
         }
      }
     // The time since the robot started in seconds
@@ -231,6 +234,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public void initializeHardware() {
         // Only initialize arm if it's not already initialized.
         // This is CRUCIAL for transitioning between Auto and TeleOp.
+        // TODO: Dont forget to add the commented code back into if statment
         if (true) { // liftMotor1 == null && liftMotor2 == null && slideMotor == null) {
             liftMotor1 = hardwareMap.get(DcMotorEx.class, "lift1");
             liftMotor2 = hardwareMap.get(DcMotorEx.class, "lift2");
