@@ -6,6 +6,7 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
@@ -574,6 +575,7 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
     public DeviceMapping<SparkFunOTOS>             sparkFunOTOS             = new DeviceMapping<>(SparkFunOTOS.class);
     public DeviceMapping<GoBildaPinpointDriver>    goBildaPinpointDrivers   = new DeviceMapping<>(GoBildaPinpointDriver.class);
     public DeviceMapping<UltrasonicDistanceSensor> ultrasonicDistanceSensor = new DeviceMapping<>(UltrasonicDistanceSensor.class);
+    public DeviceMapping<RevBlinkinLedDriver>      revBlinkinLedDriver      = new DeviceMapping<>(RevBlinkinLedDriver.class);
     protected Map<String, List<HardwareDevice>>    allDevicesMap            = new HashMap<>();
     protected List<HardwareDevice>                 allDevicesList           = new ArrayList<>();
 
@@ -670,6 +672,9 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
         } else if (UltrasonicDistanceSensor.class.isAssignableFrom(klass)) {
             device = new WilyUltrasonicDistanceSensor(deviceName);
             ultrasonicDistanceSensor.put(deviceName, (WilyUltrasonicDistanceSensor) device);
+        } else if (RevBlinkinLedDriver.class.isAssignableFrom(klass)) {
+            device = new RevBlinkinLedDriver(null, 0);
+            revBlinkinLedDriver.put(deviceName, (RevBlinkinLedDriver) device);
         } else {
             throw new IllegalArgumentException("Unexpected device type for HardwareMap");
         }
