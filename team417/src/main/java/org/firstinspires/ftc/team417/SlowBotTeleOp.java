@@ -32,7 +32,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     double liftPositionFudgeFactor;
 
     // This variable remembers the time in the previous loop to use for slide velocity
-    double previousTime = 0.0;
+    public double previousTime = 0.0;
 
     boolean intakeEnabled = false;
     boolean buttonAPressed = false;
@@ -56,9 +56,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             // Disable field-centric always!
             // toggleFieldCentricity();
 
-            controlDrivebaseWithGamepads(curve, fieldCentered);
+            // deltaTime will be the actual current time minus the currentTime of the last loop
+            double deltaTime = currentTime() - previousTime;
+            previousTime = currentTime();
 
-            controlMechanismsWithGamepads();
+            controlDrivebaseWithGamepads(curve, fieldCentered, deltaTime);
+
+            controlMechanismsWithGamepads(deltaTime);
 
             if (drive.colorProcessor != null) {
                 drive.colorProcessor.update();
@@ -104,9 +108,12 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public final double HEADING_HOLD_EPSILON = 0.01;
-    public static double HEADING_HOLD_KP = 0; // Disable correction by setting kP to 0
+    public static double HEADING_HOLD_KP = 0.5; // Disable correction by setting kP to 0
 
-    public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric) {
+    double timer = 0;
+    public static double HEADING_HOLD_DELAY = 0.1; // How long the robot waits before setting the new heading as target
+
+    public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric, double deltaTime) {
         // Only on GamePad1, the right and left triggers are speed multipliers
         speedMultiplier = 0.5;
         if (gamepad1.left_trigger > 0.1) {
@@ -158,7 +165,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         rotatedY = x * Math.sin(theta) + y * Math.cos(theta);
 
         // Set the drive motor powers according to the gamepad input:
-        if (Math.abs(rot) > HEADING_HOLD_EPSILON) {
+        if (Math.abs(rot) > HEADING_HOLD_EPSILON || timer > 0) {
             drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
                             -rotatedY * speedMultiplier,
@@ -167,6 +174,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                     -rot * speedMultiplier
             ));
             targetHeading = drive.pose.heading.log();
+            timer -= deltaTime;
         } else {
             double correction = shortestAngleDistance(drive.pose.heading.log(), targetHeading) * HEADING_HOLD_KP;
 
@@ -177,6 +185,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                     ),
                     correction
             ));
+            timer = HEADING_HOLD_DELAY;
         }
 
         // Press the D-Pad down button ONCE (do not hold)
@@ -204,7 +213,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         return deltaTheta;
     }
 
-    public void controlMechanismsWithGamepads() {
+    public void controlMechanismsWithGamepads(double deltaTime) {
 
             /* Here we handle the three buttons that have direct control of the intake speed.
             These control the continuous rotation servo that pulls elements into the robot,
@@ -284,9 +293,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             double slideVelocity = -SLIDE_VELOCITY_MAX * gamepad2.right_stick_y;
             telemetry.addData("Slide target Velocity: ", slideVelocity);
 
-            // deltaTime will be the actual current time minus the currentTime of the last loop
-            double deltaTime = currentTime() - previousTime;
-            previousTime = currentTime();
+
 
 
             // Set slide position based on magnitude of speed (Position = Velocity * Time)
