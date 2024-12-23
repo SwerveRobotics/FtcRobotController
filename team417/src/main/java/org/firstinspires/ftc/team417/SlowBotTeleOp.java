@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team417;
 
+import android.util.Log;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -61,26 +63,40 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             double deltaTime = currentTime() - previousTime;
             previousTime = currentTime();
 
+            double startTime = currentTime();
             controlDrivebaseWithGamepads(curve, fieldCentered, deltaTime);
+            Log.d("SlowBotTeleOp.runOpMode", String.format("controlDrivebaseWithGamepads took %f milliseconds.", (currentTime() - startTime * 1000)));
 
+            startTime = currentTime();
             controlMechanismsWithGamepads(deltaTime);
+            Log.d("SlowBotTeleOp.runOpMode", String.format("controlMechanismsWithGamepads took %f milliseconds.", (currentTime() - startTime * 1000)));
 
             if (drive.colorProcessor != null) {
+                startTime = currentTime();
                 drive.colorProcessor.update();
+                Log.d("SlowBotTeleOp.runOpMode", String.format("colorProcessor.update took %f milliseconds.", (currentTime() - startTime * 1000)));
             }
 
+            startTime = currentTime();
             telemeterData();
+            Log.d("SlowBotTeleOp.runOpMode", String.format("telemeterData took %f milliseconds.", (currentTime() - startTime * 1000)));
 
+            startTime = currentTime();
             // 'packet' is the object used to send data to FTC Dashboard:
             TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+            Log.d("SlowBotTeleOp.runOpMode", String.format("MecanumDrive.getTelemetryPacket took %f milliseconds.", (currentTime() - startTime * 1000)));
 
+            startTime = currentTime();
             // Do the work now for all active Road Runner actions, if any:
             drive.doActionsWork(packet);
+            Log.d("SlowBotTeleOp.runOpMode", String.format("drive.doActionsWork took %f milliseconds.", (currentTime() - startTime * 1000)));
 
+            startTime = currentTime();
             // Draw the robot and field:
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
             MecanumDrive.sendTelemetryPacket(packet);
+            Log.d("SlowBotTeleOp.runOpMode", String.format("MecanumDrive.sendTelemetryPacket took %f milliseconds.", (currentTime() - startTime * 1000)));
 
         }
 

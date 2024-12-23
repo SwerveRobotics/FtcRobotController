@@ -16,78 +16,75 @@ public class DcMotorCache implements DcMotorEx {
         this.motor = motor;
     }
 
-//    private boolean isEpsilonEqual() {
-//        return Math.abs(0.001);
-//    }
+    private static final double EPSILON = 0.0001;
 
-    @Override
-    public void setMotorEnable() {
-        motor.setMotorEnable();
+    private boolean isNotEpsilonEqual(double a, double b) {
+        return Math.abs(a - b) > EPSILON;
     }
 
+    // Caching for setPower
+    private volatile double setPowerPowerCache = 0;
     @Override
-    public void setMotorDisable() {
-        motor.setMotorDisable();
+    public void setPower(double power) {
+        if (isNotEpsilonEqual(setPowerPowerCache, power)) {
+            motor.setPower(power);
+            setPowerPowerCache = power;
+        }
     }
 
-    @Override
-    public boolean isMotorEnabled() {
-        return motor.isMotorEnabled();
-    }
-
+    // Caching for setVelocity
+    private volatile double setVelocityCache = 0;
     @Override
     public void setVelocity(double angularRate) {
-        motor.setVelocity(angularRate);
+        if (isNotEpsilonEqual(setVelocityCache, angularRate)) {
+            motor.setVelocity(angularRate);
+            setVelocityCache = angularRate;
+        }
     }
 
+    // Caching for setVelocity with unit
+    private volatile double setVelocityWithUnitCache = 0;
     @Override
     public void setVelocity(double angularRate, AngleUnit unit) {
-        motor.setVelocity(angularRate, unit);
+        if (isNotEpsilonEqual(setVelocityWithUnitCache, angularRate)) {
+            motor.setVelocity(angularRate, unit);
+            setVelocityWithUnitCache = angularRate;
+        }
+    }
+
+    // Caching for setMode
+    private volatile RunMode setModeCache = RunMode.RUN_WITHOUT_ENCODER;
+    @Override
+    public void setMode(RunMode mode) {
+        if (mode != setModeCache) {
+            motor.setMode(mode);
+            setModeCache = mode;
+        }
+    }
+
+    // Caching for setZeroPowerBehavior
+    private volatile ZeroPowerBehavior setZeroPowerBehaviorCache = ZeroPowerBehavior.FLOAT;
+    @Override
+    public void setZeroPowerBehavior(ZeroPowerBehavior zeroPowerBehavior) {
+        if (zeroPowerBehavior != setZeroPowerBehaviorCache) {
+            motor.setZeroPowerBehavior(zeroPowerBehavior);
+            setZeroPowerBehaviorCache = zeroPowerBehavior;
+        }
     }
 
     @Override
-    public double getVelocity() {
-        return motor.getVelocity();
+    public ZeroPowerBehavior getZeroPowerBehavior() {
+        return motor.getZeroPowerBehavior();
     }
 
-    @Override
-    public double getVelocity(AngleUnit unit) {
-        return motor.getVelocity(unit);
-    }
-
-    @Override
-    public void setPIDCoefficients(RunMode mode, PIDCoefficients pidCoefficients) {
-        motor.setPIDCoefficients(mode, pidCoefficients);
-    }
-
-    @Override
-    public void setPIDFCoefficients(RunMode mode, PIDFCoefficients pidfCoefficients) throws UnsupportedOperationException {
-        motor.setPIDFCoefficients(mode, pidfCoefficients);
-    }
-
-    @Override
-    public void setVelocityPIDFCoefficients(double p, double i, double d, double f) {
-        motor.setVelocityPIDFCoefficients(p, i, d, f);
-    }
-
-    @Override
-    public void setPositionPIDFCoefficients(double p) {
-        motor.setPositionPIDFCoefficients(p);
-    }
-
-    @Override
-    public PIDCoefficients getPIDCoefficients(RunMode mode) {
-        return motor.getPIDCoefficients(mode);
-    }
-
-    @Override
-    public PIDFCoefficients getPIDFCoefficients(RunMode mode) {
-        return motor.getPIDFCoefficients(mode);
-    }
-
+    // Caching for setTargetPositionTolerance
+    private volatile int setTargetPositionToleranceCache = 0;
     @Override
     public void setTargetPositionTolerance(int tolerance) {
-        motor.setTargetPositionTolerance(tolerance);
+        if (tolerance != setTargetPositionToleranceCache) {
+            motor.setTargetPositionTolerance(tolerance);
+            setTargetPositionToleranceCache = tolerance;
+        }
     }
 
     @Override
@@ -105,14 +102,14 @@ public class DcMotorCache implements DcMotorEx {
         return motor.getCurrentAlert(unit);
     }
 
+    // Caching for setDirection
+    private volatile Direction setDirectionCache = Direction.FORWARD;
     @Override
-    public void setCurrentAlert(double current, CurrentUnit unit) {
-        motor.setCurrentAlert(current, unit);
-    }
-
-    @Override
-    public boolean isOverCurrent() {
-        return motor.isOverCurrent();
+    public void setDirection(Direction direction) {
+        if (direction != setDirectionCache) {
+            motor.setDirection(direction);
+            setDirectionCache = direction;
+        }
     }
 
     @Override
@@ -120,9 +117,14 @@ public class DcMotorCache implements DcMotorEx {
         return motor.getMotorType();
     }
 
+    // Caching for setMotorType
+    private volatile MotorConfigurationType setMotorTypeCache = null;
     @Override
     public void setMotorType(MotorConfigurationType motorType) {
-        motor.setMotorType(motorType);
+        if (!motorType.equals(setMotorTypeCache)) {
+            motor.setMotorType(motorType);
+            setMotorTypeCache = motorType;
+        }
     }
 
     @Override
@@ -135,19 +137,59 @@ public class DcMotorCache implements DcMotorEx {
         return motor.getPortNumber();
     }
 
+    // Caching for setTargetPosition
+    private volatile int setTargetPositionCache = 0;
     @Override
-    public void setZeroPowerBehavior(ZeroPowerBehavior zeroPowerBehavior) {
-        motor.setZeroPowerBehavior(zeroPowerBehavior);
+    public void setTargetPosition(int position) {
+        if (position != setTargetPositionCache) {
+            motor.setTargetPosition(position);
+            setTargetPositionCache = position;
+        }
+    }
+
+    // Caching for setCurrentAlert
+    private volatile double setCurrentAlertCache = 0;
+    @Override
+    public void setCurrentAlert(double current, CurrentUnit unit) {
+        if (current != setCurrentAlertCache) {
+            motor.setCurrentAlert(current, unit);
+            setCurrentAlertCache = current;
+        }
     }
 
     @Override
-    public ZeroPowerBehavior getZeroPowerBehavior() {
-        return motor.getZeroPowerBehavior();
+    public boolean isOverCurrent() {
+        return motor.isOverCurrent();
     }
 
+    // Caching for setMotorEnable
+    private volatile boolean setMotorEnableCache = false;
+    @Override
+    public void setMotorEnable() {
+        if (!setMotorEnableCache) {
+            motor.setMotorEnable();
+            setMotorEnableCache = true;
+        }
+    }
+
+    // Caching for setMotorDisable
+    private volatile boolean setMotorDisableCache = false;
+    @Override
+    public void setMotorDisable() {
+        if (!setMotorDisableCache) {
+            motor.setMotorDisable();
+            setMotorDisableCache = true;
+        }
+    }
+
+    // Caching for setPowerFloat
+    private volatile boolean setPowerFloatCache = false;
     @Override
     public void setPowerFloat() {
-        motor.setPowerFloat();
+        if (!setPowerFloatCache) {
+            motor.setPowerFloat();
+            setPowerFloatCache = true;
+        }
     }
 
     @Override
@@ -156,8 +198,78 @@ public class DcMotorCache implements DcMotorEx {
     }
 
     @Override
-    public void setTargetPosition(int position) {
-        motor.setTargetPosition(position);
+    public boolean isMotorEnabled() {
+        return motor.isMotorEnabled();
+    }
+
+    @Override
+    public double getVelocity() {
+        return motor.getVelocity();
+    }
+
+    @Override
+    public double getVelocity(AngleUnit unit) {
+        return motor.getVelocity(unit);
+    }
+
+    // Caching for setPIDCoefficients
+    private volatile RunMode setPIDCoefficientsModeCache = RunMode.RUN_WITHOUT_ENCODER;
+    private volatile PIDCoefficients setPIDCoefficientsCache = null;
+    @Override
+    public void setPIDCoefficients(RunMode mode, PIDCoefficients pidCoefficients) {
+        if (mode != setPIDCoefficientsModeCache || isNotEpsilonEqual(pidCoefficients.p, setPIDCoefficientsCache.p) || isNotEpsilonEqual(pidCoefficients.i, setPIDCoefficientsCache.i) || isNotEpsilonEqual(pidCoefficients.d, setPIDCoefficientsCache.d)) {
+            motor.setPIDCoefficients(mode, pidCoefficients);
+            setPIDCoefficientsModeCache = mode;
+            setPIDCoefficientsCache = pidCoefficients;
+        }
+    }
+
+    // Caching for setPIDFCoefficients
+    private volatile RunMode setPIDFCoefficientsModeCache = RunMode.RUN_WITHOUT_ENCODER;
+    private volatile PIDFCoefficients setPIDFCoefficientsCache = null;
+    @Override
+    public void setPIDFCoefficients(RunMode mode, PIDFCoefficients pidfCoefficients) throws UnsupportedOperationException {
+        if (mode != setPIDFCoefficientsModeCache || isNotEpsilonEqual(pidfCoefficients.p, setPIDFCoefficientsCache.p) || isNotEpsilonEqual(pidfCoefficients.i, setPIDFCoefficientsCache.i) || isNotEpsilonEqual(pidfCoefficients.d, setPIDFCoefficientsCache.d) || isNotEpsilonEqual(pidfCoefficients.f, setPIDFCoefficientsCache.f)) {
+            motor.setPIDFCoefficients(mode, pidfCoefficients);
+            setPIDFCoefficientsModeCache = mode;
+            setPIDFCoefficientsCache = pidfCoefficients;
+        }
+    }
+
+    // Caching for setVelocityPIDFCoefficients
+    private volatile double setVelocityPIDFCoefficientsPCache = 0;
+    private volatile double setVelocityPIDFCoefficientsICache = 0;
+    private volatile double setVelocityPIDFCoefficientsDCache = 0;
+    private volatile double setVelocityPIDFCoefficientsFCache = 0;
+    @Override
+    public void setVelocityPIDFCoefficients(double p, double i, double d, double f) {
+        if (isNotEpsilonEqual(p, setVelocityPIDFCoefficientsPCache) || isNotEpsilonEqual(i, setVelocityPIDFCoefficientsICache) || isNotEpsilonEqual(d, setVelocityPIDFCoefficientsDCache) || isNotEpsilonEqual(f, setVelocityPIDFCoefficientsFCache)) {
+            motor.setVelocityPIDFCoefficients(p, i, d, f);
+            setVelocityPIDFCoefficientsPCache = p;
+            setVelocityPIDFCoefficientsICache = i;
+            setVelocityPIDFCoefficientsDCache = d;
+            setVelocityPIDFCoefficientsFCache = f;
+        }
+    }
+
+    // Caching for setPositionPIDFCoefficients
+    private volatile double setPositionPIDFCoefficientsPCache = 0;
+    @Override
+    public void setPositionPIDFCoefficients(double p) {
+        if (isNotEpsilonEqual(p, setPositionPIDFCoefficientsPCache)) {
+            motor.setPositionPIDFCoefficients(p);
+            setPositionPIDFCoefficientsPCache = p;
+        }
+    }
+
+    @Override
+    public PIDCoefficients getPIDCoefficients(RunMode mode) {
+        return motor.getPIDCoefficients(mode);
+    }
+
+    @Override
+    public PIDFCoefficients getPIDFCoefficients(RunMode mode) {
+        return motor.getPIDFCoefficients(mode);
     }
 
     @Override
@@ -176,28 +288,13 @@ public class DcMotorCache implements DcMotorEx {
     }
 
     @Override
-    public void setMode(RunMode mode) {
-        motor.setMode(mode);
-    }
-
-    @Override
     public RunMode getMode() {
         return motor.getMode();
     }
 
     @Override
-    public void setDirection(Direction direction) {
-        motor.setDirection(direction);
-    }
-
-    @Override
     public Direction getDirection() {
         return motor.getDirection();
-    }
-
-    @Override
-    public void setPower(double power) {
-        motor.setPower(power);
     }
 
     @Override
@@ -235,4 +332,3 @@ public class DcMotorCache implements DcMotorEx {
         motor.close();
     }
 }
-
