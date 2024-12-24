@@ -173,17 +173,24 @@ public class LiveView implements VisionProcessor {
     public void processYCrCb(byte[] bitMap) {
         message = "";
 
-        double[][] intensities = new double[width + 2][height + 2];
+        double[][][] intensities = new double[3][width + 2][height + 2];
 
         for (int i = 0; i < bitMap.length; i += 3) {
             int x = (i / 3) % width;
             int y = (i / 3) / width;
-            intensities[x + 1][y + 1] = TypeConversion.unsignedByteToDouble(bitMap[i]);
+
+            double Y = TypeConversion.unsignedByteToDouble(bitMap[i]);
+            double Cr = TypeConversion.unsignedByteToDouble(bitMap[i + 1]);
+            double Cb = TypeConversion.unsignedByteToDouble(bitMap[i + 2]);
+
+            intensities[0][x + 1][y + 1] = Y;
+            intensities[1][x + 1][y + 1] = Cr;
+            intensities[2][x + 1][y + 1] = Cb;
         }
 
         for (int y = 1; y < height - 1; y++) {
             for (int x = 1; x < width - 1; x++) {
-                double value = intensities[x][y];
+                double value = intensities[0][x][y];
                 double newValue;
 
                 if (value > intensityRange * 4.0 / 5.0 + intensityRangeMin) {
@@ -209,10 +216,10 @@ public class LiveView implements VisionProcessor {
 
                 double deltaValue = value - newValue;
 
-                intensities[x + 1][y    ] += deltaValue * 7.0 / 16.0;
-                intensities[x - 1][y + 1] += deltaValue * 3.0 / 16.0;
-                intensities[x    ][y + 1] += deltaValue * 5.0 / 16.0;
-                intensities[x + 1][y + 1] += deltaValue / 16.0;
+                intensities[0][x + 1][y    ] += deltaValue * 7.0 / 16.0;
+                intensities[0][x - 1][y + 1] += deltaValue * 3.0 / 16.0;
+                intensities[0][x    ][y + 1] += deltaValue * 5.0 / 16.0;
+                intensities[0][x + 1][y + 1] += deltaValue / 16.0;
             }
 
             message += "\n";
