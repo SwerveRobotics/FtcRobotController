@@ -121,11 +121,6 @@ public class LiveView implements VisionProcessor {
                 messageEnd = messageEnd.replaceFirst("</small>", "");
             }
         }
-
-        currScreenHeight = currScreenHeight * Math.pow(1.2, factor);
-        currScreenWidth = currScreenWidth * Math.pow(1.2, factor);
-        System.out.println(currScreenHeight + " ," + currScreenWidth + "\n");
-        System.out.println(messageStart + " ," + messageEnd + "\n");
     }
 
     public void allWhiteTest(double width, double height) {
@@ -155,36 +150,33 @@ public class LiveView implements VisionProcessor {
         lTime = currTime;
     }
 
-    public int[][][] fadeTest(int width, int height) {
-        int blue = 0;
-
-        int[][][] bitMap = new int[height][width][3];
-        for (int i = 1; i < height; i++) {
-            for (int j = 1; j < width; j++) {
-                int[] pixel = {j, blue, 0};
-                bitMap[i][j] = pixel;
-
-                blue += 100;
-                if (blue > 200)
-                    blue = 0;
+    public byte[] fadeTest() {
+        ArrayList<Byte> bitMap = new ArrayList<>();
+        for (int i = 0; i < height; i++) {
+            for (byte j = intensityRangeMin; j < width + intensityRangeMin; j++) {
+                bitMap.add(j);
+                bitMap.add((byte) 0);
+                bitMap.add((byte) 0);
             }
         }
 
-        for (int[][] i : bitMap) {
-            for (int[] j: i) {
-                System.out.print(j[0]);
-                System.out.print(", ");
-            }
-            System.out.println();
+        byte[] byteMap = new byte[bitMap.size()];
+        for (int i = 0; i < bitMap.size(); i++) {
+            byteMap[i] = bitMap.get(i);
         }
 
-        return bitMap;
+        return byteMap;
     }
 
     private int[] lPixel = {0, 0, 0};
 
     public void processYCrCb(byte[] bitMap) {
         message = "";
+
+        System.out.println("HI");
+        for (byte b : bitMap) {
+            System.out.println(b);
+        }
 
         for (int i = 0; i < bitMap.length; i += 3) {
             if (bitMap[i] > intensityRange * 4.0 / 5.0 + intensityRangeMin)
@@ -198,7 +190,7 @@ public class LiveView implements VisionProcessor {
             else
                 message += " ";
 
-            if (i % width == width - 1)
+            if ((i / 3) % width == width - 1)
                 message += "\n";
         }
 
@@ -208,5 +200,6 @@ public class LiveView implements VisionProcessor {
     private void sendImage() {
         //t.addLine(messageStart + message + messageEnd);
         System.out.print(messageStart + message + messageEnd);
+        System.out.print("\n");
     }
 }

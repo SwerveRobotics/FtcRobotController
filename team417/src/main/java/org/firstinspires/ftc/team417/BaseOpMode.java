@@ -20,31 +20,38 @@ abstract public class BaseOpMode extends LinearOpMode {
     Mat testImage; // Our canonical test image
 
     // Do one-time initialization code:
-    void initializeTest(LiveView view) {
-        testImage = Imgcodecs.imread("/sdcard/live_view.jpg");
-        if ((testImage.size().width != 0) && (testImage.size().height != 0)) {
-            System.out.printf("Test image successfully loaded!\n");
+    void initLiveView(int sizeFactor, int width, int height, boolean test) {
+        LiveView view = new LiveView(telemetry, 80, 40);
+
+        view.initHTML();
+        view.resize(sizeFactor);
+
+        if (test) {
+            testImage = Imgcodecs.imread("/sdcard/live_view.jpg");
+
+            if ((testImage.size().width != 0) && (testImage.size().height != 0)) {
+                System.out.printf("Test image successfully loaded!\n");
+            } else {
+                System.out.printf("ERROR: Couldn't find the test image in the robot's storage.\n");
+            }
+
+            view.processFrame(testImage, 0);
         } else {
-            System.out.printf("ERROR: Couldn't find the test image in the robot's storage.\n");
+            // Create the vision portal by using a builder.
+            VisionPortal.Builder builder = new VisionPortal.Builder();
+
+            // Specify the camera's name as set in the Robot Configuration:
+            builder.setCamera(hardwareMap.get(WebcamName.class, "camera")); // "webcam"
+
+            // Choose a camera resolution. Not all cameras support all resolutions.
+            builder.setCameraResolution(new Size(1280, 800));
+
+            // Enable the system's built-in RC preview (LiveView).  Set "false" to omit camera
+            // monitoring.
+            builder.enableLiveView(true);
+
+            // Set and enable the live-view processor.
+            builder.addProcessor(view);
         }
-
-        // Create the vision portal by using a builder.
-        VisionPortal.Builder builder = new VisionPortal.Builder();
-
-        // Specify the camera's name as set in the Robot Configuration:
-        builder.setCamera(hardwareMap.get(WebcamName.class, "camera")); // "webcam"
-
-        // Choose a camera resolution. Not all cameras support all resolutions.
-        builder.setCameraResolution(new Size(640, 480));
-
-        // Enable the system's built-in RC preview (LiveView).  Set "false" to omit camera
-        // monitoring.
-        builder.enableLiveView(true);
-
-        // Set and enable the live-view processor.
-        builder.addProcessor(view);
-
-        // Build the Vision Portal, using the above settings.
-        VisionPortal visionPortal = builder.build();
     }
 }
