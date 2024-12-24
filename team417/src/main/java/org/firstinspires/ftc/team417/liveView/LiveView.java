@@ -105,8 +105,8 @@ public class LiveView implements VisionProcessor {
 
     public void initHTML() {
         t.setDisplayFormat(Telemetry.DisplayFormat.HTML);
-        messageStart = "<tt><span style='color: #ffffff; background: gray;'>";
-        messageEnd = "</span></tt>";
+        messageStart = "<tt><span style='color: #ffffff; background: gray;'><b>";
+        messageEnd = "</b></span></tt>";
     }
 
     public void resize(int factor) {
@@ -188,38 +188,49 @@ public class LiveView implements VisionProcessor {
             intensities[2][x + 1][y + 1] = Cb;
         }
 
-        for (int y = 1; y < height - 1; y++) {
-            for (int x = 1; x < width - 1; x++) {
-                double value = intensities[0][x][y];
-                double newValue;
+        for (int y = 1; y < height - 1; y += 4) {
+            for (int x = 1; x < width - 1; x += 2) {
+                int charHex = 0x2800;
+                
+                for (int i = 0; i < 8; i++) {
+                    int pixelX = x + i % 2;
+                    int pixelY = y + i / 2;
+                    
+                    double value = intensities[0][pixelX][pixelY];
+                    double newValue;
 
-                if (value > intensityRange * 4.0 / 5.0 + intensityRangeMin) {
-                    message += "█";
-                    newValue = intensityRange * 4.5 / 5.0 + intensityRangeMin;
+                    if (value > intensityRange / 2.0 + intensityRangeMin) {
+                        newValue = intensityRange * 1.5 / 2.0 + intensityRangeMin;
 
-                } else if (value > intensityRange * 3.0 / 5.0 + intensityRangeMin) {
-                    message += "▓";
-                    newValue = intensityRange * 3.5 / 5.0 + intensityRangeMin;
+                        if (i == 0)
+                            charHex += 0x1;
+                        if (i == 1)
+                            charHex += 0x8;
+                        if (i == 2)
+                            charHex += 0x2;
+                        if (i == 3)
+                            charHex += 0x10;
+                        if (i == 4)
+                            charHex += 0x4;
+                        if (i == 5)
+                            charHex += 0x20;
+                        if (i == 6)
+                            charHex += 0x40;
+                        if (i == 7)
+                            charHex += 0x80;
 
-                } else if (value > intensityRange * 2.0 / 5.0 + intensityRangeMin) {
-                    message += "▒";
-                    newValue = intensityRange * 2.5 / 5.0 + intensityRangeMin;
+                    } else
+                        newValue = intensityRange * 0.5 / 2.0 + intensityRangeMin;
 
-                } else if (value > intensityRange / 5.0 + intensityRangeMin) {
-                    message += "░";
-                    newValue = intensityRange * 1.5/ 5.0 + intensityRangeMin;
+                    double deltaValue = value - newValue;
 
-                } else {
-                    message += "⠀";
-                    newValue = intensityRange * 0.5/ 5.0 + intensityRangeMin;
+                    intensities[0][pixelX + 1][pixelY    ] += deltaValue * 7.0 / 16.0;
+                    intensities[0][pixelX - 1][pixelY + 1] += deltaValue * 3.0 / 16.0;
+                    intensities[0][pixelX    ][pixelY + 1] += deltaValue * 5.0 / 16.0;
+                    intensities[0][pixelX + 1][pixelY + 1] += deltaValue / 16.0;
                 }
-
-                double deltaValue = value - newValue;
-
-                intensities[0][x + 1][y    ] += deltaValue * 7.0 / 16.0;
-                intensities[0][x - 1][y + 1] += deltaValue * 3.0 / 16.0;
-                intensities[0][x    ][y + 1] += deltaValue * 5.0 / 16.0;
-                intensities[0][x + 1][y + 1] += deltaValue / 16.0;
+                
+                message += (char) charHex;
             }
 
             message += "\n";
