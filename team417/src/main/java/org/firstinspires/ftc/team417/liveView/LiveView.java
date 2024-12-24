@@ -105,7 +105,7 @@ public class LiveView implements VisionProcessor {
 
     public void initHTML() {
         t.setDisplayFormat(Telemetry.DisplayFormat.HTML);
-        messageStart = "<tt><span style='color: #ffffff; background: gray;'><b>";
+        messageStart = "<tt><span style='color: #ffffff; background: black;'><b>";
         messageEnd = "</b></span></tt>";
     }
 
@@ -173,19 +173,13 @@ public class LiveView implements VisionProcessor {
     public void processYCrCb(byte[] bitMap) {
         message = "";
 
-        double[][][] intensities = new double[3][width + 2][height + 2];
+        double[][] intensities = new double[width + 2][height + 2];
 
         for (int i = 0; i < bitMap.length; i += 3) {
             int x = (i / 3) % width;
             int y = (i / 3) / width;
 
-            double Y = TypeConversion.unsignedByteToDouble(bitMap[i]);
-            double Cr = TypeConversion.unsignedByteToDouble(bitMap[i + 1]);
-            double Cb = TypeConversion.unsignedByteToDouble(bitMap[i + 2]);
-
-            intensities[0][x + 1][y + 1] = Y;
-            intensities[1][x + 1][y + 1] = Cr;
-            intensities[2][x + 1][y + 1] = Cb;
+            intensities[x + 1][y + 1] = TypeConversion.unsignedByteToDouble(bitMap[i]);
         }
 
         for (int y = 1; y < height - 1; y += 4) {
@@ -196,11 +190,11 @@ public class LiveView implements VisionProcessor {
                     int pixelX = x + i % 2;
                     int pixelY = y + i / 2;
                     
-                    double value = intensities[0][pixelX][pixelY];
+                    double value = intensities[pixelX][pixelY];
                     double newValue;
 
-                    if (value > intensityRange / 2.0 + intensityRangeMin) {
-                        newValue = intensityRange * 1.5 / 2.0 + intensityRangeMin;
+                    if (value > 55) {
+                        newValue = 155;
 
                         if (i == 0)
                             charHex += 0x1;
@@ -220,14 +214,14 @@ public class LiveView implements VisionProcessor {
                             charHex += 0x80;
 
                     } else
-                        newValue = intensityRange * 0.5 / 2.0 + intensityRangeMin;
+                        newValue = 27;
 
                     double deltaValue = value - newValue;
 
-                    intensities[0][pixelX + 1][pixelY    ] += deltaValue * 7.0 / 16.0;
-                    intensities[0][pixelX - 1][pixelY + 1] += deltaValue * 3.0 / 16.0;
-                    intensities[0][pixelX    ][pixelY + 1] += deltaValue * 5.0 / 16.0;
-                    intensities[0][pixelX + 1][pixelY + 1] += deltaValue / 16.0;
+                    intensities[pixelX + 1][pixelY    ] += deltaValue * 7.0 / 16.0;
+                    intensities[pixelX - 1][pixelY + 1] += deltaValue * 3.0 / 16.0;
+                    intensities[pixelX    ][pixelY + 1] += deltaValue * 5.0 / 16.0;
+                    intensities[pixelX + 1][pixelY + 1] += deltaValue / 16.0;
                 }
                 
                 message += (char) charHex;
