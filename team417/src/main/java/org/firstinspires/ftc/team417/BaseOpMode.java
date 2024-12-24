@@ -20,15 +20,9 @@ abstract public class BaseOpMode extends LinearOpMode {
     Mat testImage; // Our canonical test image
 
     // Do one-time initialization code:
-    void initLiveView(int sizeFactor, int width, int height, boolean test) {
-        LiveView view = new LiveView(telemetry, 80, 40);
-
-        view.initHTML();
-        view.resize(sizeFactor);
-
+    void initLiveView(LiveView view, boolean test) {
         if (test) {
             testImage = Imgcodecs.imread("/sdcard/live_view.jpg");
-
             if ((testImage.size().width != 0) && (testImage.size().height != 0)) {
                 System.out.printf("Test image successfully loaded!\n");
             } else {

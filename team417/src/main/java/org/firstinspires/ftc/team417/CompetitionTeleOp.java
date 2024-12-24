@@ -23,15 +23,19 @@ public class CompetitionTeleOp extends BaseOpMode {
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
+        LiveView view = new LiveView(telemetry, 80, 40);
+
         telemetry.update();
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
 
         //view.allWhiteTest(160, 80);
-        //view.processYCrCb(view.fadeTest());
-        initLiveView(4, 80, 40, true);
-        initLiveView(4, 80, 40, true);
+        //initLiveView(view, 4, true);
+        view.initHTML();
+        view.resize(4);
+        initLiveView(view, true);
+        initLiveView(view, true);
 
         while (opModeIsActive()) {
             //telemetry.addLine("Running TeleOp!");

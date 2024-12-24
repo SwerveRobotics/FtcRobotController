@@ -5,6 +5,7 @@ import static java.lang.System.nanoTime;
 import android.graphics.Canvas;
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.qualcomm.robotcore.util.TypeConversion;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.internal.camera.calibration.CameraCalibration;
@@ -27,8 +28,8 @@ public class LiveView implements VisionProcessor {
     private double currScreenWidth = defaultScreenWidth;
     private double currScreenHeight = defaultScreenHeight;
 
-    private final int intensityRangeMin = -128;
-    private final int intensityRangeMax = 127;
+    private final int intensityRangeMin = 0;
+    private final int intensityRangeMax = 255;
     private final int intensityRange = intensityRangeMax - intensityRangeMin;
 
     private final int redMin = 200;
@@ -168,27 +169,22 @@ public class LiveView implements VisionProcessor {
         return byteMap;
     }
 
-    private int[] lPixel = {0, 0, 0};
-
     public void processYCrCb(byte[] bitMap) {
         message = "";
 
-        System.out.println("HI");
-        for (byte b : bitMap) {
-            System.out.println(b);
-        }
-
         for (int i = 0; i < bitMap.length; i += 3) {
-            if (bitMap[i] > intensityRange * 4.0 / 5.0 + intensityRangeMin)
+            int value = TypeConversion.unsignedByteToInt(bitMap[i]);
+
+            if (value > intensityRange * 4.0 / 5.0 + intensityRangeMin)
                 message += "█";
-            else if (bitMap[i] > intensityRange * 3.0 / 5.0 + intensityRangeMin)
+            else if (value > intensityRange * 3.0 / 5.0 + intensityRangeMin)
                 message += "▓";
-            else if (bitMap[i] > intensityRange * 2.0 / 5.0 + intensityRangeMin)
+            else if (value > intensityRange * 2.0 / 5.0 + intensityRangeMin)
                 message += "▒";
-            else if (bitMap[i] > intensityRange / 5.0 + intensityRangeMin)
+            else if (value > intensityRange / 5.0 + intensityRangeMin)
                 message += "░";
             else
-                message += " ";
+                message += "\u2800";
 
             if ((i / 3) % width == width - 1)
                 message += "\n";
