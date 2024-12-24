@@ -34,6 +34,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         //initLiveView(view, 4, true);
         view.initHTML();
         view.resize(4);
+        //view.processYCrCb(view.fadeTest());
         initLiveView(view, true);
         initLiveView(view, true);
 

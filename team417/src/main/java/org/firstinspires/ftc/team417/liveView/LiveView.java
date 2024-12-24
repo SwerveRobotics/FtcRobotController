@@ -154,8 +154,9 @@ public class LiveView implements VisionProcessor {
     public byte[] fadeTest() {
         ArrayList<Byte> bitMap = new ArrayList<>();
         for (int i = 0; i < height; i++) {
-            for (byte j = intensityRangeMin; j < width + intensityRangeMin; j++) {
-                bitMap.add(j);
+            for (int j = 0; j < width; j++) {
+                byte y = (byte) ((j * 255) / width); // Scale `j` to range [0, 255]
+                bitMap.add(y);
                 bitMap.add((byte) 0);
                 bitMap.add((byte) 0);
             }
@@ -172,29 +173,56 @@ public class LiveView implements VisionProcessor {
     public void processYCrCb(byte[] bitMap) {
         message = "";
 
+        double[][] intensities = new double[width + 2][height + 2];
+
         for (int i = 0; i < bitMap.length; i += 3) {
-            int value = TypeConversion.unsignedByteToInt(bitMap[i]);
+            int x = (i / 3) % width;
+            int y = (i / 3) / width;
+            intensities[x + 1][y + 1] = TypeConversion.unsignedByteToDouble(bitMap[i]);
+        }
 
-            if (value > intensityRange * 4.0 / 5.0 + intensityRangeMin)
-                message += "█";
-            else if (value > intensityRange * 3.0 / 5.0 + intensityRangeMin)
-                message += "▓";
-            else if (value > intensityRange * 2.0 / 5.0 + intensityRangeMin)
-                message += "▒";
-            else if (value > intensityRange / 5.0 + intensityRangeMin)
-                message += "░";
-            else
-                message += "\u2800";
+        for (int y = 1; y < height - 1; y++) {
+            for (int x = 1; x < width - 1; x++) {
+                double value = intensities[x][y];
+                double newValue;
 
-            if ((i / 3) % width == width - 1)
-                message += "\n";
+                if (value > intensityRange * 4.0 / 5.0 + intensityRangeMin) {
+                    message += "█";
+                    newValue = intensityRange * 4.5 / 5.0 + intensityRangeMin;
+
+                } else if (value > intensityRange * 3.0 / 5.0 + intensityRangeMin) {
+                    message += "▓";
+                    newValue = intensityRange * 3.5 / 5.0 + intensityRangeMin;
+
+                } else if (value > intensityRange * 2.0 / 5.0 + intensityRangeMin) {
+                    message += "▒";
+                    newValue = intensityRange * 2.5 / 5.0 + intensityRangeMin;
+
+                } else if (value > intensityRange / 5.0 + intensityRangeMin) {
+                    message += "░";
+                    newValue = intensityRange * 1.5/ 5.0 + intensityRangeMin;
+
+                } else {
+                    message += "⠀";
+                    newValue = intensityRange * 0.5/ 5.0 + intensityRangeMin;
+                }
+
+                double deltaValue = value - newValue;
+
+                intensities[x + 1][y    ] += deltaValue * 7.0 / 16.0;
+                intensities[x - 1][y + 1] += deltaValue * 3.0 / 16.0;
+                intensities[x    ][y + 1] += deltaValue * 5.0 / 16.0;
+                intensities[x + 1][y + 1] += deltaValue / 16.0;
+            }
+
+            message += "\n";
         }
 
         sendImage();
     }
 
     private void sendImage() {
-        //t.addLine(messageStart + message + messageEnd);
+        t.addLine(messageStart + message + messageEnd);
         System.out.print(messageStart + message + messageEnd);
         System.out.print("\n");
     }
