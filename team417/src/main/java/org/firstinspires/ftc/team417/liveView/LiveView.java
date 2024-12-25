@@ -25,7 +25,7 @@ public class LiveView implements VisionProcessor {
     private final int offValue = 27;
 
     //PLACEHOLDER VALUES________________________________________________
-    private final int COLOR_EPSILON = 10;
+    private final int COLOR_EPSILON = 255;
     private final Lab YELLOW = new Lab(97.14, -21.56,  94.48);
     private final Lab BLUE = new Lab(32.30, 79.19, -107.86);
     private final Lab RED = new Lab(53.24 , 80.09, 67.20);
@@ -87,13 +87,13 @@ public class LiveView implements VisionProcessor {
     public Object processFrame(Mat largeRgb, long captureTimeNanos) {
         newBuffer(largeRgb, inputWidth, inputHeight, true);
 
-        double[][] intensities = new double[inputWidth + 2][inputHeight + 2];
+        double[][] intensities = new double[inputWidth][inputHeight];
 
         for (int i = 0; i < inputWidth * inputHeight * 3; i += 3) {
             int x = (i / 3) % inputWidth;
             int y = (i / 3) / inputWidth;
 
-            intensities[x + 1][y + 1] = TypeConversion.unsignedByteToDouble(buffer[i]);
+            intensities[x][y] = TypeConversion.unsignedByteToDouble(buffer[i]);
         }
 
         newBuffer(largeRgb, outputWidth, outputHeight, false);
@@ -186,10 +186,10 @@ public class LiveView implements VisionProcessor {
         System.out.print("\nXLen: " + intensities[0].length + " YLen: " + intensities.length);
 
 
-        for (int y = 1; y < outputHeight - 1; y++) {
+        for (int y = 0; y < outputHeight; y++) {
             CromaRun currRun = new CromaRun(0, 0, 0, CromaRun.Colors.OTHER);
 
-            for (int x = 1; x < outputWidth - 1; x++) {
+            for (int x = 0; x < outputWidth; x++) {
                 int charHex = 0x2800;
                 
                 for (int i = 0; i < 8; i++) {
@@ -224,34 +224,33 @@ public class LiveView implements VisionProcessor {
 
                     double deltaValue = value - newValue;
 
-                    //if (pixelX < outputWidth - 1)
-                    intensities[pixelX + 1][pixelY] += deltaValue * 7.0 / 16.0;
-                    //if (pixelY < outputHeight - 1) {
-                    //    if (pixelX > 0)
-                    intensities[pixelX - 1][pixelY + 1] += deltaValue * 3.0 / 16.0;
-                    intensities[pixelX][pixelY + 1] += deltaValue * 5.0 / 16.0;
-                    //    if (pixelX < outputWidth - 1) {
-                    intensities[pixelX + 1][pixelY + 1] += deltaValue / 16.0;
-                    //    }
-                    //}
-
-                    CromaRun.Colors color;
-                    if (colors[x][y].equals(YELLOW, COLOR_EPSILON))
-                        color = CromaRun.Colors.YELLOW;
-                    else if (colors[x][y].equals(BLUE, COLOR_EPSILON))
-                        color = CromaRun.Colors.BLUE;
-                    else if (colors[x][y].equals(RED, COLOR_EPSILON))
-                        color = CromaRun.Colors.RED;
-                    else
-                        color = CromaRun.Colors.OTHER;
-
-                    if (color == currRun.color)
-                        currRun.length += 1;
-                    else {
-                        if (currRun.color != CromaRun.Colors.OTHER)
-                            runs.add(currRun);
-                        currRun = new CromaRun(x, y, 1, color);
+                    if (pixelX < inputWidth - 1)
+                        intensities[pixelX + 1][pixelY] += deltaValue * 7.0 / 16.0;
+                    if (pixelY < inputHeight - 1) {
+                        if (pixelX > 0)
+                            intensities[pixelX - 1][pixelY + 1] += deltaValue * 3.0 / 16.0;
+                        intensities[pixelX][pixelY + 1] += deltaValue * 5.0 / 16.0;
+                        if (pixelX < inputWidth - 1)
+                            intensities[pixelX + 1][pixelY + 1] += deltaValue / 16.0;
                     }
+                }
+
+                CromaRun.Colors color;
+                if (colors[x][y].equals(YELLOW, COLOR_EPSILON))
+                    color = CromaRun.Colors.YELLOW;
+                else if (colors[x][y].equals(BLUE, COLOR_EPSILON))
+                    color = CromaRun.Colors.BLUE;
+                else if (colors[x][y].equals(RED, COLOR_EPSILON))
+                    color = CromaRun.Colors.RED;
+                else
+                    color = CromaRun.Colors.OTHER;
+
+                if (color == currRun.color)
+                    currRun.length += 1;
+                else {
+                    if (currRun.color != CromaRun.Colors.OTHER)
+                        runs.add(currRun);
+                    currRun = new CromaRun(x - 1, y - 1, 1, color);
                 }
                 
                 image.add((char) charHex);
@@ -263,13 +262,15 @@ public class LiveView implements VisionProcessor {
             image.add('\n');
         }
 
-        runs.sort(Comparator.comparingInt(run->-run.length));
+        runs.sort(Comparator.comparingInt(run -> -run.length));
         if (!runs.isEmpty()) {
             System.out.print("Largest run: ");
-            System.out.print(runs.get(0));
+            System.out.print(runs.get(0).length);
             System.out.print("Smallest run: ");
-            System.out.print(runs.get(runs.size() - 1));
+            System.out.print(runs.get(runs.size() - 1).length);
         }
+        System.out.print("Runs Length: ");
+        System.out.println(runs.size());
 
         if (runs.size() > NUM_RUNS_KEPT) {
             runs.subList(NUM_RUNS_KEPT, runs.size()).clear();
@@ -283,6 +284,8 @@ public class LiveView implements VisionProcessor {
         for (CromaRun run : runs) {
             int runStart = run.y * (outputWidth + 1) + run.x;
             int runEnd = runStart + run.length;
+
+            System.out.println(String.format("X: %d, Y: %d, length: %d", run.x, run.y, run.length));
 
             strImage.append(image.subList(lastEndIndex, runStart));
             strImage.append(String.format("<font color='%s'>", RGB_CODES[run.color.getValue()]));
