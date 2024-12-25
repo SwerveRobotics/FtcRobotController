@@ -25,7 +25,7 @@ public class LiveView implements VisionProcessor {
     private final int offValue = 27;
 
     //PLACEHOLDER VALUES________________________________________________
-    private final int COLOR_EPSILON = 255;
+    private final int COLOR_EPSILON = 50;
     private final Lab YELLOW = new Lab(97.14, -21.56,  94.48);
     private final Lab BLUE = new Lab(32.30, 79.19, -107.86);
     private final Lab RED = new Lab(53.24 , 80.09, 67.20);
@@ -285,15 +285,20 @@ public class LiveView implements VisionProcessor {
             int runStart = run.y * (outputWidth + 1) + run.x;
             int runEnd = runStart + run.length;
 
-            System.out.println(String.format("X: %d, Y: %d, length: %d", run.x, run.y, run.length));
+            System.out.println(String.format("X: %d, Y: %d, length: %d, color: %s", run.x, run.y, run.length, run.color.toString()));
 
-            strImage.append(toString(image.subList(lastEndIndex, runStart)));
+            if (lastEndIndex != runStart) {
+                strImage.append("</span><span style='color: #FFFFFF; background: black;'>");
+                strImage.append(toString(image.subList(lastEndIndex, runStart)));
+            }
+
             strImage.append(String.format("</span><span style='color: %s; background: black;'>", RGB_CODES[run.color.getValue()]));
             strImage.append(toString(image.subList(runStart, runEnd)));
 
             lastEndIndex = runEnd;
         }
 
+        strImage.append("</span><span style='color: #FFFFFF; background: black;'>");
         strImage.append(toString(image.subList(lastEndIndex, image.size())));
 
         message = strImage.toString();
