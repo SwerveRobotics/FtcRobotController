@@ -250,7 +250,7 @@ public class LiveView implements VisionProcessor {
                 else {
                     if (currRun.color != CromaRun.Colors.OTHER)
                         runs.add(currRun);
-                    currRun = new CromaRun(x - 1, y - 1, 1, color);
+                    currRun = new CromaRun(x, y, 1, color);
                 }
                 
                 image.add((char) charHex);
@@ -287,15 +287,14 @@ public class LiveView implements VisionProcessor {
 
             System.out.println(String.format("X: %d, Y: %d, length: %d", run.x, run.y, run.length));
 
-            strImage.append(image.subList(lastEndIndex, runStart));
-            strImage.append(String.format("<font color='%s'>", RGB_CODES[run.color.getValue()]));
-            strImage.append(image.subList(runStart, runEnd));
-            strImage.append("</font>");
+            strImage.append(toString(image.subList(lastEndIndex, runStart)));
+            strImage.append(String.format("</span><span style='color: %s; background: black;'>", RGB_CODES[run.color.getValue()]));
+            strImage.append(toString(image.subList(runStart, runEnd)));
 
             lastEndIndex = runEnd;
         }
 
-        strImage.append(toString(image.subList(lastEndIndex, image.size() - 1)));
+        strImage.append(toString(image.subList(lastEndIndex, image.size())));
 
         message = strImage.toString();
 
