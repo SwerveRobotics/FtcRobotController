@@ -24,12 +24,13 @@ public class LiveView implements VisionProcessor {
     private final int offValue = 27;
 
     //PLACEHOLDER VALUES________________________________________________
-    private final int COLOR_EPSILON = 100;
-    private final Lab YELLOW = new Lab(0, 0, 0);
-    private final Lab BLUE = new Lab(0, 0, 0);
-    private final Lab RED = new Lab(0 , 0, 0);
+    private final int COLOR_EPSILON = 10;
+    private final Lab YELLOW = new Lab(97.14, -21.56,  94.48);
+    private final Lab BLUE = new Lab(32.30, 79.19, -107.86);
+    private final Lab RED = new Lab(53.24 , 80.09, 67.20);
+    private final String[] RGB_CODES = {"#FFFF00", "#0000FF", "#FF0000"};
 
-    private final int numRunsKept = 200;
+    private final int NUM_RUNS_KEPT = 200;
 
     // Big memory buffers are very expensive to allocate so create them once and reuse
     // rather than recreating them on every loop:
@@ -56,12 +57,17 @@ public class LiveView implements VisionProcessor {
 
     }
 
-    private void newBuffer(Mat largeRgb, int width, int height) {
+    private void newBuffer(Mat largeRgb, int width, int height, boolean YCrCb) {
         // First resize the frame that came from the camera:
         Imgproc.resize(largeRgb, smallRgb, new org.opencv.core.Size(width, height), 0, 0, Imgproc.INTER_AREA);
 
-        // Convert it to YCrCb (Y is luminance/intensity, Cr is red chroma, Cb is blue chroma):
-        Imgproc.cvtColor(smallRgb, smallLab, Imgproc.COLOR_RGB2Lab);
+        if (YCrCb) {
+            // Convert it to YCrCb (Y is luminance/intensity, Cr is red chroma, Cb is blue chroma):
+            Imgproc.cvtColor(smallRgb, smallLab, Imgproc.COLOR_RGB2YCrCb);
+        } else {
+            // Convert it to YCrCb (Y is luminance/intensity, Cr is red chroma, Cb is blue chroma):
+            Imgproc.cvtColor(smallRgb, smallLab, Imgproc.COLOR_RGB2Lab);
+        }
 
         int pixelCount = smallLab.height() * smallLab.width();
         int channelCount = smallLab.channels();
@@ -78,7 +84,7 @@ public class LiveView implements VisionProcessor {
     // frames per second). Note that this is on a different thread than the robot's primary loop:
     @Override
     public Object processFrame(Mat largeRgb, long captureTimeNanos) {
-        newBuffer(largeRgb, inputWidth, inputHeight);
+        newBuffer(largeRgb, inputWidth, inputHeight, true);
 
         double[][] intensities = new double[inputWidth + 2][inputHeight + 2];
 
@@ -89,7 +95,7 @@ public class LiveView implements VisionProcessor {
             intensities[x + 1][y + 1] = TypeConversion.unsignedByteToDouble(buffer[i]);
         }
 
-        newBuffer(largeRgb, outputWidth, outputHeight);
+        newBuffer(largeRgb, outputWidth, outputHeight, false);
 
         Lab[][] colors = new Lab[outputWidth + 2][outputHeight + 2];
 
@@ -172,10 +178,11 @@ public class LiveView implements VisionProcessor {
         message = "";
         ArrayList<Character> image = new ArrayList<>();
 
-        ArrayList<CromaRun> runs = new ArrayList<>();
-        CromaRun currRun = new CromaRun(0, 0, 0, "");
+        ArrayList<CromaRun> runs = new ArrayList<>(outputWidth * outputHeight);
 
         for (int y = 1; y < outputHeight - 1; y++) {
+            CromaRun currRun = new CromaRun(0, 0, 0, CromaRun.Colors.OTHER);
+
             for (int x = 1; x < outputWidth - 1; x++) {
                 int charHex = 0x2800;
                 
@@ -216,20 +223,20 @@ public class LiveView implements VisionProcessor {
                     intensities[pixelX    ][pixelY + 1] += deltaValue * 5.0 / 16.0;
                     intensities[pixelX + 1][pixelY + 1] += deltaValue / 16.0;
 
-                    String color;
+                    CromaRun.Colors color;
                     if (colors[x][y].equals(YELLOW, COLOR_EPSILON))
-                        color = "Yellow";
+                        color = CromaRun.Colors.YELLOW;
                     else if (colors[x][y].equals(BLUE, COLOR_EPSILON))
-                        color = "Blue";
+                        color = CromaRun.Colors.BLUE;
                     else if (colors[x][y].equals(RED, COLOR_EPSILON))
-                        color = "Red";
+                        color = CromaRun.Colors.RED;
                     else
-                        color = "";
+                        color = CromaRun.Colors.OTHER;
 
-                    if (color.equals(currRun.color))
+                    if (color == currRun.color)
                         currRun.length += 1;
                     else {
-                        if (!currRun.color.isEmpty())
+                        if (currRun.color != CromaRun.Colors.OTHER)
                             runs.add(currRun);
                         currRun = new CromaRun(x, y, 1, color);
                     }
@@ -238,35 +245,40 @@ public class LiveView implements VisionProcessor {
                 image.add((char) charHex);
             }
 
+            if (currRun.color != CromaRun.Colors.OTHER)
+                runs.add(currRun);
+
             image.add('\n');
         }
 
         runs.sort(Comparator.comparingInt(run->-run.length));
         System.out.print("Largest run: ");
         System.out.print(runs.get(0));
-        System.out.print(" Smallest run: ");
+        System.out.print("Smallest run: ");
         System.out.print(runs.get(runs.size() - 1));
 
-        if (runs.size() > numRunsKept) {
-            runs.subList(numRunsKept, runs.size()).clear();
+        if (runs.size() > NUM_RUNS_KEPT) {
+            runs.subList(NUM_RUNS_KEPT, runs.size()).clear();
         }
 
         runs.sort(Comparator.comparingInt(run->run.x + run.y * outputWidth));
 
         StringBuilder strImage = new StringBuilder();
-        int lEndIndex = 0;
+        int lastEndIndex = 0;
 
-        for (int i = 0; i < runs.size(); i++) {
-            int runStart = runs.get(i).y * (outputWidth + 1) + runs.get(i).x;
-            int runEnd = runStart + runs.get(i).length;
+        for (CromaRun run : runs) {
+            int runStart = run.y * (outputWidth + 1) + run.x;
+            int runEnd = runStart + run.length;
 
-            strImage.append(image.subList(lEndIndex + 1, runStart));
-            strImage.append(String.format("<%s>", runs.get(i).color));
-            strImage.append(image.subList(runStart, runEnd + 1));
-            strImage.append(String.format("</%s>", runs.get(i).color));
+            strImage.append(image.subList(lastEndIndex, runStart));
+            strImage.append(String.format("<font color='%s'>", RGB_CODES[run.color.getValue()]));
+            strImage.append(image.subList(runStart, runEnd));
+            strImage.append("</font>");
 
-            lEndIndex = runEnd;
+            lastEndIndex = runEnd;
         }
+
+        strImage.append(image.subList(lastEndIndex, (outputWidth + 1) * outputHeight));
 
         message = strImage.toString();
 
