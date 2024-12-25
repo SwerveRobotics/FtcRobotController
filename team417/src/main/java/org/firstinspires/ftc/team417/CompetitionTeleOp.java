@@ -36,7 +36,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         view.resize(4);
         //view.processYCrCb(view.fadeTest());
         initLiveView(view, true);
-        initLiveView(view, true);
 
         while (opModeIsActive()) {
             //telemetry.addLine("Running TeleOp!");

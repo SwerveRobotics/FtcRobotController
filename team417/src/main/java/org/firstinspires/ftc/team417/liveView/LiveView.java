@@ -88,18 +88,18 @@ public class LiveView implements VisionProcessor {
 
         double[][] intensities = new double[inputWidth][inputHeight];
 
-        for (int i = 0; i < buffer.length; i += 3) {
+        for (int i = 0; i < outputWidth * outputHeight * 3; i += 3) {
             int x = (i / 3) % inputWidth;
             int y = (i / 3) / inputWidth;
 
-            intensities[x + 1][y + 1] = TypeConversion.unsignedByteToDouble(buffer[i]);
+            intensities[x][y] = TypeConversion.unsignedByteToDouble(buffer[i]);
         }
 
         newBuffer(largeRgb, outputWidth, outputHeight, false);
 
         Lab[][] colors = new Lab[outputWidth][outputHeight];
 
-        for (int i = 0; i < buffer.length; i += 3) {
+        for (int i = 0; i < outputWidth * outputHeight * 3; i += 3) {
             int x = (i / 3) % outputWidth;
             int y = (i / 3) / outputWidth;
 
@@ -107,7 +107,7 @@ public class LiveView implements VisionProcessor {
             double a = TypeConversion.unsignedByteToDouble(buffer[i + 1]);
             double b = TypeConversion.unsignedByteToDouble(buffer[i + 2]);
 
-            colors[x + 1][y + 1] = new Lab(L, a, b);
+            colors[x][y] = new Lab(L, a, b);
         }
 
         processLab(intensities, colors);
@@ -229,9 +229,6 @@ public class LiveView implements VisionProcessor {
                         }
                     }
 
-
-
-
                     CromaRun.Colors color;
                     if (colors[x][y].equals(YELLOW, COLOR_EPSILON))
                         color = CromaRun.Colors.YELLOW;
@@ -261,10 +258,12 @@ public class LiveView implements VisionProcessor {
         }
 
         runs.sort(Comparator.comparingInt(run->-run.length));
-        System.out.print("Largest run: ");
-        System.out.print(runs.get(0));
-        System.out.print("Smallest run: ");
-        System.out.print(runs.get(runs.size() - 1));
+        if (!runs.isEmpty()) {
+            System.out.print("Largest run: ");
+            System.out.print(runs.get(0));
+            System.out.print("Smallest run: ");
+            System.out.print(runs.get(runs.size() - 1));
+        }
 
         if (runs.size() > NUM_RUNS_KEPT) {
             runs.subList(NUM_RUNS_KEPT, runs.size()).clear();
