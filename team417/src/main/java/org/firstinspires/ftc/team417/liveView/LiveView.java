@@ -14,6 +14,8 @@ import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /** @noinspection StringConcatenationInLoop*/
 public class LiveView implements VisionProcessor {
@@ -32,8 +34,13 @@ public class LiveView implements VisionProcessor {
     private final int intensityRangeMax = 255;
     private final int intensityRange = intensityRangeMax - intensityRangeMin;
 
-    private final int redMin = 200;
-    private final int blueMin = 200;
+    //PLACEHOLDER VALUES________________________________________________
+    private final int COLOR_EPSILON = 100;
+    private final Lab YELLOW = new Lab(0, 0, 0);
+    private final Lab BLUE = new Lab(0, 0, 0);
+    private final Lab RED = new Lab(0 , 0, 0);
+
+    private final int numRunsKept = 200;
 
     double lTime = 0;
 
@@ -43,14 +50,18 @@ public class LiveView implements VisionProcessor {
     Mat smallYCrCb = new Mat();
     byte[] buffer = new byte[0]; // Will resize later...
 
-    int width;
-    int height;
+    int inputWidth;
+    int inputHeight;
+    int outputWidth;
+    int outputHeight;
 
 
     public LiveView(Telemetry t, int width, int height) {
         this.t = t;
-        this.width = width;
-        this.height = height;
+        inputWidth = width;
+        inputHeight = height;
+        outputWidth = width / 2;
+        outputHeight = height / 4;
     }
 
     @Override
@@ -70,29 +81,65 @@ public class LiveView implements VisionProcessor {
     // frames per second). Note that this is on a different thread than the robot's primary loop:
     @Override
     public Object processFrame(Mat largeRgb, long captureTimeNanos) {
-        int pixelCount = smallYCrCb.height() * smallYCrCb.width();
-        int channelCount = smallYCrCb.channels();
-        int byteCount = pixelCount * channelCount;
+        int pixelCount;
+        int channelCount;
+        int byteCount;
 
         // First resize the frame that came from the camera:
-        Imgproc.resize(largeRgb, smallRgb, new org.opencv.core.Size(width, height), 0, 0, Imgproc.INTER_AREA);
+        Imgproc.resize(largeRgb, smallRgb, new org.opencv.core.Size(inputWidth, inputHeight), 0, 0, Imgproc.INTER_AREA);
 
         // Convert it to YCrCb (Y is luminance/intensity, Cr is red chroma, Cb is blue chroma):
-        Imgproc.cvtColor(smallRgb, smallYCrCb, Imgproc.COLOR_RGB2YCrCb);
+        Imgproc.cvtColor(smallRgb, smallYCrCb, Imgproc.COLOR_RGB2Lab);
+
+        pixelCount = smallYCrCb.height() * smallYCrCb.width();
+        channelCount = smallYCrCb.channels();
+        byteCount = pixelCount * channelCount;
 
         if (buffer.length < byteCount)
             buffer = new byte[byteCount];
 
-        // Initialize the min/max statistics to be extremely crossed:
-        for (int i = 0; i < channelCount; i++) {
-            mins[i] = Double.MAX_VALUE;
-            maxes[i] = 0;
+        // Read the pixels from the 'Mat' object into our buffer:
+        smallYCrCb.get(0, 0, buffer);
+
+        double[][] intensities = new double[inputWidth + 2][inputHeight + 2];
+
+        for (int i = 0; i < buffer.length; i += 3) {
+            int x = (i / 3) % inputWidth;
+            int y = (i / 3) / inputWidth;
+
+            intensities[x + 1][y + 1] = TypeConversion.unsignedByteToDouble(buffer[i]);
         }
+
+        // First resize the frame that came from the camera:
+        Imgproc.resize(largeRgb, smallRgb, new org.opencv.core.Size(outputWidth / 2.0, outputHeight / 4.0), 0, 0, Imgproc.INTER_AREA);
+
+        // Convert it to YCrCb (Y is luminance/intensity, Cr is red chroma, Cb is blue chroma):
+        Imgproc.cvtColor(smallRgb, smallYCrCb, Imgproc.COLOR_RGB2Lab);
+
+        pixelCount = smallYCrCb.height() * smallYCrCb.width();
+        channelCount = smallYCrCb.channels();
+        byteCount = pixelCount * channelCount;
+
+        if (buffer.length < byteCount)
+            buffer = new byte[byteCount];
 
         // Read the pixels from the 'Mat' object into our buffer:
         smallYCrCb.get(0, 0, buffer);
 
-        processYCrCb(buffer);
+        Lab[][] colors = new Lab[outputWidth + 2][outputHeight + 2];
+
+        for (int i = 0; i < buffer.length; i += 3) {
+            int x = (i / 3) % outputWidth;
+            int y = (i / 3) / outputWidth;
+
+            double L = TypeConversion.unsignedByteToDouble(buffer[i    ]);
+            double a = TypeConversion.unsignedByteToDouble(buffer[i + 1]);
+            double b = TypeConversion.unsignedByteToDouble(buffer[i + 2]);
+
+            colors[x + 1][y + 1] = new Lab(L, a, b);
+        }
+
+        processYCrCb(intensities, colors);
 
         return null;
     }
@@ -153,9 +200,9 @@ public class LiveView implements VisionProcessor {
 
     public byte[] fadeTest() {
         ArrayList<Byte> bitMap = new ArrayList<>();
-        for (int i = 0; i < height; i++) {
-            for (int j = 0; j < width; j++) {
-                byte y = (byte) ((j * 255) / width); // Scale `j` to range [0, 255]
+        for (int i = 0; i < inputHeight; i++) {
+            for (int j = 0; j < inputWidth; j++) {
+                byte y = (byte) ((j * 255) / inputWidth); // Scale `j` to range [0, 255]
                 bitMap.add(y);
                 bitMap.add((byte) 0);
                 bitMap.add((byte) 0);
@@ -170,25 +217,20 @@ public class LiveView implements VisionProcessor {
         return byteMap;
     }
 
-    public void processYCrCb(byte[] bitMap) {
+    public void processYCrCb(double[][] intensities, Lab[][] colors) {
         message = "";
+        ArrayList<Character> image = new ArrayList<>();
 
-        double[][] intensities = new double[width + 2][height + 2];
+        ArrayList<CromaRun> runs = new ArrayList<>();
+        CromaRun currRun = new CromaRun(0, 0, 0, "");
 
-        for (int i = 0; i < bitMap.length; i += 3) {
-            int x = (i / 3) % width;
-            int y = (i / 3) / width;
-
-            intensities[x + 1][y + 1] = TypeConversion.unsignedByteToDouble(bitMap[i]);
-        }
-
-        for (int y = 1; y < height - 1; y += 4) {
-            for (int x = 1; x < width - 1; x += 2) {
+        for (int y = 1; y < outputHeight / 4- 1; y++) {
+            for (int x = 1; x < outputWidth / 2 - 1; x++) {
                 int charHex = 0x2800;
                 
                 for (int i = 0; i < 8; i++) {
-                    int pixelX = x + i % 2;
-                    int pixelY = y + i / 2;
+                    int pixelX = x * 2 + i % 2;
+                    int pixelY = y * 4 + i / 2;
                     
                     double value = intensities[pixelX][pixelY];
                     double newValue;
@@ -222,13 +264,60 @@ public class LiveView implements VisionProcessor {
                     intensities[pixelX - 1][pixelY + 1] += deltaValue * 3.0 / 16.0;
                     intensities[pixelX    ][pixelY + 1] += deltaValue * 5.0 / 16.0;
                     intensities[pixelX + 1][pixelY + 1] += deltaValue / 16.0;
+
+                    String color;
+                    if (colors[x][y].equals(YELLOW, COLOR_EPSILON))
+                        color = "Yellow";
+                    else if (colors[x][y].equals(BLUE, COLOR_EPSILON))
+                        color = "Blue";
+                    else if (colors[x][y].equals(RED, COLOR_EPSILON))
+                        color = "Red";
+                    else
+                        color = "";
+
+                    if (color.equals(currRun.color))
+                        currRun.length += 1;
+                    else {
+                        if (!currRun.color.isEmpty())
+                            runs.add(currRun);
+                        currRun = new CromaRun(x, y, 1, color);
+                    }
                 }
                 
-                message += (char) charHex;
+                image.add((char) charHex);
             }
 
-            message += "\n";
+            image.add('\n');
         }
+
+        runs.sort(Comparator.comparingInt(run->-run.length));
+        System.out.print("Largest run: ");
+        System.out.print(runs.get(0));
+        System.out.print(" Smallest run: ");
+        System.out.print(runs.get(runs.size() - 1));
+
+        if (runs.size() > numRunsKept) {
+            runs.subList(numRunsKept, runs.size()).clear();
+        }
+
+        runs.sort(Comparator.comparingInt(run->run.x + run.y * outputWidth));
+
+        StringBuilder strImage = new StringBuilder();
+        int lEndIndex = 0;
+
+        for (int i = 0; i < runs.size(); i++) {
+            int runStart = runs.get(i).y * (outputWidth + 1) + runs.get(i).x;
+            int runEnd = runStart + runs.get(i).length;
+
+            strImage.append(image.subList(lEndIndex + 1, runStart));
+            strImage.append(String.format("<%s>", runs.get(i).color));
+            strImage.append(image.subList(runStart, runEnd + 1));
+            strImage.append(String.format("</%s>", runs.get(i).color));
+
+            lEndIndex = runEnd;
+        }
+
+        message = strImage.toString();
 
         sendImage();
     }
