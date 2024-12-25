@@ -12,6 +12,7 @@ import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 public class LiveView implements VisionProcessor {
     Telemetry t;
@@ -86,13 +87,13 @@ public class LiveView implements VisionProcessor {
     public Object processFrame(Mat largeRgb, long captureTimeNanos) {
         newBuffer(largeRgb, inputWidth, inputHeight, true);
 
-        double[][] intensities = new double[inputWidth][inputHeight];
+        double[][] intensities = new double[inputWidth + 2][inputHeight + 2];
 
-        for (int i = 0; i < outputWidth * outputHeight * 3; i += 3) {
+        for (int i = 0; i < inputWidth * inputHeight * 3; i += 3) {
             int x = (i / 3) % inputWidth;
             int y = (i / 3) / inputWidth;
 
-            intensities[x][y] = TypeConversion.unsignedByteToDouble(buffer[i]);
+            intensities[x + 1][y + 1] = TypeConversion.unsignedByteToDouble(buffer[i]);
         }
 
         newBuffer(largeRgb, outputWidth, outputHeight, false);
@@ -155,35 +156,40 @@ public class LiveView implements VisionProcessor {
         sendImage();
     }
 
-    public byte[] fadeTest() {
-        ArrayList<Byte> bitMap = new ArrayList<>();
-        for (int i = 0; i < inputHeight; i++) {
-            for (int j = 0; j < inputWidth; j++) {
-                byte y = (byte) ((j * 255) / inputWidth); // Scale `j` to range [0, 255]
-                bitMap.add(y);
-                bitMap.add((byte) 0);
-                bitMap.add((byte) 0);
+    public double[][] fadeTest() {
+        double[][] bitMap = new double[inputWidth + 2][inputHeight + 2];
+
+        for (int y = 1; y < inputHeight - 1; y++) {
+            for (int x = 1; x < inputWidth - 1; x++) {
+                bitMap[x][y] = Math.round(((double) x / inputWidth) * 255);
             }
         }
 
-        byte[] byteMap = new byte[bitMap.size()];
-        for (int i = 0; i < bitMap.size(); i++) {
-            byteMap[i] = bitMap.get(i);
+        return bitMap;
+    }
+
+    private String toString(List<Character> chars) {
+        StringBuilder string = new StringBuilder();
+
+        for (char c : chars) {
+            string.append(c);
         }
 
-        return byteMap;
+        return string.toString();
     }
 
     public void processLab(double[][] intensities, Lab[][] colors) {
-        message = "";
-        ArrayList<Character> image = new ArrayList<>();
+        ArrayList<Character> image = new ArrayList<>(outputWidth * outputHeight);
 
-        ArrayList<CromaRun> runs = new ArrayList<>(outputWidth * outputHeight);
+        ArrayList<CromaRun> runs = new ArrayList<>();
 
-        for (int y = 0; y < outputHeight; y++) {
+        System.out.print("\nXLen: " + intensities[0].length + " YLen: " + intensities.length);
+
+
+        for (int y = 1; y < outputHeight - 1; y++) {
             CromaRun currRun = new CromaRun(0, 0, 0, CromaRun.Colors.OTHER);
 
-            for (int x = 0; x < outputWidth; x++) {
+            for (int x = 1; x < outputWidth - 1; x++) {
                 int charHex = 0x2800;
                 
                 for (int i = 0; i < 8; i++) {
@@ -218,16 +224,16 @@ public class LiveView implements VisionProcessor {
 
                     double deltaValue = value - newValue;
 
-                    if (pixelX < outputWidth - 1)
-                        intensities[pixelX + 1][pixelY] += deltaValue * 7.0 / 16.0;
-                    if (pixelY < outputHeight - 1) {
-                        if (pixelX > 0)
-                            intensities[pixelX - 1][pixelY + 1] += deltaValue * 3.0 / 16.0;
-                        intensities[pixelX][pixelY + 1] += deltaValue * 5.0 / 16.0;
-                        if (pixelX < outputWidth - 1) {
-                            intensities[pixelX + 1][pixelY + 1] += deltaValue / 16.0;
-                        }
-                    }
+                    //if (pixelX < outputWidth - 1)
+                    intensities[pixelX + 1][pixelY] += deltaValue * 7.0 / 16.0;
+                    //if (pixelY < outputHeight - 1) {
+                    //    if (pixelX > 0)
+                    intensities[pixelX - 1][pixelY + 1] += deltaValue * 3.0 / 16.0;
+                    intensities[pixelX][pixelY + 1] += deltaValue * 5.0 / 16.0;
+                    //    if (pixelX < outputWidth - 1) {
+                    intensities[pixelX + 1][pixelY + 1] += deltaValue / 16.0;
+                    //    }
+                    //}
 
                     CromaRun.Colors color;
                     if (colors[x][y].equals(YELLOW, COLOR_EPSILON))
@@ -286,7 +292,7 @@ public class LiveView implements VisionProcessor {
             lastEndIndex = runEnd;
         }
 
-        strImage.append(image.subList(lastEndIndex, (outputWidth + 1) * outputHeight));
+        strImage.append(toString(image.subList(lastEndIndex, image.size() - 1)));
 
         message = strImage.toString();
 
