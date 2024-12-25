@@ -86,7 +86,7 @@ public class LiveView implements VisionProcessor {
     public Object processFrame(Mat largeRgb, long captureTimeNanos) {
         newBuffer(largeRgb, inputWidth, inputHeight, true);
 
-        double[][] intensities = new double[inputWidth + 2][inputHeight + 2];
+        double[][] intensities = new double[inputWidth][inputHeight];
 
         for (int i = 0; i < buffer.length; i += 3) {
             int x = (i / 3) % inputWidth;
@@ -97,7 +97,7 @@ public class LiveView implements VisionProcessor {
 
         newBuffer(largeRgb, outputWidth, outputHeight, false);
 
-        Lab[][] colors = new Lab[outputWidth + 2][outputHeight + 2];
+        Lab[][] colors = new Lab[outputWidth][outputHeight];
 
         for (int i = 0; i < buffer.length; i += 3) {
             int x = (i / 3) % outputWidth;
@@ -180,10 +180,10 @@ public class LiveView implements VisionProcessor {
 
         ArrayList<CromaRun> runs = new ArrayList<>(outputWidth * outputHeight);
 
-        for (int y = 1; y < outputHeight - 1; y++) {
+        for (int y = 0; y < outputHeight; y++) {
             CromaRun currRun = new CromaRun(0, 0, 0, CromaRun.Colors.OTHER);
 
-            for (int x = 1; x < outputWidth - 1; x++) {
+            for (int x = 0; x < outputWidth; x++) {
                 int charHex = 0x2800;
                 
                 for (int i = 0; i < 8; i++) {
@@ -218,10 +218,19 @@ public class LiveView implements VisionProcessor {
 
                     double deltaValue = value - newValue;
 
-                    intensities[pixelX + 1][pixelY    ] += deltaValue * 7.0 / 16.0;
-                    intensities[pixelX - 1][pixelY + 1] += deltaValue * 3.0 / 16.0;
-                    intensities[pixelX    ][pixelY + 1] += deltaValue * 5.0 / 16.0;
-                    intensities[pixelX + 1][pixelY + 1] += deltaValue / 16.0;
+                    if (pixelX < outputWidth - 1)
+                        intensities[pixelX + 1][pixelY] += deltaValue * 7.0 / 16.0;
+                    if (pixelY < outputHeight - 1) {
+                        if (pixelX > 0)
+                            intensities[pixelX - 1][pixelY + 1] += deltaValue * 3.0 / 16.0;
+                        intensities[pixelX][pixelY + 1] += deltaValue * 5.0 / 16.0;
+                        if (pixelX < outputWidth - 1) {
+                            intensities[pixelX + 1][pixelY + 1] += deltaValue / 16.0;
+                        }
+                    }
+
+
+
 
                     CromaRun.Colors color;
                     if (colors[x][y].equals(YELLOW, COLOR_EPSILON))
