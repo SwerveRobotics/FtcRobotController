@@ -1,10 +1,7 @@
 package org.firstinspires.ftc.team417.liveView;
 
-import static java.lang.System.nanoTime;
-
 import android.graphics.Canvas;
 
-import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.util.TypeConversion;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -14,25 +11,17 @@ import org.opencv.core.Mat;
 import org.opencv.imgproc.Imgproc;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 
-/** @noinspection StringConcatenationInLoop*/
 public class LiveView implements VisionProcessor {
     Telemetry t;
-    TelemetryPacket p;
     String message;
     String messageStart;
     String messageEnd;
 
-    private final int defaultScreenWidth = 32;
-    private final int defaultScreenHeight = 16;
-    private double currScreenWidth = defaultScreenWidth;
-    private double currScreenHeight = defaultScreenHeight;
-
-    private final int intensityRangeMin = 0;
-    private final int intensityRangeMax = 255;
-    private final int intensityRange = intensityRangeMax - intensityRangeMin;
+    private final int onThreshold = 55;
+    private final int onValue = 155;
+    private final int offValue = 27;
 
     //PLACEHOLDER VALUES________________________________________________
     private final int COLOR_EPSILON = 100;
@@ -41,8 +30,6 @@ public class LiveView implements VisionProcessor {
     private final Lab RED = new Lab(0 , 0, 0);
 
     private final int numRunsKept = 200;
-
-    double lTime = 0;
 
     // Big memory buffers are very expensive to allocate so create them once and reuse
     // rather than recreating them on every loop:
@@ -67,14 +54,6 @@ public class LiveView implements VisionProcessor {
     @Override
     public void init(int width, int height, CameraCalibration calibration) {
 
-    }
-
-    // This routine shows how to get the raw pixels from the bitmap. As a test, it simply
-    // gathers some statistics about the bitmap's contents.
-    double[] mins = new double[4];
-    double[] maxes = new double[4];
-    byte[] inspect(Mat mat) {
-        return buffer;
     }
 
     private void newBuffer(Mat largeRgb, int width, int height) {
@@ -125,7 +104,7 @@ public class LiveView implements VisionProcessor {
             colors[x + 1][y + 1] = new Lab(L, a, b);
         }
 
-        processYCrCb(intensities, colors);
+        processLab(intensities, colors);
 
         return null;
     }
@@ -143,29 +122,29 @@ public class LiveView implements VisionProcessor {
     }
 
     public void resize(int factor) {
+        StringBuilder start = new StringBuilder();
+        StringBuilder end = new StringBuilder();
 
         for (int i = 0; i < factor; i++) {
-            messageStart += "<small>";
-            messageEnd = "</small>" + messageEnd;
+            start.append("<small>");
+            end.append("</small>");
         }
 
-        for (int i = 0; i > factor; i--) {
-            if (currScreenWidth > defaultScreenWidth) {
-                messageStart = messageStart.replaceFirst("<small>", "");
-                messageEnd = messageEnd.replaceFirst("</small>", "");
-            }
-        }
+        messageStart += start.toString();
+        messageEnd = end.toString() + messageEnd;
     }
 
     public void allWhiteTest(double width, double height) {
-        message = "";
+        StringBuilder message = new StringBuilder();
 
         for (int i = 0; i < height; i++) {
             for (int j = 0; j < width; j++) {
-                message += "█";
+                message.append((char) 0x283F);
             }
-            message += "\n";
+            message.append('\n');
         }
+        
+        this.message = message.toString();
 
         sendImage();
     }
@@ -189,7 +168,7 @@ public class LiveView implements VisionProcessor {
         return byteMap;
     }
 
-    public void processYCrCb(double[][] intensities, Lab[][] colors) {
+    public void processLab(double[][] intensities, Lab[][] colors) {
         message = "";
         ArrayList<Character> image = new ArrayList<>();
 
@@ -207,8 +186,8 @@ public class LiveView implements VisionProcessor {
                     double value = intensities[pixelX][pixelY];
                     double newValue;
 
-                    if (value > 55) {
-                        newValue = 155;
+                    if (value > onThreshold) {
+                        newValue = onValue;
 
                         if (i == 0)
                             charHex += 0x1;
@@ -228,7 +207,7 @@ public class LiveView implements VisionProcessor {
                             charHex += 0x80;
 
                     } else
-                        newValue = 27;
+                        newValue = offValue;
 
                     double deltaValue = value - newValue;
 
