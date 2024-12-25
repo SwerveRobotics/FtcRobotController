@@ -47,7 +47,7 @@ public class LiveView implements VisionProcessor {
     // Big memory buffers are very expensive to allocate so create them once and reuse
     // rather than recreating them on every loop:
     Mat smallRgb = new Mat();
-    Mat smallYCrCb = new Mat();
+    Mat smallLab = new Mat();
     byte[] buffer = new byte[0]; // Will resize later...
 
     int inputWidth;
@@ -77,29 +77,29 @@ public class LiveView implements VisionProcessor {
         return buffer;
     }
 
-    // The system calls processFrame every time the camera acquires a new frame (typically 30
-    // frames per second). Note that this is on a different thread than the robot's primary loop:
-    @Override
-    public Object processFrame(Mat largeRgb, long captureTimeNanos) {
-        int pixelCount;
-        int channelCount;
-        int byteCount;
-
+    private void newBuffer(Mat largeRgb, int width, int height) {
         // First resize the frame that came from the camera:
-        Imgproc.resize(largeRgb, smallRgb, new org.opencv.core.Size(inputWidth, inputHeight), 0, 0, Imgproc.INTER_AREA);
+        Imgproc.resize(largeRgb, smallRgb, new org.opencv.core.Size(width, height), 0, 0, Imgproc.INTER_AREA);
 
         // Convert it to YCrCb (Y is luminance/intensity, Cr is red chroma, Cb is blue chroma):
-        Imgproc.cvtColor(smallRgb, smallYCrCb, Imgproc.COLOR_RGB2Lab);
+        Imgproc.cvtColor(smallRgb, smallLab, Imgproc.COLOR_RGB2Lab);
 
-        pixelCount = smallYCrCb.height() * smallYCrCb.width();
-        channelCount = smallYCrCb.channels();
-        byteCount = pixelCount * channelCount;
+        int pixelCount = smallLab.height() * smallLab.width();
+        int channelCount = smallLab.channels();
+        int byteCount = pixelCount * channelCount;
 
         if (buffer.length < byteCount)
             buffer = new byte[byteCount];
 
         // Read the pixels from the 'Mat' object into our buffer:
-        smallYCrCb.get(0, 0, buffer);
+        smallLab.get(0, 0, buffer);
+    }
+
+    // The system calls processFrame every time the camera acquires a new frame (typically 30
+    // frames per second). Note that this is on a different thread than the robot's primary loop:
+    @Override
+    public Object processFrame(Mat largeRgb, long captureTimeNanos) {
+        newBuffer(largeRgb, inputWidth, inputHeight);
 
         double[][] intensities = new double[inputWidth + 2][inputHeight + 2];
 
@@ -110,21 +110,7 @@ public class LiveView implements VisionProcessor {
             intensities[x + 1][y + 1] = TypeConversion.unsignedByteToDouble(buffer[i]);
         }
 
-        // First resize the frame that came from the camera:
-        Imgproc.resize(largeRgb, smallRgb, new org.opencv.core.Size(outputWidth / 2.0, outputHeight / 4.0), 0, 0, Imgproc.INTER_AREA);
-
-        // Convert it to YCrCb (Y is luminance/intensity, Cr is red chroma, Cb is blue chroma):
-        Imgproc.cvtColor(smallRgb, smallYCrCb, Imgproc.COLOR_RGB2Lab);
-
-        pixelCount = smallYCrCb.height() * smallYCrCb.width();
-        channelCount = smallYCrCb.channels();
-        byteCount = pixelCount * channelCount;
-
-        if (buffer.length < byteCount)
-            buffer = new byte[byteCount];
-
-        // Read the pixels from the 'Mat' object into our buffer:
-        smallYCrCb.get(0, 0, buffer);
+        newBuffer(largeRgb, outputWidth, outputHeight);
 
         Lab[][] colors = new Lab[outputWidth + 2][outputHeight + 2];
 
@@ -184,20 +170,6 @@ public class LiveView implements VisionProcessor {
         sendImage();
     }
 
-    public void trackLoopTime(int windowSize, TelemetryPacket p) {
-        double currTime = nanoTime() * 1e-9;
-        double deltaTime = currTime - lTime;
-
-
-        Filter filter = new Filter();
-        double aveTime = filter.slidingWindow(deltaTime, windowSize);
-
-        t.addData("deltaTime", deltaTime);
-        t.addData("aveTime", aveTime);
-
-        lTime = currTime;
-    }
-
     public byte[] fadeTest() {
         ArrayList<Byte> bitMap = new ArrayList<>();
         for (int i = 0; i < inputHeight; i++) {
@@ -224,8 +196,8 @@ public class LiveView implements VisionProcessor {
         ArrayList<CromaRun> runs = new ArrayList<>();
         CromaRun currRun = new CromaRun(0, 0, 0, "");
 
-        for (int y = 1; y < outputHeight / 4- 1; y++) {
-            for (int x = 1; x < outputWidth / 2 - 1; x++) {
+        for (int y = 1; y < outputHeight - 1; y++) {
+            for (int x = 1; x < outputWidth - 1; x++) {
                 int charHex = 0x2800;
                 
                 for (int i = 0; i < 8; i++) {
