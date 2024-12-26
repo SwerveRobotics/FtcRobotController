@@ -18,6 +18,7 @@ import org.opencv.imgcodecs.Imgcodecs;
 abstract public class BaseOpMode extends LinearOpMode {
 
     Mat testImage; // Our canonical test image
+    VisionPortal visionPortal;
 
     // Do one-time initialization code:
     void initLiveView(LiveView view, boolean test) {
@@ -40,12 +41,16 @@ abstract public class BaseOpMode extends LinearOpMode {
             // Choose a camera resolution. Not all cameras support all resolutions.
             builder.setCameraResolution(new Size(1280, 800));
 
+            builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+
             // Enable the system's built-in RC preview (LiveView).  Set "false" to omit camera
             // monitoring.
             builder.enableLiveView(true);
 
             // Set and enable the live-view processor.
             builder.addProcessor(view);
+
+            visionPortal = builder.build();
         }
     }
 }

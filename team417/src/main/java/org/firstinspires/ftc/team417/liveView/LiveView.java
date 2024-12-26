@@ -26,7 +26,7 @@ public class LiveView implements VisionProcessor {
 
     //PLACEHOLDER VALUES________________________________________________
     private final int COLOR_EPSILON = 50;
-    private final Lab YELLOW = new Lab(97.14, -21.56,  94.48);
+    private final Lab YELLOW = new Lab(34.509803921568626, 115,  -100);
     private final Lab BLUE = new Lab(32.30, 79.19, -107.86);
     private final Lab RED = new Lab(53.24 , 80.09, 67.20);
     private final String[] RGB_CODES = {"#FFFF00", "#0000FF", "#FF0000"};
@@ -104,9 +104,9 @@ public class LiveView implements VisionProcessor {
             int x = (i / 3) % outputWidth;
             int y = (i / 3) / outputWidth;
 
-            double L = TypeConversion.unsignedByteToDouble(buffer[i    ]);
-            double a = TypeConversion.unsignedByteToDouble(buffer[i + 1]);
-            double b = TypeConversion.unsignedByteToDouble(buffer[i + 2]);
+            double L = TypeConversion.unsignedByteToDouble(buffer[i + 2]) / 255.0 * 100.0;
+            double a = buffer[i + 1];
+            double b = buffer[i    ];
 
             colors[x][y] = new Lab(L, a, b);
         }
@@ -185,6 +185,9 @@ public class LiveView implements VisionProcessor {
 
         System.out.print("\nXLen: " + intensities[0].length + " YLen: " + intensities.length);
 
+        int u = 58;
+        int v = 26;
+
 
         for (int y = 0; y < outputHeight; y++) {
             CromaRun currRun = new CromaRun(0, 0, 0, CromaRun.Colors.OTHER);
@@ -252,6 +255,16 @@ public class LiveView implements VisionProcessor {
                         runs.add(currRun);
                     currRun = new CromaRun(x, y, 1, color);
                 }
+
+                if (((x == u) && (y == v-1)) ||
+                    ((x == u) && (y == v+1)) ||
+                    ((x == u-1) && (y == v)) ||
+                        ((x == u+1) && (y==v))) {
+                    charHex = '█';
+                }
+
+                if ((x == u) && (y == v))
+                    System.out.print("\n----------------------------------------\nL: " + colors[x][y].L + " a: " + colors[x][y].a + " b: " + colors[x][y].b + "\n");
                 
                 image.add((char) charHex);
             }
@@ -310,5 +323,7 @@ public class LiveView implements VisionProcessor {
         t.addLine(messageStart + message + messageEnd);
         System.out.print(messageStart + message + messageEnd);
         System.out.print("\n");
+
+        t.update();
     }
 }
