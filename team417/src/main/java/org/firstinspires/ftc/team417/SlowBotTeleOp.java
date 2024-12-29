@@ -106,7 +106,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void prepareRobot(Pose2d startingPose) {
-        targetRotation = startingPose.heading.log();
+        targetRot = startingPose.heading.log();
 
         drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
         initializeHardware();
@@ -179,33 +179,41 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
     PoseVelocity2d poseVelocity;
 
-    double targetRotationalVelocity;
-    double targetRotation;
+    double targetRotVel;
+    double targetRot;
 
     public void driveWithHeldHeading(double userX, double userY, double userRot, double deltaTime) {
         // Calculate the rotational component of the wheel velocities
-        if (userRot >= 0) {
-            targetRotationalVelocity += driveTo.rotationalDriveAccel * deltaTime;
-            targetRotationalVelocity = Math.min(targetRotationalVelocity, userRot);
+        if (userRot * targetRotVel > 0 && Math.abs(userRot) > Math.abs(targetRotVel)) {
+            targetRotVel += driveTo.rotationalDriveAccel * deltaTime * Math.signum(targetRotVel);
+            targetRotVel = Math.min(
+                    Math.abs(targetRotVel),
+                    Math.abs(userRot))
+                    * Math.signum(targetRotVel);
         } else {
-            targetRotationalVelocity -= driveTo.rotationalDriveDeccel * deltaTime;
-            targetRotationalVelocity = Math.max(targetRotationalVelocity, userRot);
+            targetRotVel -= driveTo.rotationalDriveDeccel * deltaTime * Math.signum(targetRotVel);
+            if (userRot * targetRotVel > 0) {
+                targetRotVel = Math.max(
+                        Math.abs(targetRotVel),
+                        Math.abs(userRot))
+                        * Math.signum(targetRotVel);
+            }
         }
 
-        targetRotationalVelocity = Math.min(
-                Math.abs(targetRotationalVelocity),
+        targetRotVel = Math.min(
+                Math.abs(targetRotVel),
                 driveTo.maxRotationalSpeed
-                )
-                * Math.signum(targetRotationalVelocity);
+        )
+                * Math.signum(targetRotVel);
 
-        targetRotation = targetRotation + targetRotationalVelocity * deltaTime;
+        targetRot = targetRot + targetRotVel * deltaTime;
 
-        double accelTheta = targetRotationalVelocity / deltaTime;
+        double accelTheta = targetRotVel / deltaTime;
 
-        double[] angular = new double[] {targetRotation, targetRotationalVelocity, accelTheta};
+        double[] angular = new double[]{targetRot, targetRotVel, accelTheta};
 
         Pose2dDual<Time> txWorldTarget = new Pose2dDual<>(
-                new Vector2dDual<>(new DualNum<>(new double[] {drive.pose.position.x, 0, 0}), new DualNum<>(new double[] {drive.pose.position.y, 0, 0})),
+                new Vector2dDual<>(new DualNum<>(new double[]{drive.pose.position.x, 0, 0}), new DualNum<>(new double[]{drive.pose.position.y, 0, 0})),
                 Rotation2dDual.exp(new DualNum<>(angular)));
 
         PoseVelocity2dDual<Time> command = new HolonomicController(
