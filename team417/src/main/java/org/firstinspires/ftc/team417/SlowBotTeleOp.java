@@ -30,7 +30,6 @@ import org.firstinspires.ftc.team417.skidaddle.DPoint;
 @Config
 public class SlowBotTeleOp extends BaseOpModeSlowBot {
     private double speedMultiplier = 1;
-    public double targetHeading;
     boolean curve = true;
     boolean fieldCentered = false;
 
@@ -107,7 +106,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void prepareRobot(Pose2d startingPose) {
-        targetHeading = startingPose.heading.log();
+        targetRotation = startingPose.heading.log();
 
         drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
         initializeHardware();
@@ -130,20 +129,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         }
         if (gamepad1.right_trigger > 0.1) {
             speedMultiplier *= 2;
-        }
-
-        // Use the left and right bumpers as shortcuts to turn 90 degrees
-        if (gamepad1.left_bumper) {
-            targetHeading -= Math.PI / 2;
-        }
-        if (gamepad1.right_bumper) {
-            targetHeading += Math.PI / 2;
-        }
-
-        // Normal
-        targetHeading = ((targetHeading + Math.PI) % (2 * Math.PI)) - Math.PI;
-        if (targetHeading < -Math.PI) {
-            targetHeading += 2 * Math.PI;
         }
 
         // When slides are out, slow down robot
@@ -194,23 +179,30 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
     PoseVelocity2d poseVelocity;
 
-    public void driveWithHeldHeading(double x, double y, double rot, double deltaTime) {
-        // Calculate the rotation component of the wheel velocities
-        double rotationalSpeed = -rot * speedMultiplier;
+    double targetRotationalVelocity;
+    double targetRotation;
 
-        if (rotationalSpeed >= 0) {
-            rotationalSpeed += driveTo.rotationalDriveAccel * deltaTime;
+    public void driveWithHeldHeading(double userX, double userY, double userRot, double deltaTime) {
+        // Calculate the rotational component of the wheel velocities
+        if (userRot >= 0) {
+            targetRotationalVelocity += driveTo.rotationalDriveAccel * deltaTime;
+            targetRotationalVelocity = Math.min(targetRotationalVelocity, userRot);
         } else {
-            rotationalSpeed -= driveTo.rotationalDriveDeccel * deltaTime;
+            targetRotationalVelocity -= driveTo.rotationalDriveDeccel * deltaTime;
+            targetRotationalVelocity = Math.max(targetRotationalVelocity, userRot);
         }
 
-        rotationalSpeed = Math.min(rotationalSpeed, driveTo.maxRotationalSpeed);
+        targetRotationalVelocity = Math.min(
+                Math.abs(targetRotationalVelocity),
+                driveTo.maxRotationalSpeed
+                )
+                * Math.signum(targetRotationalVelocity);
 
-        double targetTheta = drive.pose.heading.log() + rotationalSpeed * deltaTime;
+        targetRotation = targetRotation + targetRotationalVelocity * deltaTime;
 
-        double accelTheta = rotationalSpeed / deltaTime;
+        double accelTheta = targetRotationalVelocity / deltaTime;
 
-        double[] angular = new double[] {targetTheta, rotationalSpeed, accelTheta};
+        double[] angular = new double[] {targetRotation, targetRotationalVelocity, accelTheta};
 
         Pose2dDual<Time> txWorldTarget = new Pose2dDual<>(
                 new Vector2dDual<>(new DualNum<>(new double[] {drive.pose.position.x, 0, 0}), new DualNum<>(new double[] {drive.pose.position.y, 0, 0})),
@@ -235,8 +227,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         // Calculate the driving/strafing component of the wheel velocities
         PoseVelocity2d powers = new PoseVelocity2d(
                 new Vector2d(
-                        -y * speedMultiplier,
-                        -x * speedMultiplier
+                        -userY * speedMultiplier,
+                        -userX * speedMultiplier
                 ),
                 0
         );
