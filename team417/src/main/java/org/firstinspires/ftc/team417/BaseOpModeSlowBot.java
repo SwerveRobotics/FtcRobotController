@@ -231,6 +231,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public void initializeHardware() {
         // Only initialize arm if it's not already initialized.
         // This is CRUCIAL for transitioning between Auto and TeleOp.
+        /*TODO: RENABLE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
         if (false) { // liftMotor1 == null && liftMotor2 == null && slideMotor == null) {
             liftMotor1 = hardwareMap.get(DcMotorEx.class, "lift1");
             liftMotor2 = hardwareMap.get(DcMotorEx.class, "lift2");

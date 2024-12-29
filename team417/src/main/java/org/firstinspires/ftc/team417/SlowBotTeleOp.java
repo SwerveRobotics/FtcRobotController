@@ -76,12 +76,14 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
             controlDrivebaseWithGamepads(curve, fieldCentered, deltaTime);
 
+            /*TODO: RENABLE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
             //controlMechanismsWithGamepads(deltaTime);
 
             if (drive.colorProcessor != null) {
                 drive.colorProcessor.update();
             }
 
+            /*TODO: RENABLE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
             //telemeterData();
 
             // 'packet' is the object used to send data to FTC Dashboard:
@@ -222,7 +224,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         // Enlighten Wily Works as to where we should be:
         WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
 
-        HolonomicKinematics.WheelVelocities<Time> wheelVels = drive.kinematics.inverse(command);
+        HolonomicKinematics.WheelVelocities<Time> rotWheelVels = drive.kinematics.inverse(command);
 
         double voltage = drive.getVoltage();
 
@@ -251,10 +253,10 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         /*final MotorFeedforward feedforward = new MotorFeedforward(0,
                 0,
                 0);*/
-        double leftFrontPower = (wheelVels.leftFront.get(0) / maxPowerMag + feedforward.compute(wheelVels.leftFront)) / voltage;
-        double leftBackPower = (wheelVels.leftBack.get(0) / maxPowerMag + feedforward.compute(wheelVels.leftBack)) / voltage;
-        double rightBackPower = (wheelVels.rightBack.get(0) / maxPowerMag + feedforward.compute(wheelVels.rightBack)) / voltage;
-        double rightFrontPower = (wheelVels.rightFront.get(0) / maxPowerMag + feedforward.compute(wheelVels.rightFront)) / voltage;
+        double leftFrontPower = (driveWheelVels.leftFront.get(0) / maxPowerMag + feedforward.compute(rotWheelVels.leftFront)) / voltage;
+        double leftBackPower = (driveWheelVels.leftBack.get(0) / maxPowerMag + feedforward.compute(rotWheelVels.leftBack)) / voltage;
+        double rightBackPower = (driveWheelVels.rightBack.get(0) / maxPowerMag + feedforward.compute(rotWheelVels.rightBack)) / voltage;
+        double rightFrontPower = (driveWheelVels.rightFront.get(0) / maxPowerMag + feedforward.compute(rotWheelVels.rightFront)) / voltage;
 
         drive.leftFront.setPower(leftFrontPower);
         drive.leftBack.setPower(leftBackPower);
@@ -263,19 +265,19 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void controlMechanismsWithGamepads(double deltaTime) {
-            /* Here we handle the three buttons that have direct control of the intake speed.
-            These control the continuous rotation servo that pulls elements into the robot,
-            If the user presses A, it sets the intake power to the final variable that
-            holds the speed we want to collect at.
-            If the user presses X, it sets the servo to Off.
-            And if the user presses B it reveres the servo to spit out the element.*/
+        /* Here we handle the three buttons that have direct control of the intake speed.
+        These control the continuous rotation servo that pulls elements into the robot,
+        If the user presses A, it sets the intake power to the final variable that
+        holds the speed we want to collect at.
+        If the user presses X, it sets the servo to Off.
+        And if the user presses B it reveres the servo to spit out the element.*/
 
-            /* TECH TIP: If Else loops:
-            We're using an else if loop on "gamepad1.x" and "gamepad1.b" just in case
-            multiple buttons are pressed at the same time. If the driver presses both "a" and "x"
-            at the same time. "a" will win over and the intake will turn on. If we just had
-            three if statements, then it will set the intake servo's power to multiple speeds in
-            one cycle. Which can cause strange behavior. */
+        /* TECH TIP: If Else loops:
+        We're using an else if loop on "gamepad1.x" and "gamepad1.b" just in case
+        multiple buttons are pressed at the same time. If the driver presses both "a" and "x"
+        at the same time. "a" will win over and the intake will turn on. If we just had
+        three if statements, then it will set the intake servo's power to multiple speeds in
+        one cycle. Which can cause strange behavior. */
 
         // Low basket
         if (gamepad2.x) {
@@ -327,13 +329,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             slidePosition = SLIDE_HOME_POSITION;
         }
 
-            /* Here we create a "fudge factor" for the Lift position.
-            This allows you to adjust (or "fudge") the Lift position slightly with the gamepad triggers.
-            We want the left trigger to move the Lift up, and right trigger to move the Lift down.
-            So we add the right trigger's variable to the inverse of the left trigger. If you pull
-            both triggers an equal amount, they cancel and leave the Lift at zero. But if one is larger
-            than the other, it "wins out". This variable is then multiplied by our FUDGE_FACTOR.
-            The FUDGE_FACTOR is the number of degrees that we can adjust the arm by with this function. */
+        /* Here we create a "fudge factor" for the Lift position.
+        This allows you to adjust (or "fudge") the Lift position slightly with the gamepad triggers.
+        We want the left trigger to move the Lift up, and right trigger to move the Lift down.
+        So we add the right trigger's variable to the inverse of the left trigger. If you pull
+        both triggers an equal amount, they cancel and leave the Lift at zero. But if one is larger
+        than the other, it "wins out". This variable is then multiplied by our FUDGE_FACTOR.
+        The FUDGE_FACTOR is the number of degrees that we can adjust the arm by with this function. */
 
         liftPositionFudgeFactor = FUDGE_FACTOR_LIFT * (gamepad2.right_trigger - gamepad2.left_trigger);
 
