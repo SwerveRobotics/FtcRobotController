@@ -231,7 +231,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public void initializeHardware() {
         // Only initialize arm if it's not already initialized.
         // This is CRUCIAL for transitioning between Auto and TeleOp.
-        if (true) { // liftMotor1 == null && liftMotor2 == null && slideMotor == null) {
+        if (false) { // liftMotor1 == null && liftMotor2 == null && slideMotor == null) {
             liftMotor1 = hardwareMap.get(DcMotorEx.class, "lift1");
             liftMotor2 = hardwareMap.get(DcMotorEx.class, "lift2");
             slideMotor = hardwareMap.get(DcMotorEx.class, "slides");
@@ -255,16 +255,15 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
+            intake1 = hardwareMap.get(CRServo.class, "intake1");
+            intake2 = hardwareMap.get(CRServo.class, "intake2");
+            intake2.setDirection(DcMotorSimple.Direction.REVERSE);
+            wrist = hardwareMap.get(Servo.class, "wrist");
+
+            /* Make sure that the intake is off  */
+            intake1.setPower(INTAKE_OFF);
+            intake2.setPower(INTAKE_OFF);
         }
-
-        intake1 = hardwareMap.get(CRServo.class, "intake1");
-        intake2 = hardwareMap.get(CRServo.class, "intake2");
-        intake2.setDirection(DcMotorSimple.Direction.REVERSE);
-        wrist = hardwareMap.get(Servo.class, "wrist");
-
-        /* Make sure that the intake is off  */
-        intake1.setPower(INTAKE_OFF);
-        intake2.setPower(INTAKE_OFF);
     }
 
 
