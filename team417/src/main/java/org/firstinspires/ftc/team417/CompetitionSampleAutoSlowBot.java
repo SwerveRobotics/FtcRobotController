@@ -5,59 +5,32 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
-@Autonomous (name = "AutoSpecimen", group = "SlowBot", preselectTeleOp = "TeleOp")
+@Autonomous (name = "AutoSample", group = "SlowBot", preselectTeleOp = "TeleOp")
 public class CompetitionSampleAutoSlowBot extends BaseOpModeSlowBot {
     @Override
     public void runOpMode () {
-        Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(-90));  // sets the beginning pose relative to the robot and  cxc
+        Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) + 48 , 72 - (ROBOT_WIDTH / 2), Math.toRadians(0));  // sets the beginning pose relative to the robot and  cxc
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
         initializeHardware();
 
         // TODO: Write the trajectory code (current code is placeholder)
         Action trajectoryAction = drive.actionBuilder(beginPose)
-                .setTangent(Math.toRadians(-90))
-                // after disp arm up
-                .splineToLinearHeading(new Pose2d(0, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
-                // stop and wait arm down SCORES
-                .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-49,68-(ROBOT_WIDTH/2),Math.toRadians(-90)), Math.toRadians(180))
-                //four bar out
-                //intake sample
-                //four bar in
-                .splineToLinearHeading(new Pose2d(-49,68-(ROBOT_WIDTH/2),Math.toRadians(180 )), Math.toRadians(180))
-                //output sample
-                .splineToLinearHeading(new Pose2d(-49,68-(ROBOT_WIDTH/2),Math.toRadians(90 )), Math.toRadians(180))
-                .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-49,72-(ROBOT_WIDTH/2),Math.toRadians(90 )), Math.toRadians(180))
-                //.setTangent(Math.toRadians(180))
-                //.splineToLinearHeading(new Pose2d(-59,68-(ROBOT_WIDTH/2),Math.toRadians(-90)), Math.toRadians(180))
-                //four bar out
-                //intake sample
-                //four bar in
-                //.splineToLinearHeading(new Pose2d(-59,68-(ROBOT_WIDTH/2),Math.toRadians(180 )), Math.toRadians(180))
-                //after disp arm out
-                //output sample after disp 0.5 seconds
-                .setTangent(Math.toRadians(-90))
-                // after disp arm up
-                .splineToLinearHeading(new Pose2d(-3, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
+                .setTangent(-45)
+                .splineToLinearHeading(new Pose2d(57,57, Math.toRadians(45)), Math.toRadians(45))
+                .setTangent(Math.toRadians(0))
+                .splineToLinearHeading(new Pose2d(50,60,Math.toRadians(-90)), Math.toRadians(-90))
+                //stop and add slides out
+                .splineToLinearHeading(new Pose2d(57,57, Math.toRadians(45)), Math.toRadians(45))
                 .setTangent(Math.toRadians(180))
-                .splineToLinearHeading(new Pose2d(-59,68-(ROBOT_WIDTH/2),Math.toRadians(-90)), Math.toRadians(180))
-                //four bar out
-                //intake sample
-                //four bar in
-                .splineToLinearHeading(new Pose2d(-59,68-(ROBOT_WIDTH/2),Math.toRadians(180 )), Math.toRadians(180))
-                //after disp arm out
-                //output sample after disp 0.5 seconds
-                .splineToLinearHeading(new Pose2d(-49,72 -(ROBOT_WIDTH/2),Math.toRadians(90 )), Math.toRadians(180))
-                .setTangent(Math.toRadians(-90))
-                // after disp arm up
-                .splineToLinearHeading(new Pose2d(-6, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
-                .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-49,72 -(ROBOT_WIDTH/2),Math.toRadians(-90 )), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(62,60,Math.toRadians(-90)), Math.toRadians(-90))
+                //stop and add slides out
+                .splineToLinearHeading(new Pose2d(57,57, Math.toRadians(45)), Math.toRadians(45))
                 .build();
+
         Canvas previewCanvas = new Canvas();
         trajectoryAction.preview(previewCanvas);
 

@@ -4,7 +4,10 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.SleepAction;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
@@ -20,8 +23,33 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 // after disp arm up
                 .splineToLinearHeading(new Pose2d(0, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
                 .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
+                .splineToLinearHeading(new Pose2d(0,XDRIVE_Y_SCORE_POSE - 3, Math.toRadians(-90)), Math.toRadians(-90))
+                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-36,24,Math.toRadians(-90)),Math.toRadians(-90))
+                .setTangent(Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-48,12,Math.toRadians(-90)),Math.toRadians(180))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-48,57, Math.toRadians(-90)), Math.toRadians(90))
+                .setTangent(Math.toRadians(-90))
 
-                // stop and wait arm down SCORES
+                .splineToLinearHeading(new Pose2d(-60,12, Math.toRadians(-90)), Math.toRadians(180))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-60,60,Math.toRadians(-90)),Math.toRadians(90))
+                .setTangent(Math.toRadians(-90))
+
+                .splineToLinearHeading(new Pose2d(-49,55,Math.toRadians(90)), Math.toRadians(90), new TranslationalVelConstraint(10))
+                .stopAndAdd(new SleepAction(1))
+                .splineToLinearHeading(new Pose2d(-49,65,Math.toRadians(90)), Math.toRadians(90),new TranslationalVelConstraint(25))
+                .afterDisp(0,new ControlAction(SLIDE_HOME_POSITION, WRIST_IN, 90))
+                .setTangent(Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-49,63,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))
+                .setTangent(Math.toRadians(-90))
+                // after disp arm up
+                .splineToLinearHeading(new Pose2d(-3, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
+                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
+                .splineToLinearHeading(new Pose2d(-3,XDRIVE_Y_SCORE_POSE - 3, Math.toRadians(-90)), Math.toRadians(-90))
+                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
                 //.setTangent(Math.toRadians(90))
                 //.splineToLinearHeading(new Pose2d(-49,68-(ROBOT_WIDTH/2),Math.toRadians(-90)), Math.toRadians(180))
 

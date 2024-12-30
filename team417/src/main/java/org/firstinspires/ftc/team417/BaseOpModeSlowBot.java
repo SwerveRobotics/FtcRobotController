@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
@@ -39,7 +40,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public final static double LIFT_MAX = 1200;
     public final static double LIFT_SCORE_HIGH_BASKET = 1220;
     public final static double LIFT_SCORE_LOW_BASKET = 750;
-    public final static double LIFT_SCORE_HIGH_SPECIMEN = 850;
+    public final static double LIFT_SCORE_HIGH_SPECIMEN = 875;
     public final static double LIFT_GET_SPECIMEN = 650;
     public final static double LIFT_COLLECT = 0.0;
     public final static double LIFT_MIN = 0.0;
@@ -98,6 +99,9 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
         @Override
         public boolean run(double elapsedTime) {
+            if(WilyWorks.isSimulating) { //allows wilyworks to run even though no motors present
+                return false;
+            }
             // Once lift is ABOVE the no slide zone, move the slide & wrist out at the same time
             if(isCrossingNoSlideZone(targetLiftPosition)) {
                 if (getSlidePosition() > SLIDE_HOME_POSITION + TICKS_EPSILON) {
