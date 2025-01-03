@@ -285,13 +285,25 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 0,
                 0);*/
         double leftFrontPower = (driveWheelVels.leftFront.get(0) / driveMaxPowerMag) +
-                (Math.abs(rotWheelVels.leftFront.value()) > SHIVERING_THRESHOLD ? feedforward.compute(rotWheelVels.leftFront) / voltage : 0);
+                (
+                        Math.abs(rotWheelVels.leftFront.value()) < SHIVERING_THRESHOLD ? 0 :
+                                feedforward.compute(rotWheelVels.leftFront) / voltage
+                );
         double leftBackPower = (driveWheelVels.leftBack.get(0) / driveMaxPowerMag) +
-                (Math.abs(rotWheelVels.leftBack.value()) > SHIVERING_THRESHOLD ? feedforward.compute(rotWheelVels.leftBack) / voltage : 0);
+                (
+                        Math.abs(rotWheelVels.leftBack.value()) < SHIVERING_THRESHOLD ? 0 :
+                                feedforward.compute(rotWheelVels.leftBack) / voltage
+                );
         double rightBackPower = (driveWheelVels.rightBack.get(0) / driveMaxPowerMag) +
-                (Math.abs(rotWheelVels.rightBack.value()) > SHIVERING_THRESHOLD ? feedforward.compute(rotWheelVels.rightBack) / voltage : 0);
+                (
+                        Math.abs(rotWheelVels.rightBack.value()) < SHIVERING_THRESHOLD ? 0 :
+                                feedforward.compute(rotWheelVels.rightBack) / voltage
+                );
         double rightFrontPower = (driveWheelVels.rightFront.get(0) / driveMaxPowerMag) +
-                (Math.abs(rotWheelVels.rightFront.value()) > SHIVERING_THRESHOLD ? feedforward.compute(rotWheelVels.rightFront) / voltage : 0);
+                (
+                        Math.abs(rotWheelVels.rightFront.value()) < SHIVERING_THRESHOLD ? 0 :
+                                feedforward.compute(rotWheelVels.rightFront) / voltage
+                );
 
         double denominator = Math.max(
                 Math.max(
