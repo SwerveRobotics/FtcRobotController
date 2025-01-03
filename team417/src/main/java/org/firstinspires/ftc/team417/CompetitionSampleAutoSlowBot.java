@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.TranslationalVelConstraint;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.wilyworks.common.WilyWorks;
 
@@ -20,15 +21,41 @@ public class CompetitionSampleAutoSlowBot extends BaseOpModeSlowBot {
         // TODO: Write the trajectory code (current code is placeholder)
         Action trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(-45)
-                .splineToLinearHeading(new Pose2d(57,57, Math.toRadians(45)), Math.toRadians(45))
+
+                // Splines to face the basket
+                .splineToLinearHeading(new Pose2d(50,50, Math.toRadians(45)), Math.toRadians(45), new TranslationalVelConstraint(25))
+                // Lift to basket
+                .stopAndAdd( new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_BASKET))
+                // TODO: Slides out and then deposit sample
+                // Lower lift
+                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
                 .setTangent(Math.toRadians(0))
-                .splineToLinearHeading(new Pose2d(50,60,Math.toRadians(-90)), Math.toRadians(-90))
-                //stop and add slides out
-                .splineToLinearHeading(new Pose2d(57,57, Math.toRadians(45)), Math.toRadians(45))
+
+                // Splines to face first floor sample
+                .splineToLinearHeading(new Pose2d(50,58,Math.toRadians(-90)), Math.toRadians(-90), new TranslationalVelConstraint(25))
+                // TODO: Slides out and intake sample
+
+                // Splines to face basket
+                .splineToLinearHeading(new Pose2d(50,50, Math.toRadians(45)), Math.toRadians(45), new TranslationalVelConstraint(25))
+                // Lift to basket
+                .stopAndAdd( new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_LOW_BASKET))
+                // TODO: Slides out and then deposit sample
+                // Lower lift
+                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
                 .setTangent(Math.toRadians(180))
-                .splineToLinearHeading(new Pose2d(62,60,Math.toRadians(-90)), Math.toRadians(-90))
-                //stop and add slides out
-                .splineToLinearHeading(new Pose2d(57,57, Math.toRadians(45)), Math.toRadians(45))
+
+                // Spline to second floor sample
+                .splineToLinearHeading(new Pose2d(59,50,Math.toRadians(-90)), Math.toRadians(-90), new TranslationalVelConstraint(25))
+                // TODO: Slides out and intake sample
+
+                // Splines to face basket
+                .splineToLinearHeading(new Pose2d(50,50, Math.toRadians(45)), Math.toRadians(45), new TranslationalVelConstraint(25))
+                // Lift to basket
+                .stopAndAdd( new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_LOW_BASKET))
+                // TODO: Slides out and then deposit sample
+                // Lower lift
+                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
+
                 .build();
 
         Canvas previewCanvas = new Canvas();
