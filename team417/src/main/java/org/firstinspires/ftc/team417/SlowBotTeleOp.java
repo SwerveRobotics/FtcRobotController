@@ -23,7 +23,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     boolean fieldCentered = false;
 
     public double startHeading;
-
+    public final double X_NON_OVERHANG = 14.8;
+    public final double STARTING_ANGLE = -34.69; //liftmotor angle while in home position in degrees
     /* A number in degrees that the triggers can adjust the arm position by */
     // TODO: needs tuning
     public final double FUDGE_FACTOR_LIFT = 200; // Ticks
@@ -35,13 +36,14 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     public double previousTime = 0.0;
 
     boolean intakeEnabled = false;
-    boolean buttonAPressed = false;
-
+    boolean buttonAPressed2 = false;
+    boolean buttonDpadDown1 = false;
+    boolean runSpecimenGrab = false;
     // These are variables that will be used for individual control actions
     double slidePosition = 0;
     double wristPosition = WRIST_IN;
     double liftPosition = LIFT_HOME_POSITION;
-
+    double startLiftSpecimenY = 0;
     AutoDriveTo driveTo;
 
     @Override
@@ -189,12 +191,17 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         }
 
         // Press the D-Pad down button ONCE (do not hold)
-        if (gamepad1.dpad_down) {
-            driverAssistRetrieveSpecimen();
+        if (gamepad1.dpad_down && !buttonDpadDown1) {
+            startLiftSpecimenY = drive.pose.position.y;
+            runSpecimenGrab = true;
         }
-
+        buttonDpadDown1 = gamepad1.dpad_down;
+        if(runSpecimenGrab) {
+            runSpecimenGrab= driverAssistRetrieveSpecimen();
+        }
         // Update the current pose:
         drive.updatePoseEstimate();
+
     }
 
     // Method to calculate signed shortest distance between two angles
@@ -244,10 +251,10 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
              }
 
              // Intake on and off
-            if(gamepad2.a && !buttonAPressed){
+            if(gamepad2.a && !buttonAPressed2){
                 intakeEnabled = !intakeEnabled;
             }
-            buttonAPressed = gamepad2.a;
+            buttonAPressed2 = gamepad2.a;
 
             // Collecting Sample
             if (gamepad2.right_bumper) {
@@ -364,40 +371,14 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     final public double FIRST_SEGMENT_4_BAR_LENGTH = 17;
 
     // Raise the arm and move backwards simultaneously
-    public void driverAssistRetrieveSpecimen() {
-        Pose2d initialPose = new Pose2d(
-                drive.pose.position.x,
-                drive.pose.position.y,
-                drive.pose.heading.log()
-        );
+    public boolean driverAssistRetrieveSpecimen() {
+        double yDisplace = Math.abs(startLiftSpecimenY-drive.pose.position.y);
+        if (yDisplace >= FIRST_SEGMENT_4_BAR_LENGTH - X_NON_OVERHANG)
+            return false; // too far, no point lifting anymore. we're done
 
-        // Move the lift to take the specimen off
-        moveLift(LIFT_GET_SPECIMEN);
-
-        while (liftMotor1.isBusy()) {
-            // 'packet' is the object used to send data to FTC Dashboard:
-            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
-
-            PoseVelocity2d currentPoseVelocity = drive.updatePoseEstimate();
-
-            // deltaTime will be the actual current time minus the currentTime of the last loop
-            double deltaTime = currentTime() - previousTime;
-            previousTime = currentTime();
-
-            // Determine, based on the angle, the what place the driveTo should drive to
-            double angle = INITIAL_4_BAR_ANGLE -
-                    liftMotor1.getCurrentPosition() * ARM_TICKS_PER_DEGREE;
-            double targetDistance = FIRST_SEGMENT_4_BAR_LENGTH * Math.cos(angle);
-            DPoint targetPoint = new DPoint(
-                    initialPose.position.x,
-                    initialPose.position.y - targetDistance
-            );
-            double targetHeading = initialPose.heading.log();
-
-            // Actually drive there
-            driveTo.init(targetPoint, targetHeading, currentPoseVelocity, telemetry);
-            driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
-        }
+        liftPosition = ((Math.toDegrees(-Math.acos((X_NON_OVERHANG + yDisplace) / FIRST_SEGMENT_4_BAR_LENGTH)))
+                - STARTING_ANGLE) * LIFT_TICKS_PER_DEGREE;
+        return true; // not done yet.
     }
 
     // Applies a curve to the joystick input to give finer control at lower speeds
