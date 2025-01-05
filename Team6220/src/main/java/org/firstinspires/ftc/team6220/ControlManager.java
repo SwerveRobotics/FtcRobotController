@@ -93,8 +93,10 @@ public class ControlManager {
         if (gamepad2.dpad_up && !gamepad2.dpad_down) {
             slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_HIGH_BASKET_POSITION;
             dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_HORIZONTAL;
+            armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_OVER_BAR;
             clearList(slidesMotorPosition);
             clearList(dumperServoPosition);
+            clearList(armElbowServoPosition);
         }
         if (gamepad2.dpad_right && !gamepad2.dpad_left) {
             slidesMotorPosition = DRIFTConstants.SLIDES_MOTOR_LOW_BASKET_POSITION;

@@ -8,7 +8,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 public abstract class DRIFTConstants {
     public static double ARM_ELBOW_SERVO_POSITION_OVER_BAR = 0.55;
     public static double ARM_ELBOW_SERVO_POSITION_GROUND = 0.7;
-    public static double ARM_ELBOW_SERVO_POSITION_TRANSFER = 0.48;
+    public static double ARM_ELBOW_SERVO_POSITION_TRANSFER = 0.45;
     public static int ARM_BASE_MOTOR_POSITION_GROUND = -840;
     public static int ARM_BASE_MOTOR_POSITION_INIT = 0;
     public static int ARM_BASE_MOTOR_POSITION_OUT = -400;
@@ -21,7 +21,7 @@ public abstract class DRIFTConstants {
     public static int SLIDES_MOTOR_VELOCITY = 8;
     public static int ARM_BASE_MOTOR_VELOCITY = 6;
     public static double DUMPER_SERVO_POSITION_DUMP = 0.9;
-    public static double DUMPER_SERVO_POSITION_TRANSFER = 0.43;
+    public static double DUMPER_SERVO_POSITION_TRANSFER = 0.40;
     public static double DUMPER_SERVO_POSITION_HORIZONTAL = 0.5;
     public static double DUMPER_SERVO_POSITION_INIT = 0.2;
     public static final float[] RED_COLOR_SENSOR_RANGES = {0.025f, 1f};

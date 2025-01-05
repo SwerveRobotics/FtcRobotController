@@ -175,6 +175,52 @@ abstract public class BaseOpMode extends LinearOpMode {
         }
     }
 
+    static class ArmElbowAndIntakeSimulator {
+        double intakePower;
+        int currentArmMotorPosition;
+        int targetArmMotorPosition;
+        double armElbowPosition;
+
+        double previousTime;
+
+        // Return the time, in seconds:
+        double time() {
+            return nanoTime() * 1e-9;
+        }
+
+        void update(Canvas canvas, Pose2d pose) {
+            double currentTime = time();
+            double dt = currentTime - previousTime;
+            previousTime = currentTime;
+
+        }
+
+        public double getIntakePower() {
+            return intakePower;
+        }
+
+        public void setIntakePower(double intakePower) {
+            this.intakePower = intakePower;
+        }
+
+        public double getArmElbowPosition() {
+            return armElbowPosition;
+        }
+
+        public void setArmElbowPosition(double armElbowPosition) {
+            this.armElbowPosition = armElbowPosition;
+        }
+
+        public int getCurrentArmMotorPosition() {
+            return currentArmMotorPosition;
+        }
+
+        public void setTargetArmMotorPosition(int targetArmMotorPosition) {
+            this.targetArmMotorPosition = targetArmMotorPosition;
+            this.previousTime = time();
+        }
+    }
+
     public class ArmMoveAction extends RobotAction {
         ArmActionState armActionState;
 
