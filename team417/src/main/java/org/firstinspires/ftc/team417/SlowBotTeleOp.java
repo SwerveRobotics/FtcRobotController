@@ -23,8 +23,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     boolean fieldCentered = false;
 
     public double startHeading;
-    public final double X_NON_OVERHANG = 14.8;
-    public final double STARTING_ANGLE = -34.69; //liftmotor angle while in home position in degrees
+
+
     /* A number in degrees that the triggers can adjust the arm position by */
     // TODO: needs tuning
     public final double FUDGE_FACTOR_LIFT = 200; // Ticks
@@ -197,7 +197,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         }
         buttonDpadDown1 = gamepad1.dpad_down;
         if(runSpecimenGrab) {
-            runSpecimenGrab= driverAssistRetrieveSpecimen();
+            runSpecimenGrab = driverAssistRetrieveSpecimen();
         }
         // Update the current pose:
         drive.updatePoseEstimate();
@@ -368,7 +368,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     final public double INITIAL_4_BAR_ANGLE = Math.PI / 6;
 
     // Length of first segment of 4-bar (inches)
-    final public double FIRST_SEGMENT_4_BAR_LENGTH = 17;
+
 
     // Raise the arm and move backwards simultaneously
     public boolean driverAssistRetrieveSpecimen() {

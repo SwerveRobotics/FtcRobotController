@@ -27,8 +27,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public final static double LIFT_TICKS_PER_DEGREE = 14.6697222222; //exact fraction is (5281.1/360)
 
     // TODO: implement this
-    public final static double INTAKE_DEPOSIT = 0.0;
-    public final static double INTAKE_COLLECT = 0.0;
+    public final static double INTAKE_DEPOSIT = -1.0;
+    public final static double INTAKE_COLLECT = 1.0;
     public final static double INTAKE_OFF = 0.0;
 
     public final static double LIFT_MAX = 1200;
@@ -54,14 +54,17 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
     // Both hardware and software slide velocity limit is set to 2000 ticks per second
     public final static double SLIDE_VELOCITY_MAX = 2500;
-
-    public final static double WRIST_MAX = 0.0;
-    public final static double WRIST_OUT = 0.5;
-    public final static double WRIST_IN = 0.0;
     public final static double WRIST_MIN = 0.0;
+    public final static double WRIST_MAX = 1.0;
+    public final static double WRIST_OUT = 0.6;
+    public final static double WRIST_IN = 0.2;
 
     public final static double XDRIVE_Y_SCORE_POSE = 39;
+    public final double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
 
+    final public double FIRST_SEGMENT_4_BAR_LENGTH = 17; //length of 4 bar segment
+
+    public final double STARTING_ANGLE = -34.69; //liftmotor angle while in home position in degrees
     // This provides an error tolerance for lift and slide
     public final static double TICKS_EPSILON = 3.00;
 
@@ -80,6 +83,28 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static DcMotorEx liftMotor2;
     public static DcMotorEx slideMotor;
 
+    class LiftSpecimenAction extends RobotAction {
+        public double startLiftSpecimenY = 0;
+
+
+
+        @Override
+        public boolean run(double elapsedTime) {
+            if (elapsedTime <= 0) { // only sets start position first time run is called
+                startLiftSpecimenY = drive.pose.position.y;
+
+            }
+            double yDisplace = Math.abs(startLiftSpecimenY-drive.pose.position.y);
+            if (yDisplace >= FIRST_SEGMENT_4_BAR_LENGTH - X_NON_OVERHANG) {
+                return false; // too far, no point lifting anymore. we're done
+            }
+            double liftPosition = ((Math.toDegrees(-Math.acos((X_NON_OVERHANG + yDisplace) / FIRST_SEGMENT_4_BAR_LENGTH)))
+                    - STARTING_ANGLE) * LIFT_TICKS_PER_DEGREE;
+            moveLift(liftPosition);
+            return true; // not done yet.
+
+        }
+    }
     class ControlAction extends RobotAction {
         double targetSlidePosition;
         double targetWristPosition;
@@ -256,6 +281,12 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+            slideMotor.setTargetPosition(0);
+            slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
 
         }
 
