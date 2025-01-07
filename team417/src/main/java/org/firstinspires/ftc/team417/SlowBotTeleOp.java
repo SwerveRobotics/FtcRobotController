@@ -172,8 +172,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     double targetRotVel;
     double targetRot;
 
-    public final double SHIVERING_THRESHOLD = 0;
-
     public double maxAngVel = MecanumDrive.PARAMS.maxAngVel;
     public double maxAngAccel = MecanumDrive.PARAMS.maxAngAccel;
 
