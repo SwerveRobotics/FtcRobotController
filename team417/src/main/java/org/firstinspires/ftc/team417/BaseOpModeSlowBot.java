@@ -16,66 +16,67 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
+
 @Config
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
-    public  static boolean USE_DISTANCE = true;
+    public static boolean USE_DISTANCE = true;
 
     public static MecanumDrive drive;
 
     /* This constant is the number of encoder ticks for each degree of rotation of the arm.
     To find this, we first need to consider the total gear reduction powering our arm.
     GoBilda 5203-2402-0188 motor counts 5281.1 ticks per revolution, divide by 360 to get arm ticks per degree */
-    public  static double LIFT_TICKS_PER_DEGREE = 14.6697222222; //exact fraction is (5281.1/360)
+    public static double LIFT_TICKS_PER_DEGREE = 14.6697222222; //exact fraction is (5281.1/360)
 
     // TODO: implement this
-    public  static double INTAKE_DEPOSIT = -1.0;
-    public  static double INTAKE_COLLECT = 1.0;
-    public  static double INTAKE_OFF = 0.0;
+    public static double INTAKE_DEPOSIT = -1.0;
+    public static double INTAKE_COLLECT = 1.0;
+    public static double INTAKE_OFF = 0.0;
 
-    public  static double LIFT_MAX = 1400;
-    public  static double LIFT_SCORE_HIGH_BASKET = 1380;
-    public  static double LIFT_SCORE_LOW_BASKET = 750;
-    public  static double LIFT_SCORE_HIGH_SPECIMEN = 875;
-    public  static double LIFT_GET_SPECIMEN = 650;
-    public  static double LIFT_COLLECT = 75.0;
-    public  static double LIFT_MIN = 0.0;
-    public  static double LIFT_CLEAR_BARRIER = 10.0;
-    public  static double LIFT_HOME_POSITION = 0;
-    public  static double LIFT_NO_SLIDE_ZONE_MIN = 100;
-    public  static double LIFT_NO_SLIDE_ZONE_MAX = 622;
+    public static double LIFT_MAX = 1400;
+    public static double LIFT_SCORE_HIGH_BASKET = 1380;
+    public static double LIFT_SCORE_LOW_BASKET = 750;
+    public static double LIFT_SCORE_HIGH_SPECIMEN = 875;
+    public static double LIFT_GET_SPECIMEN = 650;
+    public static double LIFT_COLLECT = 75.0;
+    public static double LIFT_MIN = 0.0;
+    public static double LIFT_CLEAR_BARRIER = 10.0;
+    public static double LIFT_HOME_POSITION = 0;
+    public static double LIFT_NO_SLIDE_ZONE_MIN = 100;
+    public static double LIFT_NO_SLIDE_ZONE_MAX = 622;
 
     public static double f_coefficient = 0.5;
 
     // TODO: Rename variables to make it have a position indicator
-    public  static double SLIDE_MAX = 2700.0;
-    public  static double SLIDE_COLLECT = 1400.0;
-    public  static double SLIDE_SCORE_IN_BASKET = 0;
-    public  static double SLIDE_MIN = 0.0;
-    public  static double SLIDE_HOME_POSITION = 0;
+    public static double SLIDE_MAX = 2700.0;
+    public static double SLIDE_COLLECT = 1400.0;
+    public static double SLIDE_SCORE_IN_BASKET = 0;
+    public static double SLIDE_MIN = 0.0;
+    public static double SLIDE_HOME_POSITION = 0;
 
     // Both hardware and software slide velocity limit is set to 2000 ticks per second
-    public  static double SLIDE_VELOCITY_MAX = 2500;
-    public  static double WRIST_MIN = 0.0;
-    public  static double WRIST_MAX = 1.0;
+    public static double SLIDE_VELOCITY_MAX = 2500;
+    public static double WRIST_MIN = 0.0;
+    public static double WRIST_MAX = 1.0;
     public static double WRIST_OUT = 0.75;
-    public  static double WRIST_IN = 0.0;
+    public static double WRIST_IN = 0.0;
     public static double WRIST_SCORE = 0.5;
-    public  static double XDRIVE_Y_SCORE_POSE = 39;
-    public  double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
+    public static double XDRIVE_Y_SCORE_POSE = 39;
+    public double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
 
-     public double FIRST_SEGMENT_4_BAR_LENGTH = 17; //length of 4 bar segment
+    public double FIRST_SEGMENT_4_BAR_LENGTH = 17; //length of 4 bar segment
 
-    public  double STARTING_ANGLE = -34.69; //liftmotor angle while in home position in degrees
+    public double STARTING_ANGLE = -34.69; //liftmotor angle while in home position in degrees
     // This provides an error tolerance for lift and slide
-    public  static double LIFT_TICKS_EPSILON = 3.00;
+    public static double LIFT_TICKS_EPSILON = 3.00;
     public static double SLIDE_TICKS_EPSILON = 20;
 
     // RC 17.50
     // DEV 17.75
-    public  static double ROBOT_LENGTH = 17.50;
+    public static double ROBOT_LENGTH = 17.50;
     // RC 16.50
     // DEV 18.50
-    public  static double ROBOT_WIDTH = 16.50;
+    public static double ROBOT_WIDTH = 16.50;
 
     //motors
     public static CRServo intake1;
@@ -89,14 +90,13 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         public double startLiftSpecimenY = 0;
 
 
-
         @Override
         public boolean run(double elapsedTime) {
             if (elapsedTime <= 0) { // only sets start position first time run is called
                 startLiftSpecimenY = drive.pose.position.y;
 
             }
-            double yDisplace = Math.abs(startLiftSpecimenY-drive.pose.position.y);
+            double yDisplace = Math.abs(startLiftSpecimenY - drive.pose.position.y);
             if (yDisplace >= FIRST_SEGMENT_4_BAR_LENGTH - X_NON_OVERHANG) {
                 return false; // too far, no point lifting anymore. we're done
             }
@@ -107,6 +107,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
         }
     }
+
     class ControlAction extends RobotAction {
         double targetSlidePosition;
         double targetWristPosition;
@@ -120,7 +121,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
         @Override
         public boolean run(double elapsedTime) {
-            if(WilyWorks.isSimulating) { //allows wilyworks to run even though no motors present
+            if (WilyWorks.isSimulating) { //allows wilyworks to run even though no motors present
                 return false;
             }
             // Once lift is ABOVE the no slide zone, move the slide & wrist out at the same time
@@ -150,20 +151,20 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             // TODO: Check if the EPSILON is different for either of the errors
             // Checks if the slide or the lift is in the correct spot
             // returns true to call again
-            return liftError >  LIFT_TICKS_EPSILON || slideError > SLIDE_TICKS_EPSILON;
+            return liftError > LIFT_TICKS_EPSILON || slideError > SLIDE_TICKS_EPSILON;
         }
     }
 
-    public boolean isCrossingNoSlideZone(double targetLiftPosition){
+    public boolean isCrossingNoSlideZone(double targetLiftPosition) {
         return ((targetLiftPosition > LIFT_NO_SLIDE_ZONE_MAX && getLiftPosition() < LIFT_NO_SLIDE_ZONE_MAX) ||
                 (targetLiftPosition < LIFT_NO_SLIDE_ZONE_MIN && getLiftPosition() > LIFT_NO_SLIDE_ZONE_MIN));
     }
 
     // This helper method controls the linear slides and tells motor to go to desired position in ticks
-    public void moveSlide(double positionInTicks){
+    public void moveSlide(double positionInTicks) {
         if (slideMotor != null) {
             telemetry.addData("Slide target: ", positionInTicks);
-            if(positionInTicks >= SLIDE_MIN && positionInTicks <= SLIDE_MAX){
+            if (positionInTicks >= SLIDE_MIN && positionInTicks <= SLIDE_MAX) {
                 slideMotor.setPower(1.0);
                 slideMotor.setTargetPosition((int) positionInTicks);
                 slideMotor.setVelocity(SLIDE_VELOCITY_MAX * 2);
@@ -174,11 +175,12 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
     // This method controls the 4bar to desired height
     static double f_value = 0.5;
+
     public void moveLift(double heightInTicks) {
 
         if (heightInTicks >= LIFT_MIN && heightInTicks <= LIFT_MAX) {
             double velocity;
-            if(getLiftPosition() > heightInTicks){
+            if (getLiftPosition() > heightInTicks) {
                 // lift going down
                 velocity = 550;
             } else {
@@ -200,9 +202,9 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     }
 
     // This method moves the wrist up and down based on desired position
-    public void moveWrist(double wristPosition){
+    public void moveWrist(double wristPosition) {
         if (wrist != null) {
-            if(wristPosition >= WRIST_MIN && wristPosition <= WRIST_MAX){
+            if (wristPosition >= WRIST_MIN && wristPosition <= WRIST_MAX) {
                 wrist.setPosition(wristPosition);
             }
         }
@@ -230,7 +232,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     }
 
     // Controls the intake of the wrist
-    public void intakeControl(double spinControl){
+    public void intakeControl(double spinControl) {
         if (intake1 != null) {
             intake1.setPower(spinControl);
         }
@@ -238,6 +240,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             intake2.setPower(spinControl);
         }
     }
+
     public void stopCrash() {
         System.out.println("Inside StopCrash");
         moveWrist(WRIST_IN);
@@ -250,7 +253,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         while(getLiftPosition() >= LIFT_TICKS_EPSILON) {
             System.out.printf("Lift loop: %.0f\n", getLiftPosition());
         }
-     }
+    }
+
     // The time since the robot started in seconds
     public double currentTime() {
         return nanoTime() * 1e-9;
@@ -260,37 +264,34 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         // Only initialize arm if it's not already initialized.
         // This is CRUCIAL for transitioning between Auto and TeleOp.
         // TODO: Dont forget to add the commented code back into if statment
-        if (true) { // liftMotor1 == null && liftMotor2 == null && slideMotor == null) {
-            liftMotor1 = hardwareMap.get(DcMotorEx.class, "lift1");
-            liftMotor2 = hardwareMap.get(DcMotorEx.class, "lift2");
-            slideMotor = hardwareMap.get(DcMotorEx.class, "slides");
+        liftMotor1 = hardwareMap.get(DcMotorEx.class, "lift1");
+        liftMotor2 = hardwareMap.get(DcMotorEx.class, "lift2");
+        slideMotor = hardwareMap.get(DcMotorEx.class, "slides");
 
-            /* This sets the maximum current that the control hub will apply to the arm before throwing a flag */
-            liftMotor1.setCurrentAlert(5, CurrentUnit.AMPS);
-            liftMotor2.setCurrentAlert(5, CurrentUnit.AMPS);
-            slideMotor.setCurrentAlert(5, CurrentUnit.AMPS);
+        /* This sets the maximum current that the control hub will apply to the arm before throwing a flag */
+        liftMotor1.setCurrentAlert(5, CurrentUnit.AMPS);
+        liftMotor2.setCurrentAlert(5, CurrentUnit.AMPS);
+        slideMotor.setCurrentAlert(5, CurrentUnit.AMPS);
 
-            /* Before starting the armMotor1. We'll make sure the TargetPosition is set to 0.
-            Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
-            If you do not have the encoder plugged into this motor, it will not run in this code. */
-            liftMotor1.setTargetPosition(0);
-            liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT); //was brake DONT CHECK IN AS FLOAT
-            liftMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
+        /* Before starting the armMotor1. We'll make sure the TargetPosition is set to 0.
+        Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
+        If you do not have the encoder plugged into this motor, it will not run in this code. */
+        liftMotor1.setTargetPosition(0);
+        liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT); //was brake DONT CHECK IN AS FLOAT
+        liftMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
 
-            liftMotor2.setTargetPosition(0);
-            liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);  // was brake DONT CHECK IN AS FLOAT
+        liftMotor2.setTargetPosition(0);
+        liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);  // was brake DONT CHECK IN AS FLOAT
 
-            slideMotor.setTargetPosition(0);
-            slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        slideMotor.setTargetPosition(0);
+        slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-
-        }
 
         intake1 = hardwareMap.get(CRServo.class, "intake1");
         intake2 = hardwareMap.get(CRServo.class, "intake2");
@@ -301,8 +302,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         intake1.setPower(INTAKE_OFF);
         intake2.setPower(INTAKE_OFF);
     }
-
-
 
 
     public static final KinematicType kinematicType = KinematicType.X;
