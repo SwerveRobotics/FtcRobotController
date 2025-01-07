@@ -32,8 +32,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public  static double INTAKE_COLLECT = 1.0;
     public  static double INTAKE_OFF = 0.0;
 
-    public  static double LIFT_MAX = 1200;
-    public  static double LIFT_SCORE_HIGH_BASKET = 1220;
+    public  static double LIFT_MAX = 1400;
+    public  static double LIFT_SCORE_HIGH_BASKET = 1380;
     public  static double LIFT_SCORE_LOW_BASKET = 750;
     public  static double LIFT_SCORE_HIGH_SPECIMEN = 875;
     public  static double LIFT_GET_SPECIMEN = 650;
@@ -59,7 +59,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public  static double WRIST_MAX = 1.0;
     public static double WRIST_OUT = 0.75;
     public  static double WRIST_IN = 0.0;
-
+    public static double WRIST_SCORE = 0.5;
     public  static double XDRIVE_Y_SCORE_POSE = 39;
     public  double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
 
@@ -68,7 +68,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public  double STARTING_ANGLE = -34.69; //liftmotor angle while in home position in degrees
     // This provides an error tolerance for lift and slide
     public  static double LIFT_TICKS_EPSILON = 3.00;
-    public static double SLIDE_TICKS_EPSILON = 50;
+    public static double SLIDE_TICKS_EPSILON = 20;
 
     // RC 17.50
     // DEV 17.75
@@ -276,13 +276,13 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             liftMotor1.setTargetPosition(0);
             liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT); //was brake DONT CHECK IN AS FLOAT
             liftMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
 
             liftMotor2.setTargetPosition(0);
             liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+            liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);  // was brake DONT CHECK IN AS FLOAT
 
             slideMotor.setTargetPosition(0);
             slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);

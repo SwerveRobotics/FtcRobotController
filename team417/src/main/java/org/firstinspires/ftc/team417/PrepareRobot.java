@@ -17,5 +17,11 @@ public class PrepareRobot extends BaseOpModeSlowBot {
         while(!isStopRequested()) {
             slideMotor.setPower(gamepad2.right_stick_y);
         }
+        telemetry.addData("Lift Motor 1 ticks: ", liftMotor1.getCurrentPosition());
+        telemetry.addData("Lift Motor 2 ticks: ", liftMotor2.getCurrentPosition());
+
+        telemetry.addData("Slide motor ticks: ", slideMotor.getCurrentPosition());
+        telemetry.addData("Slide motor velocity: ", slideMotor.getVelocity());
+        telemetry.update();
     }
 }

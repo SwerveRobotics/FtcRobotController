@@ -239,14 +239,14 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             // Low basket
             if (gamepad2.x) {
                 liftPosition = LIFT_SCORE_LOW_BASKET;
-                wristPosition = WRIST_OUT;
+                wristPosition = WRIST_SCORE;
                 slidePosition = SLIDE_SCORE_IN_BASKET;
             }
 
             // High Basket
              if (gamepad2.y) {
                  liftPosition = LIFT_SCORE_HIGH_BASKET;
-                 wristPosition = WRIST_OUT;
+                 wristPosition = WRIST_SCORE;
                  slidePosition = SLIDE_SCORE_IN_BASKET;
              }
 
