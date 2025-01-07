@@ -2,6 +2,7 @@ package org.firstinspires.ftc.team417;
 
 import static java.lang.System.nanoTime;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -15,65 +16,66 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
-@Disabled
+@Config
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
-    public final static boolean USE_DISTANCE = true;
+    public  static boolean USE_DISTANCE = true;
 
     public static MecanumDrive drive;
 
     /* This constant is the number of encoder ticks for each degree of rotation of the arm.
     To find this, we first need to consider the total gear reduction powering our arm.
     GoBilda 5203-2402-0188 motor counts 5281.1 ticks per revolution, divide by 360 to get arm ticks per degree */
-    public final static double LIFT_TICKS_PER_DEGREE = 14.6697222222; //exact fraction is (5281.1/360)
+    public  static double LIFT_TICKS_PER_DEGREE = 14.6697222222; //exact fraction is (5281.1/360)
 
     // TODO: implement this
-    public final static double INTAKE_DEPOSIT = -1.0;
-    public final static double INTAKE_COLLECT = 1.0;
-    public final static double INTAKE_OFF = 0.0;
+    public  static double INTAKE_DEPOSIT = -1.0;
+    public  static double INTAKE_COLLECT = 1.0;
+    public  static double INTAKE_OFF = 0.0;
 
-    public final static double LIFT_MAX = 1200;
-    public final static double LIFT_SCORE_HIGH_BASKET = 1220;
-    public final static double LIFT_SCORE_LOW_BASKET = 750;
-    public final static double LIFT_SCORE_HIGH_SPECIMEN = 875;
-    public final static double LIFT_GET_SPECIMEN = 650;
-    public final static double LIFT_COLLECT = 0.0;
-    public final static double LIFT_MIN = 0.0;
-    public final static double LIFT_CLEAR_BARRIER = 0.0;
-    public final static double LIFT_HOME_POSITION = 0;
-    public final static double LIFT_NO_SLIDE_ZONE_MIN = 100;
-    public final static double LIFT_NO_SLIDE_ZONE_MAX = 622;
+    public  static double LIFT_MAX = 1200;
+    public  static double LIFT_SCORE_HIGH_BASKET = 1220;
+    public  static double LIFT_SCORE_LOW_BASKET = 750;
+    public  static double LIFT_SCORE_HIGH_SPECIMEN = 875;
+    public  static double LIFT_GET_SPECIMEN = 650;
+    public  static double LIFT_COLLECT = 75.0;
+    public  static double LIFT_MIN = 0.0;
+    public  static double LIFT_CLEAR_BARRIER = 10.0;
+    public  static double LIFT_HOME_POSITION = 0;
+    public  static double LIFT_NO_SLIDE_ZONE_MIN = 100;
+    public  static double LIFT_NO_SLIDE_ZONE_MAX = 622;
 
     public static double f_coefficient = 0.5;
 
     // TODO: Rename variables to make it have a position indicator
-    public final static double SLIDE_MAX = 10000.0;
-    public final static double SLIDE_COLLECT = 0.0;
-    public final static double SLIDE_SCORE_IN_BASKET = 0;
-    public final static double SLIDE_MIN = 0.0;
-    public final static double SLIDE_HOME_POSITION = 0;
+    public  static double SLIDE_MAX = 2700.0;
+    public  static double SLIDE_COLLECT = 1400.0;
+    public  static double SLIDE_SCORE_IN_BASKET = 0;
+    public  static double SLIDE_MIN = 0.0;
+    public  static double SLIDE_HOME_POSITION = 0;
 
     // Both hardware and software slide velocity limit is set to 2000 ticks per second
-    public final static double SLIDE_VELOCITY_MAX = 2500;
-    public final static double WRIST_MIN = 0.0;
-    public final static double WRIST_MAX = 1.0;
-    public final static double WRIST_OUT = 0.6;
-    public final static double WRIST_IN = 0.2;
+    public  static double SLIDE_VELOCITY_MAX = 2500;
+    public  static double WRIST_MIN = 0.0;
+    public  static double WRIST_MAX = 1.0;
+    public static double WRIST_OUT = 0.75;
+    public  static double WRIST_IN = 0.0;
 
-    public final static double XDRIVE_Y_SCORE_POSE = 39;
-    public final double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
+    public  static double XDRIVE_Y_SCORE_POSE = 39;
+    public  double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
 
-    final public double FIRST_SEGMENT_4_BAR_LENGTH = 17; //length of 4 bar segment
+     public double FIRST_SEGMENT_4_BAR_LENGTH = 17; //length of 4 bar segment
 
-    public final double STARTING_ANGLE = -34.69; //liftmotor angle while in home position in degrees
+    public  double STARTING_ANGLE = -34.69; //liftmotor angle while in home position in degrees
     // This provides an error tolerance for lift and slide
-    public final static double TICKS_EPSILON = 3.00;
+    public  static double LIFT_TICKS_EPSILON = 3.00;
+    public static double SLIDE_TICKS_EPSILON = 50;
 
     // RC 17.50
     // DEV 17.75
-    public final static double ROBOT_LENGTH = 17.50;
+    public  static double ROBOT_LENGTH = 17.50;
     // RC 16.50
     // DEV 18.50
-    public final static double ROBOT_WIDTH = 16.50;
+    public  static double ROBOT_WIDTH = 16.50;
 
     //motors
     public static CRServo intake1;
@@ -123,7 +125,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             }
             // Once lift is ABOVE the no slide zone, move the slide & wrist out at the same time
             if(isCrossingNoSlideZone(targetLiftPosition)) {
-                if (getSlidePosition() > SLIDE_HOME_POSITION + TICKS_EPSILON) {
+                if (getSlidePosition() > SLIDE_HOME_POSITION + SLIDE_TICKS_EPSILON) {
                     // moves the slides in if lift going up and not in home pos
                     moveWrist(WRIST_IN);
                     moveSlide(SLIDE_HOME_POSITION);
@@ -148,7 +150,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             // TODO: Check if the EPSILON is different for either of the errors
             // Checks if the slide or the lift is in the correct spot
             // returns true to call again
-            return liftError > TICKS_EPSILON || slideError > TICKS_EPSILON;
+            return liftError >  LIFT_TICKS_EPSILON || slideError > SLIDE_TICKS_EPSILON;
         }
     }
 
@@ -241,11 +243,11 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         moveWrist(WRIST_IN);
         moveSlide(SLIDE_HOME_POSITION);
         System.out.printf("slide position: %.0f\n", getSlidePosition());
-        while(getSlidePosition() >= TICKS_EPSILON) {
+        while(getSlidePosition() >= SLIDE_TICKS_EPSILON) {
             System.out.printf("slide loop: %.0f\n", getSlidePosition());
         }
         moveLift(LIFT_HOME_POSITION);
-        while(getLiftPosition() >= TICKS_EPSILON) {
+        while(getLiftPosition() >= LIFT_TICKS_EPSILON) {
             System.out.printf("Lift loop: %.0f\n", getLiftPosition());
         }
      }

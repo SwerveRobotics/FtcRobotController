@@ -140,7 +140,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         }
 
         // When slides are out, slow down robot
-        if (getSlidePosition() > (SLIDE_HOME_POSITION + TICKS_EPSILON)){
+        if (getSlidePosition() > (SLIDE_HOME_POSITION + SLIDE_TICKS_EPSILON)){
             speedMultiplier *= 0.5;
         }
 
@@ -336,7 +336,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             telemetry.addLine(String.format("F value: %.1f", f_coefficient ));
 
             if(isCrossingNoSlideZone(liftPositionWithFudge )) {
-                if(getSlidePosition() > SLIDE_HOME_POSITION + TICKS_EPSILON) {
+                if(getSlidePosition() > SLIDE_HOME_POSITION + SLIDE_TICKS_EPSILON) {
                     // moves the slides in if lift going up and not in home pos
                     moveWrist(WRIST_IN);
                     moveSlide(SLIDE_HOME_POSITION);

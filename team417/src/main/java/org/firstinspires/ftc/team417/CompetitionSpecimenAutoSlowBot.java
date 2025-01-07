@@ -103,7 +103,7 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
         MecanumDrive.sendTelemetryPacket(packet);
 
         while (!isStarted()) {
-            if (getLiftPosition() < TICKS_EPSILON) {
+            if (getLiftPosition() < LIFT_TICKS_EPSILON) {
                 telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
                 telemetry.addLine("<big><big><font color='red'>WARNING! WARNING! LIFT POSITION NOT CALIBRATED ");
                 telemetry.update();
