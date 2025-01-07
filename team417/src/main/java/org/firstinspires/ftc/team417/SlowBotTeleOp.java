@@ -27,7 +27,7 @@ import org.firstinspires.ftc.team417.skidaddle.DPoint;
 @TeleOp(name = "TeleOp", group = "SlowBot")
 @Config
 public class SlowBotTeleOp extends BaseOpModeSlowBot {
-    private double speedMultiplier = 1;
+    private double speedMultiplier = 1 / Math.sqrt(2);
     boolean curve = true;
     boolean fieldCentered = false;
 
@@ -73,16 +73,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
             controlDrivebaseWithGamepads(curve, fieldCentered, deltaTime);
 
-            /*TODO: RENABLE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-            //controlMechanismsWithGamepads(deltaTime);
+            controlMechanismsWithGamepads(deltaTime);
 
             if (drive.colorProcessor != null) {
                 drive.colorProcessor.update();
             }
 
-            /*TODO: RENABLE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
-            //telemeterData();
-            telemetry.update();
+            telemeterData();
 
             // 'packet' is the object used to send data to FTC Dashboard:
             TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
@@ -123,17 +120,17 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric, double deltaTime) {
         // Only on GamePad1, the right and left triggers are speed multipliers
-        speedMultiplier = 0.5;
+        speedMultiplier = 1 / Math.sqrt(2);
         if (gamepad1.left_trigger > 0.1) {
-            speedMultiplier *= 0.5;
+            speedMultiplier /= Math.sqrt(2);
         }
         if (gamepad1.right_trigger > 0.1) {
-            speedMultiplier *= 2;
+            speedMultiplier *= Math.sqrt(2);
         }
 
         // When slides are out, slow down robot
         if (getSlidePosition() > (SLIDE_HOME_POSITION + TICKS_EPSILON)) {
-            speedMultiplier *= 0.5;
+            speedMultiplier /= Math.sqrt(2);
         }
 
         double theta, x, y, rot, rotatedX, rotatedY;
@@ -158,14 +155,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         rotatedX = x * Math.cos(theta) - y * Math.sin(theta);
         rotatedY = x * Math.sin(theta) + y * Math.cos(theta);
 
-//        drive.setDrivePowers(new PoseVelocity2d(
-//                new Vector2d(
-//                        -rotatedY * speedMultiplier,
-//                        -rotatedX * speedMultiplier
-//                ),
-//                -rot * speedMultiplier
-//        ));
-
         driveWithHeldHeading(rotatedX * speedMultiplier, rotatedY * speedMultiplier, rot * speedMultiplier, deltaTime);
 
         // Press the D-Pad down button ONCE (do not hold)
@@ -183,78 +172,74 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     double targetRotVel;
     double targetRot;
 
-    public final double SHIVERING_THRESHOLD = 6;
+    public final double SHIVERING_THRESHOLD = 0;
+
+    public double maxAngVel = MecanumDrive.PARAMS.maxAngVel;
+    public double maxAngAccel = MecanumDrive.PARAMS.maxAngAccel;
 
     public void driveWithHeldHeading(double userX, double userY, double userRot, double deltaTime) {
-        userRot *= -MecanumDrive.PARAMS.maxAngVel;
-        telemetry.addData("userRot", userRot);
-        // Calculate the rotational component of the wheel velocities
-        if (
-                userRot * targetRotVel >= 0 && userRot != 0 // Same sign, userRot is nonzero
-                        && Math.abs(userRot) >= Math.abs(targetRotVel)
-        ) {
-            targetRotVel += MecanumDrive.PARAMS.maxAngAccel * deltaTime * Math.signum(userRot);
-            telemetry.addData("targetRotVel", targetRotVel);
-            targetRotVel = Math.min(
-                    Math.abs(targetRotVel),
-                    Math.abs(userRot))
-                    * Math.signum(targetRotVel); // The one farther away from zero
-        } else {
-            telemetry.addLine("Here!");
-            telemetry.addData("targetRotVel", targetRotVel);
-            telemetry.addData("deltaTime", deltaTime);
-            telemetry.addData("rotationalDriveDeccel", -MecanumDrive.PARAMS.maxAngAccel);
-            targetRotVel += -MecanumDrive.PARAMS.maxAngAccel * deltaTime * Math.signum(targetRotVel);
-            telemetry.addData("targetRotVel", targetRotVel);
-            if (userRot * targetRotVel > 0) {
-                targetRotVel = Math.max(
-                        Math.abs(targetRotVel),
-                        Math.abs(userRot))
-                        * Math.signum(targetRotVel);
+        if (userRot == 0) {
+            if (userX == 0 && userY == 0) {
+                drive.leftFront.setPower(0);
+                drive.leftBack.setPower(0);
+                drive.rightBack.setPower(0);
+                drive.rightFront.setPower(0);
+                targetRotVel = 0;
+                targetRot = drive.pose.heading.log();
+                return;
+            } else {
+                targetRotVel = 0;
+                targetRot = drive.pose.heading.log();
             }
         }
-        telemetry.addData("targetRotVel", targetRotVel);
+
+        userRot *= -maxAngVel;
+        // Calculate the rotational component of the wheel velocities
+        if (userRot > 0) {
+            if (userRot > targetRotVel) {
+                targetRotVel = Math.min(targetRotVel + maxAngAccel * deltaTime, userRot);
+            } else {
+                targetRotVel = Math.max(targetRotVel - maxAngAccel * deltaTime, userRot);
+            }
+        } else {
+            if (userRot < targetRotVel) {
+                targetRotVel = Math.max(targetRotVel - maxAngAccel * deltaTime, userRot);
+            } else {
+                targetRotVel = Math.min(targetRotVel + maxAngAccel * deltaTime, userRot);
+            }
+        }
 
         targetRot = targetRot + targetRotVel * deltaTime;
 
-        telemetry.addData("targetRot", targetRot);
-        telemetry.addData("targetRotVel", targetRotVel);
+        while (targetRot < -Math.PI)
+            targetRot += 2 * Math.PI;
+        while (targetRot > Math.PI)
+            targetRot -= 2 * Math.PI;
 
-        double targetAccelRot = (targetRotVel - lastTargetRotVel) / deltaTime;
-
-        telemetry.addData("targetAccelRot", targetAccelRot);
+        double targetRotAccel = (targetRotVel - lastTargetRotVel) / deltaTime;
 
         lastTargetRotVel = targetRotVel;
 
-        double[] angular = new double[]{targetRot, targetRotVel, targetAccelRot};
+        double[] angular = new double[]{targetRot, targetRotVel, targetRotAccel};
 
         Pose2dDual<Time> txWorldTarget = new Pose2dDual<>(
-                new Vector2dDual<>(new DualNum<>(new double[]{drive.pose.position.x, 0, 0}),
-                        new DualNum<>(new double[]{drive.pose.position.y, 0, 0})),
+                new Vector2dDual<>(new DualNum<>(new double[]{0, 0, 0}),
+                        new DualNum<>(new double[]{0, 0, 0})),
                 Rotation2dDual.exp(new DualNum<>(angular)));
 
-        telemetry.addData("txWorldTarget", txWorldTarget.value());
-
         PoseVelocity2dDual<Time> command = new HolonomicController(
-                MecanumDrive.PARAMS.axialGain, MecanumDrive.PARAMS.lateralGain, MecanumDrive.PARAMS.headingGain,
-                MecanumDrive.PARAMS.axialVelGain, MecanumDrive.PARAMS.lateralVelGain, MecanumDrive.PARAMS.headingVelGain
+                0, 0, MecanumDrive.PARAMS.headingGain,
+                0, 0, MecanumDrive.PARAMS.headingVelGain
         ).compute(txWorldTarget, drive.pose, poseVelocity);
-
-        telemetry.addData("command", command.value());
 
         // Enlighten Wily Works as to where we should be:
         WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
 
         HolonomicKinematics.WheelVelocities<Time> rotWheelVels = drive.kinematics.inverse(command);
 
-        telemetry.addData("leftFront", rotWheelVels.leftFront.value());
-        telemetry.addData("leftBack", rotWheelVels.leftBack.value());
-        telemetry.addData("rightBack", rotWheelVels.rightBack.value());
-        telemetry.addData("rightFront", rotWheelVels.rightFront.value());
-
         double voltage = drive.getVoltage();
 
-        final MotorFeedforward feedforward = new MotorFeedforward(MecanumDrive.PARAMS.kS,
+        final MotorFeedforward feedforward = new MotorFeedforward(0,
                 MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
                 MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick);
 
@@ -270,40 +255,23 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         HolonomicKinematics.WheelVelocities<Time> driveWheelVels = new HolonomicKinematics(kinematicType, 1).inverse(
                 PoseVelocity2dDual.constant(powers, 1));
 
-        double driveMaxPowerMag = 0.25;
-//        for (DualNum<Time> power : driveWheelVels.all()) {
-//            driveMaxPowerMag = Math.max(driveMaxPowerMag, power.value());
-//        }
-
-        telemetry.addData("leftFront", driveWheelVels.leftFront.value() / driveMaxPowerMag);
-        telemetry.addData("leftBack", driveWheelVels.leftBack.value() / driveMaxPowerMag);
-        telemetry.addData("rightBack", driveWheelVels.rightBack.value() / driveMaxPowerMag);
-        telemetry.addData("rightFront", driveWheelVels.rightFront.value() / driveMaxPowerMag);
+        double driveMaxPowerMag = 1;
+        for (DualNum<Time> power : driveWheelVels.all()) {
+            driveMaxPowerMag = Math.max(driveMaxPowerMag, power.value());
+        }
 
         // Add the rotational and the driving/strafing wheel velocities and divide by voltages to become powers
         /*final MotorFeedforward feedforward = new MotorFeedforward(0,
                 0,
                 0);*/
         double leftFrontPower = (driveWheelVels.leftFront.get(0) / driveMaxPowerMag) +
-                (
-                        Math.abs(rotWheelVels.leftFront.value()) < SHIVERING_THRESHOLD ? 0 :
-                                feedforward.compute(rotWheelVels.leftFront) / voltage
-                );
+                feedforward.compute(rotWheelVels.leftFront) / voltage;
         double leftBackPower = (driveWheelVels.leftBack.get(0) / driveMaxPowerMag) +
-                (
-                        Math.abs(rotWheelVels.leftBack.value()) < SHIVERING_THRESHOLD ? 0 :
-                                feedforward.compute(rotWheelVels.leftBack) / voltage
-                );
+                feedforward.compute(rotWheelVels.leftBack) / voltage;
         double rightBackPower = (driveWheelVels.rightBack.get(0) / driveMaxPowerMag) +
-                (
-                        Math.abs(rotWheelVels.rightBack.value()) < SHIVERING_THRESHOLD ? 0 :
-                                feedforward.compute(rotWheelVels.rightBack) / voltage
-                );
+                feedforward.compute(rotWheelVels.rightBack) / voltage;
         double rightFrontPower = (driveWheelVels.rightFront.get(0) / driveMaxPowerMag) +
-                (
-                        Math.abs(rotWheelVels.rightFront.value()) < SHIVERING_THRESHOLD ? 0 :
-                                feedforward.compute(rotWheelVels.rightFront) / voltage
-                );
+                feedforward.compute(rotWheelVels.rightFront) / voltage;
 
         double denominator = Math.max(
                 Math.max(
@@ -318,11 +286,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 ),
                 1
         );
-
-        telemetry.addData("leftFront", leftFrontPower);
-        telemetry.addData("leftBack", leftBackPower);
-        telemetry.addData("rightBack", rightBackPower);
-        telemetry.addData("rightFront", rightFrontPower);
 
         drive.leftFront.setPower(leftFrontPower / denominator);
         drive.leftBack.setPower(leftBackPower / denominator);
