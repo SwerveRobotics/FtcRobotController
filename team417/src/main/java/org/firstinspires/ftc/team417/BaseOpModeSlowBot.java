@@ -3,7 +3,6 @@ package org.firstinspires.ftc.team417;
 import static java.lang.System.nanoTime;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -192,7 +191,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     static double f_value = 0.5;
 
     public void moveLift(double heightInTicks) {
-
         if (heightInTicks >= LIFT_MIN && heightInTicks <= LIFT_MAX) {
             double velocity;
             if (getLiftPosition() > heightInTicks) {

@@ -22,7 +22,6 @@ import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.HolonomicKinematics;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.skidaddle.AutoDriveTo;
-import org.firstinspires.ftc.team417.skidaddle.DPoint;
 
 @TeleOp(name = "TeleOp", group = "SlowBot")
 @Config
@@ -54,6 +53,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     double liftPosition = LIFT_HOME_POSITION;
     double startLiftSpecimenY = 0;
     AutoDriveTo driveTo;
+
+    boolean holdHeading = true;
 
     @Override
     public void runOpMode() {
@@ -121,6 +122,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric, double deltaTime) {
+        toggleHoldHeading();
+
         // Only on GamePad1, the right and left triggers are speed multipliers
         speedMultiplier = 1 / Math.sqrt(2);
         if (gamepad1.left_trigger > 0.1) {
@@ -157,7 +160,23 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         rotatedX = x * Math.cos(theta) - y * Math.sin(theta);
         rotatedY = x * Math.sin(theta) + y * Math.cos(theta);
 
-        driveWithHeldHeading(rotatedX * speedMultiplier, rotatedY * speedMultiplier, rot * speedMultiplier, deltaTime);
+        if (holdHeading) {
+            driveWithHeldHeading(
+                    rotatedX * speedMultiplier,
+                    rotatedY * speedMultiplier,
+                    rot * speedMultiplier,
+                    deltaTime);
+        } else {
+            drive.setDrivePowers(
+                    new PoseVelocity2d(
+                            new Vector2d(
+                                    rotatedX * speedMultiplier,
+                                    rotatedY * speedMultiplier
+                            ),
+                            rot * speedMultiplier
+                    )
+            );
+        }
 
         // Press the D-Pad down button ONCE (do not hold)
         if (gamepad1.dpad_down && !buttonDpadDown1) {
@@ -460,6 +479,15 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         return Math.copySign(Math.pow(rawSpeed, 2), rawSpeed);
     }
 
+    boolean backWasPressed = false;
+
+    public void toggleHoldHeading() {
+        if (!backWasPressed && gamepad1.back) {
+            holdHeading = !holdHeading;
+        }
+        backWasPressed = gamepad1.back;
+    }
+
     boolean startWasPressed = false;
 
     public void toggleFieldCentricity() {
@@ -474,6 +502,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         telemetry.addData("Kinematic Type", kinematicType);
         telemetry.addData("Stick Curve On", curve);
         telemetry.addData("Field-Centric", fieldCentered);
+        telemetry.addData("Hold Heading", holdHeading);
         telemetry.addData("Speed Multiplier", speedMultiplier);
 
         telemetry.addData("Lift Motor 1 ticks: ", liftMotor1.getCurrentPosition());
