@@ -155,7 +155,22 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         }
     }
 
-    public boolean isCrossingNoSlideZone(double targetLiftPosition) {
+    class IntakeAction extends RobotAction{
+        double speedDirection;
+
+        public IntakeAction(double speedDirection){
+            this.speedDirection = speedDirection;
+        }
+
+        @Override
+        public boolean run(double elapsedTime){
+            // Call the intake control method
+            intakeControl(speedDirection);
+            return false;
+        }
+    }
+
+    public boolean isCrossingNoSlideZone(double targetLiftPosition){
         return ((targetLiftPosition > LIFT_NO_SLIDE_ZONE_MAX && getLiftPosition() < LIFT_NO_SLIDE_ZONE_MAX) ||
                 (targetLiftPosition < LIFT_NO_SLIDE_ZONE_MIN && getLiftPosition() > LIFT_NO_SLIDE_ZONE_MIN));
     }
@@ -302,6 +317,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         intake1.setPower(INTAKE_OFF);
         intake2.setPower(INTAKE_OFF);
     }
+
+
 
 
     public static final KinematicType kinematicType = KinematicType.X;
