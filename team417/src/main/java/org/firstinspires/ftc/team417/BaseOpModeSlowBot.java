@@ -119,11 +119,25 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             telemetry.addData("Slide Position: ", getSlidePosition());
             telemetry.addData("Target Slide Position: ", targetSlidePosition);
 
-
             // TODO: Check if the EPSILON is different for either of the errors
             // Checks if the slide or the lift is in the correct spot
             // returns true to call again
             return liftError > TICKS_EPSILON || slideError > TICKS_EPSILON;
+        }
+    }
+
+    class IntakeAction extends RobotAction{
+        double speedDirection;
+
+        public IntakeAction(double speedDirection){
+            this.speedDirection = speedDirection;
+        }
+
+        @Override
+        public boolean run(double elapsedTime){
+            // Call the intake control method
+            intakeControl(speedDirection);
+            return false;
         }
     }
 
@@ -256,7 +270,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
         }
 
         intake1 = hardwareMap.get(CRServo.class, "intake1");
@@ -268,9 +281,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         intake1.setPower(INTAKE_OFF);
         intake2.setPower(INTAKE_OFF);
     }
-
-
-
 
     public static final KinematicType kinematicType = KinematicType.X;
 }
