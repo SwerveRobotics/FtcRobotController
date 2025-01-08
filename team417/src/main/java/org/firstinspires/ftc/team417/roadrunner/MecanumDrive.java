@@ -548,18 +548,16 @@ public final class MecanumDrive {
             case COMPETITION_ROBOT: {
                 pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
                 if (BaseOpModeSlowBot.USE_DISTANCE) {
-                    // TODO: Create the distance sensor tracking object:
-                    //   UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
-                    //   UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
-                    //   DistanceSensorInfo leftInfo = new DistanceSensorInfo(-6.75, 7.75, -0.25 * Math.PI);
-                    //   DistanceSensorInfo rightInfo = new DistanceSensorInfo(6.75, 7.75, 0.25 * Math.PI);
-                    //   distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this);
+                    UltrasonicDistanceSensor leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
+                    UltrasonicDistanceSensor rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");
+                    DistanceSensorInfo leftInfo = new DistanceSensorInfo(-8, -1.5, -0.5 * Math.PI);
+                    DistanceSensorInfo rightInfo = new DistanceSensorInfo(-1, 8, 0);
+                    distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this, true);
                 }
 
-                // TODO: Create the color processing object:
-                //   ColorSensor colorSensor = hardwareMap.get(ColorSensor.class, "PLACEHOLDER");
-                //   RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "PLACEHOLDER");
-                //   colorProcessor = new ColorProcessor(colorSensor, lightStrip);
+                ColorSensor colorSensor = hardwareMap.get(ColorSensor.class, "color");
+                RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
+                colorProcessor = new ColorProcessor(colorSensor, lightStrip);
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
