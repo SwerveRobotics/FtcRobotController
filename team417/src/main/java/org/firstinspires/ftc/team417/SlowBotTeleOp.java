@@ -2,14 +2,24 @@ package org.firstinspires.ftc.team417;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.DualNum;
+import com.acmerobotics.roadrunner.HolonomicController;
+import com.acmerobotics.roadrunner.MotorFeedforward;
 import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.Pose2dDual;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.PoseVelocity2dDual;
+import com.acmerobotics.roadrunner.Rotation2dDual;
+import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.acmerobotics.roadrunner.Vector2dDual;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
+import org.firstinspires.ftc.team417.roadrunner.HolonomicKinematics;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.skidaddle.AutoDriveTo;
 import org.firstinspires.ftc.team417.skidaddle.DPoint;
@@ -17,14 +27,13 @@ import org.firstinspires.ftc.team417.skidaddle.DPoint;
 @TeleOp(name = "TeleOp", group = "SlowBot")
 @Config
 public class SlowBotTeleOp extends BaseOpModeSlowBot {
-    private double speedMultiplier = 1;
-    public double targetHeading;
+    private double speedMultiplier = 1 / Math.sqrt(2);
     boolean curve = true;
     boolean fieldCentered = false;
 
     public double startHeading;
-    public final double X_NON_OVERHANG = 14.8;
-    public final double STARTING_ANGLE = -34.69; //liftmotor angle while in home position in degrees
+
+
     /* A number in degrees that the triggers can adjust the arm position by */
     // TODO: needs tuning
     public final double FUDGE_FACTOR_LIFT = 200; // Ticks
@@ -54,6 +63,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
 
+        poseVelocity = drive.updatePoseEstimate();
+
         while (opModeIsActive()) {
             // Disable field-centric always!
             // toggleFieldCentricity();
@@ -82,7 +93,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
             MecanumDrive.sendTelemetryPacket(packet);
-
         }
 
         // Reset the wrist position to avoid "breaking" the servo:
@@ -94,7 +104,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void prepareRobot(Pose2d startingPose) {
-        targetHeading = startingPose.heading.log();
+        targetRot = startingPose.heading.log();
+        lastTargetRotVel = 0;
 
         drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
         initializeHardware();
@@ -109,39 +120,19 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         telemetry.update();
     }
 
-    public final double HEADING_HOLD_EPSILON = 0.01;
-    public static double HEADING_HOLD_KP = 0.5; // Disable correction by setting kP to 0
-
-    double timer = 0;
-    public static double HEADING_HOLD_DELAY = 0.1; // How long the robot waits before setting the new heading as target
-
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric, double deltaTime) {
         // Only on GamePad1, the right and left triggers are speed multipliers
-        speedMultiplier = 0.5;
+        speedMultiplier = 1 / Math.sqrt(2);
         if (gamepad1.left_trigger > 0.1) {
-            speedMultiplier *= 0.5;
+            speedMultiplier /= Math.sqrt(2);
         }
         if (gamepad1.right_trigger > 0.1) {
-            speedMultiplier *= 2;
-        }
-
-        // Use the left and right bumpers as shortcuts to turn 90 degrees
-        if (gamepad1.left_bumper) {
-            targetHeading -= Math.PI / 2;
-        }
-        if (gamepad1.right_bumper) {
-            targetHeading += Math.PI / 2;
-        }
-
-        // Normal
-        targetHeading = ((targetHeading + Math.PI) % (2 * Math.PI)) - Math.PI;
-        if (targetHeading < -Math.PI) {
-            targetHeading += 2 * Math.PI;
+            speedMultiplier *= Math.sqrt(2);
         }
 
         // When slides are out, slow down robot
-        if (getSlidePosition() > (SLIDE_HOME_POSITION + TICKS_EPSILON)){
-            speedMultiplier *= 0.5;
+        if (getSlidePosition() > (SLIDE_HOME_POSITION + SLIDE_TICKS_EPSILON)) {
+            speedMultiplier /= Math.sqrt(2);
         }
 
         double theta, x, y, rot, rotatedX, rotatedY;
@@ -166,29 +157,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         rotatedX = x * Math.cos(theta) - y * Math.sin(theta);
         rotatedY = x * Math.sin(theta) + y * Math.cos(theta);
 
-        // Set the drive motor powers according to the gamepad input:
-        if (Math.abs(rot) > HEADING_HOLD_EPSILON || timer > 0) {
-            drive.setDrivePowers(new PoseVelocity2d(
-                    new Vector2d(
-                            -rotatedY * speedMultiplier,
-                            -rotatedX * speedMultiplier
-                    ),
-                    -rot * speedMultiplier
-            ));
-            targetHeading = drive.pose.heading.log();
-            timer -= deltaTime;
-        } else {
-            double correction = shortestAngleDistance(drive.pose.heading.log(), targetHeading) * HEADING_HOLD_KP;
-
-            drive.setDrivePowers(new PoseVelocity2d(
-                    new Vector2d(
-                            -rotatedY * speedMultiplier,
-                            -rotatedX * speedMultiplier
-                    ),
-                    correction
-            ));
-            timer = HEADING_HOLD_DELAY;
-        }
+        driveWithHeldHeading(rotatedX * speedMultiplier, rotatedY * speedMultiplier, rot * speedMultiplier, deltaTime);
 
         // Press the D-Pad down button ONCE (do not hold)
         if (gamepad1.dpad_down && !buttonDpadDown1) {
@@ -196,183 +165,288 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             runSpecimenGrab = true;
         }
         buttonDpadDown1 = gamepad1.dpad_down;
-        if(runSpecimenGrab) {
-            runSpecimenGrab= driverAssistRetrieveSpecimen();
+        if (runSpecimenGrab) {
+            runSpecimenGrab = driverAssistRetrieveSpecimen();
         }
         // Update the current pose:
-        drive.updatePoseEstimate();
-
+        poseVelocity = drive.updatePoseEstimate();
     }
 
-    // Method to calculate signed shortest distance between two angles
-    public static double shortestAngleDistance(double theta1, double theta2) {
-        // Calculate the raw difference
-        double deltaTheta = theta2 - theta1;
+    PoseVelocity2d poseVelocity;
 
-        // Wrap into the range [-pi, pi]
-        deltaTheta = (deltaTheta + Math.PI) % (2 * Math.PI) - Math.PI;
+    double lastTargetRotVel;
+    double targetRotVel;
+    double targetRot;
 
-        // Handle edge case due to negative modulo in Java
-        if (deltaTheta < -Math.PI) {
-            deltaTheta += 2 * Math.PI;
+    public double maxAngVel = MecanumDrive.PARAMS.maxAngVel;
+    public double maxAngAccel = MecanumDrive.PARAMS.maxAngAccel;
+
+    public void driveWithHeldHeading(double userX, double userY, double userRot, double deltaTime) {
+        if (userRot == 0) {
+            if (userX == 0 && userY == 0) {
+                drive.leftFront.setPower(0);
+                drive.leftBack.setPower(0);
+                drive.rightBack.setPower(0);
+                drive.rightFront.setPower(0);
+                targetRotVel = 0;
+                targetRot = drive.pose.heading.log();
+                return;
+            } else {
+                targetRotVel = 0;
+                targetRot = drive.pose.heading.log();
+            }
         }
 
-        return deltaTheta;
+        userRot *= -maxAngVel;
+        // Calculate the rotational component of the wheel velocities
+        if (userRot > 0) {
+            if (userRot > targetRotVel) {
+                targetRotVel = Math.min(targetRotVel + maxAngAccel * deltaTime, userRot);
+            } else {
+                targetRotVel = Math.max(targetRotVel - maxAngAccel * deltaTime, userRot);
+            }
+        } else {
+            if (userRot < targetRotVel) {
+                targetRotVel = Math.max(targetRotVel - maxAngAccel * deltaTime, userRot);
+            } else {
+                targetRotVel = Math.min(targetRotVel + maxAngAccel * deltaTime, userRot);
+            }
+        }
+
+        targetRot = targetRot + targetRotVel * deltaTime;
+
+        while (targetRot < -Math.PI)
+            targetRot += 2 * Math.PI;
+        while (targetRot > Math.PI)
+            targetRot -= 2 * Math.PI;
+
+        double targetRotAccel = (targetRotVel - lastTargetRotVel) / deltaTime;
+
+        lastTargetRotVel = targetRotVel;
+
+        double[] angular = new double[]{targetRot, targetRotVel, targetRotAccel};
+
+        Pose2dDual<Time> txWorldTarget = new Pose2dDual<>(
+                new Vector2dDual<>(new DualNum<>(new double[]{0, 0, 0}),
+                        new DualNum<>(new double[]{0, 0, 0})),
+                Rotation2dDual.exp(new DualNum<>(angular)));
+
+        PoseVelocity2dDual<Time> command = new HolonomicController(
+                0, 0, MecanumDrive.PARAMS.headingGain,
+                0, 0, MecanumDrive.PARAMS.headingVelGain
+        ).compute(txWorldTarget, drive.pose, poseVelocity);
+
+        // Enlighten Wily Works as to where we should be:
+        WilyWorks.runTo(txWorldTarget.value(), txWorldTarget.velocity().value());
+
+        HolonomicKinematics.WheelVelocities<Time> rotWheelVels = drive.kinematics.inverse(command);
+
+        double voltage = drive.getVoltage();
+
+        final MotorFeedforward feedforward = new MotorFeedforward(0,
+                MecanumDrive.PARAMS.kV / MecanumDrive.PARAMS.inPerTick,
+                MecanumDrive.PARAMS.kA / MecanumDrive.PARAMS.inPerTick);
+
+        // Calculate the driving/strafing component of the wheel velocities
+        PoseVelocity2d powers = new PoseVelocity2d(
+                new Vector2d(
+                        -userY * speedMultiplier,
+                        -userX * speedMultiplier
+                ),
+                0
+        );
+
+        HolonomicKinematics.WheelVelocities<Time> driveWheelVels = new HolonomicKinematics(kinematicType, 1).inverse(
+                PoseVelocity2dDual.constant(powers, 1));
+
+        double driveMaxPowerMag = 1;
+        for (DualNum<Time> power : driveWheelVels.all()) {
+            driveMaxPowerMag = Math.max(driveMaxPowerMag, power.value());
+        }
+
+        // Add the rotational and the driving/strafing wheel velocities and divide by voltages to become powers
+        /*final MotorFeedforward feedforward = new MotorFeedforward(0,
+                0,
+                0);*/
+        double leftFrontPower = (driveWheelVels.leftFront.get(0) / driveMaxPowerMag) +
+                feedforward.compute(rotWheelVels.leftFront) / voltage;
+        double leftBackPower = (driveWheelVels.leftBack.get(0) / driveMaxPowerMag) +
+                feedforward.compute(rotWheelVels.leftBack) / voltage;
+        double rightBackPower = (driveWheelVels.rightBack.get(0) / driveMaxPowerMag) +
+                feedforward.compute(rotWheelVels.rightBack) / voltage;
+        double rightFrontPower = (driveWheelVels.rightFront.get(0) / driveMaxPowerMag) +
+                feedforward.compute(rotWheelVels.rightFront) / voltage;
+
+        double denominator = Math.max(
+                Math.max(
+                        Math.max(
+                                Math.abs(leftFrontPower),
+                                Math.abs(leftBackPower)
+                        ),
+                        Math.max(
+                                Math.abs(rightBackPower),
+                                Math.abs(rightFrontPower)
+                        )
+                ),
+                1
+        );
+
+        drive.leftFront.setPower(leftFrontPower / denominator);
+        drive.leftBack.setPower(leftBackPower / denominator);
+        drive.rightBack.setPower(rightBackPower / denominator);
+        drive.rightFront.setPower(rightFrontPower / denominator);
     }
 
     public void controlMechanismsWithGamepads(double deltaTime) {
+        /* Here we handle the three buttons that have direct control of the intake speed.
+        These control the continuous rotation servo that pulls elements into the robot,
+        If the user presses A, it sets the intake power to the final variable that
+        holds the speed we want to collect at.
+        If the user presses X, it sets the servo to Off.
+        And if the user presses B it reveres the servo to spit out the element.*/
 
-            /* Here we handle the three buttons that have direct control of the intake speed.
-            These control the continuous rotation servo that pulls elements into the robot,
-            If the user presses A, it sets the intake power to the final variable that
-            holds the speed we want to collect at.
-            If the user presses X, it sets the servo to Off.
-            And if the user presses B it reveres the servo to spit out the element.*/
+        /* TECH TIP: If Else loops:
+        We're using an else if loop on "gamepad1.x" and "gamepad1.b" just in case
+        multiple buttons are pressed at the same time. If the driver presses both "a" and "x"
+        at the same time. "a" will win over and the intake will turn on. If we just had
+        three if statements, then it will set the intake servo's power to multiple speeds in
+        one cycle. Which can cause strange behavior. */
 
-            /* TECH TIP: If Else loops:
-            We're using an else if loop on "gamepad1.x" and "gamepad1.b" just in case
-            multiple buttons are pressed at the same time. If the driver presses both "a" and "x"
-            at the same time. "a" will win over and the intake will turn on. If we just had
-            three if statements, then it will set the intake servo's power to multiple speeds in
-            one cycle. Which can cause strange behavior. */
+        // Low basket
+        if (gamepad2.x) {
+            liftPosition = LIFT_SCORE_LOW_BASKET;
+            wristPosition = WRIST_SCORE;
+            slidePosition = SLIDE_SCORE_IN_BASKET;
+        }
 
-            // Low basket
-            if (gamepad2.x) {
-                liftPosition = LIFT_SCORE_LOW_BASKET;
-                wristPosition = WRIST_OUT;
-                slidePosition = SLIDE_SCORE_IN_BASKET;
-            }
+        // High Basket
+        if (gamepad2.y) {
+            liftPosition = LIFT_SCORE_HIGH_BASKET;
+            wristPosition = WRIST_SCORE;
+            slidePosition = SLIDE_SCORE_IN_BASKET;
+        }
 
-            // High Basket
-             if (gamepad2.y) {
-                 liftPosition = LIFT_SCORE_HIGH_BASKET;
-                 wristPosition = WRIST_OUT;
-                 slidePosition = SLIDE_SCORE_IN_BASKET;
-             }
+        // Intake on and off
+        if (gamepad2.a && !buttonAPressed2) {
+            intakeEnabled = !intakeEnabled;
+        }
+        buttonAPressed2 = gamepad2.a;
 
-             // Intake on and off
-            if(gamepad2.a && !buttonAPressed2){
-                intakeEnabled = !intakeEnabled;
-            }
-            buttonAPressed2 = gamepad2.a;
+        // Collecting Sample
+        if (gamepad2.right_bumper) {
+            liftPosition = LIFT_COLLECT;
+            wristPosition = WRIST_OUT;
+            slidePosition = SLIDE_COLLECT;
+            intakeEnabled = true;
+        }
 
-            // Collecting Sample
-            if (gamepad2.right_bumper) {
-                liftPosition = LIFT_COLLECT;
-                wristPosition = WRIST_OUT;
-                slidePosition = SLIDE_COLLECT;
-                intakeEnabled = true;
-            }
+        // Clear floor barrier for intake
+        if (gamepad2.left_bumper) {
+            slidePosition = SLIDE_COLLECT;
+            wristPosition = WRIST_IN;
+            liftPosition = LIFT_CLEAR_BARRIER;
+        }
 
-            // Clear floor barrier for intake
-            if (gamepad2.left_bumper) {
-                slidePosition = SLIDE_COLLECT;
-                wristPosition = WRIST_IN;
-                liftPosition = LIFT_CLEAR_BARRIER;
-            }
+        // Retract linear slides
+        if (gamepad2.dpad_left) {
+            liftPosition = LIFT_HOME_POSITION;
+            wristPosition = WRIST_IN;
+            slidePosition = SLIDE_HOME_POSITION;
+            intakeEnabled = false;
+        }
 
-            // Retract linear slides
-            if (gamepad2.dpad_left) {
-                liftPosition = LIFT_HOME_POSITION;
-                wristPosition = WRIST_IN;
-                slidePosition = SLIDE_HOME_POSITION;
-                intakeEnabled = false;
-            }
+        // Correct height for specimen (High)
+        if (gamepad2.dpad_right) {
+            liftPosition = LIFT_SCORE_HIGH_SPECIMEN;
+            wristPosition = WRIST_IN;
+            slidePosition = SLIDE_HOME_POSITION;
+        }
 
-            // Correct height for specimen (High)
-            if (gamepad2.dpad_right) {
-                liftPosition = LIFT_SCORE_HIGH_SPECIMEN;
-                wristPosition = WRIST_IN;
-                slidePosition = SLIDE_HOME_POSITION;
-            }
+        /* Here we create a "fudge factor" for the Lift position.
+        This allows you to adjust (or "fudge") the Lift position slightly with the gamepad triggers.
+        We want the left trigger to move the Lift up, and right trigger to move the Lift down.
+        So we add the right trigger's variable to the inverse of the left trigger. If you pull
+        both triggers an equal amount, they cancel and leave the Lift at zero. But if one is larger
+        than the other, it "wins out". This variable is then multiplied by our FUDGE_FACTOR.
+        The FUDGE_FACTOR is the number of degrees that we can adjust the arm by with this function. */
 
-            /* Here we create a "fudge factor" for the Lift position.
-            This allows you to adjust (or "fudge") the Lift position slightly with the gamepad triggers.
-            We want the left trigger to move the Lift up, and right trigger to move the Lift down.
-            So we add the right trigger's variable to the inverse of the left trigger. If you pull
-            both triggers an equal amount, they cancel and leave the Lift at zero. But if one is larger
-            than the other, it "wins out". This variable is then multiplied by our FUDGE_FACTOR.
-            The FUDGE_FACTOR is the number of degrees that we can adjust the arm by with this function. */
+        liftPositionFudgeFactor = FUDGE_FACTOR_LIFT * (gamepad2.right_trigger - gamepad2.left_trigger);
 
-            liftPositionFudgeFactor = FUDGE_FACTOR_LIFT * (gamepad2.right_trigger - gamepad2.left_trigger);
-
-            // Set the slide velocity to magnitude of the 'right stick y' multiplied by the speed multiplier (SLIDE_VELOCITY)
-            double slideVelocity = -SLIDE_VELOCITY_MAX * gamepad2.right_stick_y;
-            telemetry.addData("Slide target Velocity: ", slideVelocity);
-
+        // Set the slide velocity to magnitude of the 'right stick y' multiplied by the speed multiplier (SLIDE_VELOCITY)
+        double slideVelocity = -SLIDE_VELOCITY_MAX * gamepad2.right_stick_y;
+        telemetry.addData("Slide target Velocity: ", slideVelocity);
 
 
+        // Set slide position based on magnitude of speed (Position = Velocity * Time)
+        slidePosition += slideVelocity * deltaTime;
 
-            // Set slide position based on magnitude of speed (Position = Velocity * Time)
-            slidePosition += slideVelocity * deltaTime;
+        // Makes sure if driver tries to go past the max or min, set the position to the max or min slide values
+        if (slidePosition > SLIDE_MAX) {
+            slidePosition = SLIDE_MAX;
+        }
+        if (slidePosition < SLIDE_MIN) {
+            slidePosition = SLIDE_MIN;
+        }
 
-            // Makes sure if driver tries to go past the max or min, set the position to the max or min slide values
-            if(slidePosition > SLIDE_MAX){
-                slidePosition = SLIDE_MAX;
-            }
-            if(slidePosition < SLIDE_MIN){
-                slidePosition = SLIDE_MIN;
-            }
+        // If lift is travelling through 'no mans land', pull in arm and wrist, then perform the lift action.
+        // Else, perform all the actions
+        double liftPositionWithFudge = liftPosition + liftPositionFudgeFactor;
 
-            // If lift is travelling through 'no mans land', pull in arm and wrist, then perform the lift action.
-            // Else, perform all the actions
-            double liftPositionWithFudge = liftPosition + liftPositionFudgeFactor;
+        // In case position is over max or min, set position to the max or min
+        if (liftPositionWithFudge > LIFT_MAX) {
+            liftPositionWithFudge = LIFT_MAX;
+        }
+        if (liftPositionWithFudge < LIFT_MIN) {
+            liftPositionWithFudge = LIFT_MIN;
+        }
+        // TEMPORARY
+        PIDFCoefficients pidf = liftMotor1.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+        pidf.f = f_coefficient;
+        liftMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
 
-            // In case position is over max or min, set position to the max or min
-            if(liftPositionWithFudge > LIFT_MAX){
-                liftPositionWithFudge = LIFT_MAX;
-            }
-            if(liftPositionWithFudge < LIFT_MIN){
-                liftPositionWithFudge = LIFT_MIN;
-            }
-            // TEMPORARY
-            PIDFCoefficients pidf = liftMotor1.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-            pidf.f = f_coefficient;
-            liftMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
+        PIDFCoefficients pidf2 = liftMotor2.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
+        pidf2.f = f_coefficient;
+        liftMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf2);
+        telemetry.addLine(String.format("F value: %.1f", f_coefficient));
 
-            PIDFCoefficients pidf2 = liftMotor2.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-            pidf2.f = f_coefficient;
-            liftMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf2);
-            telemetry.addLine(String.format("F value: %.1f", f_coefficient ));
+        if (isCrossingNoSlideZone(liftPositionWithFudge)) {
+            if (getSlidePosition() > SLIDE_HOME_POSITION + SLIDE_TICKS_EPSILON) {
+                // moves the slides in if lift going up and not in home pos
+                moveWrist(WRIST_IN);
+                moveSlide(SLIDE_HOME_POSITION);
 
-            if(isCrossingNoSlideZone(liftPositionWithFudge )) {
-                if(getSlidePosition() > SLIDE_HOME_POSITION + TICKS_EPSILON) {
-                    // moves the slides in if lift going up and not in home pos
-                    moveWrist(WRIST_IN);
-                    moveSlide(SLIDE_HOME_POSITION);
-
-                } else {
-                    // if slide in home position move lift up
-                    moveLift(liftPositionWithFudge);
-                }
             } else {
-                moveWrist(wristPosition);
-                moveSlide(slidePosition);
+                // if slide in home position move lift up
                 moveLift(liftPositionWithFudge);
             }
+        } else {
+            moveWrist(wristPosition);
+            moveSlide(slidePosition);
+            moveLift(liftPositionWithFudge);
+        }
 
-            // Reverse intake when b-button is held down
-            boolean reversed = gamepad2.b;
-            // When 'b' is HELD down, it will deposit
-            if (reversed) {
-                intakeControl(INTAKE_DEPOSIT);
-            } else if (intakeEnabled) {
-                // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
-                intakeControl(INTAKE_COLLECT);
-            } else {
-                intakeControl(INTAKE_OFF);
-            }
+        // Reverse intake when b-button is held down
+        boolean reversed = gamepad2.b;
+        // When 'b' is HELD down, it will deposit
+        if (reversed) {
+            intakeControl(INTAKE_DEPOSIT);
+        } else if (intakeEnabled) {
+            // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
+            intakeControl(INTAKE_COLLECT);
+        } else {
+            intakeControl(INTAKE_OFF);
+        }
     }
 
     // Angle of depression from parallel to the ground when the 4-bar is completely collapsed
     final public double INITIAL_4_BAR_ANGLE = Math.PI / 6;
 
     // Length of first segment of 4-bar (inches)
-    final public double FIRST_SEGMENT_4_BAR_LENGTH = 17;
+
 
     // Raise the arm and move backwards simultaneously
     public boolean driverAssistRetrieveSpecimen() {
-        double yDisplace = Math.abs(startLiftSpecimenY-drive.pose.position.y);
+        double yDisplace = Math.abs(startLiftSpecimenY - drive.pose.position.y);
         if (yDisplace >= FIRST_SEGMENT_4_BAR_LENGTH - X_NON_OVERHANG)
             return false; // too far, no point lifting anymore. we're done
 
@@ -387,6 +461,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     boolean startWasPressed = false;
+
     public void toggleFieldCentricity() {
         if (!startWasPressed && gamepad1.start) {
             fieldCentered = !fieldCentered;

@@ -74,7 +74,7 @@ public class OptimalTeleop extends SlowBotTeleOp {
                         driveTo.init(new DPoint(24, -63), 0, currentPoseVel, telemetry);
 
                         armPosition = ARM_COLLECT;
-                        wrist.setPosition(WRIST_OUT);
+                        wrist.setPosition(WRIST_SCORE);
                         intakeEnabled = true;
 
                         pathing = true;
