@@ -93,8 +93,7 @@ public class PathUnitTest extends SlowBotTeleOp {
     }
 
     public void prepareRobot(Pose2d startingPose) {
-        drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
-        initializeHardware();
+        initializeHardware(startingPose);
 
         startHeading = startingPose.heading.log();
 
