@@ -59,7 +59,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static double WRIST_MIN = 0.0;
     public static double WRIST_MAX = 1.0;
     public static double WRIST_OUT = 0.75;
-    public static double WRIST_IN = 0.0;
+    public static double WRIST_IN = 0.125;
     public static double WRIST_SCORE = 0.5;
     public static double XDRIVE_Y_SCORE_POSE = 39;
     public double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
@@ -69,7 +69,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public double STARTING_ANGLE = -34.69; //liftmotor angle while in home position in degrees
     // This provides an error tolerance for lift and slide
     public static double LIFT_TICKS_EPSILON = 3.00;
-    public static double SLIDE_TICKS_EPSILON = 20;
+    public static double SLIDE_TICKS_EPSILON = 3.00;
 
     // RC 17.50
     // DEV 17.75

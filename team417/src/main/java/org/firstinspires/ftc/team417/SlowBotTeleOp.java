@@ -18,6 +18,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.wilyworks.common.WilyWorks;
 
+import org.firstinspires.ftc.team417.color.Color;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.HolonomicKinematics;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
@@ -55,6 +56,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     double startLiftSpecimenY = 0;
     AutoDriveTo driveTo;
 
+    Color color;
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
@@ -78,7 +80,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             controlMechanismsWithGamepads(deltaTime);
 
             if (drive.colorProcessor != null) {
-                drive.colorProcessor.update();
+                color = drive.colorProcessor.update();
             }
 
             telemeterData();
@@ -126,7 +128,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         if (gamepad1.left_trigger > 0.1) {
             speedMultiplier /= Math.sqrt(2);
         }
-        if (gamepad1.right_trigger > 0.1) {
+        if (gamepad1.right_trigger > 0.1 && getLiftPosition() < LIFT_COLLECT+LIFT_TICKS_EPSILON) {
             speedMultiplier *= Math.sqrt(2);
         }
 
@@ -313,6 +315,9 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         one cycle. Which can cause strange behavior. */
 
         // Low basket
+//        if (color == Color.RED) {
+//
+//        }
         if (gamepad2.x) {
             liftPosition = LIFT_SCORE_LOW_BASKET;
             wristPosition = WRIST_SCORE;
@@ -417,6 +422,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
             } else {
                 // if slide in home position move lift up
+                moveWrist(WRIST_IN);
                 moveLift(liftPositionWithFudge);
             }
         } else {
@@ -428,7 +434,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         // Reverse intake when b-button is held down
         boolean reversed = gamepad2.b;
         // When 'b' is HELD down, it will deposit
-        if (reversed) {
+        if (reversed && wrist.getPosition()!=WRIST_IN) {
             intakeControl(INTAKE_DEPOSIT);
         } else if (intakeEnabled) {
             // When 'a' is clicked, it is TOGGLED, so it will keep collecting until another input is clicked
