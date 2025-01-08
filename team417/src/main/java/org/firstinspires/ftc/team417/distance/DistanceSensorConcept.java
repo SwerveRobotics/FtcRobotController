@@ -26,7 +26,14 @@ public class DistanceSensorConcept extends SlowBotTeleOp {
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
-        prepareRobot();
+        if(!prepareRobot()){
+            telemetry.addLine("Run auto or prepare robot Op mode");
+            telemetry.update();
+
+            waitForStart();
+
+            return;
+        }
 
         leftSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "leftSonic");
         rightSonic = hardwareMap.get(UltrasonicDistanceSensor.class, "rightSonic");

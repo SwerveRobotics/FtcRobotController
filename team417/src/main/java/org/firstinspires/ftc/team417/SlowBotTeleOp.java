@@ -99,18 +99,15 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         stopCrash();
     }
 
-    public void prepareRobot() {
-        prepareRobot(new Pose2d(0, 0, Math.PI / 2));
-    }
-
-    public void prepareRobot(Pose2d startingPose) {
-        targetRot = startingPose.heading.log();
+    public boolean prepareRobot() {
         lastTargetRotVel = 0;
 
-        drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
-        initializeHardware();
+        if(!initializeHardware(null)){
+            return false;
+        }
 
-        startHeading = startingPose.heading.log();
+        startHeading = drive.pose.heading.log();
+        targetRot = drive.pose.heading.log();
         previousTime = currentTime();
 
         driveTo = new AutoDriveTo(drive);
@@ -118,6 +115,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         /* Send telemetry message to signify robot waiting */
         telemetry.addLine("Robot Ready.");
         telemetry.update();
+
+        return true;
     }
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric, double deltaTime) {
