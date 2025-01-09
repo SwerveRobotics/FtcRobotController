@@ -1,11 +1,10 @@
 package org.firstinspires.ftc.team417.distance;
 
-import static org.firstinspires.ftc.team417.distance.DistanceLocalizer.calculateDistance;
-
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.team417.SlowBotTeleOp;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
@@ -48,13 +47,13 @@ public class DistanceSensorConcept extends SlowBotTeleOp {
             // 'packet' is the object used to send data to FTC Dashboard:
             TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
 
-            double h = drive.otosDriver.getPosition().h;
+            double h = drive.pinpointDriver.getPosition().getHeading(AngleUnit.RADIANS);
 
             double dL = leftSonic.getDistance(DistanceUnit.INCH);
             double dR = rightSonic.getDistance(DistanceUnit.INCH);
 
-            telemetry.addData("X distance", calculateDistance(dR, h, rightInfo, false));
-            telemetry.addData("Y distance", calculateDistance(dL, h, leftInfo, true));
+            telemetry.addData("Raw L", dL);
+            telemetry.addData("Raw R", dR);
 
             // deltaTime will be the actual current time minus the currentTime of the last loop
             double deltaTime = currentTime() - previousTime;

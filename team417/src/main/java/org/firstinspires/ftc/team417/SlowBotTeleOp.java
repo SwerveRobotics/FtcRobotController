@@ -23,7 +23,6 @@ import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.HolonomicKinematics;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.skidaddle.AutoDriveTo;
-import org.firstinspires.ftc.team417.skidaddle.DPoint;
 
 @TeleOp(name = "TeleOp", group = "SlowBot")
 @Config
@@ -96,6 +95,28 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             // Draw the robot and field:
             packet.fieldOverlay().setStroke("#3F51B5");
             Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
+
+            // Draw the uncorrected pose in green if it's correcting and red if it's not:
+            if (drive.distanceLocalizer != null && drive.distanceLocalizer.enabled) {
+                Pose2d oldPose = new Pose2d(
+                        drive.pose.position.x - drive.distanceLocalizer.correction.x,
+                        drive.pose.position.y - drive.distanceLocalizer.correction.y,
+                        drive.pose.heading.log()
+                );
+                if (drive.distanceLocalizer.correcting) {
+                    packet.fieldOverlay().setStroke("#00FF00");
+                } else {
+                    packet.fieldOverlay().setStroke("#FF0000");
+                }
+                packet.fieldOverlay().strokeLine(
+                        oldPose.position.x,
+                        oldPose.position.y,
+                        drive.pose.position.x,
+                        drive.pose.position.y
+                );
+                Drawing.drawRobot(packet.fieldOverlay(), oldPose);
+            }
+
             MecanumDrive.sendTelemetryPacket(packet);
         }
 
@@ -177,10 +198,10 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             drive.setDrivePowers(
                     new PoseVelocity2d(
                             new Vector2d(
-                                    rotatedX * speedMultiplier,
-                                    rotatedY * speedMultiplier
+                                    -rotatedY * speedMultiplier,
+                                    -rotatedX * speedMultiplier
                             ),
-                            rot * speedMultiplier
+                            -rot * speedMultiplier
                     )
             );
         }
@@ -514,13 +535,14 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         telemetry.addData("Stick Curve On", curve);
         telemetry.addData("Field-Centric", fieldCentered);
         telemetry.addData("Hold Heading", holdHeading);
+        telemetry.addData("Distance Sensors", drive.distanceLocalizer.enabled);
         telemetry.addData("Speed Multiplier", speedMultiplier);
 
-        telemetry.addData("Lift Motor 1 ticks: ", liftMotor1.getCurrentPosition());
-        telemetry.addData("Lift Motor 2 ticks: ", liftMotor2.getCurrentPosition());
+        telemetry.addData("Lift Motor 1 ticks", liftMotor1.getCurrentPosition());
+        telemetry.addData("Lift Motor 2 ticks", liftMotor2.getCurrentPosition());
 
-        telemetry.addData("Slide motor ticks: ", slideMotor.getCurrentPosition());
-        telemetry.addData("Slide motor velocity: ", slideMotor.getVelocity());
+        telemetry.addData("Slide motor ticks", slideMotor.getCurrentPosition());
+        telemetry.addData("Slide motor velocity", slideMotor.getVelocity());
         telemetry.update();
     }
 }
