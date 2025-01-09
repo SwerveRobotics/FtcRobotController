@@ -39,7 +39,7 @@ abstract public class BaseOpMode extends LinearOpMode {
             builder.setCamera(hardwareMap.get(WebcamName.class, "camera")); // "webcam"
 
             // Choose a camera resolution. Not all cameras support all resolutions.
-            builder.setCameraResolution(new Size(1280, 800));
+            builder.setCameraResolution(new Size(640, 480));
 
             builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
 

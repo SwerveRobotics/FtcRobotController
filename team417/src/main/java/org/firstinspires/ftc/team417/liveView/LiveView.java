@@ -2,6 +2,7 @@ package org.firstinspires.ftc.team417.liveView;
 
 import android.graphics.Canvas;
 
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.util.TypeConversion;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -16,22 +17,29 @@ import java.util.List;
 
 public class LiveView implements VisionProcessor {
     Telemetry t;
+    Gamepad gamepad1;
     String message;
     String messageStart;
     String messageEnd;
 
-    private final int onThreshold = 55;
-    private final int onValue = 155;
-    private final int offValue = 27;
+    private final int onThreshold = 50;
+    private final int onValue = 100;
+    private final int offValue = 0;
 
     //PLACEHOLDER VALUES________________________________________________
-    private final int COLOR_EPSILON = 50;
-    private final Lab YELLOW = new Lab(34.509803921568626, 115,  -100);
-    private final Lab BLUE = new Lab(32.30, 79.19, -107.86);
-    private final Lab RED = new Lab(53.24 , 80.09, 67.20);
-    private final String[] RGB_CODES = {"#FFFF00", "#0000FF", "#FF0000"};
+    private final int COLOR_EPSILON = 35;
+    /*private final Lab YELLOW = new Lab(82.35, -3, 78);
+    private final Lab BLUE = new Lab(32.941, 21, -56);
+    private final Lab RED = new Lab(50.6, 62, 33);*/
 
-    private final int NUM_RUNS_KEPT = 200;
+    private final Lab YELLOW = new Lab(61.2, -13, -40);
+    private final Lab BLUE = new Lab(29, 34, 28);
+    private final Lab RED = new Lab(27.1, 53, -77);
+    private final String[] RGB_CODES = {"#yellow", "#00bfff", "#red"};
+
+    private final int NUM_RUNS_KEPT = 100;
+
+    public boolean tune = false;
 
     // Big memory buffers are very expensive to allocate so create them once and reuse
     // rather than recreating them on every loop:
@@ -45,8 +53,9 @@ public class LiveView implements VisionProcessor {
     int outputHeight;
 
 
-    public LiveView(Telemetry t, int width, int height) {
+    public LiveView(Telemetry t, int width, int height, Gamepad gamepad1) {
         this.t = t;
+        this.gamepad1 = gamepad1;
         inputWidth = width;
         inputHeight = height;
         outputWidth = width / 2;
@@ -58,17 +67,13 @@ public class LiveView implements VisionProcessor {
 
     }
 
-    private void newBuffer(Mat largeRgb, int width, int height, boolean YCrCb) {
+    private void newBuffer(Mat largeRgb, int width, int height) {
         // First resize the frame that came from the camera:
         Imgproc.resize(largeRgb, smallRgb, new org.opencv.core.Size(width, height), 0, 0, Imgproc.INTER_AREA);
 
-        if (YCrCb) {
-            // Convert it to YCrCb (Y is luminance/intensity, Cr is red chroma, Cb is blue chroma):
-            Imgproc.cvtColor(smallRgb, smallLab, Imgproc.COLOR_RGB2YCrCb);
-        } else {
-            // Convert it to YCrCb (Y is luminance/intensity, Cr is red chroma, Cb is blue chroma):
-            Imgproc.cvtColor(smallRgb, smallLab, Imgproc.COLOR_RGB2Lab);
-        }
+        // Convert it to YCrCb (Y is luminance/intensity, Cr is red chroma, Cb is blue chroma):
+        Imgproc.cvtColor(smallRgb, smallLab, Imgproc.COLOR_RGB2Lab);
+
 
         int pixelCount = smallLab.height() * smallLab.width();
         int channelCount = smallLab.channels();
@@ -85,7 +90,7 @@ public class LiveView implements VisionProcessor {
     // frames per second). Note that this is on a different thread than the robot's primary loop:
     @Override
     public Object processFrame(Mat largeRgb, long captureTimeNanos) {
-        newBuffer(largeRgb, inputWidth, inputHeight, true);
+        newBuffer(largeRgb, inputWidth, inputHeight);
 
         double[][] intensities = new double[inputWidth][inputHeight];
 
@@ -93,10 +98,10 @@ public class LiveView implements VisionProcessor {
             int x = (i / 3) % inputWidth;
             int y = (i / 3) / inputWidth;
 
-            intensities[x][y] = TypeConversion.unsignedByteToDouble(buffer[i]);
+            intensities[x][y] = TypeConversion.unsignedByteToDouble(buffer[i]) / 255.0 * 100.0;
         }
 
-        newBuffer(largeRgb, outputWidth, outputHeight, false);
+        newBuffer(largeRgb, outputWidth, outputHeight);
 
         Lab[][] colors = new Lab[outputWidth][outputHeight];
 
@@ -104,9 +109,9 @@ public class LiveView implements VisionProcessor {
             int x = (i / 3) % outputWidth;
             int y = (i / 3) / outputWidth;
 
-            double L = TypeConversion.unsignedByteToDouble(buffer[i + 2]) / 255.0 * 100.0;
-            double a = buffer[i + 1];
-            double b = buffer[i    ];
+            double L = TypeConversion.unsignedByteToDouble(buffer[i + 0]) / 255.0 * 100.0;
+            double a = TypeConversion.unsignedByteToDouble(buffer[i + 1]) - 128;
+            double b = TypeConversion.unsignedByteToDouble(buffer[i + 2]) - 128;
 
             colors[x][y] = new Lab(L, a, b);
         }
@@ -124,8 +129,9 @@ public class LiveView implements VisionProcessor {
 
     public void initHTML() {
         t.setDisplayFormat(Telemetry.DisplayFormat.HTML);
-        messageStart = "<tt><span style='color: #ffffff; background: black;'><b>";
+        messageStart = "<tt><span style='background: black;'><b>";
         messageEnd = "</b></span></tt>";
+        tuneMessage = "";
     }
 
     public void resize(int factor) {
@@ -178,16 +184,38 @@ public class LiveView implements VisionProcessor {
         return string.toString();
     }
 
+    String tuneMessage;
+    boolean aPressed = false;
+    boolean changeMessage = true;
+
+    private int tuneColorValues(int x, int y, int charHex, Lab[][] colors) {
+        int u = 40;
+        int v = 20;
+
+
+
+        if (((x == u) && (y == v-1)) ||
+                ((x == u) && (y == v+1)) ||
+                ((x == u-1) && (y == v)) ||
+                ((x == u+1) && (y==v))) {
+            charHex = '█';
+        }
+
+        if (gamepad1.a && !aPressed)
+            changeMessage = !changeMessage;
+
+        aPressed = gamepad1.a;
+
+        if ((x == u) && (y == v) & changeMessage)
+            tuneMessage = "\n----------------------------------------\nL: " + colors[x][y].L + " a: " + colors[x][y].a + " b: " + colors[x][y].b + "\n";
+
+        return charHex;
+    }
+
     public void processLab(double[][] intensities, Lab[][] colors) {
         ArrayList<Character> image = new ArrayList<>(outputWidth * outputHeight);
 
         ArrayList<CromaRun> runs = new ArrayList<>();
-
-        System.out.print("\nXLen: " + intensities[0].length + " YLen: " + intensities.length);
-
-        int u = 58;
-        int v = 26;
-
 
         for (int y = 0; y < outputHeight; y++) {
             CromaRun currRun = new CromaRun(0, 0, 0, CromaRun.Colors.OTHER);
@@ -256,15 +284,8 @@ public class LiveView implements VisionProcessor {
                     currRun = new CromaRun(x, y, 1, color);
                 }
 
-                if (((x == u) && (y == v-1)) ||
-                    ((x == u) && (y == v+1)) ||
-                    ((x == u-1) && (y == v)) ||
-                        ((x == u+1) && (y==v))) {
-                    charHex = '█';
-                }
-
-                if ((x == u) && (y == v))
-                    System.out.print("\n----------------------------------------\nL: " + colors[x][y].L + " a: " + colors[x][y].a + " b: " + colors[x][y].b + "\n");
+                if (tune)
+                    charHex = tuneColorValues(x, y, charHex, colors);
                 
                 image.add((char) charHex);
             }
@@ -276,14 +297,6 @@ public class LiveView implements VisionProcessor {
         }
 
         runs.sort(Comparator.comparingInt(run -> -run.length));
-        if (!runs.isEmpty()) {
-            System.out.print("Largest run: ");
-            System.out.print(runs.get(0).length);
-            System.out.print("Smallest run: ");
-            System.out.print(runs.get(runs.size() - 1).length);
-        }
-        System.out.print("Runs Length: ");
-        System.out.println(runs.size());
 
         if (runs.size() > NUM_RUNS_KEPT) {
             runs.subList(NUM_RUNS_KEPT, runs.size()).clear();
@@ -298,15 +311,13 @@ public class LiveView implements VisionProcessor {
             int runStart = run.y * (outputWidth + 1) + run.x;
             int runEnd = runStart + run.length;
 
-            System.out.println(String.format("X: %d, Y: %d, length: %d, color: %s", run.x, run.y, run.length, run.color.toString()));
-
             if (lastEndIndex != runStart) {
-                strImage.append("</span><span style='color: #FFFFFF; background: black;'>");
                 strImage.append(toString(image.subList(lastEndIndex, runStart)));
             }
 
-            strImage.append(String.format("</span><span style='color: %s; background: black;'>", RGB_CODES[run.color.getValue()]));
+            strImage.append(String.format("<font color='%s'>", RGB_CODES[run.color.getValue()]));
             strImage.append(toString(image.subList(runStart, runEnd)));
+            strImage.append("</font>");
 
             lastEndIndex = runEnd;
         }
@@ -320,9 +331,8 @@ public class LiveView implements VisionProcessor {
     }
 
     private void sendImage() {
-        t.addLine(messageStart + message + messageEnd);
-        System.out.print(messageStart + message + messageEnd);
-        System.out.print("\n");
+        t.setMsTransmissionInterval(100);
+        t.addLine(messageStart + message + messageEnd + tuneMessage);
 
         t.update();
     }
