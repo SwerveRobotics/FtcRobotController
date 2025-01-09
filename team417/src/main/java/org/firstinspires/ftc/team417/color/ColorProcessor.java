@@ -44,16 +44,26 @@ public class ColorProcessor {
         int g = sensor.green();
         int b = sensor.blue();
 
-        if (a < 200) { // If the detection is too transparent
-            return Color.UNDETECTED;
-        } else {
-            if (r >= g && r >= b) {
-                return Color.RED; // Most red
-            } else if (g >= r && g >= b) {
-                return Color.YELLOW; // Most green
-            } else {
-                return Color.BLUE; // Most blue
-            }
-        }
+        return analyzeDominance(a, r, g, b);
+    }
+
+    public static Color analyzeDominance(int alpha, int red, int green, int blue) {
+        // Apply alpha channel to RGB values
+        double alphaFactor = alpha / 255.0;
+        int adjustedRed = (int) (red * alphaFactor);
+        int adjustedGreen = (int) (green * alphaFactor);
+        int adjustedBlue = (int) (blue * alphaFactor);
+
+        // Calculate yellow intensity (average of red and green)
+        int yellow = (adjustedRed + adjustedGreen) / 2;
+
+        // Find the maximum value
+        int maxValue = Math.max(Math.max(adjustedRed, adjustedGreen),
+                Math.max(adjustedBlue, yellow));
+
+        if (maxValue == yellow) return Color.YELLOW;
+        if (maxValue == adjustedRed) return Color.RED;
+        if (maxValue == adjustedGreen) return Color.UNDETECTED;
+        return Color.BLUE;
     }
 }
