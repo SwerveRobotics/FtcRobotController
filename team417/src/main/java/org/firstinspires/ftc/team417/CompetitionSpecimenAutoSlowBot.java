@@ -43,7 +43,7 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 .stopAndAdd(new SleepAction(0.5))
                 .splineToLinearHeading(new Pose2d(-49,65,Math.toRadians(90)), Math.toRadians(90),new TranslationalVelConstraint(25))
                 .afterDisp(0,new LiftSpecimenAction()) //after intaking lift 4 bar up
-
+                .afterDisp(20,new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
                 .setTangent(Math.toRadians(180))
                 .splineToLinearHeading(new Pose2d(-49,63,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))
                 .setTangent(Math.toRadians(-90))
@@ -57,6 +57,7 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 .stopAndAdd(new SleepAction(0.5))
                 .splineToLinearHeading(new Pose2d(-49,65,Math.toRadians(90)), Math.toRadians(90),new TranslationalVelConstraint(25))
                 .afterDisp(0,new LiftSpecimenAction()) //after intaking lift 4 bar up
+                .afterDisp(20,new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
 
                 .setTangent(Math.toRadians(180))
                 .splineToLinearHeading(new Pose2d(-49,63,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))
