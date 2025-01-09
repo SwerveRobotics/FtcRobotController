@@ -16,7 +16,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
-
+import com.acmerobotics.roadrunner.Pose2d;
 @Config
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static boolean USE_DISTANCE = true;
