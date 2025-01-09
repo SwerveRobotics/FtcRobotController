@@ -14,6 +14,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
 @Autonomous (name = "AutoSpecimen", group = "SlowBot", preselectTeleOp = "TeleOp")
 public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
+
     @Override
     public void runOpMode () {
         Pose2d beginPose = new Pose2d((ROBOT_LENGTH / -2) , 72 - (ROBOT_WIDTH / 2), Math.toRadians(-90));  // sets the beginning pose relative to the robot and  cxc
@@ -23,23 +24,23 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 // after disp arm up
                 .splineToLinearHeading(new Pose2d(0, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
                 .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
-                .splineToLinearHeading(new Pose2d(0,XDRIVE_Y_SCORE_POSE - 3, Math.toRadians(-90)), Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(0,XDRIVE_Y_SCORE_POSE - 4, Math.toRadians(-90)), Math.toRadians(-90))
                 .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-36,24,Math.toRadians(-90)),Math.toRadians(-90))   // bring sample to obs zone
+                .splineToLinearHeading(new Pose2d(-36,30,Math.toRadians(-90)),Math.toRadians(-90))   // bring sample to obs zone
                 .setTangent(Math.toRadians(-90))
                 .splineToLinearHeading(new Pose2d(-48,12,Math.toRadians(-90)),Math.toRadians(180))
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-48,57, Math.toRadians(-90)), Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-48,57, Math.toRadians(-90)), Math.toRadians(90), new TranslationalVelConstraint(70))
                 .setTangent(Math.toRadians(-90))
 
                 .splineToLinearHeading(new Pose2d(-60,12, Math.toRadians(-90)), Math.toRadians(180))
                 .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-60,60,Math.toRadians(-90)),Math.toRadians(90))  // finish bringing to obs zone
+                .splineToLinearHeading(new Pose2d(-60,60,Math.toRadians(-90)),Math.toRadians(90), new TranslationalVelConstraint(70))  // finish bringing to obs zone
                 .setTangent(Math.toRadians(-90))
 
                 .splineToLinearHeading(new Pose2d(-49,55,Math.toRadians(90)), Math.toRadians(90), new TranslationalVelConstraint(10))
-                .stopAndAdd(new SleepAction(1))
+                .stopAndAdd(new SleepAction(0.5))
                 .splineToLinearHeading(new Pose2d(-49,65,Math.toRadians(90)), Math.toRadians(90),new TranslationalVelConstraint(25))
                 .afterDisp(0,new LiftSpecimenAction()) //after intaking lift 4 bar up
 
@@ -51,6 +52,21 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
                 .splineToLinearHeading(new Pose2d(-3,XDRIVE_Y_SCORE_POSE - 3, Math.toRadians(-90)), Math.toRadians(-90))
                 .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-49,55,Math.toRadians(90)), Math.toRadians(90))
+                .stopAndAdd(new SleepAction(0.5))
+                .splineToLinearHeading(new Pose2d(-49,65,Math.toRadians(90)), Math.toRadians(90),new TranslationalVelConstraint(25))
+                .afterDisp(0,new LiftSpecimenAction()) //after intaking lift 4 bar up
+
+                .setTangent(Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-49,63,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))
+                .setTangent(Math.toRadians(-90))
+                // after disp arm up
+                .splineToLinearHeading(new Pose2d(-6, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
+                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
+                .splineToLinearHeading(new Pose2d(-6,XDRIVE_Y_SCORE_POSE - 3, Math.toRadians(-90)), Math.toRadians(-90))
+                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
+
                 //.setTangent(Math.toRadians(90))
                 //.splineToLinearHeading(new Pose2d(-49,68-(ROBOT_WIDTH/2),Math.toRadians(-90)), Math.toRadians(180))
 
@@ -100,7 +116,7 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
         TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
         packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
         MecanumDrive.sendTelemetryPacket(packet);
-
+        drive.distanceLocalizer.enabled=false;
         while (!isStarted()) {
             if (getLiftPosition() < LIFT_TICKS_EPSILON) {
                 telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
