@@ -10,7 +10,8 @@ public class PrepareRobot extends BaseOpModeSlowBot {
     @Override
     public void runOpMode() throws InterruptedException {
         // This sets the pose in the human corner facing the opponents basket
-        initializeHardware(new Pose2d(-72 + ROBOT_WIDTH / 2, 72 - ROBOT_LENGTH / 2, -Math.PI / 2));
+        Pose2d beginPose = new Pose2d(-72 + ROBOT_WIDTH / 2, 72 - ROBOT_LENGTH / 2, -Math.PI / 2);
+        initializeHardware(beginPose);
         slideMotor.setVelocity(25);
         slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         wrist.setPosition(WRIST_IN);
@@ -37,5 +38,7 @@ public class PrepareRobot extends BaseOpModeSlowBot {
         liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        drive.pose = beginPose;
     }
 }

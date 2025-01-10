@@ -61,7 +61,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static double WRIST_OUT = 0.75;
     public static double WRIST_IN = 0.125;
     public static double WRIST_SCORE = 0.5;
-    public static double XDRIVE_Y_SCORE_POSE = 39;
+    public static double XDRIVE_Y_SCORE_POSE = 39 ;
     public double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
 
     public double FIRST_SEGMENT_4_BAR_LENGTH = 17; //length of 4 bar segment
@@ -73,10 +73,10 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
     // RC 17.50
     // DEV 17.75
-    public static double ROBOT_LENGTH = 17.50;
+    public static double ROBOT_LENGTH = 16.85;
     // RC 16.50
     // DEV 18.50
-    public static double ROBOT_WIDTH = 16.50;
+    public static double ROBOT_WIDTH = 16.85;
 
     //motors
     public static CRServo intake1;
@@ -292,13 +292,13 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             liftMotor1.setTargetPosition(0);
             liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE); //was brake DONT CHECK IN AS FLOAT
+            liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             liftMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
 
             liftMotor2.setTargetPosition(0);
             liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);  // was brake DONT CHECK IN AS FLOAT
+            liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
             slideMotor.setTargetPosition(0);
             slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
