@@ -13,19 +13,25 @@ public class ColorSensorConcept extends LinearOpMode {
     ColorSensor sensor;
     RevBlinkinLedDriver lightStrip;
 
+    public final Lab RED = new Lab(526, -152, 90);
+    public final Lab BLUE = new Lab(507, -142, -98);
+    public final Lab YELLOW = new Lab(733, -337, 340);
+
     @Override
     public void runOpMode() {
         Color color;
 
         sensor = hardwareMap.get(ColorSensor.class, "color");
 
-        sensor.enableLed(true);
+        sensor.enableLed(false);
 
         lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
 
         lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
 
         waitForStart();
+
+        sensor.enableLed(true);
 
         while (opModeIsActive()) {
             color = senseColor();
@@ -43,7 +49,7 @@ public class ColorSensorConcept extends LinearOpMode {
                     lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
                     break;
                 default:
-                    telemetry.addLine("Detecting white!!!");
+                    telemetry.addLine("Detecting nothing!!!");
                     lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
             }
             telemetry.addData("Color", color);
@@ -60,7 +66,23 @@ public class ColorSensorConcept extends LinearOpMode {
         int g = sensor.green();
         int b = sensor.blue();
 
-        return analyzeDominance(a, r, g, b);
+        Lab labColor = ColorConverter.rgbToLab(r, g, b);
+
+        telemetry.addData("Lab color", labColor.toString());
+
+        if (labColor.equals(YELLOW, 20)) {
+            return Color.YELLOW;
+        }
+
+        if (labColor.equals(RED, 20)) {
+            return Color.RED;
+        }
+
+        if (labColor.equals(BLUE, 20)) {
+            return Color.BLUE;
+        }
+
+        return Color.UNDETECTED;
     }
 
     public static Color analyzeDominance(int alpha, int red, int green, int blue) {
