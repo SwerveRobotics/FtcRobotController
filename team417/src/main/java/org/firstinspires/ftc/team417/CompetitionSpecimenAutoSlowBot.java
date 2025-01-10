@@ -22,14 +22,16 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
         Action trajectoryAction = drive.actionBuilder(beginPose)
                 .setTangent(Math.toRadians(-90))
                 // after disp arm up
+                .afterDisp(0,new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_SCORE_HIGH_SPECIMEN))
+
                 .splineToLinearHeading(new Pose2d(0, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
-                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
+                .afterDisp(0, new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
                 .splineToLinearHeading(new Pose2d(0,XDRIVE_Y_SCORE_POSE - 4, Math.toRadians(-90)), Math.toRadians(-90))
                 .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-36,30,Math.toRadians(-90)),Math.toRadians(-90))   // bring sample to obs zone
                 .setTangent(Math.toRadians(-90))
-                .splineToLinearHeading(new Pose2d(-48,12,Math.toRadians(-90)),Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-48,8,Math.toRadians(-90)),Math.toRadians(180))
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-48,57, Math.toRadians(-90)), Math.toRadians(90), new TranslationalVelConstraint(70))
                 .setTangent(Math.toRadians(-90))
@@ -43,7 +45,6 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 .stopAndAdd(new SleepAction(0.5))
                 .splineToLinearHeading(new Pose2d(-49,65,Math.toRadians(90)), Math.toRadians(90),new TranslationalVelConstraint(25))
                 .afterDisp(0,new LiftSpecimenAction()) //after intaking lift 4 bar up
-                .afterDisp(20,new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
                 .setTangent(Math.toRadians(180))
                 .splineToLinearHeading(new Pose2d(-49,63,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))
                 .setTangent(Math.toRadians(-90))
@@ -57,7 +58,6 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 .stopAndAdd(new SleepAction(0.5))
                 .splineToLinearHeading(new Pose2d(-49,65,Math.toRadians(90)), Math.toRadians(90),new TranslationalVelConstraint(25))
                 .afterDisp(0,new LiftSpecimenAction()) //after intaking lift 4 bar up
-                .afterDisp(20,new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
 
                 .setTangent(Math.toRadians(180))
                 .splineToLinearHeading(new Pose2d(-49,63,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))

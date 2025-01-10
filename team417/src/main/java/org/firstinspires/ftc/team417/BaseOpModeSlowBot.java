@@ -73,10 +73,10 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
     // RC 17.50
     // DEV 17.75
-    public static double ROBOT_LENGTH = 17.50;
+    public static double ROBOT_LENGTH = 16.85;
     // RC 16.50
     // DEV 18.50
-    public static double ROBOT_WIDTH = 16.50;
+    public static double ROBOT_WIDTH = 16.85;
 
     //motors
     public static CRServo intake1;
