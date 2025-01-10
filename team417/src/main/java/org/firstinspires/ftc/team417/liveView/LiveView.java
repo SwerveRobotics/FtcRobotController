@@ -35,7 +35,7 @@ public class LiveView implements VisionProcessor {
     private final Lab YELLOW = new Lab(61.2, -13, -40);
     private final Lab BLUE = new Lab(29, 34, 28);
     private final Lab RED = new Lab(27.1, 53, -77);
-    private final String[] RGB_CODES = {"#yellow", "#00bfff", "#red"};
+    private final String[] RGB_CODES = {"yellow", "#00bfff", "red"};
 
     private final int NUM_RUNS_KEPT = 100;
 
