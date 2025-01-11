@@ -19,7 +19,7 @@ public class CompetitionSampleAutoSlowBot extends BaseOpModeSlowBot {
         initializeHardware(beginPose);
 
         Action trajectoryAction = drive.actionBuilder(beginPose)
-                .setTangent(-45)
+                .setTangent(Math.toRadians(-45))
 
                 // Splines to face the basket
                 .splineToLinearHeading(new Pose2d(basketPositionX, basketPositionY, basketHeading), basketHeading, new TranslationalVelConstraint(sampleAutoSpeedConst))
@@ -32,13 +32,10 @@ public class CompetitionSampleAutoSlowBot extends BaseOpModeSlowBot {
                 .stopAndAdd(new IntakeAction(INTAKE_OFF))
                 // Lower lift
                 .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
-                .setTangent(Math.toRadians(0))
-
+                .setTangent(Math.toRadians(180))
 
                 // Splines to face first floor sample
-                .splineToLinearHeading(new Pose2d(48,58, Math.toRadians(-90)), Math.toRadians(-90), new TranslationalVelConstraint(25))
-                .stopAndAdd(new SleepAction(5))
-
+                .splineToLinearHeading(new Pose2d(48,58, Math.toRadians(-90)), Math.toRadians(180), new TranslationalVelConstraint(25))
                 // Slides extend out and wrist folds out
                 .stopAndAdd(new ControlAction(SLIDE_COLLECT, WRIST_IN, LIFT_HOME_POSITION))
                 .stopAndAdd(new ControlAction(SLIDE_COLLECT, WRIST_OUT, LIFT_HOME_POSITION))

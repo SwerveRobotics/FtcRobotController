@@ -77,8 +77,8 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
 
     public double sampleAutoSpeedConst = 25;
-    public double basketPositionX = 55;
-    public double basketPositionY= 55;
+    public double basketPositionX = 56;
+    public double basketPositionY= 56;
     public double basketHeading = Math.toRadians(45);
 
     public double FIRST_SEGMENT_4_BAR_LENGTH = 17; //length of 4 bar segment
