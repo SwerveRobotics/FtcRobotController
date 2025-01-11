@@ -276,59 +276,62 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     }
 
     public boolean initializeHardware(Pose2d startingPose) {
+        // If auto or prepareRobot is not run before then fail the program
+        if ((startingPose == null) && (drive == null)) {
+            return false;
+        }
+
         // This code is run if auto is run
         if (startingPose != null) {
             liftMotor1 = hardwareMap.get(DcMotorEx.class, "lift1");
             liftMotor2 = hardwareMap.get(DcMotorEx.class, "lift2");
             slideMotor = hardwareMap.get(DcMotorEx.class, "slides");
 
-            /* This sets the maximum current that the control hub will apply to the arm before throwing a flag */
-            liftMotor1.setCurrentAlert(5, CurrentUnit.AMPS);
-            liftMotor2.setCurrentAlert(5, CurrentUnit.AMPS);
-            slideMotor.setCurrentAlert(5, CurrentUnit.AMPS);
-
-            /* Before starting the armMotor1. We'll make sure the TargetPosition is set to 0.
-            Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
-            If you do not have the encoder plugged into this motor, it will not run in this code. */
-            liftMotor1.setTargetPosition(0);
             liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-            liftMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
 
-            liftMotor2.setTargetPosition(0);
             liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-            slideMotor.setTargetPosition(0);
             slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-            slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-            intake1 = hardwareMap.get(CRServo.class, "intake1");
-            intake2 = hardwareMap.get(CRServo.class, "intake2");
-            intake2.setDirection(DcMotorSimple.Direction.REVERSE);
-            wrist = hardwareMap.get(Servo.class, "wrist");
-
-            /* Make sure that the intake is off  */
-            intake1.setPower(INTAKE_OFF);
-            intake2.setPower(INTAKE_OFF);
         }
+
+        /* This sets the maximum current that the control hub will apply to the arm before throwing a flag */
+        liftMotor1.setCurrentAlert(5, CurrentUnit.AMPS);
+        liftMotor2.setCurrentAlert(5, CurrentUnit.AMPS);
+        slideMotor.setCurrentAlert(5, CurrentUnit.AMPS);
+    /* Before starting the armMotor1. We'll make sure the TargetPosition is set to 0.
+    Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
+    If you do not have the encoder plugged into this motor, it will not run in this code. */
+        liftMotor1.setTargetPosition(0);
+        liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        liftMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        liftMotor2.setTargetPosition(0);
+        liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        slideMotor.setTargetPosition(0);
+        slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+
+        intake1 = hardwareMap.get(CRServo.class, "intake1");
+        intake2 = hardwareMap.get(CRServo.class, "intake2");
+        intake2.setDirection(DcMotorSimple.Direction.REVERSE);
+        wrist = hardwareMap.get(Servo.class, "wrist");
+
+        /* Make sure that the intake is off  */
+        intake1.setPower(INTAKE_OFF);
+        intake2.setPower(INTAKE_OFF);
 
         // If the drive mode is teleOp then it will set the new pose right after auto
         if (startingPose == null) {
-            // If auto or prepareRobot is not run before then fail the program
-            if(drive == null){
-                return false;
-            }
             startingPose = drive.pose;
         }
         drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
 
-
         return true;
     }
+
 
     public static final KinematicType kinematicType = KinematicType.X;
 }

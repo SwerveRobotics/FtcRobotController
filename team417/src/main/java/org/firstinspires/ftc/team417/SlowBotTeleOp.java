@@ -72,10 +72,15 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     @Override
     public void runOpMode() {
         // Initialize the hardware and make the robot ready
-        prepareRobot();
-
+        if (!prepareRobot()) {
+            telemetry.addLine("WARNING, WARNING: Need to run PrepareRobot first.");
+            telemetry.update();
+            waitForStart();
+            return;
+        }
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
+
 
         poseVelocity = drive.updatePoseEstimate();
 
@@ -134,9 +139,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         // Reset the wrist position to avoid "breaking" the servo:
         stopCrash();
     }
-
-
-
 
     public boolean prepareRobot() {
 
@@ -570,6 +572,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void telemeterData() {
+        telemetry.addData("Lift Motor 1 direction", liftMotor1.getDirection());
+        telemetry.addData("Lift Motor 2 direction", liftMotor2.getDirection());
         telemetry.addLine("Running TeleOp!");
         telemetry.addData("Kinematic Type", kinematicType);
         telemetry.addData("Stick Curve On", curve);
