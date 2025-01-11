@@ -203,10 +203,10 @@ public final class MecanumDrive {
 
                     inPerTick = 1.0;
                     lateralInPerTick = 1.077; // Was 1.00
-                    trackWidthTicks = 9.05; // Was 0.00
+                    trackWidthTicks = 8.56; // Was 0.00
 
-                    kS = 2.350; // Was 0
-                    kV = 0.136; // Was 0
+                    kS = 2.415; // Was 2.350
+                    kV = 0.14; // Was 1.136
                     kA = 0.0300f;
 
                     axialGain = 4.00; // Was 0
@@ -225,8 +225,8 @@ public final class MecanumDrive {
                     pinpoint.ticksPerMm = 13.121;
                     pinpoint.xReversed = false;
                     pinpoint.yReversed = true;
-                    pinpoint.xOffset = -126.0;
-                    pinpoint.yOffset = -36.9;
+                    pinpoint.xOffset = -128.3;
+                    pinpoint.yOffset = -38.8;
                     break;
 
             }
