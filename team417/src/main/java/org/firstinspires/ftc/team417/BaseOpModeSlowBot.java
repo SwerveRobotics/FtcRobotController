@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.robot.Robot;
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -61,7 +62,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static double WRIST_OUT = 0.75;
     public static double WRIST_IN = 0.125;
     public static double WRIST_SCORE = 0.5;
-    public static double XDRIVE_Y_SCORE_POSE = 39 ;
+    public static double XDRIVE_Y_SCORE_POSE = 36 ;
     public double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
 
     public double FIRST_SEGMENT_4_BAR_LENGTH = 17; //length of 4 bar segment
@@ -169,7 +170,16 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             return false;
         }
     }
-
+    class WaitAction extends  RobotAction {
+        RobotAction actionToWaitOn;
+        WaitAction(RobotAction actionToWaitOn) {
+            this.actionToWaitOn = actionToWaitOn;
+        }
+        @Override
+        public boolean run(double elapsedTime) {
+            return actionToWaitOn.isRunning();
+        }
+    }
     public boolean isCrossingNoSlideZone(double targetLiftPosition){
         return ((targetLiftPosition > LIFT_NO_SLIDE_ZONE_MAX && getLiftPosition() < LIFT_NO_SLIDE_ZONE_MAX) ||
                 (targetLiftPosition < LIFT_NO_SLIDE_ZONE_MIN && getLiftPosition() > LIFT_NO_SLIDE_ZONE_MIN));
@@ -268,6 +278,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             System.out.printf("Lift loop: %.0f\n", getLiftPosition());
         }
     }
+
 
     // The time since the robot started in seconds
     public double currentTime() {
