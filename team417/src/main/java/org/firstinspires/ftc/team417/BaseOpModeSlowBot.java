@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.RobotLog;
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
@@ -306,7 +307,9 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
         return nanoTime() * 1e-9;
     }
 
-    public boolean initializeHardware(Pose2d startingPose) {
+    public boolean initializeHardware(Pose2d startingPose) { //starting pose null during teleop
+        boolean isTeleop =(startingPose==null);
+        RobotLog.clearGlobalWarningMsg();
         // If auto or prepareRobot is not run before then fail the program
         if ((startingPose == null) && (drive == null)) {
             return false;
@@ -362,7 +365,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             startingPose = drive.pose;
         }
         drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startingPose);
-
+        drive.distanceLocalizer.enabled = isTeleop;
         return true;
     }
 

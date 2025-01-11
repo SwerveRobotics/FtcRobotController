@@ -59,14 +59,16 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
     boolean x1Pressed = false;
     boolean y1Pressed = false;
+    boolean b1Pressed = false;
     boolean back1Pressed = false;
 
     boolean pathing = false;
     public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(-49, 60);
     public double HUMAN_ZONE_DRIVE_TO_HEADING = Math.PI / 2.0;
-    //public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 37.21);
-    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 37.5);
+    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 37.4);
     public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
+    public DPoint BASKET_DRIVE_TO = new DPoint(0, 37.4);
+    public double BASKET_DRIVE_TO_HEADING = -Math.PI / 2.0;
 
     private DPoint specimenOffset = new DPoint(4, 0);
     private double increamentAmnt = 3;
@@ -190,16 +192,31 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 //                wrist.setPosition(WRIST_FOLDED_OUT);
 //                intakeEnabled = true;
                 pathing = true;
-                System.out.println("init");
             }
             if (pathing) {
                 pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
-                System.out.println("run");
             }
         } else if(gamepad1.y){
             if(!y1Pressed && !SPECIMEN_DRIVE_TO.plus(specimenOffset.times(increamentAmnt)).equals(drive.pose.position, 0.25)){
+                driveTo.init(SPECIMEN_DRIVE_TO.plus(specimenOffset.times(increamentAmnt)), SPECIMEN_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
+                // We should not move the arm, wrist, or intake for Drive-To.
+//                armPosition = ARM_VERTICAL;
+//                wrist.setPosition(WRIST_FOLDED_IN);
+//                intakeEnabled = false;
+
+                liftPosition = LIFT_SCORE_HIGH_SPECIMEN;
+                wristPosition = WRIST_IN;
+                slidePosition = SLIDE_HOME_POSITION;
+
+                //pathing = true;
+            }
+            if (pathing) {
+                pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
+            }
+        } else if(gamepad1.b) {
+            if (!b1Pressed && !BASKET_DRIVE_TO.equals(drive.pose.position, 0.25)) {
                 //driveTo.init(SPECIMEN_DRIVE_TO.plus(specimenOffset.times(increamentAmnt)), SPECIMEN_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
-                System.out.println(SPECIMEN_DRIVE_TO.plus(specimenOffset.times(increamentAmnt)).x);
+                driveTo.init(BASKET_DRIVE_TO, BASKET_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
                 // We should not move the arm, wrist, or intake for Drive-To.
 //                armPosition = ARM_VERTICAL;
 //                wrist.setPosition(WRIST_FOLDED_IN);
@@ -214,7 +231,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             if (pathing) {
                 pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
             }
-        } else {
+        }else {
             pathing = false;
         }
 
