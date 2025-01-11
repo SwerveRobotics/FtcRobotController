@@ -26,6 +26,15 @@ public class OptimalTeleop extends SlowBotTeleOp {
     private int ARM_SCORE_SPECIMEN = 3030;
     private int ARM_VERTICAL = 2320;
 
+    boolean x1Pressed = false;
+    boolean y1Pressed = false;
+    boolean back1Pressed = false;
+
+    public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(-49, 63.5);
+    public double HUMAN_ZONE_DRIVE_TO_HEADING = Math.PI / 2.0;
+    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 45);
+    public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
+
     @Override
     public void runOpMode() {
         boolean pathing = false;
@@ -36,7 +45,7 @@ public class OptimalTeleop extends SlowBotTeleOp {
         prepareRobot(new Pose2d(63, -63, 0));
         FtcDashboard dashboard = FtcDashboard.getInstance();
 
-        PoseVelocity2d currentPoseVel = drive.updatePoseEstimate();
+        PoseVelocity2d currentPoseVelocity = drive.updatePoseEstimate();
 
         AutoDriveTo driveTo = new AutoDriveTo(drive);
 
@@ -56,37 +65,34 @@ public class OptimalTeleop extends SlowBotTeleOp {
             TelemetryPacket packet = new TelemetryPacket();
             Canvas canvas = packet.fieldOverlay();
 
-            currentPoseVel = drive.updatePoseEstimate();
+            currentPoseVelocity = drive.updatePoseEstimate();
 
-            if (doAuto) {
-            } else {
-                if (!pathing) {
-                    if (gamepad2.dpad_up && !upPressed) {
-                        driveTo.init(new DPoint(0, -45), Math.PI / 2.0, currentPoseVel, telemetry);
-
-                        armPosition = ARM_VERTICAL;
-                        wrist.setPosition(WRIST_IN);
-                        intakeEnabled = false;
-
-                        pathing = true;
-                    }
-                    if (gamepad2.y && yPressed) {
-                        driveTo.init(new DPoint(24, -63), 0, currentPoseVel, telemetry);
-
-                        armPosition = ARM_COLLECT;
-                        wrist.setPosition(WRIST_SCORE);
-                        intakeEnabled = true;
-
-                        pathing = true;
-                    }
-
-                    drive.setDrivePowers(new PoseVelocity2d(new Vector2d(
-                            -gamepad1.left_stick_y / 2.0,
-                            -gamepad1.left_stick_x / 2.0),
-                            -gamepad1.right_stick_x / 2.0));
-
-                    controlMechanismsWithGamepads();
+            if(gamepad1.x){
+                if(!x1Pressed){
+                    driveTo.init(HUMAN_ZONE_DRIVE_TO, HUMAN_ZONE_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
+                    // We should not move the arm, wrist, or intake for Drive-To.
+//                armPosition = ARM_COLLECT;
+//                wrist.setPosition(WRIST_FOLDED_OUT);
+//                intakeEnabled = true;
+                    pathing = true;
                 }
+                if (pathing) {
+                    pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
+                }
+            } else if(gamepad1.y){
+                if(!y1Pressed){
+                    driveTo.init(SPECIMEN_DRIVE_TO, SPECIMEN_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
+                    // We should not move the arm, wrist, or intake for Drive-To.
+//                armPosition = ARM_VERTICAL;
+//                wrist.setPosition(WRIST_FOLDED_IN);
+//                intakeEnabled = false;
+                    pathing = true;
+                }
+                if (pathing) {
+                    pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
+                }
+            } else {
+                pathing = false;
             }
 
             upPressed = gamepad1.dpad_up;
@@ -94,7 +100,7 @@ public class OptimalTeleop extends SlowBotTeleOp {
             downPressed= gamepad1.dpad_down;
 
             if (pathing)
-                pathing = !driveTo.linearDriveTo(currentPoseVel, deltaTime, packet, canvas) || !driveArm();
+                pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, canvas) || !driveArm();
 
 
             WilyWorks.updateSimulation(deltaTime);
