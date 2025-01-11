@@ -146,8 +146,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     public boolean prepareRobot() {
         lastTargetRotVel = 0;
 
+        // We don't know our initial starting point in TeleOp - but Wily Works requires one:
+        Pose2d startingPose = null;
+        if (WilyWorks.isSimulating) {
+            startingPose = new Pose2d(0, 0, 0);
+        }
 
-        if(!initializeHardware(null)) {
+        if(!initializeHardware(startingPose)) {
             return false;
         }
 
@@ -597,12 +602,35 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
         telemetry.addLine(menu.toString());
 
-        telemetry.addLine(String.format("<small><small>\nLift1 goal: %.2f Lift1 pos: %d PCT: %.2f", liftGoal,
-                          liftMotor1.getCurrentPosition(), liftMotor1.getCurrentPosition() / liftGoal * 100));
-        telemetry.addLine(String.format("\nLift2 goal: %.2f Lift2 pos: %d PCT: %.2f", liftGoal,
-                liftMotor2.getCurrentPosition(), liftMotor2.getCurrentPosition() / liftGoal * 100));
-        telemetry.addLine(String.format("\nslides goal: %.2f slides pos: %d PCT: %.2f</small></small>", liftGoal,
-                slideMotor.getCurrentPosition(), slideMotor.getCurrentPosition() / slidePosition * 100));
+        String lift1Status = String.format("Lift1 goal: %.0f, pos: %d:  %.0f%%",
+                liftGoal, liftMotor1.getCurrentPosition(), liftMotor1.getCurrentPosition() / (liftGoal + 1) * 100);
+        String lift2Status = String.format("Lift2 goal: %.0f, pos: %d:  %.0f%%",
+                liftGoal, liftMotor2.getCurrentPosition(), liftMotor2.getCurrentPosition() / (liftGoal + 1) * 100);
+        String slideStatus = String.format("Slides goal: %.0f, pos: %d:  %.0f%%", liftGoal,
+                slideMotor.getCurrentPosition(), slideMotor.getCurrentPosition() / (slidePosition + 1) * 100);
+
+        if (liftMotor1.isOverCurrent()) {
+            lift1Status = "<big><font color='#ffff00'>" + lift1Status + "</font></big>";
+            telemetry.speak("Warning");
+        } else {
+            lift1Status = "<small><small>" + lift1Status + "</small></small>";
+        }
+        if (liftMotor2.isOverCurrent()) {
+            lift2Status = "<big><font color='ffff00'>" + lift2Status + "</font></big>";
+            telemetry.speak("Warning");
+        } else {
+            lift2Status = "<small><small>" + lift2Status + "</small></small>";
+        }
+        if (slideMotor.isOverCurrent()) {
+            slideStatus = "<big><font color='ffff00'>" + slideStatus + "</font></big>";
+            telemetry.speak("Warning");
+        } else {
+            slideStatus = "<small><small>" + slideStatus + "</small></small>";
+        }
+        telemetry.addLine(lift1Status);
+        telemetry.addLine(lift2Status);
+        telemetry.addLine(slideStatus);
+
         telemetry.update();
     }
 }

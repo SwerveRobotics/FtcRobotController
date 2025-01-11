@@ -21,7 +21,7 @@ public class LiveView implements VisionProcessor {
     String message;
     String messageStart;
     String messageEnd;
-    public String image;
+    public String image = "";
 
     private final int onThreshold = 50;
     private final int onValue = 100;
@@ -199,7 +199,7 @@ public class LiveView implements VisionProcessor {
                 ((x == u) && (y == v+1)) ||
                 ((x == u-1) && (y == v)) ||
                 ((x == u+1) && (y==v))) {
-            charHex = '█';
+            charHex = '\u2013'; // '█';
         }
 
         if (gamepad1.a && !aPressed)
