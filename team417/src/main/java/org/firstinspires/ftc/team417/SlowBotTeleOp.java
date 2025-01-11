@@ -69,9 +69,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         poseVelocity = drive.updatePoseEstimate();
 
         while (opModeIsActive()) {
-            // Disable field-centric always!
-            // toggleFieldCentricity();
-
             // deltaTime will be the actual current time minus the currentTime of the last loop
             double deltaTime = currentTime() - previousTime;
             previousTime = currentTime();
@@ -149,8 +146,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         return true;
     }
 
+    boolean back1WasPressed = false;
+
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric, double deltaTime) {
-        toggleHoldHeading();
+        if (!back1WasPressed && gamepad1.back) {
+            holdHeading = !holdHeading;
+        }
+        back1WasPressed = gamepad1.back;
 
         // Only on GamePad1, the right and left triggers are speed multipliers
         speedMultiplier = 1 / Math.sqrt(2);
@@ -509,24 +511,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     // Applies a curve to the joystick input to give finer control at lower speeds
     public double curveStick(double rawSpeed) {
         return Math.copySign(Math.pow(rawSpeed, 2), rawSpeed);
-    }
-
-    boolean backWasPressed = false;
-
-    public void toggleHoldHeading() {
-        if (!backWasPressed && gamepad1.back) {
-            holdHeading = !holdHeading;
-        }
-        backWasPressed = gamepad1.back;
-    }
-
-    boolean startWasPressed = false;
-
-    public void toggleFieldCentricity() {
-        if (!startWasPressed && gamepad1.start) {
-            fieldCentered = !fieldCentered;
-        }
-        startWasPressed = gamepad1.start;
     }
 
     public void telemeterData() {
