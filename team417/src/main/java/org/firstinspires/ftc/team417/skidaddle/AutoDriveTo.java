@@ -220,6 +220,15 @@ public class AutoDriveTo {
         double targetRotAccel = confineToScope(targetRotVel - lastRotVel) / deltaT;
         lastRotVel = targetRotVel;
 
+        if (endPos.equals(drive.pose.position, 0.25)) {
+            drive.leftFront.setPower(0);
+            drive.leftBack.setPower(0);
+            drive.rightBack.setPower(0);
+            drive.rightFront.setPower(0);
+
+            return true;
+        }
+
         double[] x = {targetPos.x, targetLinVel.x, targetLinAccel.x };
         double[] y = {targetPos.y, targetLinVel.y, targetLinAccel.y };
         double[] angular = {targetRot, targetRotVel, targetRotAccel};

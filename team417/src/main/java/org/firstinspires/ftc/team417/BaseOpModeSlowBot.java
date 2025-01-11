@@ -11,7 +11,6 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.robotcore.robot.Robot;
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
@@ -201,8 +200,9 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
     // This method controls the 4bar to desired height
     static double f_value = 0.5;
+    double liftPosEsplion = 50;
 
-    public void moveLift(double heightInTicks) {
+    public boolean moveLift(double heightInTicks) {
         if (heightInTicks >= LIFT_MIN && heightInTicks <= LIFT_MAX) {
             double velocity;
             if (getLiftPosition() > heightInTicks) {
@@ -224,6 +224,9 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
                 liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             }
         }
+
+        int aveLiftPos = (liftMotor1.getCurrentPosition() + liftMotor2.getCurrentPosition()) / 2;
+        return Math.abs(aveLiftPos - heightInTicks) < liftPosEsplion;
     }
 
     // This method moves the wrist up and down based on desired position

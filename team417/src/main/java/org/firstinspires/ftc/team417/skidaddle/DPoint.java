@@ -30,4 +30,8 @@ public class DPoint {
     public static DPoint to(Vector2d point) {
         return new DPoint(point.x, point.y);
     }
+
+    public boolean equals(Vector2d p, double epsilon) {
+        return Math.abs(x - p.x) < epsilon && Math.abs(y - p.y) < epsilon;
+    }
 }

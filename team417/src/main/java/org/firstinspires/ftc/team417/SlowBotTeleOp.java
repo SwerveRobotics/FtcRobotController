@@ -63,7 +63,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     boolean pathing = false;
     public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(-49, 60);
     public double HUMAN_ZONE_DRIVE_TO_HEADING = Math.PI / 2.0;
-    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 37.21);
+    //public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 37.21);
+    public DPoint SPECIMEN_DRIVE_TO = new DPoint(-10, 37.5);
     public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
 
     Color color;
@@ -162,7 +163,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         PoseVelocity2d currentPoseVelocity = drive.updatePoseEstimate();
 
         if(gamepad1.x){
-            if(!x1Pressed){
+            if(!x1Pressed && !HUMAN_ZONE_DRIVE_TO.equals(drive.pose.position, 0.25)){
                 driveTo.init(HUMAN_ZONE_DRIVE_TO, HUMAN_ZONE_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
                 // We should not move the arm, wrist, or intake for Drive-To.
 //                armPosition = ARM_COLLECT;
@@ -176,16 +177,16 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 System.out.println("run");
             }
         } else if(gamepad1.y){
-            if(!y1Pressed){
+            if(!y1Pressed && !SPECIMEN_DRIVE_TO.equals(drive.pose.position, 0.25)){
                 driveTo.init(SPECIMEN_DRIVE_TO, SPECIMEN_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
                 // We should not move the arm, wrist, or intake for Drive-To.
 //                armPosition = ARM_VERTICAL;
 //                wrist.setPosition(WRIST_FOLDED_IN);
 //                intakeEnabled = false;
 
-                liftPosition = LIFT_SCORE_HIGH_SPECIMEN;
-                wristPosition = WRIST_IN;
-                slidePosition = SLIDE_HOME_POSITION;
+                //liftPosition = LIFT_SCORE_HIGH_SPECIMEN;
+                //wristPosition = WRIST_IN;
+                //slidePosition = SLIDE_HOME_POSITION;
 
                 pathing = true;
             }
@@ -453,7 +454,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         }
 
         // Retract linear slides
-        if (gamepad2.dpad_left) {
+        if (gamepad1.dpad_left) {
             liftPosition = LIFT_HOME_POSITION;
             wristPosition = WRIST_IN;
             slidePosition = SLIDE_HOME_POSITION;
