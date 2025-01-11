@@ -199,7 +199,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     // This helper method controls the linear slides and tells motor to go to desired position in ticks
     public void moveSlide(double positionInTicks) {
         if (slideMotor != null) {
-            telemetry.addData("Slide target: ", positionInTicks);
             if (positionInTicks >= SLIDE_MIN && positionInTicks <= SLIDE_MAX) {
                 slideMotor.setPower(1.0);
                 slideMotor.setTargetPosition((int) positionInTicks);
@@ -312,16 +311,14 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             slideMotor = hardwareMap.get(DcMotorEx.class, "slides");
 
             liftMotor1.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
-            liftMotor2.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
-            slideMotor.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
-
-
             liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+            liftMotor2.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
             liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
+            slideMotor.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
             slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         }

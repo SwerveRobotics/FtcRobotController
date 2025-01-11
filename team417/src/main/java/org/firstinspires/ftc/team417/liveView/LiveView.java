@@ -332,7 +332,6 @@ public class LiveView implements VisionProcessor {
     }
 
     private void sendImage() {
-        t.setMsTransmissionInterval(100);
         image = messageStart + message + messageEnd + tuneMessage;
     }
 }

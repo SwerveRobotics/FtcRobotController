@@ -68,7 +68,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 37.5);
     public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
 
-    private DPoint specimenOffset = new DPoint(-4, 0);
+    private DPoint specimenOffset = new DPoint(4, 0);
     private double increamentAmnt = 3;
 
     private double liftGoal;
@@ -157,8 +157,9 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
         driveTo = new AutoDriveTo(drive);
 
-        view = new LiveView(telemetry, 80, 40, gamepad1);
+        view = new LiveView(telemetry, 160, 160, gamepad1);
         view.initHTML();
+        view.resize(5);
         initLiveView(view, false);
 
         /* Send telemetry message to signify robot waiting */
@@ -192,7 +193,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             }
         } else if(gamepad1.y){
             if(!y1Pressed && !SPECIMEN_DRIVE_TO.plus(specimenOffset.times(increamentAmnt)).equals(drive.pose.position, 0.25)){
-                driveTo.init(SPECIMEN_DRIVE_TO.plus(specimenOffset.times(increamentAmnt)), SPECIMEN_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
+                //driveTo.init(SPECIMEN_DRIVE_TO.plus(specimenOffset.times(increamentAmnt)), SPECIMEN_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
+                System.out.println(SPECIMEN_DRIVE_TO.plus(specimenOffset.times(increamentAmnt)).x);
                 // We should not move the arm, wrist, or intake for Drive-To.
 //                armPosition = ARM_VERTICAL;
 //                wrist.setPosition(WRIST_FOLDED_IN);
@@ -202,7 +204,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 //wristPosition = WRIST_IN;
                 //slidePosition = SLIDE_HOME_POSITION;
 
-                pathing = true;
+                //pathing = true;
             }
             if (pathing) {
                 pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
@@ -212,9 +214,9 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         }
 
         if (gamepad1.dpad_left && ! left1Pressed)
-            specimenOffset.x = specimenOffset.x + 1;
-        if (gamepad1.dpad_right && ! right1Pressed)
             specimenOffset.x = specimenOffset.x - 1;
+        if (gamepad1.dpad_right && ! right1Pressed)
+            specimenOffset.x = specimenOffset.x + 1;
 
         if (specimenOffset.x > 4)
             specimenOffset.x = -4;
@@ -480,7 +482,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         }
 
         // Retract linear slides
-        if (gamepad1.dpad_left) {
+        if (gamepad2.dpad_left) {
             liftPosition = LIFT_HOME_POSITION;
             wristPosition = WRIST_IN;
             slidePosition = SLIDE_HOME_POSITION;
@@ -506,7 +508,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
         // Set the slide velocity to magnitude of the 'right stick y' multiplied by the speed multiplier (SLIDE_VELOCITY)
         double slideVelocity = -SLIDE_VELOCITY_MAX * gamepad2.right_stick_y;
-        telemetry.addData("Slide target Velocity: ", slideVelocity);
 
 
         // Set slide position based on magnitude of speed (Position = Velocity * Time)
@@ -587,21 +588,20 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void telemeterData() {
-        telemetry.addLine(view.image);
-        telemetry.addLine("\n---------------------------------------------------------");
+        telemetry.setMsTransmissionInterval(100);
 
-        StringBuilder menu = new StringBuilder("-------");
+        telemetry.addLine(view.image);
+
+        StringBuilder menu = new StringBuilder("------- ");
         menu.insert((int) specimenOffset.x + 4, "█");
 
-        System.out.println(menu);
+        telemetry.addLine(menu.toString());
 
-        telemetry.addLine("███████");
-        telemetry.addLine("\n---------------------------------------------------------");
-        telemetry.addLine(String.format("\nLift1 goal: %0.2 Lift1 pos: %0.2 PCT: %.2", liftGoal,
+        telemetry.addLine(String.format("<small><small>\nLift1 goal: %.2f Lift1 pos: %d PCT: %.2f", liftGoal,
                           liftMotor1.getCurrentPosition(), liftMotor1.getCurrentPosition() / liftGoal * 100));
-        telemetry.addLine(String.format("\nLift2 goal: %0.2 Lift2 pos: %0.2 PCT: %.2", liftGoal,
+        telemetry.addLine(String.format("\nLift2 goal: %.2f Lift2 pos: %d PCT: %.2f", liftGoal,
                 liftMotor2.getCurrentPosition(), liftMotor2.getCurrentPosition() / liftGoal * 100));
-        telemetry.addLine(String.format("\nslides goal: %0.2 slides pos: %0.2 PCT: %.2", liftGoal,
+        telemetry.addLine(String.format("\nslides goal: %.2f slides pos: %d PCT: %.2f</small></small>", liftGoal,
                 slideMotor.getCurrentPosition(), slideMotor.getCurrentPosition() / slidePosition * 100));
         telemetry.update();
     }
