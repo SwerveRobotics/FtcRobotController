@@ -67,8 +67,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     public double HUMAN_ZONE_DRIVE_TO_HEADING = Math.PI / 2.0;
     public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 37.4);
     public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
-    public DPoint BASKET_DRIVE_TO = new DPoint(0, 37.4);
-    public double BASKET_DRIVE_TO_HEADING = -Math.PI / 2.0;
+    public DPoint BASKET_DRIVE_TO = new DPoint(55, 55);
+    public double BASKET_DRIVE_TO_HEADING = Math.toRadians(45);
 
     private DPoint specimenOffset = new DPoint(4, 0);
     private double increamentAmnt = 3;
@@ -208,7 +208,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 wristPosition = WRIST_IN;
                 slidePosition = SLIDE_HOME_POSITION;
 
-                //pathing = true;
+                pathing = true;
             }
             if (pathing) {
                 pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
@@ -222,11 +222,11 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 //                wrist.setPosition(WRIST_FOLDED_IN);
 //                intakeEnabled = false;
 
-                //liftPosition = LIFT_SCORE_HIGH_SPECIMEN;
-                //wristPosition = WRIST_IN;
-                //slidePosition = SLIDE_HOME_POSITION;
+                liftPosition = LIFT_SCORE_HIGH_BASKET;
+                wristPosition = WRIST_IN;
+                slidePosition = SLIDE_HOME_POSITION;
 
-                //pathing = true;
+                pathing = true;
             }
             if (pathing) {
                 pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
