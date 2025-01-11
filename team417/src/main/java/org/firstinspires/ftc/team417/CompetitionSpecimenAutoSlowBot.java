@@ -45,8 +45,8 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 .stopAndAdd(new SleepAction(0.5))
                 .splineToLinearHeading(new Pose2d(-49,63.5,Math.toRadians(90)), Math.toRadians(90),new TranslationalVelConstraint(25))
                 .afterDisp(0,new LiftSpecimenAction()) //after intaking lift 4 bar up
-                .setTangent(Math.toRadians(180))
-                .splineToLinearHeading(new Pose2d(-49,63,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-49,57,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))
                 .setTangent(Math.toRadians(-90))
                 // after disp arm up
                 .afterDisp(0, new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
@@ -60,8 +60,8 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 .splineToLinearHeading(new Pose2d(-49,63.5,Math.toRadians(90)), Math.toRadians(90),new TranslationalVelConstraint(25))
                 .afterDisp(0,new LiftSpecimenAction()) //after intaking lift 4 bar up
 
-                .setTangent(Math.toRadians(180))
-                .splineToLinearHeading(new Pose2d(-49,63,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-49,57,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))
                 .setTangent(Math.toRadians(-90))
                 // after disp arm up
                 .afterDisp(0, new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
@@ -119,7 +119,6 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
         TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
         packet.fieldOverlay().getOperations().addAll(previewCanvas.getOperations());
         MecanumDrive.sendTelemetryPacket(packet);
-        drive.distanceLocalizer.enabled=false;
         while (!isStarted()) {
             if (getLiftPosition() < LIFT_TICKS_EPSILON) {
                 telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
