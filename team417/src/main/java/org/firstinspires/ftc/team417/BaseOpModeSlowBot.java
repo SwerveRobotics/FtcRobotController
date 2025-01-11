@@ -297,6 +297,11 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             liftMotor2 = hardwareMap.get(DcMotorEx.class, "lift2");
             slideMotor = hardwareMap.get(DcMotorEx.class, "slides");
 
+            liftMotor1.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
+            liftMotor2.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
+            slideMotor.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
+
+
             liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
@@ -314,14 +319,14 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     /* Before starting the armMotor1. We'll make sure the TargetPosition is set to 0.
     Then we'll set the RunMode to RUN_TO_POSITION. And we'll ask it to stop and reset encoder.
     If you do not have the encoder plugged into this motor, it will not run in this code. */
-        liftMotor1.setTargetPosition(0);
+        //liftMotor1.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
         liftMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         liftMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        liftMotor2.setTargetPosition(0);
+        //liftMotor2.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
         liftMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        slideMotor.setTargetPosition(0);
+        //slideMotor.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
         slideMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         intake1 = hardwareMap.get(CRServo.class, "intake1");
@@ -341,7 +346,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
 
         return true;
     }
-
 
     public static final KinematicType kinematicType = KinematicType.X;
 }

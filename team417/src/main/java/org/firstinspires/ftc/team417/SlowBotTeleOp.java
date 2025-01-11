@@ -63,7 +63,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     boolean pathing = false;
     public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(-49, 60);
     public double HUMAN_ZONE_DRIVE_TO_HEADING = Math.PI / 2.0;
-    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 38);
+    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 37.21);
     public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
 
     Color color;
@@ -78,7 +78,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         }
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
-
 
         poseVelocity = drive.updatePoseEstimate();
 
@@ -136,7 +135,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public boolean prepareRobot() {
-
         lastTargetRotVel = 0;
 
 
@@ -184,6 +182,11 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 //                armPosition = ARM_VERTICAL;
 //                wrist.setPosition(WRIST_FOLDED_IN);
 //                intakeEnabled = false;
+
+                liftPosition = LIFT_SCORE_HIGH_SPECIMEN;
+                wristPosition = WRIST_IN;
+                slidePosition = SLIDE_HOME_POSITION;
+
                 pathing = true;
             }
             if (pathing) {
@@ -570,6 +573,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
         telemetry.addData("Slide motor ticks", slideMotor.getCurrentPosition());
         telemetry.addData("Slide motor velocity", slideMotor.getVelocity());
+        telemetry.addData("X", drive.pose.position.x);
+        telemetry.addData("Y", drive.pose.position.y);
         telemetry.update();
     }
 }

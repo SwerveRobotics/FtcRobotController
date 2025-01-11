@@ -42,5 +42,4 @@ public class PrepareRobot extends BaseOpModeSlowBot {
         // Once start is clicked, reset the encoder to make the absolute bottom the home position
         initializeHardware(beginPose);
     }
-
 }
