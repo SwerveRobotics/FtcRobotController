@@ -63,9 +63,9 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     boolean back1Pressed = false;
 
     boolean pathing = false;
-    public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(-49, 63.5);
+    public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(-49, 60);
     public double HUMAN_ZONE_DRIVE_TO_HEADING = Math.PI / 2.0;
-    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 45);
+    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 38);
     public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
 
     Color color;
@@ -143,7 +143,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         lastTargetRotVel = 0;
 
 
-        if(!initializeHardware(new Pose2d(0, 0, 0))) { // @@@@@@@@@@@@@@@@@@@@@@
+        if(!initializeHardware(null)) {
             return false;
         }
 
@@ -163,10 +163,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric, double deltaTime, TelemetryPacket packet) {
         // Update the current pose:
         PoseVelocity2d currentPoseVelocity = drive.updatePoseEstimate();
-
-        if (gamepad1.back && !back1Pressed) {
-            drive.setPose(new Pose2d(-63.125, 63.75, 0));
-        }
 
         if(gamepad1.x){
             if(!x1Pressed){
@@ -239,23 +235,24 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         // Rotate the movement direction counter to the bot's rotation
         rotatedX = x * Math.cos(theta) - y * Math.sin(theta);
         rotatedY = x * Math.sin(theta) + y * Math.cos(theta);
-
-        if (holdHeading) {
-            driveWithHeldHeading(
-                    rotatedX * speedMultiplier,
-                    rotatedY * speedMultiplier,
-                    rot * speedMultiplier,
-                    deltaTime);
-        } else {
-            drive.setDrivePowers(
-                    new PoseVelocity2d(
-                            new Vector2d(
-                                    -rotatedY * speedMultiplier,
-                                    -rotatedX * speedMultiplier
-                            ),
-                            -rot * speedMultiplier
-                    )
-            );
+        if(!pathing) {
+            if (holdHeading) {
+                driveWithHeldHeading(
+                        rotatedX * speedMultiplier,
+                        rotatedY * speedMultiplier,
+                        rot * speedMultiplier,
+                        deltaTime);
+            } else {
+                drive.setDrivePowers(
+                        new PoseVelocity2d(
+                                new Vector2d(
+                                        -rotatedY * speedMultiplier,
+                                        -rotatedX * speedMultiplier
+                                ),
+                                -rot * speedMultiplier
+                        )
+                );
+            }
         }
 
         // Press the D-Pad down button ONCE (do not hold)

@@ -29,16 +29,16 @@ public class AutoDriveTo {
     Canvas canvas;
 
     //linear motion constants
-    public final double linearDriveAccel = MecanumDrive.PARAMS.maxProfileAccel * 1.5; // Was maxProfileAccel * 1
-    public final double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel * 1.5; // Was minProfileAccel * 1
-    public final double maxLinearSpeed = MecanumDrive.PARAMS.maxWheelVel * 1.5; // Was maxWheelVel * 1
+    public final double linearDriveAccel = MecanumDrive.PARAMS.maxProfileAccel ; // Was maxProfileAccel * 1
+    public final double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel; // Was minProfileAccel * 1
+    public final double maxLinearSpeed = MecanumDrive.PARAMS.maxWheelVel; // Was maxWheelVel * 1
     public final double linearVelEpsilon = 2;
     public final double linearDistEpsilon = 0.5;
 
     //rotational motion constants
-    public final double rotationalDriveAccel = MecanumDrive.PARAMS.maxAngAccel * 1.5; // Was maxAngAccel * 1
-    public final double rotationalDriveDeccel = -MecanumDrive.PARAMS.maxAngAccel * 1.5; // Was -maxAngAccel * 1
-    public final double maxRotationalSpeed = MecanumDrive.PARAMS.maxAngVel * 1.5; // Was maxAngVel * 1
+    public final double rotationalDriveAccel = MecanumDrive.PARAMS.maxAngAccel; // Was maxAngAccel * 1
+    public final double rotationalDriveDeccel = -MecanumDrive.PARAMS.maxAngAccel * 0.75; // Was -maxAngAccel * 1
+    public final double maxRotationalSpeed = MecanumDrive.PARAMS.maxAngVel; // Was maxAngVel * 1
     public final double rotationalVelEpsilon = Math.toRadians(3);
     public final double rotationalDistEpsilon = Math.toRadians(1);
 
