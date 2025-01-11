@@ -51,7 +51,7 @@ import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
-import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.Gamepad;
@@ -468,9 +468,9 @@ public final class MecanumDrive {
                     distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this, true);
                 }
 
-                ColorSensor colorSensor = hardwareMap.get(ColorSensor.class, "color");
+                NormalizedColorSensor NormalizedColorSensor = hardwareMap.get(NormalizedColorSensor.class, "color");
                 RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "lightStrip");
-                colorProcessor = new ColorProcessor(colorSensor, lightStrip);
+                colorProcessor = new ColorProcessor(NormalizedColorSensor, lightStrip);
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -499,9 +499,9 @@ public final class MecanumDrive {
                 }
 
                 // TODO: Create the color processing object:
-                //   ColorSensor colorSensor = hardwareMap.get(ColorSensor.class, "PLACEHOLDER");
+                //   NormalizedColorSensor NormalizedColorSensor = hardwareMap.get(NormalizedColorSensor.class, "PLACEHOLDER");
                 //   RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "PLACEHOLDER");
-                //   colorProcessor = new ColorProcessor(colorSensor, lightStrip);
+                //   colorProcessor = new ColorProcessor(NormalizedColorSensor, lightStrip);
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -528,9 +528,9 @@ public final class MecanumDrive {
                 }
 
                 // TODO: Create the color processing object:
-                //   ColorSensor colorSensor = hardwareMap.get(ColorSensor.class, "PLACEHOLDER");
+                //   NormalizedColorSensor NormalizedColorSensor = hardwareMap.get(NormalizedColorSensor.class, "PLACEHOLDER");
                 //   RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "PLACEHOLDER");
-                //   colorProcessor = new ColorProcessor(colorSensor, lightStrip);
+                //   colorProcessor = new ColorProcessor(NormalizedColorSensor, lightStrip);
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -555,9 +555,9 @@ public final class MecanumDrive {
                     distanceLocalizer = new DistanceLocalizer(leftSonic, leftInfo, rightSonic, rightInfo, this, true);
                 }
 
-                ColorSensor colorSensor = hardwareMap.get(ColorSensor.class, "color");
+                NormalizedColorSensor NormalizedColorSensor = hardwareMap.get(NormalizedColorSensor.class, "color");
                 RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
-                colorProcessor = new ColorProcessor(colorSensor, lightStrip);
+                colorProcessor = new ColorProcessor(NormalizedColorSensor, lightStrip);
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
                 leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
