@@ -2,6 +2,8 @@ package org.firstinspires.ftc.team417;
 
 import static java.lang.System.nanoTime;
 
+import android.util.Size;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -13,10 +15,16 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.wilyworks.common.WilyWorks;
 
+import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.team417.liveView.LiveView;
 import org.firstinspires.ftc.team417.roadrunner.KinematicType;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
+import org.firstinspires.ftc.vision.VisionPortal;
+import org.opencv.core.Mat;
+import org.opencv.imgcodecs.Imgcodecs;
+
 import com.acmerobotics.roadrunner.Pose2d;
 @Config
 abstract public class BaseOpModeSlowBot extends LinearOpMode {
@@ -86,6 +94,9 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static DcMotorEx liftMotor1;
     public static DcMotorEx liftMotor2;
     public static DcMotorEx slideMotor;
+
+    Mat testImage; // Our canonical test image
+    VisionPortal visionPortal;
 
     class LiftSpecimenAction extends RobotAction {
         public double startLiftSpecimenY = 0;
@@ -351,4 +362,38 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     }
 
     public static final KinematicType kinematicType = KinematicType.X;
+
+    // Do one-time initialization code:
+    void initLiveView(LiveView view, boolean test) {
+        if (test) {
+            testImage = Imgcodecs.imread("/sdcard/live_view.jpg");
+            if ((testImage.size().width != 0) && (testImage.size().height != 0)) {
+                System.out.printf("Test image successfully loaded!\n");
+            } else {
+                System.out.printf("ERROR: Couldn't find the test image in the robot's storage.\n");
+            }
+
+            view.processFrame(testImage, 0);
+        } else {
+            // Create the vision portal by using a builder.
+            VisionPortal.Builder builder = new VisionPortal.Builder();
+
+            // Specify the camera's name as set in the Robot Configuration:
+            builder.setCamera(hardwareMap.get(WebcamName.class, "camera")); // "webcam"
+
+            // Choose a camera resolution. Not all cameras support all resolutions.
+            builder.setCameraResolution(new Size(640, 480));
+
+            builder.setStreamFormat(VisionPortal.StreamFormat.YUY2);
+
+            // Enable the system's built-in RC preview (LiveView).  Set "false" to omit camera
+            // monitoring.
+            builder.enableLiveView(true);
+
+            // Set and enable the live-view processor.
+            builder.addProcessor(view);
+
+            visionPortal = builder.build();
+        }
+    }
 }

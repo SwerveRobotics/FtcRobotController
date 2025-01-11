@@ -15,6 +15,10 @@ public class DPoint {
         return new DPoint(x + vel.x, y + vel.y);
     }
 
+    public DPoint plus(DPoint vel) {
+        return new DPoint(x + vel.x, y + vel.y);
+    }
+
     public DPoint minus(Vector2d vel) {
         return new DPoint(x - vel.x, y - vel.y);
     }
@@ -33,5 +37,9 @@ public class DPoint {
 
     public boolean equals(Vector2d p, double epsilon) {
         return Math.abs(x - p.x) < epsilon && Math.abs(y - p.y) < epsilon;
+    }
+
+    public DPoint times(double n) {
+        return new DPoint(x * n, y * n);
     }
 }

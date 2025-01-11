@@ -21,6 +21,7 @@ public class LiveView implements VisionProcessor {
     String message;
     String messageStart;
     String messageEnd;
+    public String image;
 
     private final int onThreshold = 50;
     private final int onValue = 100;
@@ -156,7 +157,7 @@ public class LiveView implements VisionProcessor {
             }
             message.append('\n');
         }
-        
+
         this.message = message.toString();
 
         sendImage();
@@ -222,11 +223,11 @@ public class LiveView implements VisionProcessor {
 
             for (int x = 0; x < outputWidth; x++) {
                 int charHex = 0x2800;
-                
+
                 for (int i = 0; i < 8; i++) {
                     int pixelX = x * 2 + i % 2;
                     int pixelY = y * 4 + i / 2;
-                    
+
                     double value = intensities[pixelX][pixelY];
                     double newValue;
 
@@ -286,7 +287,7 @@ public class LiveView implements VisionProcessor {
 
                 if (tune)
                     charHex = tuneColorValues(x, y, charHex, colors);
-                
+
                 image.add((char) charHex);
             }
 
@@ -332,8 +333,6 @@ public class LiveView implements VisionProcessor {
 
     private void sendImage() {
         t.setMsTransmissionInterval(100);
-        t.addLine(messageStart + message + messageEnd + tuneMessage);
-
-        t.update();
+        image = messageStart + message + messageEnd + tuneMessage;
     }
 }

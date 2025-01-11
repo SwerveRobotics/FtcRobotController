@@ -17,6 +17,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.color.Color;
+import org.firstinspires.ftc.team417.liveView.LiveView;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.HolonomicKinematics;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
@@ -64,8 +65,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(-49, 60);
     public double HUMAN_ZONE_DRIVE_TO_HEADING = Math.PI / 2.0;
     //public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 37.21);
-    public DPoint SPECIMEN_DRIVE_TO = new DPoint(-10, 37.5);
+    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 37.5);
     public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
+
+    private DPoint specimenOffset = new DPoint(-4, 0);
+    private double increamentAmnt = 3;
+
+    private double liftGoal;
 
     Color color;
     @Override
@@ -135,6 +141,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         stopCrash();
     }
 
+    LiveView view;
+
     public boolean prepareRobot() {
         lastTargetRotVel = 0;
 
@@ -149,6 +157,10 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
         driveTo = new AutoDriveTo(drive);
 
+        view = new LiveView(telemetry, 80, 40, gamepad1);
+        view.initHTML();
+        initLiveView(view, false);
+
         /* Send telemetry message to signify robot waiting */
         telemetry.addLine("Robot Ready.");
         telemetry.update();
@@ -157,6 +169,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     boolean back1WasPressed = false;
+    boolean left1Pressed = false;
+    boolean right1Pressed = false;
 
     public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric, double deltaTime, TelemetryPacket packet) {
         // Update the current pose:
@@ -177,8 +191,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 System.out.println("run");
             }
         } else if(gamepad1.y){
-            if(!y1Pressed && !SPECIMEN_DRIVE_TO.equals(drive.pose.position, 0.25)){
-                driveTo.init(SPECIMEN_DRIVE_TO, SPECIMEN_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
+            if(!y1Pressed && !SPECIMEN_DRIVE_TO.plus(specimenOffset.times(increamentAmnt)).equals(drive.pose.position, 0.25)){
+                driveTo.init(SPECIMEN_DRIVE_TO.plus(specimenOffset.times(increamentAmnt)), SPECIMEN_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
                 // We should not move the arm, wrist, or intake for Drive-To.
 //                armPosition = ARM_VERTICAL;
 //                wrist.setPosition(WRIST_FOLDED_IN);
@@ -197,9 +211,21 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             pathing = false;
         }
 
+        if (gamepad1.dpad_left && ! left1Pressed)
+            specimenOffset.x = specimenOffset.x + 1;
+        if (gamepad1.dpad_right && ! right1Pressed)
+            specimenOffset.x = specimenOffset.x - 1;
+
+        if (specimenOffset.x > 4)
+            specimenOffset.x = -4;
+        if (specimenOffset.x < -4)
+            specimenOffset.x = 4;
+
         x1Pressed = gamepad1.x;
         y1Pressed = gamepad1.y;
         back1Pressed = gamepad1.back;
+        left1Pressed = gamepad1.dpad_left;
+        right1Pressed = gamepad2.dpad_right;
 
         // Toggle the hold-heading
         if (!back1WasPressed && gamepad1.back) {
@@ -516,11 +542,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 // if slide in home position move lift up
                 moveWrist(WRIST_IN);
                 moveLift(liftPositionWithFudge);
+                liftGoal = liftPositionWithFudge;
             }
         } else {
             moveWrist(wristPosition);
             moveSlide(slidePosition);
             moveLift(liftPositionWithFudge);
+            liftGoal = liftPositionWithFudge;
         }
 
         // Reverse intake when b-button is held down
@@ -559,23 +587,22 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     }
 
     public void telemeterData() {
-        telemetry.addData("Lift Motor 1 direction", liftMotor1.getDirection());
-        telemetry.addData("Lift Motor 2 direction", liftMotor2.getDirection());
-        telemetry.addLine("Running TeleOp!");
-        telemetry.addData("Kinematic Type", kinematicType);
-        telemetry.addData("Stick Curve On", curve);
-        telemetry.addData("Field-Centric", fieldCentered);
-        telemetry.addData("Hold Heading", holdHeading);
-        telemetry.addData("Distance Sensors", drive.distanceLocalizer.enabled);
-        telemetry.addData("Speed Multiplier", speedMultiplier);
+        telemetry.addLine(view.image);
+        telemetry.addLine("\n---------------------------------------------------------");
 
-        telemetry.addData("Lift Motor 1 ticks", liftMotor1.getCurrentPosition());
-        telemetry.addData("Lift Motor 2 ticks", liftMotor2.getCurrentPosition());
+        StringBuilder menu = new StringBuilder("-------");
+        menu.insert((int) specimenOffset.x + 4, "█");
 
-        telemetry.addData("Slide motor ticks", slideMotor.getCurrentPosition());
-        telemetry.addData("Slide motor velocity", slideMotor.getVelocity());
-        telemetry.addData("X", drive.pose.position.x);
-        telemetry.addData("Y", drive.pose.position.y);
+        System.out.println(menu);
+
+        telemetry.addLine("███████");
+        telemetry.addLine("\n---------------------------------------------------------");
+        telemetry.addLine(String.format("\nLift1 goal: %0.2 Lift1 pos: %0.2 PCT: %.2", liftGoal,
+                          liftMotor1.getCurrentPosition(), liftMotor1.getCurrentPosition() / liftGoal * 100));
+        telemetry.addLine(String.format("\nLift2 goal: %0.2 Lift2 pos: %0.2 PCT: %.2", liftGoal,
+                liftMotor2.getCurrentPosition(), liftMotor2.getCurrentPosition() / liftGoal * 100));
+        telemetry.addLine(String.format("\nslides goal: %0.2 slides pos: %0.2 PCT: %.2", liftGoal,
+                slideMotor.getCurrentPosition(), slideMotor.getCurrentPosition() / slidePosition * 100));
         telemetry.update();
     }
 }
