@@ -14,8 +14,6 @@ import com.acmerobotics.roadrunner.Time;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.Vector2dDual;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.team417.color.Color;
@@ -23,6 +21,7 @@ import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.HolonomicKinematics;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.skidaddle.AutoDriveTo;
+import org.firstinspires.ftc.team417.skidaddle.DPoint;
 
 @TeleOp(name = "TeleOp", group = "SlowBot")
 @Config
@@ -57,6 +56,16 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
     boolean holdHeading = true;
 
+    boolean x1Pressed = false;
+    boolean y1Pressed = false;
+    boolean back1Pressed = false;
+
+    boolean pathing = false;
+    public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(-49, 63.5);
+    public double HUMAN_ZONE_DRIVE_TO_HEADING = Math.PI / 2.0;
+    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 45);
+    public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
+
     Color color;
     @Override
     public void runOpMode() {
@@ -69,14 +78,14 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         poseVelocity = drive.updatePoseEstimate();
 
         while (opModeIsActive()) {
-            // Disable field-centric always!
-            // toggleFieldCentricity();
-
             // deltaTime will be the actual current time minus the currentTime of the last loop
             double deltaTime = currentTime() - previousTime;
             previousTime = currentTime();
 
-            controlDrivebaseWithGamepads(curve, fieldCentered, deltaTime);
+            // 'packet' is the object used to send data to FTC Dashboard:
+            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+
+            controlDrivebaseWithGamepads(curve, fieldCentered, deltaTime, packet);
 
             controlMechanismsWithGamepads(deltaTime);
 
@@ -85,9 +94,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             }
 
             telemeterData();
-
-            // 'packet' is the object used to send data to FTC Dashboard:
-            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
 
             // Do the work now for all active Road Runner actions, if any:
             drive.doActionsWork(packet);
@@ -132,7 +138,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         lastTargetRotVel = 0;
 
 
-        if(!initializeHardware(null)) {
+        if(!initializeHardware(new Pose2d(0, 0, 0))) { // @@@@@@@@@@@@@@@@@@@@@@
             return false;
         }
 
@@ -149,8 +155,55 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         return true;
     }
 
-    public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric, double deltaTime) {
-        toggleHoldHeading();
+    boolean back1WasPressed = false;
+
+    public void controlDrivebaseWithGamepads(boolean curveStick, boolean fieldCentric, double deltaTime, TelemetryPacket packet) {
+        // Update the current pose:
+        PoseVelocity2d currentPoseVelocity = drive.updatePoseEstimate();
+
+        if (gamepad1.back && !back1Pressed) {
+            drive.setPose(new Pose2d(-63.125, 63.75, 0));
+        }
+
+        if(gamepad1.x){
+            if(!x1Pressed){
+                driveTo.init(HUMAN_ZONE_DRIVE_TO, HUMAN_ZONE_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
+                // We should not move the arm, wrist, or intake for Drive-To.
+//                armPosition = ARM_COLLECT;
+//                wrist.setPosition(WRIST_FOLDED_OUT);
+//                intakeEnabled = true;
+                pathing = true;
+                System.out.println("init");
+            }
+            if (pathing) {
+                pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
+                System.out.println("run");
+            }
+        } else if(gamepad1.y){
+            if(!y1Pressed){
+                driveTo.init(SPECIMEN_DRIVE_TO, SPECIMEN_DRIVE_TO_HEADING, currentPoseVelocity, telemetry);
+                // We should not move the arm, wrist, or intake for Drive-To.
+//                armPosition = ARM_VERTICAL;
+//                wrist.setPosition(WRIST_FOLDED_IN);
+//                intakeEnabled = false;
+                pathing = true;
+            }
+            if (pathing) {
+                pathing = !driveTo.linearDriveTo(currentPoseVelocity, deltaTime, packet, packet.fieldOverlay());
+            }
+        } else {
+            pathing = false;
+        }
+
+        x1Pressed = gamepad1.x;
+        y1Pressed = gamepad1.y;
+        back1Pressed = gamepad1.back;
+
+        // Toggle the hold-heading
+        if (!back1WasPressed && gamepad1.back) {
+            holdHeading = !holdHeading;
+        }
+        back1WasPressed = gamepad1.back;
 
         // Only on GamePad1, the right and left triggers are speed multipliers
         speedMultiplier = 1 / Math.sqrt(2);
@@ -449,15 +502,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         if (liftPositionWithFudge < LIFT_MIN) {
             liftPositionWithFudge = LIFT_MIN;
         }
-        // TEMPORARY
-        PIDFCoefficients pidf = liftMotor1.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-        pidf.f = f_coefficient;
-        liftMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
-
-        PIDFCoefficients pidf2 = liftMotor2.getPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER);
-        pidf2.f = f_coefficient;
-        liftMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf2);
-        telemetry.addLine(String.format("F value: %.1f", f_coefficient));
 
         if (isCrossingNoSlideZone(liftPositionWithFudge)) {
             if (getSlidePosition() > SLIDE_HOME_POSITION + SLIDE_TICKS_EPSILON) {
@@ -509,24 +553,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     // Applies a curve to the joystick input to give finer control at lower speeds
     public double curveStick(double rawSpeed) {
         return Math.copySign(Math.pow(rawSpeed, 2), rawSpeed);
-    }
-
-    boolean backWasPressed = false;
-
-    public void toggleHoldHeading() {
-        if (!backWasPressed && gamepad1.back) {
-            holdHeading = !holdHeading;
-        }
-        backWasPressed = gamepad1.back;
-    }
-
-    boolean startWasPressed = false;
-
-    public void toggleFieldCentricity() {
-        if (!startWasPressed && gamepad1.start) {
-            fieldCentered = !fieldCentered;
-        }
-        startWasPressed = gamepad1.start;
     }
 
     public void telemeterData() {

@@ -4,34 +4,27 @@ import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 
 // Concept for the color sensor, not for OpenCV.
 @TeleOp(name = "Color Sensor", group = "Concept")
 @Config
 public class ColorSensorConcept extends LinearOpMode {
-    ColorSensor sensor;
+    NormalizedColorSensor sensor;
     RevBlinkinLedDriver lightStrip;
-
-    public final Lab RED = new Lab(526, -152, 90);
-    public final Lab BLUE = new Lab(507, -142, -98);
-    public final Lab YELLOW = new Lab(733, -337, 340);
 
     @Override
     public void runOpMode() {
         Color color;
 
-        sensor = hardwareMap.get(ColorSensor.class, "color");
-
-        sensor.enableLed(false);
+        sensor = hardwareMap.get(NormalizedColorSensor.class, "color");
 
         lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
 
         lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
 
         waitForStart();
-
-        sensor.enableLed(true);
 
         while (opModeIsActive()) {
             color = senseColor();
@@ -55,53 +48,37 @@ public class ColorSensorConcept extends LinearOpMode {
             telemetry.addData("Color", color);
             telemetry.update();
         }
-
-        sensor.enableLed(false);
     }
 
     // Get color based on ARGB
     Color senseColor() {
-        int a = sensor.alpha();
-        int r = sensor.red();
-        int g = sensor.green();
-        int b = sensor.blue();
+        NormalizedRGBA rgba = sensor.getNormalizedColors();
 
-        Lab labColor = ColorConverter.rgbToLab(r, g, b);
+        double a = rgba.alpha;
+        double r = rgba.red;
+        double g = rgba.green;
+        double b = rgba.blue;
+
+        telemetry.addLine(String.format("ARGB color: {%f, %f, %f, %f}", a, r, g, b));
+
+        double[] labArray = ColorConverter.rgbToLab(r, g, b);
+
+        Lab labColor = new Lab(labArray[0], labArray[1], labArray[2]);
 
         telemetry.addData("Lab color", labColor.toString());
 
-        if (labColor.equals(YELLOW, 20)) {
+        if (labColor.equals(ColorProcessor.YELLOW, ColorProcessor.LAB_EPSILON)) {
             return Color.YELLOW;
         }
 
-        if (labColor.equals(RED, 20)) {
+        if (labColor.equals(ColorProcessor.RED, ColorProcessor.LAB_EPSILON)) {
             return Color.RED;
         }
 
-        if (labColor.equals(BLUE, 20)) {
+        if (labColor.equals(ColorProcessor.BLUE, ColorProcessor.LAB_EPSILON)) {
             return Color.BLUE;
         }
 
         return Color.UNDETECTED;
-    }
-
-    public static Color analyzeDominance(int alpha, int red, int green, int blue) {
-        // Apply alpha channel to RGB values
-        double alphaFactor = alpha / 255.0;
-        int adjustedRed = (int) (red * alphaFactor);
-        int adjustedGreen = (int) (green * alphaFactor);
-        int adjustedBlue = (int) (blue * alphaFactor);
-
-        // Calculate yellow intensity (average of red and green)
-        int yellow = (adjustedRed + adjustedGreen) / 2;
-
-        // Find the maximum value
-        int maxValue = Math.max(Math.max(adjustedRed, adjustedGreen),
-                Math.max(adjustedBlue, yellow));
-
-        if (maxValue == yellow) return Color.YELLOW;
-        if (maxValue == adjustedRed) return Color.RED;
-        if (maxValue == adjustedGreen) return Color.UNDETECTED;
-        return Color.BLUE;
     }
 }

@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.robot.Robot;
 import com.wilyworks.common.WilyWorks;
 
@@ -278,7 +279,6 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             System.out.printf("Lift loop: %.0f\n", getLiftPosition());
         }
     }
-
 
     // The time since the robot started in seconds
     public double currentTime() {

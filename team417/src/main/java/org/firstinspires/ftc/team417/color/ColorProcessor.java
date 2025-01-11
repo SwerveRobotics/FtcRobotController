@@ -1,13 +1,18 @@
 package org.firstinspires.ftc.team417.color;
 
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
-import com.qualcomm.robotcore.hardware.ColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
+import com.qualcomm.robotcore.hardware.NormalizedRGBA;
 
 public class ColorProcessor {
-    ColorSensor sensor;
+    NormalizedColorSensor sensor;
     RevBlinkinLedDriver lightStrip;
 
-    public ColorProcessor(ColorSensor sensor, RevBlinkinLedDriver lightStrip) {
+    public static final Lab RED = new Lab(526, -152, 90);
+    public static final Lab BLUE = new Lab(507, -142, -98);
+    public static final Lab YELLOW = new Lab(733, -337, 340);
+
+    public ColorProcessor(NormalizedColorSensor sensor, RevBlinkinLedDriver lightStrip) {
         this.sensor = sensor;
         this.lightStrip = lightStrip;
     }
@@ -37,33 +42,33 @@ public class ColorProcessor {
         return color;
     }
 
+    public static final double LAB_EPSILON = 20;
+
     // Get color based on ARGB
     Color senseColor() {
-        int a = sensor.alpha();
-        int r = sensor.red();
-        int g = sensor.green();
-        int b = sensor.blue();
+        NormalizedRGBA rgba = sensor.getNormalizedColors();
 
-        return analyzeDominance(a, r, g, b);
-    }
+        double a = rgba.alpha;
+        double r = rgba.red;
+        double g = rgba.green;
+        double b = rgba.blue;
 
-    public static Color analyzeDominance(int alpha, int red, int green, int blue) {
-        // Apply alpha channel to RGB values
-        double alphaFactor = alpha / 255.0;
-        int adjustedRed = (int) (red * alphaFactor);
-        int adjustedGreen = (int) (green * alphaFactor);
-        int adjustedBlue = (int) (blue * alphaFactor);
+        double[] labArray = ColorConverter.rgbToLab(r, g, b);
 
-        // Calculate yellow intensity (average of red and green)
-        int yellow = (adjustedRed + adjustedGreen) / 2;
+        Lab labColor = new Lab(labArray[0], labArray[1], labArray[2]);
 
-        // Find the maximum value
-        int maxValue = Math.max(Math.max(adjustedRed, adjustedGreen),
-                Math.max(adjustedBlue, yellow));
+        if (labColor.equals(YELLOW, LAB_EPSILON)) {
+            return Color.YELLOW;
+        }
 
-        if (maxValue == yellow) return Color.YELLOW;
-        if (maxValue == adjustedRed) return Color.RED;
-        if (maxValue == adjustedGreen) return Color.UNDETECTED;
-        return Color.BLUE;
+        if (labColor.equals(RED, LAB_EPSILON)) {
+            return Color.RED;
+        }
+
+        if (labColor.equals(BLUE, LAB_EPSILON)) {
+            return Color.BLUE;
+        }
+
+        return Color.UNDETECTED;
     }
 }
