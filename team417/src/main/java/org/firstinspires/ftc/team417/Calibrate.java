@@ -42,8 +42,7 @@ public class Calibrate extends LinearOpMode {
         lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
 
         print("Please insert a YELLOW Sample into the BOWG." +
-                "\nPress A when finished."  +
-                "\nYour gain value is: " + gain);
+                "\nPress A when finished.");
 
         while (!(gamepad1.a && !a1IsPressed)) {
             a1IsPressed = gamepad1.a;
@@ -54,8 +53,7 @@ public class Calibrate extends LinearOpMode {
         lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
 
         print("Please insert a BLUE Sample into the BOWG." +
-                "\nPress A when finished." +
-                "\nYour LAB values for YELLOW are: " + yellow);
+                "\nPress A when finished.");
 
         while (!(gamepad1.a && !a1IsPressed)) {
             a1IsPressed = gamepad1.a;
@@ -66,8 +64,7 @@ public class Calibrate extends LinearOpMode {
         lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
 
         print("Please insert a RED Sample into the BOWG." +
-                "\nPress A when finished." +
-                "\nYour LAB values for BLUE are: " + blue);
+                "\nPress A when finished.");
 
         while (!(gamepad1.a && !a1IsPressed)) {
             a1IsPressed = gamepad1.a;
@@ -75,11 +72,14 @@ public class Calibrate extends LinearOpMode {
 
         Lab red = getLab();
 
-        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.CONFETTI);
 
-        print("Calibration for the color sensor is complete." +
-                "\nPress A when finished." +
-                "\nYour LAB values for RED are: " + red);
+        print("Calibration for the color sensor is complete. Congratulations!" +
+                "\nPress A when to stop the program." +
+                "\nYour LAB values for BLUE are: " + blue +
+                "\nYour LAB values for YELLOW are: " + yellow +
+                "\nYour LAB values for RED are: " + red +
+                "\nYour gain value is: " + gain);
 
         while (!(gamepad1.a && !a1IsPressed)) {
             a1IsPressed = gamepad1.a;
