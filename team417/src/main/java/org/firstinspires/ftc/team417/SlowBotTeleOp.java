@@ -247,6 +247,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
         x1Pressed = gamepad1.x;
         y1Pressed = gamepad1.y;
+        b1Pressed = gamepad1.b;
         back1Pressed = gamepad1.back;
         left1Pressed = gamepad1.dpad_left;
         right1Pressed = gamepad2.dpad_right;
