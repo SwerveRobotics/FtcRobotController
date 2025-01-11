@@ -52,14 +52,14 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static double LIFT_CLEAR_BARRIER = 10.0;
     public static double LIFT_HOME_POSITION = 0;
     public static double LIFT_NO_SLIDE_ZONE_MIN = 100;
-    public static double LIFT_NO_SLIDE_ZONE_MAX = 622;
+    public static double LIFT_NO_SLIDE_ZONE_MAX = 800;
 
     public static double f_coefficient = 0.5;
 
     // TODO: Rename variables to make it have a position indicator
     public static double SLIDE_MAX = 2700.0;
     public static double SLIDE_COLLECT = 1400.0;
-    public static double SLIDE_SCORE_IN_BASKET = 0;
+    public static double SLIDE_SCORE_IN_BASKET = 800;
     public static double SLIDE_MIN = 0.0;
     public static double SLIDE_HOME_POSITION = 0;
 
@@ -70,15 +70,22 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static double WRIST_OUT = 0.75;
     public static double WRIST_IN = 0.125;
     public static double WRIST_SCORE = 0.5;
+    public static double WRIST_SCORE_AUTO = 0.3;
+
     public static double XDRIVE_Y_SCORE_POSE = 36 ;
     public double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
+
+    public double sampleAutoSpeedConst = 25;
+    public double basketPositionX = 55;
+    public double basketPositionY= 55;
+    public double basketHeading = Math.toRadians(45);
 
     public double FIRST_SEGMENT_4_BAR_LENGTH = 17; //length of 4 bar segment
 
     public double STARTING_ANGLE = -34.69; //liftmotor angle while in home position in degrees
     // This provides an error tolerance for lift and slide
-    public static double LIFT_TICKS_EPSILON = 3.00;
-    public static double SLIDE_TICKS_EPSILON = 3.00;
+    public static double LIFT_TICKS_EPSILON = 15.00;
+    public static double SLIDE_TICKS_EPSILON = 20.00;
 
     // RC 17.50
     // DEV 17.75
@@ -181,6 +188,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             return false;
         }
     }
+
     class WaitAction extends  RobotAction {
         RobotAction actionToWaitOn;
         WaitAction(RobotAction actionToWaitOn) {
