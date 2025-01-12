@@ -65,7 +65,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     boolean pathing = false;
     public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(-49, 60);
     public double HUMAN_ZONE_DRIVE_TO_HEADING = Math.PI / 2.0;
-    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 36);
+    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 3);
     public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
     public DPoint BASKET_DRIVE_TO = new DPoint(55, 55);
     public double BASKET_DRIVE_TO_HEADING = Math.toRadians(45);

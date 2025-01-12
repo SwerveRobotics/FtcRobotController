@@ -133,6 +133,7 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
             }
 
         }
+        waitForStart();
         boolean more = true;
         while (opModeIsActive() && more) {
             telemetry.addLine("Running Auto!");
