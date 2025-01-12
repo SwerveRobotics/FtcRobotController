@@ -8,13 +8,17 @@ public class ColorProcessor {
     NormalizedColorSensor sensor;
     RevBlinkinLedDriver lightStrip;
 
+    public static final float GAIN = 2;
+
     public static final Lab RED = new Lab(526, -152, 90);
     public static final Lab BLUE = new Lab(507, -142, -98);
     public static final Lab YELLOW = new Lab(733, -337, 340);
 
     public ColorProcessor(NormalizedColorSensor sensor, RevBlinkinLedDriver lightStrip) {
         this.sensor = sensor;
+        sensor.setGain(GAIN);
         this.lightStrip = lightStrip;
+        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
     }
 
     // Detect the color and update the light strip

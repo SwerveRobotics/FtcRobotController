@@ -20,6 +20,8 @@ public class ColorSensorConcept extends LinearOpMode {
 
         sensor = hardwareMap.get(NormalizedColorSensor.class, "color");
 
+        sensor.setGain(ColorProcessor.GAIN);
+
         lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
 
         lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
