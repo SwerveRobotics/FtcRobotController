@@ -23,8 +23,8 @@ public class DistanceLocalizer {
     public boolean correcting = false;
 
     public Vector2d correction;
-    public Double xTargetCorrection;
-    public Double yTargetCorrection;
+    public Double xTargetCorrection = 0.0;
+    public Double yTargetCorrection = 0.0;
     public ArrayList<Double> xHistory = new ArrayList<Double>();
     public ArrayList<Double> yHistory = new ArrayList<Double>();
     final int MAX_HISTORY_SIZE = 10;

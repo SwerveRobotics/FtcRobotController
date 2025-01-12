@@ -557,6 +557,7 @@ public final class MecanumDrive {
 
                 NormalizedColorSensor NormalizedColorSensor = hardwareMap.get(NormalizedColorSensor.class, "color");
                 RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
+                lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.WHITE);
                 colorProcessor = new ColorProcessor(NormalizedColorSensor, lightStrip);
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
