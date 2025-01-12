@@ -14,7 +14,7 @@ public class PrepareRobot extends BaseOpModeSlowBot {
         // This sets the pose in the human corner facing the opponents basket
         Pose2d beginPose = new Pose2d(-72 + ROBOT_WIDTH / 2, 72 - ROBOT_LENGTH / 2, -Math.PI / 2);
         initializeHardware(beginPose);
-        slideMotor.setVelocity(25);
+        slideMotor.setVelocity(10);
         slideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         wrist.setPosition(WRIST_IN);
         while(!isStarted()) {

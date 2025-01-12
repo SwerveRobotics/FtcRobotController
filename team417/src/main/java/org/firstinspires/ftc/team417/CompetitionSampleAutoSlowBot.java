@@ -6,6 +6,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.SleepAction;
 import com.acmerobotics.roadrunner.TranslationalVelConstraint;
+import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.wilyworks.common.WilyWorks;
 
@@ -32,78 +33,61 @@ public class CompetitionSampleAutoSlowBot extends BaseOpModeSlowBot {
                 .stopAndAdd(new IntakeAction(INTAKE_OFF))
                 // Lower lift
                 .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
-                .setTangent(Math.toRadians(180))
+                .setTangent(Math.toRadians(225))
 
                 // Splines to face first floor sample
-                .splineToLinearHeading(new Pose2d(48,58, Math.toRadians(-90)), Math.toRadians(180), new TranslationalVelConstraint(25))
+                .setTangent(-Math.PI)
+                .splineToConstantHeading(new Vector2d(49, 50), Math.toRadians(225))
+                .turnTo(-Math.PI / 2)
                 // Slides extend out and wrist folds out
-                .stopAndAdd(new ControlAction(SLIDE_COLLECT, WRIST_IN, LIFT_HOME_POSITION))
                 .stopAndAdd(new ControlAction(SLIDE_COLLECT, WRIST_OUT, LIFT_HOME_POSITION))
-                // Turn on intake for 2 seconds then turn off
+                // Turn on intake then turn off
                 .stopAndAdd(new IntakeAction(INTAKE_COLLECT))
-                .stopAndAdd(new SleepAction(2))
+                .splineToConstantHeading(new Vector2d(49, 43), Math.toRadians(-90))
                 .stopAndAdd(new IntakeAction(INTAKE_OFF))
                 // Pull in slides and fold in the wrist
-                .stopAndAdd(new ControlAction(SLIDE_COLLECT, WRIST_IN, LIFT_HOME_POSITION))
                 .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION, WRIST_IN, LIFT_HOME_POSITION))
-//
-//                // Splines to face the basket
-//                .splineToLinearHeading(new Pose2d(50,50, Math.toRadians(45)), Math.toRadians(45), new TranslationalVelConstraint(25))
-//                // Lift to basket
-//                .stopAndAdd(new ControlAction(SLIDE_SCORE_IN_BASKET,WRIST_OUT, LIFT_SCORE_HIGH_BASKET))
-//                // Deposit then off
-//                .stopAndAdd(new IntakeAction(INTAKE_DEPOSIT))
-//                .stopAndAdd(new SleepAction(2))
-//                .stopAndAdd(new IntakeAction(INTAKE_OFF))
-//                // Lower lift
-//                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
-//                .setTangent(Math.toRadians(0))
-//
-//                // Spline to second floor sample
-//                .splineToLinearHeading(new Pose2d(59,50,Math.toRadians(-90)), Math.toRadians(-90), new TranslationalVelConstraint(25))
-//                // Slides extend out and wrist folds out
-//                .stopAndAdd(new ControlAction(SLIDE_COLLECT, WRIST_OUT, LIFT_HOME_POSITION))
-//                // Turn on intake for 2 seconds then turn off
-//                .stopAndAdd(new IntakeAction(INTAKE_COLLECT))
-//                .stopAndAdd(new SleepAction(2))
-//                .stopAndAdd(new IntakeAction(INTAKE_OFF))
-//                // Pull in slides and fold in the wrist
-//                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION, WRIST_IN, LIFT_HOME_POSITION))
-//
-//                // Splines to face the basket
-//                .splineToLinearHeading(new Pose2d(50,50, Math.toRadians(45)), Math.toRadians(45), new TranslationalVelConstraint(25))
-//                // Lift to basket
-//                .stopAndAdd(new ControlAction(SLIDE_SCORE_IN_BASKET,WRIST_OUT, LIFT_SCORE_HIGH_BASKET))
-//                // Deposit then off
-//                .stopAndAdd(new IntakeAction(INTAKE_DEPOSIT))
-//                .stopAndAdd(new SleepAction(2))
-//                .stopAndAdd(new IntakeAction(INTAKE_OFF))
-//                // Lower lift
-//                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
-//                .setTangent(Math.toRadians(0))
-//
-//                // Spline to third floor sample
-//                .splineToLinearHeading(new Pose2d(46,26,Math.toRadians(0)), Math.toRadians(0), new TranslationalVelConstraint(25))
-//                // Slides extend out and wrist folds out
-//                .stopAndAdd(new ControlAction(SLIDE_COLLECT, WRIST_OUT, LIFT_HOME_POSITION))
-//                // Turn on intake for 2 seconds then turn off
-//                .stopAndAdd(new IntakeAction(INTAKE_COLLECT))
-//                .stopAndAdd(new SleepAction(2))
-//                .stopAndAdd(new IntakeAction(INTAKE_OFF))
-//                // Pull in slides and fold in the wrist
-//                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION, WRIST_IN, LIFT_HOME_POSITION))
-//
-//                // Splines to face the basket
-//                .splineToLinearHeading(new Pose2d(50,50, Math.toRadians(45)), Math.toRadians(45), new TranslationalVelConstraint(25))
-//                // Lift to basket
-//                .stopAndAdd(new ControlAction(SLIDE_SCORE_IN_BASKET,WRIST_OUT, LIFT_SCORE_HIGH_BASKET))
-//                // Deposit then off
-//                .stopAndAdd(new IntakeAction(INTAKE_DEPOSIT))
-//                .stopAndAdd(new SleepAction(2))
-//                .stopAndAdd(new IntakeAction(INTAKE_OFF))
-//                // Lower lift
-//                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
-//                .setTangent(Math.toRadians(0))
+
+                // Splines to face the basket second time
+                .setTangent(Math.toRadians(45))
+                .splineToLinearHeading(new Pose2d(basketPositionX, basketPositionY, basketHeading), basketHeading, new TranslationalVelConstraint(sampleAutoSpeedConst))
+                // Lift to basket
+                .stopAndAdd(new ControlAction(SLIDE_SCORE_IN_BASKET,WRIST_IN, LIFT_SCORE_HIGH_BASKET))
+                .stopAndAdd(new ControlAction(SLIDE_SCORE_IN_BASKET,WRIST_SCORE, LIFT_SCORE_HIGH_BASKET))
+                // Deposit then off
+                .stopAndAdd(new IntakeAction(INTAKE_DEPOSIT))
+                .stopAndAdd(new SleepAction(2))
+                .stopAndAdd(new IntakeAction(INTAKE_OFF))
+                // Lower lift
+                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
+                .setTangent(Math.toRadians(180))
+
+                // Spline to second floor sample
+                .setTangent(-Math.PI)
+                .splineToConstantHeading(new Vector2d(59, 50), Math.toRadians(225))
+                .turnTo(-Math.PI / 2)
+                // Slides extend out and wrist folds out
+                .stopAndAdd(new ControlAction(SLIDE_COLLECT, WRIST_OUT, LIFT_HOME_POSITION))
+                // Turn on intake then turn off
+                .stopAndAdd(new IntakeAction(INTAKE_COLLECT))
+                .splineToConstantHeading(new Vector2d(59, 43), Math.toRadians(-90))
+                .stopAndAdd(new IntakeAction(INTAKE_OFF))
+                // Pull in slides and fold in the wrist
+                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION, WRIST_IN, LIFT_HOME_POSITION))
+
+                // Splines to face the basket third time
+                .setTangent(Math.toRadians(45))
+                .splineToLinearHeading(new Pose2d(basketPositionX, basketPositionY, basketHeading), basketHeading, new TranslationalVelConstraint(sampleAutoSpeedConst))
+                // Lift to basket
+                .stopAndAdd(new ControlAction(SLIDE_SCORE_IN_BASKET,WRIST_IN, LIFT_SCORE_HIGH_BASKET))
+                .stopAndAdd(new ControlAction(SLIDE_SCORE_IN_BASKET,WRIST_SCORE, LIFT_SCORE_HIGH_BASKET))
+                // Deposit then off
+                .stopAndAdd(new IntakeAction(INTAKE_DEPOSIT))
+                .stopAndAdd(new SleepAction(2))
+                .stopAndAdd(new IntakeAction(INTAKE_OFF))
+                // Lower lift
+                .stopAndAdd(new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
+                .setTangent(Math.toRadians(180))
 
                 .build();
 
