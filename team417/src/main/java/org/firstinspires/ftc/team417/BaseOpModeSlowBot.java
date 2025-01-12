@@ -51,7 +51,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static double LIFT_COLLECT = 75.0;
     public static double LIFT_MIN = 0.0;
     public static double LIFT_CLEAR_BARRIER = 10.0;
-    public static double LIFT_HOME_POSITION = 20;
+    public static double LIFT_HOME_POSITION = 0;
     public static double LIFT_NO_SLIDE_ZONE_MIN = 100;
     public static double LIFT_NO_SLIDE_ZONE_MAX = 1000;
 
