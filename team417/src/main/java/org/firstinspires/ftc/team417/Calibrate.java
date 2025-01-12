@@ -125,6 +125,7 @@ public class Calibrate extends LinearOpMode {
         // Loop until we are asked to stop
         while (!gamepad1.y) {
             // Explain basic gain information via telemetry
+            telemetry.addLine(lightStrip.getConnectionInfo());
             telemetry.addLine("Please insert a YELLOW sample into the BOWG.");
             telemetry.addLine("Your goal is to get one of R, G, and B close to about 0.8.\n");
             telemetry.addLine("Hold the A button on gamepad 1 to increase gain, or B to decrease it.\n");
