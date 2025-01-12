@@ -30,7 +30,7 @@ public class AutoDriveTo {
 
     //linear motion constants
     public final double linearDriveAccel = MecanumDrive.PARAMS.maxProfileAccel ; // Was maxProfileAccel * 1
-    public final double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel; // Was minProfileAccel * 1
+    public final double linearDriveDeccel = MecanumDrive.PARAMS.minProfileAccel - 15; // Was minProfileAccel * 1
     public final double maxLinearSpeed = MecanumDrive.PARAMS.maxWheelVel; // Was maxWheelVel * 1
     public final double linearVelEpsilon = 2;
     public final double linearDistEpsilon = 0.5;
