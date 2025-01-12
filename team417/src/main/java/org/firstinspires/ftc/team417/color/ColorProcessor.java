@@ -8,11 +8,11 @@ public class ColorProcessor {
     NormalizedColorSensor sensor;
     RevBlinkinLedDriver lightStrip;
 
-    public static final float GAIN = 2;
+    public static final float GAIN = 9.99f;
 
-    public static final Lab RED = new Lab(526, -152, 90);
-    public static final Lab BLUE = new Lab(507, -142, -98);
-    public static final Lab YELLOW = new Lab(733, -337, 340);
+    public static final Lab YELLOW = new Lab(83, -42, 70);
+    public static final Lab BLUE = new Lab(26, 23, -51);
+    public static final Lab RED = new Lab(29, 15, 20);
 
     public ColorProcessor(NormalizedColorSensor sensor, RevBlinkinLedDriver lightStrip) {
         this.sensor = sensor;

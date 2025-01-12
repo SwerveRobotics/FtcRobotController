@@ -3,8 +3,8 @@ package org.firstinspires.ftc.team417;
 import android.graphics.Color;
 
 import com.qualcomm.hardware.rev.RevBlinkinLedDriver;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
@@ -14,7 +14,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.team417.color.ColorConverter;
 import org.firstinspires.ftc.team417.color.Lab;
 
-@Autonomous(name = "Calibrate")
+@TeleOp(name = "Calibrate")
 public class Calibrate extends LinearOpMode {
     NormalizedColorSensor sensor;
     RevBlinkinLedDriver lightStrip;
@@ -33,13 +33,13 @@ public class Calibrate extends LinearOpMode {
     private void calibrateColor() {
         sensor = hardwareMap.get(NormalizedColorSensor.class, "color");
 
-        lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
+        // lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
 
-        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.WHITE);
+        // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.WHITE);
 
         float gain = calibrateColorGain();
 
-        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
+        // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
 
         print("Please insert a YELLOW Sample into the BOWG." +
                 "\nPress A when finished.");
@@ -48,9 +48,11 @@ public class Calibrate extends LinearOpMode {
             a1IsPressed = gamepad1.a;
         }
 
+        a1IsPressed = gamepad1.a;
+
         Lab yellow = getLab();
 
-        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
+        // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
 
         print("Please insert a BLUE Sample into the BOWG." +
                 "\nPress A when finished.");
@@ -59,9 +61,11 @@ public class Calibrate extends LinearOpMode {
             a1IsPressed = gamepad1.a;
         }
 
+        a1IsPressed = gamepad1.a;
+
         Lab blue = getLab();
 
-        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+        // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
 
         print("Please insert a RED Sample into the BOWG." +
                 "\nPress A when finished.");
@@ -70,20 +74,24 @@ public class Calibrate extends LinearOpMode {
             a1IsPressed = gamepad1.a;
         }
 
+        a1IsPressed = gamepad1.a;
+
         Lab red = getLab();
 
-        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.CONFETTI);
+        // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.CONFETTI);
 
         print("Calibration for the color sensor is complete. Congratulations!" +
                 "\nPress A when to stop the program." +
-                "\nYour LAB values for BLUE are: " + blue +
+                "\nYour gain value is: " + Math.round(gain * 100) / 100.0 +
                 "\nYour LAB values for YELLOW are: " + yellow +
-                "\nYour LAB values for RED are: " + red +
-                "\nYour gain value is: " + gain);
+                "\nYour LAB values for BLUE are: " + blue +
+                "\nYour LAB values for RED are: " + red);
 
         while (!(gamepad1.a && !a1IsPressed)) {
             a1IsPressed = gamepad1.a;
         }
+
+        a1IsPressed = gamepad1.a;
     }
 
     public float calibrateColorGain() {
@@ -115,7 +123,7 @@ public class Calibrate extends LinearOpMode {
         }
 
         // Loop until we are asked to stop
-        while (gamepad1.y) {
+        while (!gamepad1.y) {
             // Explain basic gain information via telemetry
             telemetry.addLine("Please insert a YELLOW sample into the BOWG.");
             telemetry.addLine("Your goal is to get one of R, G, and B close to about 0.8.\n");

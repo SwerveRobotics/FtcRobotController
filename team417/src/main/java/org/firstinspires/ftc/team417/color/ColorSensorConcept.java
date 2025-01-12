@@ -22,9 +22,9 @@ public class ColorSensorConcept extends LinearOpMode {
 
         sensor.setGain(ColorProcessor.GAIN);
 
-        lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
+        // lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
 
-        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
+        // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
 
         waitForStart();
 
@@ -33,19 +33,19 @@ public class ColorSensorConcept extends LinearOpMode {
             switch (color) {
                 case RED:
                     telemetry.addLine("Detecting red!!!");
-                    lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+                    // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
                     break;
                 case BLUE:
                     telemetry.addLine("Detecting blue!!!");
-                    lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
+                    // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
                     break;
                 case YELLOW:
                     telemetry.addLine("Detecting yellow!!!");
-                    lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
+                    // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
                     break;
                 default:
                     telemetry.addLine("Detecting nothing!!!");
-                    lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
+                    // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
             }
             telemetry.addData("Color", color);
             telemetry.update();
