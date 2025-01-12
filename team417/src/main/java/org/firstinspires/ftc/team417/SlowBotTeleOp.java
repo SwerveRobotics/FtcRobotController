@@ -65,13 +65,14 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     boolean pathing = false;
     public DPoint HUMAN_ZONE_DRIVE_TO = new DPoint(-49, 60);
     public double HUMAN_ZONE_DRIVE_TO_HEADING = Math.PI / 2.0;
-    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 37.4);
+    public DPoint SPECIMEN_DRIVE_TO = new DPoint(0, 36);
     public double SPECIMEN_DRIVE_TO_HEADING = -Math.PI / 2.0;
     public DPoint BASKET_DRIVE_TO = new DPoint(55, 55);
     public double BASKET_DRIVE_TO_HEADING = Math.toRadians(45);
 
-    private DPoint specimenOffset = new DPoint(4, 0);
-    private double increamentAmnt = 3;
+    private DPoint specimenOffset = new DPoint(-5, 0);
+    private double increamentAmnt = 2;
+    private double specimenMax = 5;
 
     private double liftGoal;
 
@@ -208,6 +209,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
                 wristPosition = WRIST_IN;
                 slidePosition = SLIDE_HOME_POSITION;
 
+                specimenOffset.x += 1;
                 pathing = true;
             }
             if (pathing) {
@@ -240,10 +242,10 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         if (gamepad1.dpad_right && ! right1Pressed)
             specimenOffset.x = specimenOffset.x + 1;
 
-        if (specimenOffset.x > 4)
-            specimenOffset.x = -4;
-        if (specimenOffset.x < -4)
-            specimenOffset.x = 4;
+        if (specimenOffset.x > specimenMax)
+            specimenOffset.x = -specimenMax;
+        if (specimenOffset.x < -specimenMax)
+            specimenOffset.x = specimenMax;
 
         x1Pressed = gamepad1.x;
         y1Pressed = gamepad1.y;
@@ -615,8 +617,13 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 
         telemetry.addLine(view.image);
 
-        StringBuilder menu = new StringBuilder("------- ");
-        menu.insert((int) specimenOffset.x + 4, "█");
+        StringBuilder menu = new StringBuilder();
+
+        for (int i = 0; i < specimenMax * 2 - 1; i++)
+            menu.append("-");
+
+        menu.append(" ");
+        menu.insert((int) (specimenOffset.x + specimenMax), "█");
 
         telemetry.addLine(menu.toString());
 

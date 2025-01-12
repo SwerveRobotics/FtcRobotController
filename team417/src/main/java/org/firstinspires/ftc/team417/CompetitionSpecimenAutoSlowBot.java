@@ -26,7 +26,7 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 // after disp arm up
                 .afterDisp(0,liftHighBar)
                 .splineToLinearHeading(new Pose2d(-6, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
-                .stopAndAdd(new WaitAction(liftHighBar))
+                /*.stopAndAdd(new WaitAction(liftHighBar))
                 .stopAndAdd( new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-34,30,Math.toRadians(-90)),Math.toRadians(-90))   // bring sample to obs zone
@@ -107,7 +107,7 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
 //                // after disp arm up
 //                .splineToLinearHeading(new Pose2d(-6, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
 //                .setTangent(Math.toRadians(90))
-//                .splineToLinearHeading(new Pose2d(-49,72 -(ROBOT_WIDTH/2),Math.toRadians(-90 )), Math.toRadians(90))
+//                .splineToLinearHeading(new Pose2d(-49,72 -(ROBOT_WIDTH/2),Math.toRadians(-90 )), Math.toRadians(90))*/
                 .build();
 
         Canvas previewCanvas = new Canvas();
