@@ -20,9 +20,9 @@ public class Lab {
     @Override
     public String toString() {
         return "Lab{" +
-                "L=" + L +
-                ", a=" + a +
-                ", b=" + b +
+                "L=" + Math.round(L) +
+                ", a=" + Math.round(a) +
+                ", b=" + Math.round(b) +
                 '}';
     }
 }
