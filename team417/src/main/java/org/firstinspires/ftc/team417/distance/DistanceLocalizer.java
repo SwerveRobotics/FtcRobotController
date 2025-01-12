@@ -57,8 +57,8 @@ public class DistanceLocalizer {
 
     public void reset() {
         correction = new Vector2d(0, 0);
-        xTargetCorrection = null;
-        yTargetCorrection = null;
+        xTargetCorrection = 0.0;
+        yTargetCorrection = 0.0;
         xHistory = new ArrayList<Double>();
         yHistory = new ArrayList<Double>();
         correcting = false;
