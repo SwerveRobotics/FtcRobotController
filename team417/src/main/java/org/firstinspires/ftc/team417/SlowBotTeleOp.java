@@ -205,9 +205,9 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 //                wrist.setPosition(WRIST_FOLDED_IN);
 //                intakeEnabled = false;
 
-                liftPosition = LIFT_SCORE_HIGH_SPECIMEN;
+                /*liftPosition = LIFT_SCORE_HIGH_SPECIMEN;
                 wristPosition = WRIST_IN;
-                slidePosition = SLIDE_HOME_POSITION;
+                slidePosition = SLIDE_HOME_POSITION;*/
 
                 specimenOffset.x += 1;
                 pathing = true;
@@ -224,9 +224,9 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 //                wrist.setPosition(WRIST_FOLDED_IN);
 //                intakeEnabled = false;
 
-                liftPosition = LIFT_SCORE_HIGH_BASKET;
+                /*liftPosition = LIFT_SCORE_HIGH_BASKET;
                 wristPosition = WRIST_IN;
-                slidePosition = SLIDE_HOME_POSITION;
+                slidePosition = SLIDE_HOME_POSITION;*/
 
                 pathing = true;
             }
