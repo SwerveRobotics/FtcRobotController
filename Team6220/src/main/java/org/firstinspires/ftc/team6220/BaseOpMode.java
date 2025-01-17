@@ -293,7 +293,9 @@ abstract public class BaseOpMode extends LinearOpMode {
     public enum SlideActionState {
         GROUND(DRIFTConstants.SLIDES_MOTOR_GROUND_POSITION),
         LOW_BASKET(DRIFTConstants.SLIDES_MOTOR_LOW_BASKET_POSITION),
-        HIGH_BASKET(DRIFTConstants.SLIDES_MOTOR_HIGH_BASKET_POSITION - 100);
+        HIGH_BASKET(DRIFTConstants.SLIDES_MOTOR_HIGH_BASKET_POSITION),
+        OVER_HIGH_CHAMBER(DRIFTConstants.SLIDES_MOTOR_OVER_HIGH_CHAMBER_POSITION),
+        HIGH_CHAMBER(DRIFTConstants.SLIDES_MOTOR_HIGH_CHAMBER_POSITION);
 
         final int slidesMotorTargetPositionTicks;
 

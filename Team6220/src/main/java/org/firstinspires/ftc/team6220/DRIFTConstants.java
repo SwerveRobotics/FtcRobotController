@@ -17,7 +17,9 @@ public abstract class DRIFTConstants {
     public static int SLIDES_MOTOR_GROUND_POSITION = 0;
     //public static int SLIDES_MOTOR_LOW_BASKET_POSITION = 3700;
     public static int SLIDES_MOTOR_LOW_BASKET_POSITION = 2000;
-    public static int SLIDES_MOTOR_HIGH_BASKET_POSITION = 3950;
+    public static int SLIDES_MOTOR_HIGH_BASKET_POSITION = 3850;
+    public static int SLIDES_MOTOR_OVER_HIGH_CHAMBER_POSITION = 2500;
+    public static int SLIDES_MOTOR_HIGH_CHAMBER_POSITION = 1500;
     public static int SLIDES_MOTOR_VELOCITY = 8;
     public static int ARM_BASE_MOTOR_VELOCITY = 6;
     public static double DUMPER_SERVO_POSITION_DUMP = 0.9;
@@ -28,9 +30,10 @@ public abstract class DRIFTConstants {
     public static final float[] BLUE_COLOR_SENSOR_RANGES = {0.025f, 1f};
     public static final float COLOR_SENSOR_GAIN = 3.8f;
     //public static final Pose2d BASKET_SCORING_POSE = new Pose2d()
-    public static final Pose2d MIDDLE_STARTING_POSE = new Pose2d(0, 60, (3*Math.PI)/2);
-    public static final Pose2d LEFT_STARTING_POSE = new Pose2d(24, 60, (3*Math.PI)/2);
-    public static final Pose2d RIGHT_STARTING_POSE = new Pose2d(-20, 60, (3*Math.PI)/2);
+    public static final double ROBOT_LENGTH_IN = 16.50;
+    public static final Pose2d MIDDLE_STARTING_POSE = new Pose2d(0, 72-(ROBOT_LENGTH_IN/2), Math.PI/2);
+    public static final Pose2d LEFT_STARTING_POSE = new Pose2d(24, 72-(ROBOT_LENGTH_IN/2), Math.PI/2);
+    public static final Pose2d RIGHT_STARTING_POSE = new Pose2d(-20, 72-(ROBOT_LENGTH_IN/2), Math.PI/2);
     public static final Vector2d SUBMERSIBLE_PARK_POSITION = new Vector2d(20, 12);
     public static final Vector2d OBSERVATION_PARK_POSITION = new Vector2d(-60, 60);
 

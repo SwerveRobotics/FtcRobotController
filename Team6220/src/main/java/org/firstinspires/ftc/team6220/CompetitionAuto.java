@@ -147,8 +147,21 @@ public class CompetitionAuto extends BaseOpMode {
 
     private Action computeAutoPath(MecanumDrive drive) {
         TrajectoryActionBuilder actionBuilder = drive.actionBuilder(autoStartPosition.startingPose);
+        slidesMotor.setVelocity(1500);
+        actionBuilder = actionBuilder
+                .stopAndAdd(new SlideMoveAction(SlideActionState.OVER_HIGH_CHAMBER))
+                .waitSeconds(2)
+                .setTangent((3*Math.PI)/2)
+                .splineToLinearHeading(new Pose2d(0, 33.5, Math.toRadians(90)), Math.toRadians(270))
+                .waitSeconds(2)
+                .stopAndAdd(new SlideMoveAction(SlideActionState.HIGH_CHAMBER))
+                .waitSeconds(1)
+//                .afterDisp(0, new SlideMoveAction(SlideActionState.GROUND))
+                .splineToLinearHeading(new Pose2d(0, 36, Math.toRadians(90)), Math.toRadians(270))
+//                .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND))
+                .endTrajectory();
 
-        // apply scoring portion of auto
+        /*// apply scoring portion of auto
         if (Objects.requireNonNull(autoType) == AutonomousEnums.AutoType.SCORING) {
             switch (spikeMarkSide) {
                 case LEFT: {
@@ -208,42 +221,6 @@ public class CompetitionAuto extends BaseOpMode {
                             .setTangent(Math.toRadians(200));
 
 
-
-
-
-
-                    // BACKUP CODE - Pushes 3 samples + 1 preloaded into NET ZONE (no slides/dumper)
-                            /*
-                            // strafe and drop off preloaded sample in net zone
-                            .strafeTo(new Vector2d(60, 60))
-                            .setTangent(Math.toRadians(-180))
-                            // spline to prepare to collect first sample
-                            .splineToLinearHeading(new Pose2d(48, 10, Math.toRadians(-90)),  Math.toRadians(-40))
-                            .endTrajectory()
-                            .setTangent(Math.toRadians(90))
-                            // spline to deposit first sample in scoring area
-                            .splineToLinearHeading(new Pose2d(55, 60, Math.toRadians(-140)),  Math.toRadians(40))
-                            .endTrajectory()
-                            .setTangent(Math.toRadians(-180))
-                            // spline to prepare to collect second sample
-                            .splineToLinearHeading(new Pose2d(58, 10, Math.toRadians(-90)),  Math.toRadians(-40))
-                            .endTrajectory()
-                            .setTangent(Math.toRadians(90))
-                            // spline to deposit second sample in scoring area
-                            .splineToLinearHeading(new Pose2d(61, 55, Math.toRadians(-140)),  Math.toRadians(40))
-                            .endTrajectory()
-                            .setTangent(Math.toRadians(-180))
-                            // spline to prepare to collect third sample
-                            .splineToLinearHeading(new Pose2d(68, 10, Math.toRadians(-90)),  Math.toRadians(40))
-                            .endTrajectory()
-                            // strafe to deposit third sample
-                            .strafeTo(new Vector2d(62, 52))
-                            // prepare to move to park position
-                            .strafeTo(new Vector2d(62, 50))
-                            .endTrajectory()
-                            .setTangent(Math.toRadians(200));
-                            */
-
                 }
                 case RIGHT: {
                     // to be implemented
@@ -279,7 +256,7 @@ public class CompetitionAuto extends BaseOpMode {
                     }
                 }
             }
-        }
+        }*/
 
 
         return actionBuilder.endTrajectory().build();

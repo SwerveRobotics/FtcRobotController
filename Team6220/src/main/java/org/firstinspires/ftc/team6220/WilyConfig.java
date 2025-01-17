@@ -15,7 +15,7 @@ public class WilyConfig extends WilyWorks.Config {
         deviceName = "6220-D-RC";
 
         // Use these dimensions for the robot:
-        robotWidth = 17.0;
-        robotLength = 17.0;
+        robotWidth = 16;
+        robotLength = 16.5;
     }
 }
