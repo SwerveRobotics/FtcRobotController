@@ -58,17 +58,20 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 .splineToLinearHeading(new Pose2d(-49,55,Math.toRadians(90)), Math.toRadians(90))
                 .stopAndAdd(new SleepAction(0.5))
                 .splineToLinearHeading(new Pose2d(-49,63.5,Math.toRadians(90)), Math.toRadians(90),new TranslationalVelConstraint(25))
-//                .afterDisp(0,new LiftSpecimenAction()) //after intaking lift 4 bar up
-//
-//                .setTangent(Math.toRadians(90))
-//                .splineToLinearHeading(new Pose2d(-49,57,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))
-//                .setTangent(Math.toRadians(-90))
-//                // after disp arm up
-//                .afterDisp(0, new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
-//
-//                .splineToLinearHeading(new Pose2d(0, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
-//                .stopAndAdd( new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
+                .setTangent(Math.toRadians(-90))
 
+                .afterDisp(0,new LiftSpecimenAction()) //after intaking lift 4 bar up
+
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-49,57,Math.toRadians(90)),Math.toRadians(90),new TranslationalVelConstraint(5))
+                .setTangent(Math.toRadians(-90))
+                // after disp arm up
+                .afterDisp(0, new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
+
+                .splineToLinearHeading(new Pose2d(0, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
+                .stopAndAdd( new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-60,60,Math.toRadians(-90)), Math.toRadians(90))
 
                 //.setTangent(Math.toRadians(90))
                 //.splineToLinearHeading(new Pose2d(-49,68-(ROBOT_WIDTH/2),Math.toRadians(-90)), Math.toRadians(180))

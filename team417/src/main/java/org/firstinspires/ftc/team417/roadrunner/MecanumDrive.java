@@ -90,7 +90,7 @@ public final class MecanumDrive {
         Params() {
             maxWheelVel = 50;
             minProfileAccel = -30; // was 30
-            maxProfileAccel = 50;
+            maxProfileAccel = 60;
 
             maxAngVel = Math.PI;
             maxAngAccel = Math.PI;

@@ -20,7 +20,7 @@ public class CompetitionSampleAutoSlowBot extends BaseOpModeSlowBot {
         initializeHardware(beginPose);
 
         Action trajectoryAction = drive.actionBuilder(beginPose)
-                .setTangent(Math.toRadians(-45))
+                 .setTangent(Math.toRadians(-45))
 
                 // Splines to face the basket
                 .splineToLinearHeading(new Pose2d(basketPositionX, basketPositionY, basketHeading), basketHeading, new TranslationalVelConstraint(sampleAutoSpeedConst))
