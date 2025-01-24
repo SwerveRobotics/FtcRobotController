@@ -55,7 +55,7 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
     double startLiftSpecimenY = 0;
     AutoDriveTo driveTo;
 
-    boolean holdHeading = true;
+    boolean holdHeading = false;
 
     boolean x1Pressed = false;
     boolean y1Pressed = false;
@@ -453,6 +453,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         drive.rightFront.setPower(rightFrontPower / denominator);
     }
 
+    boolean a1Pressed = false;
+
     public void controlMechanismsWithGamepads(double deltaTime) {
         /* Here we handle the three buttons that have direct control of the intake speed.
         These control the continuous rotation servo that pulls elements into the robot,
@@ -472,6 +474,18 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 //        if (color == Color.RED) {
 //
 //        }
+        if (gamepad1.a) {
+            liftPosition = LIFT_INTAKE;
+            wristPosition = WRIST_OUT;
+            slidePosition = SLIDE_COLLECT;
+        } else if (a1Pressed) {
+            liftPosition = LIFT_COLLECT;
+            wristPosition = WRIST_OUT;
+            slidePosition = SLIDE_COLLECT;
+        }
+
+        a1Pressed = gamepad1.a;
+
         if (gamepad2.x) {
             liftPosition = LIFT_SCORE_LOW_BASKET;
             wristPosition = WRIST_SCORE;
@@ -655,6 +669,8 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
         telemetry.addLine(lift1Status);
         telemetry.addLine(lift2Status);
         telemetry.addLine(slideStatus);
+        telemetry.addLine(String.format("Lift height: %d", liftMotor1.getCurrentPosition()));
+        telemetry.addLine(String.format("Lift height: %d", liftMotor1.getCurrentPosition()));
 
         telemetry.update();
     }

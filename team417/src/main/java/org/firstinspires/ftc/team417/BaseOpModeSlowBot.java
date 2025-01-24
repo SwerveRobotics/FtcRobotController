@@ -47,12 +47,13 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static double LIFT_SCORE_HIGH_BASKET = 1380;
     public static double LIFT_SCORE_LOW_BASKET = 750;
     public static double LIFT_SCORE_HIGH_SPECIMEN = 875;
+    public static double LIFT_INTAKE = 0;
     public static double LIFT_GET_SPECIMEN = 650;
-    public static double LIFT_COLLECT = 75.0;
+    public static double LIFT_COLLECT = 150.0;
     public static double LIFT_MIN = 0.0;
     public static double LIFT_CLEAR_BARRIER = 10.0;
     public static double LIFT_HOME_POSITION = 0;
-    public static double LIFT_NO_SLIDE_ZONE_MIN = 100;
+    public static double LIFT_NO_SLIDE_ZONE_MIN = 200;
     public static double LIFT_NO_SLIDE_ZONE_MAX = 1000;
 
     public static double f_coefficient = 0.5;
