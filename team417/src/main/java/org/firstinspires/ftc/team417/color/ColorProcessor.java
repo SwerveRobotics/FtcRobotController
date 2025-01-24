@@ -16,11 +16,9 @@ public class ColorProcessor {
 
     public ColorProcessor(NormalizedColorSensor sensor, RevBlinkinLedDriver lightStrip) {
         this.sensor = sensor;
-        sensor.setGain(GAIN);
+        if (sensor != null) sensor.setGain(GAIN);
         this.lightStrip = lightStrip;
-        if (lightStrip != null) {
-            lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
-        }
+        if (lightStrip != null) lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.GREEN);
     }
 
     // Detect the color and update the light strip

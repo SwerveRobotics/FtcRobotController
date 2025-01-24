@@ -88,12 +88,12 @@ public final class MecanumDrive {
 
     public static class Params {
         Params() {
-            maxWheelVel = 50;
-            minProfileAccel = -30; // was 30
-            maxProfileAccel = 60;
+            maxWheelVel = 50; // Was 50
+            minProfileAccel = -30; // was -30
+            maxProfileAccel = 60; // was 50
 
-            maxAngVel = Math.PI;
-            maxAngAccel = Math.PI;
+            maxAngVel = Math.PI; // was Math.PI
+            maxAngAccel = Math.PI; // was Math.PI
 
             switch (driveParameters) {
                 case DEVBOT_MECANUM:
@@ -832,7 +832,17 @@ public final class MecanumDrive {
                 t = Actions.now() - beginTs;
             }
 
-            if (t >= timeTrajectory.duration) {
+            Pose2dDual<Time> txWorldTarget = timeTrajectory.get(t);
+            targetPoseWriter.write(new PoseMessage(txWorldTarget.value()));
+
+            PoseVelocity2d robotVelRobot = updatePoseEstimate();
+
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+
+            if ((t >= timeTrajectory.duration
+                    && Math.abs(error.heading.log()) < Math.PI / 180)
+//                    || t >= timeTrajectory.duration + 3
+            ) {
                 leftFront.setPower(0);
                 leftBack.setPower(0);
                 rightBack.setPower(0);
@@ -840,11 +850,6 @@ public final class MecanumDrive {
 
                 return false;
             }
-
-            Pose2dDual<Time> txWorldTarget = timeTrajectory.get(t);
-            targetPoseWriter.write(new PoseMessage(txWorldTarget.value()));
-
-            PoseVelocity2d robotVelRobot = updatePoseEstimate();
 
             PoseVelocity2dDual<Time> command = new HolonomicController(
                     PARAMS.axialGain, PARAMS.lateralGain, PARAMS.headingGain,
@@ -880,7 +885,6 @@ public final class MecanumDrive {
 
             // Update some statistics:
             updateLoopTimeStatistic(p);
-            Pose2d error = txWorldTarget.value().minusExp(pose);
             lastLinearGainError = error.position.norm();
             lastHeadingGainError = error.heading.toDouble();
             maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
@@ -931,7 +935,17 @@ public final class MecanumDrive {
                 t = Actions.now() - beginTs;
             }
 
-            if (t >= turn.duration) {
+            Pose2dDual<Time> txWorldTarget = turn.get(t);
+            targetPoseWriter.write(new PoseMessage(txWorldTarget.value()));
+
+            PoseVelocity2d robotVelRobot = updatePoseEstimate();
+
+            Pose2d error = txWorldTarget.value().minusExp(pose);
+
+            if ((t >= turn.duration
+                    && Math.abs(error.heading.log()) < Math.PI / 180)
+//                    || t >= turn.duration + 3
+            ) {
                 leftFront.setPower(0);
                 leftBack.setPower(0);
                 rightBack.setPower(0);
@@ -939,11 +953,6 @@ public final class MecanumDrive {
 
                 return false;
             }
-
-            Pose2dDual<Time> txWorldTarget = turn.get(t);
-            targetPoseWriter.write(new PoseMessage(txWorldTarget.value()));
-
-            PoseVelocity2d robotVelRobot = updatePoseEstimate();
 
             PoseVelocity2dDual<Time> command = new HolonomicController(
                     PARAMS.axialGain, PARAMS.lateralGain, PARAMS.headingGain,
@@ -979,7 +988,6 @@ public final class MecanumDrive {
 
             // Update some statistics:
             updateLoopTimeStatistic(p);
-            Pose2d error = txWorldTarget.value().minusExp(pose);
             lastLinearGainError = error.position.norm();
             lastHeadingGainError = error.heading.toDouble();
             maxLinearGainError = Math.max(maxLinearGainError, lastLinearGainError);
