@@ -478,10 +478,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             liftPosition = LIFT_INTAKE;
             wristPosition = WRIST_OUT;
             slidePosition = SLIDE_COLLECT;
-        } else if (a1Pressed) {
-            liftPosition = LIFT_COLLECT;
-            wristPosition = WRIST_OUT;
-            slidePosition = SLIDE_COLLECT;
         }
 
         a1Pressed = gamepad1.a;
@@ -590,6 +586,9 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
             moveLift(liftPositionWithFudge);
             liftGoal = liftPositionWithFudge;
         }
+
+        intake1.setPower(100);
+        intake2.setPower(100);
 
         // Reverse intake when b-button is held down
         boolean reversed = gamepad2.b;
