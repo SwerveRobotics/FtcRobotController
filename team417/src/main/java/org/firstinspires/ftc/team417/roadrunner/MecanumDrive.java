@@ -90,7 +90,7 @@ public final class MecanumDrive {
         Params() {
             maxWheelVel = 50; // Was 50
             minProfileAccel = -30; // was -30
-            maxProfileAccel = 50; // was 50
+            maxProfileAccel = 60; // was 50
 
             maxAngVel = Math.PI; // was Math.PI
             maxAngAccel = Math.PI; // was Math.PI
@@ -557,6 +557,7 @@ public final class MecanumDrive {
 
                 NormalizedColorSensor NormalizedColorSensor = hardwareMap.get(NormalizedColorSensor.class, "color");
                 RevBlinkinLedDriver lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
+                lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.WHITE);
                 colorProcessor = new ColorProcessor(NormalizedColorSensor, lightStrip);
 
                 leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");

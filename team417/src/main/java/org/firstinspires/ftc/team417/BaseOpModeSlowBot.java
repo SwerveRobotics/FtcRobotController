@@ -48,7 +48,7 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static double LIFT_SCORE_LOW_BASKET = 750;
     public static double LIFT_SCORE_HIGH_SPECIMEN = 875;
     public static double LIFT_GET_SPECIMEN = 650;
-    public static double LIFT_COLLECT = 30.0;
+    public static double LIFT_COLLECT = 75.0;
     public static double LIFT_MIN = 0.0;
     public static double LIFT_CLEAR_BARRIER = 10.0;
     public static double LIFT_HOME_POSITION = 0;
@@ -68,17 +68,17 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
     public static double SLIDE_VELOCITY_MAX = 2500;
     public static double WRIST_MIN = 0.0;
     public static double WRIST_MAX = 1.0;
-    public static double WRIST_OUT = 0.75;
-    public static double WRIST_IN = 0.125;
-    public static double WRIST_SCORE = 0.5;
+    public static double WRIST_OUT = 0.15;
+    public static double WRIST_IN = 0.9;
+    public static double WRIST_SCORE = 0.25;
     public static double WRIST_SCORE_AUTO = 0.3;
 
     public static double XDRIVE_Y_SCORE_POSE = 36 ;
     public double X_NON_OVERHANG = 14.8;   // how high the slides can go without going past robot length
 
     public double sampleAutoSpeedConst = 25;
-    public double basketPositionX = 56;
-    public double basketPositionY= 56;
+    public double basketPositionX = 53;
+    public double basketPositionY= 53;
     public double basketHeading = Math.toRadians(45);
 
     public double FIRST_SEGMENT_4_BAR_LENGTH = 17; //length of 4 bar segment

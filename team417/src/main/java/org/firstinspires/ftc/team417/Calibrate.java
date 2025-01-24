@@ -33,13 +33,13 @@ public class Calibrate extends LinearOpMode {
     private void calibrateColor() {
         sensor = hardwareMap.get(NormalizedColorSensor.class, "color");
 
-        // lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
+        lightStrip = hardwareMap.get(RevBlinkinLedDriver.class, "indicatorLed");
 
-        // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.WHITE);
+        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.WHITE);
 
         float gain = calibrateColorGain();
 
-        // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
+        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.YELLOW);
 
         print("Please insert a YELLOW Sample into the BOWG." +
                 "\nPress A when finished.");
@@ -52,7 +52,7 @@ public class Calibrate extends LinearOpMode {
 
         Lab yellow = getLab();
 
-        // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
+        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.BLUE);
 
         print("Please insert a BLUE Sample into the BOWG." +
                 "\nPress A when finished.");
@@ -65,7 +65,7 @@ public class Calibrate extends LinearOpMode {
 
         Lab blue = getLab();
 
-        // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
+        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.RED);
 
         print("Please insert a RED Sample into the BOWG." +
                 "\nPress A when finished.");
@@ -78,7 +78,7 @@ public class Calibrate extends LinearOpMode {
 
         Lab red = getLab();
 
-        // lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.CONFETTI);
+        lightStrip.setPattern(RevBlinkinLedDriver.BlinkinPattern.CONFETTI);
 
         print("Calibration for the color sensor is complete. Congratulations!" +
                 "\nPress A when to stop the program." +
@@ -125,6 +125,7 @@ public class Calibrate extends LinearOpMode {
         // Loop until we are asked to stop
         while (!gamepad1.y) {
             // Explain basic gain information via telemetry
+            telemetry.addLine(lightStrip.getConnectionInfo());
             telemetry.addLine("Please insert a YELLOW sample into the BOWG.");
             telemetry.addLine("Your goal is to get one of R, G, and B close to about 0.8.\n");
             telemetry.addLine("Hold the A button on gamepad 1 to increase gain, or B to decrease it.\n");
