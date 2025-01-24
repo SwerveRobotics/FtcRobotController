@@ -476,8 +476,6 @@ public class SlowBotTeleOp extends BaseOpModeSlowBot {
 //        }
         if (gamepad1.a) {
             liftPosition = LIFT_INTAKE;
-            wristPosition = WRIST_OUT;
-            slidePosition = SLIDE_COLLECT;
         }
 
         a1Pressed = gamepad1.a;

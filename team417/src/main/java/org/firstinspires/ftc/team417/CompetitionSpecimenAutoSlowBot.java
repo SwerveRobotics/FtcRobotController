@@ -51,7 +51,7 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 // after disp arm up
                 .afterDisp(0, new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
 
-                .splineToLinearHeading(new Pose2d(-3, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
+                .splineToLinearHeading(new Pose2d(-3, XDRIVE_Y_SCORE_POSE-1, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
                 .stopAndAdd( new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
 
                 .setTangent(Math.toRadians(90))
@@ -68,7 +68,7 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
                 // after disp arm up
                 .afterDisp(0, new ControlAction(SLIDE_HOME_POSITION,WRIST_IN, LIFT_SCORE_HIGH_SPECIMEN))
 
-                .splineToLinearHeading(new Pose2d(0, XDRIVE_Y_SCORE_POSE, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
+                .splineToLinearHeading(new Pose2d(0, XDRIVE_Y_SCORE_POSE-1, Math.toRadians(-90)), Math.toRadians(-90))  // goes up to the specimen high bar
                 .stopAndAdd( new ControlAction(SLIDE_HOME_POSITION,WRIST_IN,LIFT_HOME_POSITION))
                 .setTangent(Math.toRadians(90))
                 .splineToLinearHeading(new Pose2d(-60,60,Math.toRadians(-90)), Math.toRadians(90))
@@ -126,12 +126,27 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
             if (getLiftPosition() < LIFT_TICKS_EPSILON) {
                 telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
                 telemetry.addLine("<big><big><font color='red'>WARNING! WARNING! LIFT POSITION NOT CALIBRATED ");
+                telemetry.addLine(String.format("Lift current position: %f", getLiftPosition()));
+                telemetry.addLine(String.format("Lift1 target position: %d", liftMotor1.getTargetPosition()));
+
+                telemetry.addLine(String.format("Lift2 target position: %d", liftMotor2.getTargetPosition()));
+                telemetry.addLine(String.format("Tol1: %d", liftMotor1.getTargetPositionTolerance()));
+                telemetry.addLine(String.format("Tol2: %d", liftMotor2.getTargetPositionTolerance()));
+
                 telemetry.update();
 
             }
             else {
                 telemetry.setDisplayFormat(Telemetry.DisplayFormat.CLASSIC);
                 telemetry.addLine("good to go");
+                telemetry.addLine(String.format("Lift current position: %f", getLiftPosition()));
+                telemetry.addLine(String.format("Lift1 target position: %d", liftMotor1.getTargetPosition()));
+
+                telemetry.addLine(String.format("Lift2 target position: %d", liftMotor2.getTargetPosition()));
+                telemetry.addLine(String.format("Tol1: %d", liftMotor1.getTargetPositionTolerance()));
+                telemetry.addLine(String.format("Tol2: %d", liftMotor2.getTargetPositionTolerance()));
+
+
                 telemetry.update();
             }
 
@@ -156,6 +171,7 @@ public class CompetitionSpecimenAutoSlowBot extends BaseOpModeSlowBot {
             // drawing up on the field once the robot is done:
             if (more)
                 MecanumDrive.sendTelemetryPacket(packet);
+            telemetry.addLine(String.format("Lift height : %f",  getLiftPosition() ));
             telemetry.update();
         }
         stopCrash();

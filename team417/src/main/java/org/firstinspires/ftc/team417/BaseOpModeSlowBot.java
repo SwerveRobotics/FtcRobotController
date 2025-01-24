@@ -325,14 +325,18 @@ abstract public class BaseOpModeSlowBot extends LinearOpMode {
             liftMotor1.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
             liftMotor1.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor1.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftMotor1.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
 
             liftMotor2.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
             liftMotor2.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             liftMotor2.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            liftMotor2.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
 
             slideMotor.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
             slideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             slideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+            slideMotor.setTargetPosition(0);//@@@@@@@@@@@@@@@@@@@@@@@@@@
+
         }
 
         /* This sets the maximum current that the control hub will apply to the arm before throwing a flag */
