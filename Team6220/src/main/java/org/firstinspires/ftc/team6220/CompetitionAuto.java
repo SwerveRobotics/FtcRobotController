@@ -150,15 +150,53 @@ public class CompetitionAuto extends BaseOpMode {
         slidesMotor.setVelocity(1500);
         actionBuilder = actionBuilder
                 .stopAndAdd(new SlideMoveAction(SlideActionState.OVER_HIGH_CHAMBER))
-                .waitSeconds(2)
                 .setTangent((3*Math.PI)/2)
                 .splineToLinearHeading(new Pose2d(0, 33.5, Math.toRadians(90)), Math.toRadians(270))
-                .waitSeconds(2)
                 .stopAndAdd(new SlideMoveAction(SlideActionState.HIGH_CHAMBER))
                 .waitSeconds(1)
-//                .afterDisp(0, new SlideMoveAction(SlideActionState.GROUND))
                 .splineToLinearHeading(new Pose2d(0, 36, Math.toRadians(90)), Math.toRadians(270))
-//                .stopAndAdd(new SlideMoveAction(SlideActionState.GROUND))
+                .stopAndAdd(new SlideMoveAction(SlideActionState.OVER_HIGH_CHAMBER))
+                .splineToLinearHeading(new Pose2d(0, 40, Math.toRadians(90)), Math.toRadians(270))
+
+                .stopAndAdd(new DumperMoveAction(DumperActionState.TRANSFER))
+                .afterDisp(0, new SlideMoveAction(SlideActionState.GROUND))
+
+                .splineToLinearHeading(new Pose2d(0, 62, Math.toRadians(90)), Math.toRadians(270))
+
+                // spline to prepare to collect first sample
+                .setTangent(Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(40, 24, Math.toRadians(270)),  3 * Math.PI / 2)
+                .splineToLinearHeading(new Pose2d(50, 9, Math.toRadians(270)),  Math.toRadians(340))
+                .endTrajectory()
+                .setTangent(Math.toRadians(90))
+
+                // spline to deposit first sample in scoring area
+                .splineToLinearHeading(new Pose2d(55, 60, Math.toRadians(220)),  Math.toRadians(40))
+                .endTrajectory()
+                .setTangent(Math.toRadians(180))
+
+                // spline to prepare to collect second sample
+                .splineToLinearHeading(new Pose2d(60, 10, Math.toRadians(270)),  Math.toRadians(330))
+                .endTrajectory()
+                .setTangent(Math.toRadians(90))
+
+                // spline to deposit second sample in scoring area
+                .splineToLinearHeading(new Pose2d(61, 55, Math.toRadians(220)),  Math.toRadians(40))
+                .endTrajectory()
+                .setTangent(Math.toRadians(-80))
+
+                // spline to prepare to collect third sample
+                .splineToLinearHeading(new Pose2d(70, 12, Math.toRadians(270)),  Math.toRadians(40))
+                .endTrajectory()
+
+                // strafe to deposit third sample
+                .strafeTo(new Vector2d(70, 52))
+
+                // prepare to move to park position and move dumper and arm to init position for teleop
+                .splineToLinearHeading(new Pose2d(62, 50, Math.PI), 0) //change this in backup code too if it works!
+                .endTrajectory()
+                .setTangent(Math.toRadians(200))
+
                 .endTrajectory();
 
         /*// apply scoring portion of auto
