@@ -176,6 +176,9 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
 
     static class ArmElbowAndIntakeSimulator {
+
+        final double ARM_MOTOR_VELOCITY = 3000;
+
         double intakePower;
         int currentArmMotorPosition;
         int targetArmMotorPosition;

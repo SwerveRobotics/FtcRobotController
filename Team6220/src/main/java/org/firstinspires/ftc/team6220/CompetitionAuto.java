@@ -146,7 +146,10 @@ public class CompetitionAuto extends BaseOpMode {
     }
 
     private Action computeAutoPath(MecanumDrive drive) {
+
+
         TrajectoryActionBuilder actionBuilder = drive.actionBuilder(autoStartPosition.startingPose);
+        /*
         slidesMotor.setVelocity(1500);
         actionBuilder = actionBuilder
                 .stopAndAdd(new SlideMoveAction(SlideActionState.OVER_HIGH_CHAMBER))
@@ -166,7 +169,7 @@ public class CompetitionAuto extends BaseOpMode {
                 // spline to prepare to collect first sample
                 .setTangent(Math.toRadians(180))
                 .splineToLinearHeading(new Pose2d(40, 24, Math.toRadians(270)),  3 * Math.PI / 2)
-                .splineToLinearHeading(new Pose2d(50, 9, Math.toRadians(270)),  Math.toRadians(340))
+                .splineToLinearHeading(new Pose2d(47, 9, Math.toRadians(270)),  Math.toRadians(340))
                 .endTrajectory()
                 .setTangent(Math.toRadians(90))
 
@@ -176,7 +179,7 @@ public class CompetitionAuto extends BaseOpMode {
                 .setTangent(Math.toRadians(180))
 
                 // spline to prepare to collect second sample
-                .splineToLinearHeading(new Pose2d(60, 10, Math.toRadians(270)),  Math.toRadians(330))
+                .splineToLinearHeading(new Pose2d(57, 10, Math.toRadians(270)),  Math.toRadians(330))
                 .endTrajectory()
                 .setTangent(Math.toRadians(90))
 
@@ -198,8 +201,10 @@ public class CompetitionAuto extends BaseOpMode {
                 .setTangent(Math.toRadians(200))
 
                 .endTrajectory();
+        */
 
-        /*// apply scoring portion of auto
+
+        // apply scoring portion of auto
         if (Objects.requireNonNull(autoType) == AutonomousEnums.AutoType.SCORING) {
             switch (spikeMarkSide) {
                 case LEFT: {
@@ -227,7 +232,7 @@ public class CompetitionAuto extends BaseOpMode {
                             // spline to prepare to collect first sample
                             .setTangent(Math.toRadians(180))
                             .splineToLinearHeading(new Pose2d(40, 24, Math.toRadians(270)),  3 * Math.PI / 2)
-                            .splineToLinearHeading(new Pose2d(50, 9, Math.toRadians(270)),  Math.toRadians(340))
+                            .splineToLinearHeading(new Pose2d(45, 9, Math.toRadians(270)),  Math.toRadians(340))
                             .endTrajectory()
                             .setTangent(Math.toRadians(90))
 
@@ -237,7 +242,7 @@ public class CompetitionAuto extends BaseOpMode {
                             .setTangent(Math.toRadians(180))
 
                             // spline to prepare to collect second sample
-                            .splineToLinearHeading(new Pose2d(60, 10, Math.toRadians(270)),  Math.toRadians(330))
+                            .splineToLinearHeading(new Pose2d(57, 10, Math.toRadians(270)),  Math.toRadians(330))
                             .endTrajectory()
                             .setTangent(Math.toRadians(90))
 
@@ -294,7 +299,7 @@ public class CompetitionAuto extends BaseOpMode {
                     }
                 }
             }
-        }*/
+        }
 
 
         return actionBuilder.endTrajectory().build();
