@@ -110,6 +110,7 @@ public class ControlManager {
 
 
         // hacky crap code
+        // lets you toggle dumper with one single button (left bumper)
         if (oldLeftBumperToggleState != gamepad2.left_bumper) {
             double interimDumperServoPosition = dumperServoPosition;
             dumperServoPosition = gamepad2.left_bumper ? DRIFTConstants.DUMPER_SERVO_POSITION_DUMP : DRIFTConstants.DUMPER_SERVO_POSITION_HORIZONTAL;
@@ -120,7 +121,8 @@ public class ControlManager {
         oldLeftBumperToggleState = gamepad2.left_bumper;
 
 
-        slidesMotorPosition += (int) (10 * -gamepad2.right_stick_y);
+        // deadzone go brrt
+        if (Math.abs(gamepad2.right_stick_y) > 0.1) slidesMotorPosition += (int) (10 * -gamepad2.right_stick_y);
 
         if (gamepad2.right_stick_y != 0) {
             clearList(slidesMotorPosition);
@@ -220,6 +222,6 @@ public class ControlManager {
     }
 
     private void clearList(Object trackedObject) {
-        delayedActions.removeIf(action -> action.getTrackedObject().equals(trackedObject));
+        // delayedActions.removeIf(action -> action.getTrackedObject().equals(trackedObject));
     }
 }

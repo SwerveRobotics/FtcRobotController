@@ -56,6 +56,12 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             controls.update(getRuntime());
 
+            /*
+            telemetry.addLine("Slides Motor Target Position: " + controls.getSlidesMotorPosition());
+            telemetry.addLine("Slides Motor Current Position: " + slidesMotor.getCurrentPosition());
+            telemetry.addLine("GP2 Right Stick Y: " + -gamepad2.right_stick_y);
+            */
+
             armBaseMotor.setTargetPosition(controls.getArmBaseMotorPosition());
             slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
             intakeCRServo.setPower(controls.getIntakeServoPower());

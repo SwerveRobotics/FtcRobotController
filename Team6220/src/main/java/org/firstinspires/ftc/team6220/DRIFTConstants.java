@@ -14,14 +14,14 @@ public abstract class DRIFTConstants {
     public static int ARM_BASE_MOTOR_POSITION_OUT = -400;
     public static int ARM_BASE_MOTOR_POSITION_TRANSFER = -270;
     public static int ARM_BASE_MOTOR_POSITION_OVER_BAR = -1450; //changed on 11/15, was -1500
+
     public static int SLIDES_MOTOR_GROUND_POSITION = 0;
     //public static int SLIDES_MOTOR_LOW_BASKET_POSITION = 3700;
     public static int SLIDES_MOTOR_LOW_BASKET_POSITION = 2000;
     public static int SLIDES_MOTOR_HIGH_BASKET_POSITION = 3850;
     public static int SLIDES_MOTOR_OVER_HIGH_CHAMBER_POSITION = 2500;
     public static int SLIDES_MOTOR_HIGH_CHAMBER_POSITION = 1500;
-    public static int SLIDES_MOTOR_VELOCITY = 8;
-    public static int ARM_BASE_MOTOR_VELOCITY = 6;
+
     public static double DUMPER_SERVO_POSITION_DUMP = 0.9;
     public static double DUMPER_SERVO_POSITION_TRANSFER = 0.40;
     public static double DUMPER_SERVO_POSITION_HORIZONTAL = 0.5;
