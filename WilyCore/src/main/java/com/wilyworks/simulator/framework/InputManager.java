@@ -1,10 +1,10 @@
 package com.wilyworks.simulator.framework;
 
-// import com.badlogic.gdx.controllers.Controller;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.wilyworks.simulator.WilyCore;
 
-// import org.libsdl.SDL;
+import org.lwjgl.glfw.GLFW;
+import org.lwjgl.glfw.GLFWGamepadState;
 
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
@@ -15,46 +15,33 @@ import java.awt.event.KeyEvent;
 /**
  * Fake do-nothing gamepad classes while the gamepad library is offline.
  */
-    class SDL {
-        public static final int SDL_CONTROLLER_BUTTON_INVALID = -1,
-                SDL_CONTROLLER_BUTTON_A = 0,
-                SDL_CONTROLLER_BUTTON_B = 1,
-                SDL_CONTROLLER_BUTTON_X = 2,
-                SDL_CONTROLLER_BUTTON_Y = 3,
-                SDL_CONTROLLER_BUTTON_BACK = 4,
-                SDL_CONTROLLER_BUTTON_GUIDE = 5,
-                SDL_CONTROLLER_BUTTON_START = 6,
-                SDL_CONTROLLER_BUTTON_LEFTSTICK = 7,
-                SDL_CONTROLLER_BUTTON_RIGHTSTICK = 8,
-                SDL_CONTROLLER_BUTTON_LEFTSHOULDER = 9,
-                SDL_CONTROLLER_BUTTON_RIGHTSHOULDER = 10,
-                SDL_CONTROLLER_BUTTON_DPAD_UP = 11,
-                SDL_CONTROLLER_BUTTON_DPAD_DOWN = 12,
-                SDL_CONTROLLER_BUTTON_DPAD_LEFT = 13,
-                SDL_CONTROLLER_BUTTON_DPAD_RIGHT = 14,
-                SDL_CONTROLLER_BUTTON_MAX = 15;
-        public static final int SDL_CONTROLLER_AXIS_INVALID = -1,
-                SDL_CONTROLLER_AXIS_LEFTX = 0,
-                SDL_CONTROLLER_AXIS_LEFTY = 1,
-                SDL_CONTROLLER_AXIS_RIGHTX = 2,
-                SDL_CONTROLLER_AXIS_RIGHTY = 3,
-                SDL_CONTROLLER_AXIS_TRIGGERLEFT = 4,
-                SDL_CONTROLLER_AXIS_TRIGGERRIGHT = 5,
-                SDL_CONTROLLER_AXIS_MAX = 6;
-    }
-    class Controller {
-        public boolean getButton (int buttonCode) { return false; }
-        public float getAxis (int axisCode) { return 0; }
-    }
-    class Array {
-        int size = 0;
-        Controller get(int i) { return null; }
-    }
-    class SDL2ControllerManager {
-        public Array getControllers() {
-            return new Array();
-        }
-    }
+class SDL {
+    public static final int SDL_CONTROLLER_BUTTON_INVALID = -1,
+            SDL_CONTROLLER_BUTTON_A = 0,
+            SDL_CONTROLLER_BUTTON_B = 1,
+            SDL_CONTROLLER_BUTTON_X = 2,
+            SDL_CONTROLLER_BUTTON_Y = 3,
+            SDL_CONTROLLER_BUTTON_BACK = 4,
+            SDL_CONTROLLER_BUTTON_GUIDE = 5,
+            SDL_CONTROLLER_BUTTON_START = 6,
+            SDL_CONTROLLER_BUTTON_LEFTSTICK = 7,
+            SDL_CONTROLLER_BUTTON_RIGHTSTICK = 8,
+            SDL_CONTROLLER_BUTTON_LEFTSHOULDER = 9,
+            SDL_CONTROLLER_BUTTON_RIGHTSHOULDER = 10,
+            SDL_CONTROLLER_BUTTON_DPAD_UP = 11,
+            SDL_CONTROLLER_BUTTON_DPAD_DOWN = 12,
+            SDL_CONTROLLER_BUTTON_DPAD_LEFT = 13,
+            SDL_CONTROLLER_BUTTON_DPAD_RIGHT = 14,
+            SDL_CONTROLLER_BUTTON_MAX = 15;
+    public static final int SDL_CONTROLLER_AXIS_INVALID = -1,
+            SDL_CONTROLLER_AXIS_LEFTX = 0,
+            SDL_CONTROLLER_AXIS_LEFTY = 1,
+            SDL_CONTROLLER_AXIS_RIGHTX = 2,
+            SDL_CONTROLLER_AXIS_RIGHTY = 3,
+            SDL_CONTROLLER_AXIS_TRIGGERLEFT = 4,
+            SDL_CONTROLLER_AXIS_TRIGGERRIGHT = 5,
+            SDL_CONTROLLER_AXIS_MAX = 6;
+}
 
 /**
  * Window manager hook for key presses.
@@ -68,16 +55,17 @@ class KeyDispatcher implements KeyEventDispatcher {
     // Consecutive clicks must be this many seconds to activate double-click:
     final double DOUBLE_CLICK_DURATION = 0.5;
 
-    private boolean altActivated; // True if Alt-mode was activating by double-tapping the Alt key
-    private double altPressTime; // Time when the Alt key was last pressed for a double-tap; 0 if none
-    private boolean altPressed; // True if the Alt key is currently being pressed
-    private boolean ctrlPressed; // True if the Control key is currently being pressed
-    private boolean shiftPressed; // True if the Shift key is currently being pressed
+    boolean altActivated; // True if Alt-mode was activating by double-tapping the Alt key
+    double altPressTime; // Time when the Alt key was last pressed for a double-tap; 0 if none
+    boolean altPressed; // True if the Alt key is currently being pressed
+    boolean ctrlPressed; // True if the Control key is currently being pressed
+    boolean shiftPressed; // True if the Shift key is currently being pressed
 
-    public boolean gamepad1Active = true; // True if gamepad1 is receiving input; false if gamepad2 is active
-    public boolean[] button = new boolean[SDL.SDL_CONTROLLER_BUTTON_MAX];
-    public float[] axis = new float[SDL.SDL_CONTROLLER_AXIS_MAX];
-    public float axisMultiplier; // When an axis is activated, use this for its speed
+    boolean[] button = new boolean[SDL.SDL_CONTROLLER_BUTTON_MAX];
+    float[] axis = new float[SDL.SDL_CONTROLLER_AXIS_MAX];
+    float axisMultiplier; // When an axis is activated, use this for its speed
+
+    int associatedGamepad = 1; // Which gamepad this input goes to, 1 or 2
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent keyEvent) {
@@ -100,8 +88,10 @@ class KeyDispatcher implements KeyEventDispatcher {
                 }
                 break;
 
-            case KeyEvent.VK_1: gamepad1Active = true; break;
-            case KeyEvent.VK_2: gamepad1Active = false; break;
+            case KeyEvent.VK_1: associatedGamepad = 1; break;
+            case KeyEvent.VK_F1: associatedGamepad = 1; break;
+            case KeyEvent.VK_2: associatedGamepad = 2; break;
+            case KeyEvent.VK_F2: associatedGamepad = 2; break;
             case KeyEvent.VK_CONTROL: ctrlPressed = pressed; break;
             case KeyEvent.VK_SHIFT: shiftPressed = pressed; break;
 
@@ -187,6 +177,95 @@ class KeyDispatcher implements KeyEventDispatcher {
         axisMultiplier = (ctrlPressed) ? SLOW_SPEED : ((shiftPressed) ? FAST_SPEED : NORMAL_SPEED);
         return true;
     }
+
+    float getAxis(int gamepadId, int sdlAxis) {
+        return (gamepadId == associatedGamepad) ? axis[sdlAxis] * axisMultiplier : 0;
+    }
+
+    boolean getButton(int gamepadId, int sdlButton) {
+        return (gamepadId == associatedGamepad) ? button[sdlButton] : false;
+    }
+}
+
+/**
+ * Abstraction for true gamepad input on the PC via GLFW.
+ */
+class GamepadInput {
+    int associatedGamepad = 1; // Gamepad that this input is directed to, 1 or 2
+    GLFWGamepadState gamepadState; // Gamepad input object, null if no controller is plugged in
+
+    GamepadInput() {
+        if (!GLFW.glfwInit()) {
+            System.out.println("Failed to initialize GLFW!");
+            return;
+        }
+        if (GLFW.glfwJoystickIsGamepad(GLFW.GLFW_JOYSTICK_1)) {
+            gamepadState = GLFWGamepadState.create();
+        }
+    }
+
+    // FTC automatically implements a dead-zone but we have to do it manually on PC:
+    private float deadZone(float value) {
+        final double EPSILON = 0.05f;
+        if (Math.abs(value) <= EPSILON)
+            value = 0;
+        return value;
+    }
+
+    boolean getButton(int gamepadId, int button) {
+        if (gamepadId != associatedGamepad)
+            return false;
+        if (gamepadState == null)
+            return false;
+
+        final int[] mapping = {
+            GLFW.GLFW_GAMEPAD_BUTTON_A,             // SDL_CONTROLLER_BUTTON_A = 0,
+            GLFW.GLFW_GAMEPAD_BUTTON_B,             // SDL_CONTROLLER_BUTTON_B = 1,
+            GLFW.GLFW_GAMEPAD_BUTTON_X,             // SDL_CONTROLLER_BUTTON_X = 2,
+            GLFW.GLFW_GAMEPAD_BUTTON_Y,             // SDL_CONTROLLER_BUTTON_Y = 3,
+            GLFW.GLFW_GAMEPAD_BUTTON_BACK,          // SDL_CONTROLLER_BUTTON_BACK = 4,
+            GLFW.GLFW_GAMEPAD_BUTTON_GUIDE,         // SDL_CONTROLLER_BUTTON_GUIDE = 5,
+            GLFW.GLFW_GAMEPAD_BUTTON_START,         // SDL_CONTROLLER_BUTTON_START = 6,
+            GLFW.GLFW_GAMEPAD_BUTTON_LEFT_THUMB,    // SDL_CONTROLLER_BUTTON_LEFTSTICK = 7,
+            GLFW.GLFW_GAMEPAD_BUTTON_RIGHT_THUMB,   // SDL_CONTROLLER_BUTTON_RIGHTSTICK = 8,
+            GLFW.GLFW_GAMEPAD_BUTTON_LEFT_BUMPER,   // SDL_CONTROLLER_BUTTON_LEFTSHOULDER = 9,
+            GLFW.GLFW_GAMEPAD_BUTTON_RIGHT_BUMPER,  // SDL_CONTROLLER_BUTTON_RIGHTSHOULDER = 10,
+            GLFW.GLFW_GAMEPAD_BUTTON_DPAD_UP,       // SDL_CONTROLLER_BUTTON_DPAD_UP = 11,
+            GLFW.GLFW_GAMEPAD_BUTTON_DPAD_DOWN,     // SDL_CONTROLLER_BUTTON_DPAD_DOWN = 12,
+            GLFW.GLFW_GAMEPAD_BUTTON_DPAD_LEFT,     // SDL_CONTROLLER_BUTTON_DPAD_LEFT = 13,
+            GLFW.GLFW_GAMEPAD_BUTTON_DPAD_RIGHT     // SDL_CONTROLLER_BUTTON_DPAD_RIGHT = 14
+        };
+        return gamepadState.buttons(mapping[button]) != 0;
+    }
+
+    float getAxis(int gamepadId, int axis) {
+        if (gamepadId != associatedGamepad)
+            return 0;
+        if (gamepadState == null)
+            return 0;
+        float result = gamepadState.axes(axis);
+
+        // FTC returns trigger results in the range [0, 1] but LWJGL returns [-1, 1]:
+        if ((axis == SDL.SDL_CONTROLLER_AXIS_TRIGGERLEFT) ||
+            (axis == SDL.SDL_CONTROLLER_AXIS_TRIGGERRIGHT))
+            result = (result + 1) / 2;
+
+        return deadZone(result);
+    }
+
+    void poll() {
+        if (gamepadState != null) {
+            GLFW.glfwGetGamepadState(GLFW.GLFW_JOYSTICK_1, gamepadState);
+
+            // Handle gamepad changes:
+            if (gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_START) != 0) {
+                if (gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_A) != 0)
+                    associatedGamepad = 1;
+                else if (gamepadState.buttons(GLFW.GLFW_GAMEPAD_BUTTON_B) != 0)
+                    associatedGamepad = 2;
+            }
+        }
+    }
 }
 
 /**
@@ -195,13 +274,8 @@ class KeyDispatcher implements KeyEventDispatcher {
 public class InputManager extends Thread {
     Gamepad gamepad1;
     Gamepad gamepad2;
-
-    SDL2ControllerManager controllerManager = new SDL2ControllerManager();
+    GamepadInput gamepadInput = new GamepadInput();
     KeyDispatcher keyDispatcher = new KeyDispatcher();
-
-    // State used by the 'get' methods:
-    Controller getController;
-    boolean getActive;
 
     // Wrap the two gamepad objects:
     public InputManager(Gamepad gamepad1, Gamepad gamepad2) {
@@ -226,72 +300,62 @@ public class InputManager extends Thread {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            update(gamepad1, keyDispatcher.gamepad1Active);
-            update(gamepad2, !keyDispatcher.gamepad1Active);
+            update(gamepad1, 1);
+            update(gamepad2, 2);
         }
     }
 
-    // FTC automatically implements a dead-zone but we have to do it manually on PC:
-    private float deadZone(float value) {
-        final double EPSILON = 0.05f;
-        if (Math.abs(value) <= EPSILON)
-            value = 0;
-        return value;
-    }
-
     // Get button state from either the controller or the keyboard:
-    boolean getButton(int sdlButton) {
-        if (!getActive)
-            return false;
-        else if (getController != null)
-            return getController.getButton(sdlButton) || keyDispatcher.button[sdlButton];
-        else
-            return keyDispatcher.button[sdlButton];
+    boolean getButton(int gamepadId, int sdlButton) {
+        return gamepadInput.getButton(gamepadId, sdlButton)
+            || keyDispatcher.getButton(gamepadId, sdlButton);
     }
 
     // Get axis state from either the controller or the keyboard, with the latter winning ties:
-    float getAxis(int sdlAxis) {
-        if (!getActive)
-            return 0;
-        else if (keyDispatcher.axis[sdlAxis] != 0)
-            return keyDispatcher.axis[sdlAxis] * keyDispatcher.axisMultiplier;
-        else if (getController != null)
-            return deadZone(getController.getAxis(sdlAxis));
-        else
-            return 0;
+    float getAxis(int gamepadId, int sdlAxis) {
+        float result = keyDispatcher.getAxis(gamepadId, sdlAxis);
+        if (result == 0)
+            result = gamepadInput.getAxis(gamepadId, sdlAxis);
+        return result;
     }
 
     // Poll the attached game controller to update the button and axis states
-    void update(Gamepad gamepad, boolean isActive) {
-        // Set some state so 'getButton' and 'getAxis' work:
-        int count = controllerManager.getControllers().size;
-        getController = (count == 0) ? null : controllerManager.getControllers().get(0);
-        getActive = isActive;
+    void update(Gamepad gamepad, int gamepadId) {
+        gamepadInput.poll();
 
         // Now set the state:
-        gamepad.a = getButton(SDL.SDL_CONTROLLER_BUTTON_A);
-        gamepad.b = getButton(SDL.SDL_CONTROLLER_BUTTON_B);
-        gamepad.x = getButton(SDL.SDL_CONTROLLER_BUTTON_X);
-        gamepad.y = getButton(SDL.SDL_CONTROLLER_BUTTON_Y);
-        gamepad.back = getButton(SDL.SDL_CONTROLLER_BUTTON_BACK);
-        gamepad.guide = getButton(SDL.SDL_CONTROLLER_BUTTON_GUIDE);
-        gamepad.start = getButton(SDL.SDL_CONTROLLER_BUTTON_START);
-        gamepad.dpad_up = getButton(SDL.SDL_CONTROLLER_BUTTON_DPAD_UP);
-        gamepad.dpad_down = getButton(SDL.SDL_CONTROLLER_BUTTON_DPAD_DOWN);
-        gamepad.dpad_left = getButton(SDL.SDL_CONTROLLER_BUTTON_DPAD_LEFT);
-        gamepad.dpad_right = getButton(SDL.SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
-        gamepad.left_bumper = getButton(SDL.SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
-        gamepad.right_bumper = getButton(SDL.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
-        gamepad.left_stick_button = getButton(SDL.SDL_CONTROLLER_BUTTON_LEFTSTICK);
-        gamepad.right_stick_button = getButton(SDL.SDL_CONTROLLER_BUTTON_RIGHTSTICK);
+        gamepad.a = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_A);
+        gamepad.b = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_B);
+        gamepad.x = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_X);
+        gamepad.y = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_Y);
+        gamepad.back = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_BACK);
+        gamepad.guide = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_GUIDE);
+        gamepad.start = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_START);
+        gamepad.dpad_up = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_DPAD_UP);
+        gamepad.dpad_down = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_DPAD_DOWN);
+        gamepad.dpad_left = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_DPAD_LEFT);
+        gamepad.dpad_right = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_DPAD_RIGHT);
+        gamepad.left_bumper = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_LEFTSHOULDER);
+        gamepad.right_bumper = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_RIGHTSHOULDER);
+        gamepad.left_stick_button = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_LEFTSTICK);
+        gamepad.right_stick_button = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_RIGHTSTICK);
 
-        gamepad.left_stick_x = getAxis(SDL.SDL_CONTROLLER_AXIS_LEFTX);
-        gamepad.left_stick_y = getAxis(SDL.SDL_CONTROLLER_AXIS_LEFTY);
-        gamepad.right_stick_x = getAxis(SDL.SDL_CONTROLLER_AXIS_RIGHTX);
-        gamepad.right_stick_y = getAxis(SDL.SDL_CONTROLLER_AXIS_RIGHTY);
-        gamepad.left_trigger = getAxis(SDL.SDL_CONTROLLER_AXIS_TRIGGERLEFT);
-        gamepad.right_trigger = getAxis(SDL.SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
+        gamepad.left_stick_x = getAxis(gamepadId, SDL.SDL_CONTROLLER_AXIS_LEFTX);
+        gamepad.left_stick_y = getAxis(gamepadId, SDL.SDL_CONTROLLER_AXIS_LEFTY);
+        gamepad.right_stick_x = getAxis(gamepadId, SDL.SDL_CONTROLLER_AXIS_RIGHTX);
+        gamepad.right_stick_y = getAxis(gamepadId, SDL.SDL_CONTROLLER_AXIS_RIGHTY);
+        gamepad.left_trigger = getAxis(gamepadId, SDL.SDL_CONTROLLER_AXIS_TRIGGERLEFT);
+        gamepad.right_trigger = getAxis(gamepadId, SDL.SDL_CONTROLLER_AXIS_TRIGGERRIGHT);
 
         gamepad.updateButtonAliases();
+    }
+
+    // Get a string describing which gamepads the inputs correspond to.
+    public String getMappings() {
+        String result = "Keyboard: gamepad" + keyDispatcher.associatedGamepad;
+        if (gamepadInput.gamepadState != null) {
+            result += ", Controller: gamepad" + gamepadInput.associatedGamepad;
+        }
+        return result;
     }
 }

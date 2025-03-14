@@ -10,8 +10,6 @@ import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorController;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DigitalChannel;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.HardwareDevice;
@@ -33,7 +31,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 import org.firstinspires.ftc.robotcore.external.navigation.Quaternion;
@@ -55,37 +52,6 @@ import java.util.TreeSet;
 import java.util.function.Consumer;
 
 import kotlin.coroutines.Continuation;
-
-/**
- * Wily Works device subclass implementation.
- */
-class WilyHardwareDevice implements HardwareDevice {
-    @Override
-    public Manufacturer getManufacturer() {
-        return Manufacturer.Unknown;
-    }
-
-    @Override
-    public String getDeviceName() {
-        return "";
-    }
-
-    @Override
-    public String getConnectionInfo() {
-        return "";
-    }
-
-    @Override
-    public int getVersion() {
-        return 0;
-    }
-
-    @Override
-    public void resetDeviceConfigurationForOpMode() { }
-
-    @Override
-    public void close() { }
-}
 
 /**
  * Wily Works simulated IMU implementation.
@@ -271,13 +237,37 @@ class WilyWebcam extends WilyHardwareDevice implements WebcamName {
 }
 
 /**
+ * Wily Works ServoController implementation.
+ */
+class WilyServoController extends WilyHardwareDevice implements ServoController {
+    @Override
+    public void pwmEnable() { }
+
+    @Override
+    public void pwmDisable() { }
+
+    @Override
+    public PwmStatus getPwmStatus() { return PwmStatus.DISABLED; }
+
+    @Override
+    public void setServoPosition(int servo, double position) { }
+
+    @Override
+    public double getServoPosition(int servo) { return 0; }
+
+    @Override
+    public void close() { }
+}
+
+/**
  * Wily Works Servo implementation.
  */
 class WilyServo extends WilyHardwareDevice implements Servo {
+    double position;
 
     @Override
     public ServoController getController() {
-        return null;
+        return new WilyServoController();
     }
 
     @Override
@@ -296,14 +286,10 @@ class WilyServo extends WilyHardwareDevice implements Servo {
     }
 
     @Override
-    public void setPosition(double position) {
-
-    }
+    public void setPosition(double position) { this.position = Math.max(0, Math.min(1, position)); }
 
     @Override
-    public double getPosition() {
-        return 0;
-    }
+    public double getPosition() {return position; }
 
     @Override
     public void scaleRange(double min, double max) {
@@ -318,7 +304,7 @@ class WilyCRServo extends WilyHardwareDevice implements CRServo {
 
     @Override
     public ServoController getController() {
-        return null;
+        return new WilyServoController();
     }
 
     @Override
@@ -340,158 +326,6 @@ class WilyCRServo extends WilyHardwareDevice implements CRServo {
     public void setPower(double power) {
 
     }
-
-    @Override
-    public double getPower() {
-        return 0;
-    }
-}
-
-/**
- * Wily Works DcMotorEx implementation.
- */
-class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
-
-    @Override
-    public DcMotorController getController() {
-        return null;
-    }
-
-    @Override
-    public int getPortNumber() {
-        return 0;
-    }
-
-    @Override
-    public void setZeroPowerBehavior(ZeroPowerBehavior zeroPowerBehavior) {
-
-    }
-
-    @Override
-    public ZeroPowerBehavior getZeroPowerBehavior() {
-        return null;
-    }
-
-    @Override
-    public boolean getPowerFloat() {
-        return false;
-    }
-
-    @Override
-    public void setTargetPosition(int position) {
-
-    }
-
-    @Override
-    public int getTargetPosition() {
-        return 0;
-    }
-
-    @Override
-    public boolean isBusy() {
-        return false;
-    }
-
-    @Override
-    public int getCurrentPosition() {
-        return 0;
-    }
-
-    @Override
-    public void setMode(RunMode mode) {
-
-    }
-
-    @Override
-    public RunMode getMode() {
-        return null;
-    }
-
-    @Override
-    public void setMotorEnable() {
-
-    }
-
-    @Override
-    public void setMotorDisable() {
-
-    }
-
-    @Override
-    public boolean isMotorEnabled() {
-        return false;
-    }
-
-    @Override
-    public void setVelocity(double angularRate) {
-
-    }
-
-    @Override
-    public void setVelocity(double angularRate, AngleUnit unit) {
-
-    }
-
-    @Override
-    public double getVelocity() {
-        return 0;
-    }
-
-    @Override
-    public double getVelocity(AngleUnit unit) {
-        return 0;
-    }
-
-    @Override
-    public void setVelocityPIDFCoefficients(double p, double i, double d, double f) {
-
-    }
-
-    @Override
-    public void setPositionPIDFCoefficients(double p) {
-
-    }
-
-    @Override
-    public void setTargetPositionTolerance(int tolerance) {
-
-    }
-
-    @Override
-    public int getTargetPositionTolerance() {
-        return 0;
-    }
-
-    @Override
-    public double getCurrent(CurrentUnit unit) {
-        return 0;
-    }
-
-    @Override
-    public double getCurrentAlert(CurrentUnit unit) {
-        return 0;
-    }
-
-    @Override
-    public void setCurrentAlert(double current, CurrentUnit unit) {
-
-    }
-
-    @Override
-    public boolean isOverCurrent() {
-        return false;
-    }
-
-    @Override
-    public void setDirection(Direction direction) { }
-
-    @Override
-    public Direction getDirection() {
-        return null;
-    }
-
-    @Override
-    public void setPower(double power) { }
 
     @Override
     public double getPower() {
@@ -588,7 +422,7 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
         return result;
     }
 
-    private synchronized <T> T tryGet(Class<? extends T> classOrInterface, String deviceName){
+    private synchronized <T> T wilyTryGet(Class<? extends T> classOrInterface, String deviceName){
         List<HardwareDevice> list = allDevicesMap.get(deviceName.trim());
         if (list != null) {
             for (HardwareDevice device : list){
@@ -598,15 +432,18 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
         return null;
     }
 
+    public <T> T tryGet(Class<? extends T> classOrInterface, String deviceName) {
+        return get(classOrInterface, deviceName);
+    }
     public <T> T get(Class<? extends T> classOrInterface, String deviceName) {
         if (classOrInterface.equals(IMU.class)) {
             return (T) new WilyIMU();
         }
-        T result = tryGet(classOrInterface, deviceName);
+        T result = wilyTryGet(classOrInterface, deviceName);
         if (result == null) {
             // Wily Works behavior is that we automatically add the device if it's not found:
             put(deviceName, classOrInterface);
-            result = tryGet(classOrInterface, deviceName);
+            result = wilyTryGet(classOrInterface, deviceName);
         }
         return result;
     }

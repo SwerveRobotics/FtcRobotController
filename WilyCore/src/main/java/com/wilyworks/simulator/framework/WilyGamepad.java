@@ -1,5 +1,9 @@
 package com.wilyworks.simulator.framework;
 
+import com.qualcomm.robotcore.util.Range;
+
+import java.util.ArrayList;
+
 /**
  * Wily Works Gamepad implementation that takes input either from a connected gamepad or
  * from the keyboard.
@@ -35,6 +39,14 @@ public class WilyGamepad {
     public volatile boolean options = false;
     public volatile boolean ps = false;
 
+    public volatile boolean touchpad = false;
+    public volatile boolean touchpad_finger_1;
+    public volatile boolean touchpad_finger_2;
+    public volatile float touchpad_finger_1_x;
+    public volatile float touchpad_finger_1_y;
+    public volatile float touchpad_finger_2_x;
+    public volatile float touchpad_finger_2_y;
+
     public WilyGamepad() {
     }
 
@@ -48,4 +60,37 @@ public class WilyGamepad {
         options = start;
         ps = guide;
     }
+
+    public void runRumbleEffect(RumbleEffect effect) { }
+    public void rumble(int durationMs) { }
+    public void rumble(double rumble1, double rumble2, int durationMs) { }
+    public void stopRumble() { }
+    public void rumbleBlips(int count) { }
+
+    public static class RumbleEffect {
+        public static class Step {
+            public int large;
+            public int small;
+            public int duration;
+        }
+
+        public int user;
+        public final ArrayList<Step> steps;
+        private RumbleEffect(ArrayList<Step> steps) {
+            this.steps = steps;
+        }
+        public String serialize() { return ""; }
+        public static RumbleEffect deserialize(String serialized) {
+            return new RumbleEffect(new ArrayList<>());
+        }
+        public static class Builder {
+            public Builder addStep(double rumble1, double rumble2, int durationMs) {
+                return this;
+            }
+            public RumbleEffect build() {
+                return new RumbleEffect(new ArrayList<>());
+            }
+        }
+    }
+
 }

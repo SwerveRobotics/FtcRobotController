@@ -99,4 +99,13 @@ public class Color {
 
         return Color.argb(0xff, red, green, blue);
     }
+
+    public static int parseColor(String colorString) {
+        if ((colorString.length() < 7) || (colorString.charAt(0) != '#'))
+            return 0;
+        int value = (int) Long.parseLong(colorString.substring(1), 16);
+        if (colorString.length() == 7)
+            value |= 0xff000000;
+        return value;
+    }
 }
