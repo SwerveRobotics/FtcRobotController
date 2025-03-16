@@ -683,9 +683,9 @@ class Arm {
 
             if (sloMo) {
                 // Slow down the arm for testing
-                maxSpeed *= 0.2;
-                acceleration *= 0.2;
-                deceleration *= 0.2;
+                maxSpeed *= 0.1;
+                acceleration *= 0.1;
+                deceleration *= 0.1;
             }
             if (joint.id == Id.SHOULDER) {
                 maxSpeed *= 0.5; // Slow down the shoulder as a hack
