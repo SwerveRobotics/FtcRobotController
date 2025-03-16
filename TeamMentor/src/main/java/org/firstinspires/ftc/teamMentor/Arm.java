@@ -771,6 +771,15 @@ class Arm {
                 joints[Id.ELBOW2].setTarget(Math.PI - beta - Math.PI / 2 + alpha) &
                 joints[Id.ELBOW3].setTarget(-Math.PI + (Math.PI / 2 - alpha));
     }
+    boolean wrist(double angle) { // Radians
+        return joints[Id.WRIST].setTarget(angle);
+    }
+    boolean turret(double angle) { // Radians
+        return joints[Id.TURRET].setTarget(angle);
+    }
+    boolean claw(boolean open) {
+        return joints[Id.CLAW].setTarget(open ? Math.toRadians(90) : Math.toRadians(15));
+    }
 }
 
 /**

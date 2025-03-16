@@ -526,7 +526,7 @@ class NumericInput {
     }
 }
 
-@TeleOp(name = "Calibrate", group = "Tuning")
+@TeleOp(name = "MentorBot Calibrator", group = "Tuning")
 public class Calibrate extends LinearOpMode {
     Io io; // Input/output abstraction
 
@@ -551,15 +551,17 @@ public class Calibrate extends LinearOpMode {
     static class Entry {
         final String LOWLIGHT_COLOR = "#808080"; // Grey lowlight color
 
-        String name;
-        String suffix;
+        String name; // Name of the entry (e.g. "Start position")
+        String suffix; // Suffix to show after the value (e.g. "degrees")
+        boolean isAngle; // True if this entry is an angle (as opposed to a position)
         boolean isEnabled; // True if the user can edit this entry
         boolean isEditing; // True if the user is actively editing this entry
         NumericInput inputter;
 
-        Entry(String name, String suffix, NumericInput inputter) {
+        Entry(String name, boolean isAngle, NumericInput inputter) {
             this.name = name;
-            this.suffix = suffix;
+            this.isAngle = isAngle;
+            this.suffix = isAngle ? "\u00b0" : "";
             this.inputter = inputter;
         }
     }
@@ -581,19 +583,19 @@ public class Calibrate extends LinearOpMode {
 
         } else if (screen.state == CalibrateState.INITIALIZE) {
             screen.entries = new Entry[]{
-                    new Entry("Start position", "",
+                    new Entry("Start position", false,
                             new NumericInput(joint, "start", -3, 3, 0, 1)),
-                    new Entry("A position", "",
+                    new Entry("A position", false,
                             new NumericInput(joint, "positionA", -3, 3, 0, 1)),
-                    new Entry("A angle", "\u00b0",
+                    new Entry("A angle", true,
                             new NumericInput(joint, "degreesA", -1, 1, -180, 180)),
-                    new Entry("B position", "",
+                    new Entry("B position", false,
                             new NumericInput(joint, "positionB", -3, 3, 0, 1)),
-                    new Entry("B angle", "\u00b0",
+                    new Entry("B angle", true,
                             new NumericInput(joint, "degreesB", -1, 1, -180, 180)),
-                    new Entry("Minimum position", "",
+                    new Entry("Minimum position", false,
                             new NumericInput(joint, "min", -3, 3, 0, 1)),
-                    new Entry("Maximum position", "",
+                    new Entry("Maximum position", false,
                             new NumericInput(joint, "max", -3, 3, 0, 1))
             };
 
@@ -624,8 +626,6 @@ public class Calibrate extends LinearOpMode {
                 }
             }
         } else if (screen.state == CalibrateState.ENTER_START) {
-            ServoController controller = servo.getController();
-            controller.pwmEnable(); // Apply power to the servo to allow it to be moved by hand
             io.out("Enter the start position for the " + screen.name + " servo:\n");
             io.out("<big><big>&emsp;" + screen.entries[0].inputter.update(gamepad1) + "</big></big>\n");
             io.out("Use the right stick to adjust the value, Dpad to select digit, " +
@@ -663,8 +663,10 @@ public class Calibrate extends LinearOpMode {
                 io.out("\nUse the right stick to adjust the value, Dpad to select digit, " +
                         Io.A + " when done.");
 
-                // Tell the hardware the new position:
-                servo.setPosition(selectedEntry.inputter.getValue());
+                // Tell the hardware the new position, assuming this isn't an angle entry:
+                if (!selectedEntry.isAngle) {
+                    servo.setPosition(selectedEntry.inputter.getValue());
+                }
             } else {
                 io.out("\nDpad to select, " + Io.A + " to edit.");
                 if (io.up()) {
@@ -743,7 +745,7 @@ public class Calibrate extends LinearOpMode {
             if (io.rightBumper())
                 screenIndex = Math.min(screenIndex + 1, screens.length - 1);
 
-            StringBuilder header = new StringBuilder("<small>\u2b9c</small>");
+            StringBuilder header = new StringBuilder(""); // "<small>\u2b9c</small>"
             for (int i = 0; i < screens.length; i++) {
                 if (i == screenIndex) {
                     header.append(String.format("<span style='background: %s;'>", Io.HIGHLIGHT_COLOR));
@@ -755,7 +757,7 @@ public class Calibrate extends LinearOpMode {
                 if (i < screens.length - 1)
                     header.append("<small>|</small>");
             }
-            header.append("<small>\u2b9e</small>\n");
+            header.append("\n"); // "<small>\u2b9e</small>\n"
             telemetry.addLine(header.toString());
 
             // Call the current screen's method
@@ -772,31 +774,29 @@ public class Calibrate extends LinearOpMode {
                 io.out(Io.CRITICAL_ICON + "The calibration file couldn't be found. " +
                         "Please calibrate the arm first.");
             } else {
-                boolean isValid = true;
                 for (int i = 0; i < calibration.jointCalibrations.length; i++) {
                     if (!calibration.jointCalibrations[i].isValid()) {
-                        isValid = false;
                         io.out(Io.CRITICAL_ICON + "The " + Id.DEVICE_NAMES[i] + " joint is missing valid data. " +
                                 "Please calibrate first.");
                     }
                 }
-                if (isValid) {
-                    if (arm == null) {
-                        arm = new Arm(hardwareMap, telemetry);
-                        for (int i = 0; i < arm.joints.length; i++) {
+                if (arm == null) {
+                    arm = new Arm(hardwareMap, telemetry);
+                    for (int i = 0; i < arm.joints.length; i++) {
+                        if (arm.joints[i].servo != null) {
                             ServoController controller = arm.joints[i].servo.getController();
+                            controller.pwmDisable();
                             controller.pwmEnable(); // Apply power to the servo to allow it to be moved by hand
                         }
                     }
-
-                    io.out(Io.CRITICAL_ICON + "WARNING: As soon as you press " + Io.A + ", all servos " +
-                            "will move to their calibrated start positions at the fastest velocity. " +
-                            "Make sure that the arm is already in its start position before proceeding. " +
-                            "\n\n" +
-                            "Press " + Io.A + " to continue, " + Io.GUIDE + " to cancel. ");
-                    if (io.a()) {
-                        return arm;
-                    }
+                }
+                io.out(Io.CRITICAL_ICON + "WARNING: As soon as you press " + Io.A + ", all servos " +
+                        "will move to their calibrated start positions at the fastest velocity. " +
+                        "Make sure that the arm is already in its start position before proceeding. " +
+                        "\n\n" +
+                        "Press " + Io.A + " to continue, " + Io.GUIDE + " to cancel. ");
+                if (io.a()) {
+                    return arm;
                 }
             }
             io.update();
@@ -825,7 +825,7 @@ public class Calibrate extends LinearOpMode {
         double maxDecelSeconds = arm.calibration.maxSpeed / -arm.calibration.deceleration;
 
         Menu.Widget modeWidget = new Menu.ListWidget("Position", 0,
-                new String[]{"High basket", "Pickup", "Start"}, (index, destination) -> {
+                new String[]{"High basket", "Pickup", "Start", "Wrist", "Claw", "Turret"}, (index, destination) -> {
             state.descriptor = destination;
         });
         Menu.Widget maxVelWidget = new Menu.NumericWidget("Max velocity", "s/60\u00b0",
@@ -881,10 +881,26 @@ public class Calibrate extends LinearOpMode {
                 return; // ====>
             }
 
+            Calibration.JointCalibration wristCalibration = arm.joints[Id.WRIST].calibration;
+            Calibration.JointCalibration turretCalibration = arm.joints[Id.TURRET].calibration;
+
             io.out("<b>Tune kinematics</b>\n");
             if (io.gamepad.y) {
                 isMoving = true;
-                arm.home();
+                switch (state.descriptor) {
+                    case "Wrist":
+                        arm.wrist(wristCalibration.positionToRadians(wristCalibration.min));
+                        break;
+                    case "Claw":
+                        arm.claw(false);
+                        break;
+                    case "Turret":
+                        arm.turret(turretCalibration.positionToRadians(turretCalibration.min));
+                        break;
+                    default:
+                        arm.home();
+                        break;
+                }
             } else if (io.gamepad.x) {
                 isMoving = true;
                 switch (state.descriptor) {
@@ -903,6 +919,15 @@ public class Calibrate extends LinearOpMode {
                         }
                         io.out("Distance: %.1f inches, Height: %.1f inches\n", distance, height);
                         arm.pickup(distance, height);
+                        break;
+                    case "Wrist":
+                        arm.wrist(wristCalibration.positionToRadians(wristCalibration.max));
+                        break;
+                    case "Claw":
+                        arm.claw(true);
+                        break;
+                    case "Turret":
+                        arm.turret(turretCalibration.positionToRadians(turretCalibration.max));
                         break;
                 }
             } else if (isMoving) {
