@@ -66,14 +66,14 @@ class Id {
     /////////////////////////////////
     public static final int COUNT = 7;
 
-    static final String[] DEVICE_NAMES = {
-        "turret",   // Id.TURRET
-        "shoulder", // Id.SHOULDER
-        "elbow1",   // Id.ELBOW1
-        "elbow2",   // Id.ELBOW2
-        "elbow3",   // Id.ELBOW3
-        "wrist",    // Id.WRIST
-        "claw"      // Id.CLAW
+    static final String[][] DEVICE_NAMES = {
+        new String[]{"turret"},                 // Id.TURRET
+        new String[]{"shoulderA", "shoulderB"}, // Id.SHOULDER
+        new String[]{"elbow1"},                 // Id.ELBOW1
+        new String[]{"elbow2"},                 // Id.ELBOW2
+        new String[]{"elbow3"},                 // Id.ELBOW3
+        new String[]{"wrist"},                  // Id.WRIST
+        new String[]{"claw"}                    // Id.CLAW
     };
 }
 
@@ -554,7 +554,7 @@ class Arm {
     static class Joint {
         int id; // Joint ID
         Calibration.JointCalibration calibration; // Calibration data for this joint
-        Servo servo; // Servo controlling this joint
+        Servo[] servos; // Servo controlling this joint
         double currentAngle; // Current angle, radians
         double targetAngle; // Target angle, radians
         double currentVelocity; // Current angular velocity, radians per second
@@ -586,7 +586,7 @@ class Arm {
         // Disable the joint while ensuring no divide-by-zeroes or other crashes from invalid
         // calibration data:
         void disable() {
-            servo = null;
+            servos = new Servo[]{}; // Disable this joint by nulling the servos
             calibration.degreesA = -180;
             calibration.degreesB = 180;
             calibration.positionA = 0;
@@ -608,7 +608,7 @@ class Arm {
             if ((position < calibration.min) || (position > calibration.max)) {
                 throw new IllegalArgumentException("Joint position out of range");
             }
-            if (servo != null) {
+            for (Servo servo: servos) {
                 Stats.beginIo();
                 servo.setPosition(position);
                 Stats.endIo();
@@ -638,13 +638,22 @@ class Arm {
         }
 
         for (int id = 0; id < Id.COUNT; id++) {
-            Servo servo = hardwareMap.tryGet(Servo.class, Id.DEVICE_NAMES[id]);
-            if (servo == null) {
-                if (!MecanumDrive.isDevBot)
-                    RobotLog.addGlobalWarningMessage("Missing servo in RC configuration: " + Id.DEVICE_NAMES[id]);
-            }
+            int servoCount = Id.DEVICE_NAMES[id].length;
 
             Joint joint = new Joint();
+            joint.id = id;
+            joint.currentAngle = joint.homeInRadians();
+            joint.targetAngle = joint.homeInRadians();
+            joint.servos = new Servo[servoCount];
+            for (int servoIndex = 0; servoIndex < servoCount; servoIndex++) {
+                joint.servos[servoIndex] = hardwareMap.tryGet(Servo.class, Id.DEVICE_NAMES[id][servoIndex]);
+                if (joint.servos[servoIndex] == null) {
+                    if (!MecanumDrive.isDevBot)
+                        RobotLog.addGlobalWarningMessage("Missing servo in RC configuration: " + Id.DEVICE_NAMES[id][servoIndex]);
+                    joint.servos = new Servo[]{}; // Disable this joint by nulling the servos
+                    break; // ====>
+                }
+            }
             if (calibration.jointCalibrations[id].isValid()) {
                 joint.calibration = calibration.jointCalibrations[id];
             } else {
@@ -652,13 +661,9 @@ class Arm {
                     // Disable the joint if the calibration is invalid and ensure no divide-by-zeroes:
                     RobotLog.addGlobalWarningMessage("Invalid servo calibration: " + Id.DEVICE_NAMES[joint.id]);
 
-                servo = null; // Disable this joint by nulling the servo
+                joint.servos = new Servo[]{}; // Disable this joint by nulling the servos
                 joint.calibration = Calibration.getDefaultCalibration().jointCalibrations[id];
             }
-            joint.id = id;
-            joint.currentAngle = joint.homeInRadians();
-            joint.targetAngle = joint.homeInRadians();
-            joint.servo = servo;
             joints[id] = joint;
         }
     }

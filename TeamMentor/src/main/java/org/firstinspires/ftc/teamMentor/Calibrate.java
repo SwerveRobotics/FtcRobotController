@@ -575,7 +575,7 @@ public class Calibrate extends LinearOpMode {
     // Calibrate a specific joint. This is called within the UI input loop.
     void calibrateJoint(Screen screen, Calibration calibration) {
         Calibration.JointCalibration joint = calibration.jointCalibrations[screen.id];
-        String servoName = Id.DEVICE_NAMES[screen.id];
+        String servoName = Id.DEVICE_NAMES[screen.id][0];
         Servo servo = hardwareMap.tryGet(Servo.class, servoName);
 
         if (servo == null) {
@@ -783,8 +783,8 @@ public class Calibrate extends LinearOpMode {
                 if (arm == null) {
                     arm = new Arm(hardwareMap, telemetry);
                     for (int i = 0; i < arm.joints.length; i++) {
-                        if (arm.joints[i].servo != null) {
-                            ServoController controller = arm.joints[i].servo.getController();
+                        for (Servo servo: arm.joints[i].servos) {
+                            ServoController controller = servo.getController();
                             controller.pwmDisable();
                             controller.pwmEnable(); // Apply power to the servo to allow it to be moved by hand
                         }
