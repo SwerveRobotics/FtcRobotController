@@ -30,8 +30,6 @@ class ArmSpecs {
     static final String CALIBRATION_FILE = "/sdcard/arm_calibration.json";
 
     static final double MAX_SERVO_SPEED = Math.toRadians(60) / 0.17; // Marcel's specs: 60 degrees in 0.17 seconds
-    static final double MIN_REACH = 10.0; // Minimum reach of the arm beyond the front of the robot
-
     static final Point TURRET_OFFSET = new Point(-3, 0); // Relative to robot center
     static final Point SHOULDER_OFFSET = new Point(0, 1.25); // Offset of shoulder relative to turret base
     static final double SEGMENT_WIDTH = 2.5; // Width of the arm segments
@@ -149,7 +147,7 @@ class Calibration {
 
     // Apply an identity fudge to the arm, which means no correction:
     void setDefaultFudges() {
-        minReach = 0;
+        minReach = 10;
         fudges = new Fudge[]{new Fudge(42, 42, 0)};
     }
 
@@ -636,7 +634,8 @@ class Arm {
 
         Calibration loadedCalibration = Calibration.loadFromFile();
         if (WilyWorks.isSimulating) {
-            calibration = Calibration.getDefaultCalibration();
+            // calibration = Calibration.getDefaultCalibration();
+            calibration = loadedCalibration; // @@@
         } else if (loadedCalibration != null) {
             calibration = loadedCalibration;
         } else {
@@ -751,7 +750,7 @@ class Arm {
     }
 
     // Compute the joint angles for a given reach, taking measured fudge factors into account.
-    double[] computeFudgedReach(double distance, double height) {
+    double[] computeCorrectedReach(double distance, double height) {
         Calibration.Fudge lowerFudge = new Calibration.Fudge(0, 0, 0);
         Calibration.Fudge upperFudge = null;
         for (Calibration.Fudge fudge : calibration.fudges) {
@@ -769,7 +768,7 @@ class Arm {
             return null;
         }
 
-        // Interpolate between the two fudge factors:
+        // LERP between the two fudge factors:
         double distanceDelta = upperFudge.measuredDistance - lowerFudge.measuredDistance;
         double correctedDistance = lowerFudge.computedDistance +
                 (upperFudge.computedDistance - lowerFudge.computedDistance) *
@@ -813,7 +812,7 @@ class Arm {
         return done;
     }
     boolean pickup(double distance, double height) {
-        double[] angles = computeFudgedReach(distance, height);
+        double[] angles = computeCorrectedReach(distance, height);
         if (angles == null)
             return true; // An impossible configuration was requested so we're already done
 

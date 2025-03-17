@@ -839,11 +839,12 @@ public class Calibrate extends LinearOpMode {
         int measurement = 0;
         double theoreticalHeight = TARGET_ARM_HEIGHT; // Height to maintain while measuring
         double theoreticalDistance = 0; // Start closest to the robot
-        double minReach = 0;
+        double minMeasuredReach = 0;
+        double minTheoreticalReach = 0;
         double lastTime = System.nanoTime() * 1e-9; // Time of the last measurement
         Distance measuredDistance = new Distance(); // Object to hold the measured distance
 
-        NumericInput inputter = new NumericInput(measuredDistance, "distance", -1, 1, 0, MAX_DISTANCE);
+        NumericInput inputter = new NumericInput(measuredDistance, "distance", -1, 2, 0, MAX_DISTANCE);
         while (opModeIsActive()) {
             double time = System.nanoTime() * 1e-9;
             double deltaT = time - lastTime;
@@ -851,13 +852,17 @@ public class Calibrate extends LinearOpMode {
 
             if (measurement == MEASUREMENT_COUNT) {
                 io.out("Done measuring fudge factors!\n");
-                io.out("Press " + Io.GUIDE + " to save and return to the main menu.");
+                io.out("Press " + Io.A + " to save and return to the main menu, " +
+                        Io.B + " to cancel and discard the results.\n");
                 io.update();
-                if (io.guide()) {
-                    arm.calibration.minReach = minReach;
+                if (io.a()) {
+                    arm.calibration.minReach = minMeasuredReach;
                     arm.calibration.fudges = fudges; // Save the fudge factors
                     arm.calibration.saveToFile(); // Save the resulting calibration
                     return; // ====> Done!
+                }
+                if (io.b()) {
+                    return; // ====> Discard the results and return to the main menu
                 }
             } else {
                 if (io.guide()) {
@@ -876,10 +881,10 @@ public class Calibrate extends LinearOpMode {
                             " robot and enter it using the Dpad and right stick.\n");
                 }
                 io.out("Enter measured distance: <big><big>%s</big></big> inches\n", inputter.update(gamepad1));
-                io.out("Theoretical distance: %.1f\", height: %.1f\"\n", theoreticalDistance, theoreticalHeight);
+                io.out("Theoretical distance: %.2f\", height: %.2f\"\n", theoreticalDistance, theoreticalHeight);
                 io.out("Press " + Io.A + " once touching the floor and the measured distance is entered.");
 
-                theoreticalHeight += gamepad1.right_stick_y * deltaT * EXTENSION_INCHES_PER_SECOND;
+                theoreticalHeight += -gamepad1.left_stick_y * deltaT * EXTENSION_INCHES_PER_SECOND;
                 theoreticalHeight = Math.max(-5, Math.min(theoreticalHeight, 12)); // Clamp height
                 if (measurement == 0) {
                     theoreticalDistance += gamepad1.left_stick_x * deltaT * EXTENSION_INCHES_PER_SECOND;
@@ -890,22 +895,26 @@ public class Calibrate extends LinearOpMode {
                 if (io.a()) {
                     // The very first measurement sets the minimum reach:
                     if (measurement == 0) {
-                        minReach = theoreticalDistance;
+                        minMeasuredReach = measuredDistance.distance;
+                        minTheoreticalReach = theoreticalDistance;
                     }
 
                     // Save the current results:
                     fudges[measurement] = new Calibration.Fudge(
                             measuredDistance.distance,
                             theoreticalDistance,
-                            theoreticalHeight); // @@@ Is this correct?
+                            theoreticalHeight); // If theoretical height is 1", say, then dial 1" to get to true 0"
 
                     // Setup for the next measurement:
                     measurement++;
                     theoreticalHeight = TARGET_ARM_HEIGHT;
-                    theoreticalDistance = minReach
-                            + (measurement * (MAX_DISTANCE - minReach) / (MEASUREMENT_COUNT - 1));
+                    theoreticalDistance = minTheoreticalReach
+                            + (measurement * (MAX_DISTANCE - minTheoreticalReach) / (MEASUREMENT_COUNT - 1));
                     measuredDistance.distance = theoreticalDistance; // Pre-seed
                 }
+                TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+                arm.update(new Pose2d(0, 0, 0), packet.fieldOverlay());
+                MecanumDrive.sendTelemetryPacket(packet);
                 io.update();
             }
         }

@@ -195,7 +195,7 @@ public class ArmTeleOp extends LinearOpMode {
             double newHeight = height + dy * EXTENSION_INCHES_PER_SECOND * dt;
             newHeight = Math.max(0, newHeight); // Don't let the claw dig into the floor
             newDistance = Math.max(0, newDistance);
-            if (Arm.computeTheoreticalReach(newDistance, newHeight) != null) {
+            if (arm.computeCorrectedReach(newDistance, newHeight) != null) {
                 distance = newDistance;
                 height = newHeight;
             }

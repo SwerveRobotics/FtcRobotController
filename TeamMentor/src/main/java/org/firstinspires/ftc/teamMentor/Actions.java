@@ -107,9 +107,9 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
 
         // Compute the target number of inches beyond the robot's edge:
         double xDistance = focusPoint.x - (robotCenter.x + WilyConfig.ROBOT_LENGTH/2);
-        if (xDistance < ArmSpecs.MIN_REACH) {
+        if (xDistance < arm.calibration.minReach) {
             abut = false;
-            robotCenter = new Point(focusPoint.x - ArmSpecs.MIN_REACH - WilyConfig.ROBOT_LENGTH/2 - MIN_X_GAP,
+            robotCenter = new Point(focusPoint.x - arm.calibration.minReach - WilyConfig.ROBOT_LENGTH/2 - MIN_X_GAP,
                     robotCenter.y);
         }
 
