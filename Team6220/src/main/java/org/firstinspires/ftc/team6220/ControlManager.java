@@ -52,7 +52,7 @@ public class ControlManager {
        if(gamepad2.x && !gamepad2.y) {
            armElbowServoPosition = DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER;
            armBaseMotorPosition = DRIFTConstants.ARM_BASE_MOTOR_POSITION_TRANSFER;
-           dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER;
+           dumperServoPosition = DRIFTConstants.DUMPER_SERVO_POSITION_HORIZONTAL;
            clearList(armElbowServoPosition);
            clearList(armBaseMotorPosition);
            clearList(dumperServoPosition);
@@ -145,7 +145,7 @@ public class ControlManager {
     public boolean isTransferring() {
         return armElbowServoPosition == DRIFTConstants.ARM_ELBOW_SERVO_POSITION_TRANSFER
                 && slidesMotorPosition == DRIFTConstants.SLIDES_MOTOR_GROUND_POSITION
-                && dumperServoPosition == DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER
+                //&& dumperServoPosition == DRIFTConstants.DUMPER_SERVO_POSITION_TRANSFER
                 // check if it's running but account for stick drift error (OMG 6220 DRIFT SO ON BRAND YOO)
                 && Math.abs(intakeServoPower) > 0.05;
     }
