@@ -37,11 +37,6 @@ class ArmSpecs {
     static final double SEGMENT_WIDTH = 2.5; // Width of the arm segments
     static final double CLAW_Y_OFFSET = -SEGMENT_WIDTH; // Offset of the claw in y, relative to the shoulder's center
 
-//    static final Point TURRET_OFFSET = new Point(-0, 0);
-//    static final Point SHOULDER_OFFSET = new Point(0, 5);
-//    static final double CLAW_Y_OFFSET = 0;
-//    static final double SEGMENT_WIDTH = 0.00001;
-
     static final double SHOULDER_HEIGHT = 4; // Height of the shoulder joint relative to floor
     static final double SEGMENT_OVERHANG = SEGMENT_WIDTH / 2; // Overhang of the arm segment past the joint
     static final double SEGMENT_LENGTH = 14.0; // Length of an arm segment from joint to joint
@@ -86,7 +81,9 @@ class Calibration {
     double acceleration; // Radians per second squared
     double deceleration; // Radians per second squared (a negative value)
     JointCalibration[] jointCalibrations = new JointCalibration[Id.COUNT]; // Calibration for each joint
+    Fudge[] fudges = new Fudge[]{}; // Measured correction factors, in sorted order of increasing distance
 
+    // Calibration data for each joint:
     static class JointCalibration {
         double start; // Servo position when starting
         double positionA; // Position at location A, [0, 1]
@@ -108,9 +105,6 @@ class Calibration {
             double position0 = positionA - Math.toRadians(degreesA) * deltaPosition / deltaAngle;
             return (position - position0) * deltaAngle / deltaPosition;
         }
-        double sweepAngle() {
-            return Math.abs(positionToRadians(min) - positionToRadians(max));
-        }
         boolean isValid() {
             if ((min >= max) || (min < 0) || (max > 1))
                 return false;
@@ -124,6 +118,17 @@ class Calibration {
                     (degreesB < -180) || (degreesB > 180))
                 return false;
             return true;
+        }
+    }
+    // Measured fudge factor
+    static class Fudge {
+        double measuredDistance; // Actual distance of the arm extension when the fudge was measured
+        double computedDistance; // Theoretical distance of the arm extension when the fudge was measured
+        double heightCorrection; // Correction to add to the requested height
+        Fudge(double measuredDistance, double computedDistance, double heightCorrection) {
+            this.measuredDistance = measuredDistance;
+            this.computedDistance = computedDistance;
+            this.heightCorrection = heightCorrection;
         }
     }
 
@@ -150,6 +155,7 @@ class Calibration {
     static Calibration getDefaultCalibration() {
         Calibration calibration = new Calibration();
         calibration.setDefaultKinematics();
+        calibration.fudges = new Fudge[]{new Fudge(42, 42, 0)};
 
         for (int i = 0; i < Id.COUNT; i++) {
             JointCalibration joint = calibration.jointCalibrations[i];
@@ -642,8 +648,6 @@ class Arm {
 
             Joint joint = new Joint();
             joint.id = id;
-            joint.currentAngle = joint.homeInRadians();
-            joint.targetAngle = joint.homeInRadians();
             joint.servos = new Servo[servoCount];
             for (int servoIndex = 0; servoIndex < servoCount; servoIndex++) {
                 joint.servos[servoIndex] = hardwareMap.tryGet(Servo.class, Id.DEVICE_NAMES[id][servoIndex]);
@@ -664,6 +668,8 @@ class Arm {
                 joint.servos = new Servo[]{}; // Disable this joint by nulling the servos
                 joint.calibration = Calibration.getDefaultCalibration().jointCalibrations[id];
             }
+            joint.currentAngle = joint.homeInRadians();
+            joint.targetAngle = joint.homeInRadians();
             joints[id] = joint;
         }
     }
@@ -719,7 +725,8 @@ class Arm {
         model.update(canvas, pose);
     }
 
-    // Compute the joint angles for a given reach. Returns null if the reach is out of range.
+    // Compute the theoretical joint angles for a given reach. Returns null if the reach is out of
+    // range.
     static double[] computeReach(double distance, double height) {
         // Within this class, height is considered relative to the base of the arm, but
         // user expects the height to be relative to the floor. Adjust the height accordingly:
@@ -734,6 +741,40 @@ class Arm {
         if (Double.isNaN(alpha) || Double.isNaN(beta))
             return null; // ====>
         return new double[] { alpha, beta };
+    }
+
+    // Compute the joint angles for a given reach, taking measured fudge factors into account.
+    double[] fudgedReach(double distance, double height) {
+        Calibration.Fudge lowerFudge = new Calibration.Fudge(0, 0, 0);
+        Calibration.Fudge upperFudge = null;
+        for (Calibration.Fudge fudge : calibration.fudges) {
+            if (fudge.measuredDistance <= distance) {
+                lowerFudge = fudge; // Keep the last fudge factor that is less than or equal to the distance
+            } else {
+                upperFudge = fudge; // The first fudge factor that is greater than the distance
+                break; // Fudge factors are sorted by distance
+            }
+        }
+
+        // The last fudge has to be measured at the full extent of the arm, so if this request
+        // exceeds that, the request is not possible:
+        if (upperFudge == null) {
+            return null;
+        }
+
+        // Interpolate between the two fudge factors:
+        double distanceDelta = upperFudge.measuredDistance - lowerFudge.measuredDistance;
+        double correctedDistance = lowerFudge.computedDistance +
+                (upperFudge.computedDistance - lowerFudge.computedDistance) *
+                (distance - lowerFudge.measuredDistance) / distanceDelta;
+
+        double heightCorrectionDelta = upperFudge.heightCorrection - lowerFudge.heightCorrection;
+        double heightCorrection = lowerFudge.heightCorrection +
+                (heightCorrectionDelta * (distance - lowerFudge.measuredDistance) / distanceDelta);
+        double correctedHeight = height + heightCorrection;
+
+        // Compute the angles based on the corrected distance and height:
+        return computeReach(correctedDistance, correctedHeight);
     }
 
     void halt() {
@@ -765,7 +806,7 @@ class Arm {
         return done;
     }
     boolean pickup(double distance, double height) {
-        double[] angles = Arm.computeReach(distance, height);
+        double[] angles = fudgedReach(distance, height);
         if (angles == null)
             return true; // An impossible configuration was requested so we're already done
 
