@@ -369,17 +369,13 @@ public final class MecanumDrive {
             leftFront.setDirection(DcMotorEx.Direction.REVERSE);
             leftBack.setDirection(DcMotorEx.Direction.REVERSE);
         } else {
-            // TODO: Create the optical tracking object:
-            //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
-
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
             leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
             rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
             rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
-            // TODO: reverse motor directions if needed
             leftBack.setDirection(DcMotorEx.Direction.REVERSE);
-            rightBack.setDirection(DcMotorEx.Direction.REVERSE);
+            leftFront.setDirection(DcMotorEx.Direction.REVERSE);
         }
 
         // TODO: make sure your config has an IMU with this name (can be BNO or BHI)
