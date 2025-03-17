@@ -80,6 +80,7 @@ class Calibration {
     double maxSpeed; // Radians per seconds
     double acceleration; // Radians per second squared
     double deceleration; // Radians per second squared (a negative value)
+    double minReach; // Minimum distance at which the arm can touch the floor, in inches
     JointCalibration[] jointCalibrations = new JointCalibration[Id.COUNT]; // Calibration for each joint
     Fudge[] fudges = new Fudge[]{}; // Measured correction factors, in sorted order of increasing distance
 
@@ -146,6 +147,12 @@ class Calibration {
         deceleration = -maxSpeed / 0.1; // Down to 0 in 0.1 seconds
     }
 
+    // Apply an identity fudge to the arm, which means no correction:
+    void setDefaultFudges() {
+        minReach = 0;
+        fudges = new Fudge[]{new Fudge(42, 42, 0)};
+    }
+
     // Validate the calibration data:
     public boolean isValidKinematics() {
         return (maxSpeed > 0) && (acceleration > 0) && (deceleration < 0);
@@ -155,7 +162,7 @@ class Calibration {
     static Calibration getDefaultCalibration() {
         Calibration calibration = new Calibration();
         calibration.setDefaultKinematics();
-        calibration.fudges = new Fudge[]{new Fudge(42, 42, 0)};
+        calibration.setDefaultFudges();
 
         for (int i = 0; i < Id.COUNT; i++) {
             JointCalibration joint = calibration.jointCalibrations[i];
@@ -663,7 +670,7 @@ class Arm {
             } else {
                 if (!MecanumDrive.isDevBot)
                     // Disable the joint if the calibration is invalid and ensure no divide-by-zeroes:
-                    RobotLog.addGlobalWarningMessage("Invalid servo calibration: " + Id.DEVICE_NAMES[joint.id]);
+                    RobotLog.addGlobalWarningMessage("Invalid servo calibration: " + Id.DEVICE_NAMES[joint.id].toString());
 
                 joint.servos = new Servo[]{}; // Disable this joint by nulling the servos
                 joint.calibration = Calibration.getDefaultCalibration().jointCalibrations[id];
@@ -727,7 +734,7 @@ class Arm {
 
     // Compute the theoretical joint angles for a given reach. Returns null if the reach is out of
     // range.
-    static double[] computeReach(double distance, double height) {
+    static double[] computeTheoreticalReach(double distance, double height) {
         // Within this class, height is considered relative to the base of the arm, but
         // user expects the height to be relative to the floor. Adjust the height accordingly:
         height -= ArmSpecs.SHOULDER_HEIGHT;
@@ -744,7 +751,7 @@ class Arm {
     }
 
     // Compute the joint angles for a given reach, taking measured fudge factors into account.
-    double[] fudgedReach(double distance, double height) {
+    double[] computeFudgedReach(double distance, double height) {
         Calibration.Fudge lowerFudge = new Calibration.Fudge(0, 0, 0);
         Calibration.Fudge upperFudge = null;
         for (Calibration.Fudge fudge : calibration.fudges) {
@@ -774,7 +781,7 @@ class Arm {
         double correctedHeight = height + heightCorrection;
 
         // Compute the angles based on the corrected distance and height:
-        return computeReach(correctedDistance, correctedHeight);
+        return computeTheoreticalReach(correctedDistance, correctedHeight);
     }
 
     void halt() {
@@ -806,7 +813,7 @@ class Arm {
         return done;
     }
     boolean pickup(double distance, double height) {
-        double[] angles = fudgedReach(distance, height);
+        double[] angles = computeFudgedReach(distance, height);
         if (angles == null)
             return true; // An impossible configuration was requested so we're already done
 

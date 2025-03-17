@@ -24,7 +24,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-/**
+/*
  * This package handles MentorBot calibration.
  */
 
@@ -804,6 +804,113 @@ public class Calibrate extends LinearOpMode {
         return null;
     }
 
+    // Structure to hold the distance input:
+    static class Distance {
+        double distance;
+    }
+
+    // Measure the distance and height correction factors for the arm's kinematics.
+    void measureFudge() {
+        final int MEASUREMENT_COUNT = 10; // Number of samples to average
+        final double TARGET_ARM_HEIGHT = 5; // Target arm height above the field, in inches
+        final double MAX_DISTANCE = 42 - WilyConfig.ROBOT_LENGTH/2 + ArmSpecs.TURRET_OFFSET.x;
+        final double EXTENSION_INCHES_PER_SECOND = 5; // Arm movement speed for direct user control
+
+        Arm arm = initializeArm();
+        if (arm == null)
+            return; // ====> Abort tuning
+
+        while (opModeIsActive()) {
+            io.out("This will measure new fudge factors for the arm's kinematics.\n");
+            io.out(Io.WARNING_ICON + "WARNING: Pressing " + Io.A + " will reset the existing " +
+                    "fudge factors!\n");
+            io.out("Press " + Io.A + " to continue, " + Io.GUIDE + " to cancel.");
+            io.update();
+
+            if (io.guide())
+                return; // ====>
+            if (io.a()) {
+                arm.calibration.setDefaultFudges();
+                break; // ====>
+            }
+        }
+
+        Calibration.Fudge[] fudges = new Calibration.Fudge[MEASUREMENT_COUNT];
+        int measurement = 0;
+        double theoreticalHeight = TARGET_ARM_HEIGHT; // Height to maintain while measuring
+        double theoreticalDistance = 0; // Start closest to the robot
+        double minReach = 0;
+        double lastTime = System.nanoTime() * 1e-9; // Time of the last measurement
+        Distance measuredDistance = new Distance(); // Object to hold the measured distance
+
+        NumericInput inputter = new NumericInput(measuredDistance, "distance", -1, 1, 0, MAX_DISTANCE);
+        while (opModeIsActive()) {
+            double time = System.nanoTime() * 1e-9;
+            double deltaT = time - lastTime;
+            lastTime = time;
+
+            if (measurement == MEASUREMENT_COUNT) {
+                io.out("Done measuring fudge factors!\n");
+                io.out("Press " + Io.GUIDE + " to save and return to the main menu.");
+                io.update();
+                if (io.guide()) {
+                    arm.calibration.minReach = minReach;
+                    arm.calibration.fudges = fudges; // Save the fudge factors
+                    arm.calibration.saveToFile(); // Save the resulting calibration
+                    return; // ====> Done!
+                }
+            } else {
+                if (io.guide()) {
+                    // Don't save the calibration if the user cancels before the final measurement:
+                    return; // ====>
+                }
+                if (measurement == 0) {
+                    io.out("Use the left stick to adjust the arm so that it touches " +
+                            "the floor at the closest point to the robot. Measure the distance " +
+                            "from the front of the robot and enter it using the Dpad and right " +
+                            "stick.\n");
+                } else {
+                    io.out("Fudge measurement %d of %d\n", measurement + 1, MEASUREMENT_COUNT);
+                    io.out("Use the left stick to adjust the arm's height so that it " +
+                            "touches the floor. Measure the distance from the front of the " +
+                            " robot and enter it using the Dpad and right stick.\n");
+                }
+                io.out("Enter measured distance: <big><big>%s</big></big> inches\n", inputter.update(gamepad1));
+                io.out("Theoretical distance: %.1f\", height: %.1f\"\n", theoreticalDistance, theoreticalHeight);
+                io.out("Press " + Io.A + " once touching the floor and the measured distance is entered.");
+
+                theoreticalHeight += gamepad1.right_stick_y * deltaT * EXTENSION_INCHES_PER_SECOND;
+                theoreticalHeight = Math.max(-5, Math.min(theoreticalHeight, 12)); // Clamp height
+                if (measurement == 0) {
+                    theoreticalDistance += gamepad1.left_stick_x * deltaT * EXTENSION_INCHES_PER_SECOND;
+                    theoreticalDistance = Math.max(0, Math.min(theoreticalDistance, MAX_DISTANCE)); // Clamp distance
+                }
+                arm.pickup(theoreticalDistance, theoreticalHeight); // Move the arm to the requested position
+
+                if (io.a()) {
+                    // The very first measurement sets the minimum reach:
+                    if (measurement == 0) {
+                        minReach = theoreticalDistance;
+                    }
+
+                    // Save the current results:
+                    fudges[measurement] = new Calibration.Fudge(
+                            measuredDistance.distance,
+                            theoreticalDistance,
+                            theoreticalHeight); // @@@ Is this correct?
+
+                    // Setup for the next measurement:
+                    measurement++;
+                    theoreticalHeight = TARGET_ARM_HEIGHT;
+                    theoreticalDistance = minReach
+                            + (measurement * (MAX_DISTANCE - minReach) / (MEASUREMENT_COUNT - 1));
+                    measuredDistance.distance = theoreticalDistance; // Pre-seed
+                }
+                io.update();
+            }
+        }
+    }
+
     // Tune the velocity and acceleration of the arm while testing the motion.
     void tuneKinematics() {
         final double EXTENSION_INCHES_PER_SECOND = 20; // Claw movement speed for direct user control
@@ -913,7 +1020,7 @@ public class Calibrate extends LinearOpMode {
                     case "Pickup":
                         double newDistance = distance + io.gamepad.left_stick_x * EXTENSION_INCHES_PER_SECOND * deltaT;
                         double newHeight = height - io.gamepad.left_stick_y * EXTENSION_INCHES_PER_SECOND * deltaT;
-                        if (arm.computeReach(newDistance, newHeight) != null) {
+                        if (Arm.computeTheoreticalReach(newDistance, newHeight) != null) {
                             distance = newDistance;
                             height = newHeight;
                         }
@@ -1037,11 +1144,6 @@ public class Calibrate extends LinearOpMode {
     public void runOpMode() {
         io = new Io(telemetry, gamepad1);
 
-        TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
-        packet.put("MentorBot", "Calibrator");
-        packet.addLine("See, this works@@@!!!!!!!!!");
-        MecanumDrive.sendTelemetryPacket(packet);
-
         telemetry.addLine("MentorBot calibrator is ready to start!");
         telemetry.update();
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
@@ -1049,7 +1151,7 @@ public class Calibrate extends LinearOpMode {
         Menu menu = new Menu(io);
         menu.add(new Menu.RunWidget("Calibrate arm joints", this::calibrateJoints));
         menu.add(new Menu.RunWidget("Tune arm kinematics", this::tuneKinematics));
-        menu.add(new Menu.RunWidget("Adjust arm fudge factors", () -> {}));
+        menu.add(new Menu.RunWidget("Adjust arm fudge factors", this::measureFudge));
         menu.add(new Menu.RunWidget("Tune localization", this::tuneLocalization));
 
         waitForStart();
