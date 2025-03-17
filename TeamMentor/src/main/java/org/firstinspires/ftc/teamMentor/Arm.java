@@ -669,7 +669,7 @@ class Arm {
             } else {
                 if (!MecanumDrive.isDevBot)
                     // Disable the joint if the calibration is invalid and ensure no divide-by-zeroes:
-                    RobotLog.addGlobalWarningMessage("Invalid servo calibration: " + Id.DEVICE_NAMES[joint.id].toString());
+                    RobotLog.addGlobalWarningMessage("Invalid servo calibration: " + Id.DEVICE_NAMES[joint.id][0]);
 
                 joint.servos = new Servo[]{}; // Disable this joint by nulling the servos
                 joint.calibration = Calibration.getDefaultCalibration().jointCalibrations[id];

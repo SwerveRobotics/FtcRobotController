@@ -275,7 +275,7 @@ public class Poser {
                     (Double.isNaN(poseVelocity.linearVel.x) || Double.isNaN(poseVelocity.linearVel.y) ||
                             Double.isNaN(poseVelocity.angVel))) {
 
-                System.out.printf("PinPoint NaN! pose: %s, velocity: %s", odometryPose, poseVelocity);
+                System.out.printf("PinPoint NaN! pose: %s, velocity: %s\n", odometryPose, poseVelocity);
                 throw new RuntimeException("PinPoint NaN!");
             }
         } else if (otosDriver != null) {

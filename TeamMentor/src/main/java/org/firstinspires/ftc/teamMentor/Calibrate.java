@@ -15,10 +15,14 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoController;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamMentor.roadrunner.MecanumDrive;
+import org.swerverobotics.ftc.GoBildaPinpointDriver;
+import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -538,6 +542,7 @@ public class Calibrate extends LinearOpMode {
         String anglesDescription; // Description of the angles convention for this joint
         int id; // Joint ID
         int state; // Finite state machine state
+        Servo[] servos; // Array of servos for this joint
         BiConsumer<Screen, Calibration> method;
         Screen(String name, int id, BiConsumer<Screen, Calibration> method, String description) {
             this.name = name;
@@ -575,12 +580,15 @@ public class Calibrate extends LinearOpMode {
     // Calibrate a specific joint. This is called within the UI input loop.
     void calibrateJoint(Screen screen, Calibration calibration) {
         Calibration.JointCalibration joint = calibration.jointCalibrations[screen.id];
-        String servoName = Id.DEVICE_NAMES[screen.id][0];
-        Servo servo = hardwareMap.tryGet(Servo.class, servoName);
 
-        if (servo == null) {
-            io.out(Io.CRITICAL_ICON + "The servo '" + servoName + "' couldn't be found in the robot's Configuration.");
-
+        // If either servo is null, we can't calibrate this joint:
+        if (Arrays.stream(screen.servos).anyMatch(servo -> servo == null)) {
+            for (int i = 0; i < screen.servos.length; i++) {
+                if (screen.servos[i] == null) {
+                    String servoName = Id.DEVICE_NAMES[screen.id][i];
+                    io.out(Io.CRITICAL_ICON + "The servo '" + servoName + "' couldn't be found in the robot's Configuration.");
+                }
+            }
         } else if (screen.state == CalibrateState.INITIALIZE) {
             screen.entries = new Entry[]{
                     new Entry("Start position", false,
@@ -637,7 +645,7 @@ public class Calibrate extends LinearOpMode {
             }
         } else if (screen.state == CalibrateState.ENTER_ALL) {
             io.out(screen.anglesDescription + " Servo's current angle according to calibration: %.1f\u00b0.\n",
-                Math.toDegrees(joint.positionToRadians(servo.getPosition())));
+                Math.toDegrees(joint.positionToRadians(screen.servos[0].getPosition())));
 
             for (int i = 0; i < screen.entries.length; i++) {
                 Entry entry = screen.entries[i];
@@ -665,7 +673,9 @@ public class Calibrate extends LinearOpMode {
 
                 // Tell the hardware the new position, assuming this isn't an angle entry:
                 if (!selectedEntry.isAngle) {
-                    servo.setPosition(selectedEntry.inputter.getValue());
+                    for (Servo servo: screen.servos) {
+                        servo.setPosition(selectedEntry.inputter.getValue());
+                    }
                 }
             } else {
                 io.out("\nDpad to select, " + Io.A + " to edit.");
@@ -736,6 +746,14 @@ public class Calibrate extends LinearOpMode {
 
         int screenIndex = 0; // Index of the current screen
 
+        // Initialize the servo objects for each screen:
+        for (Screen screen: screens) {
+            screen.servos = new Servo[Id.DEVICE_NAMES[screen.id].length];
+            for (int i = 0; i < screen.servos.length; i++) {
+                screen.servos[i] = hardwareMap.tryGet(Servo.class, Id.DEVICE_NAMES[screen.id][i]);
+            }
+        }
+
         while (opModeIsActive()) {
             // Handle the UI:
             if (io.guide())
@@ -776,7 +794,7 @@ public class Calibrate extends LinearOpMode {
             } else {
                 for (int i = 0; i < calibration.jointCalibrations.length; i++) {
                     if (!calibration.jointCalibrations[i].isValid()) {
-                        io.out(Io.CRITICAL_ICON + "The " + Id.DEVICE_NAMES[i] + " joint is missing valid data. " +
+                        io.out(Io.CRITICAL_ICON + "The " + Id.DEVICE_NAMES[i][0] + " joint is missing valid data. " +
                                 "Please calibrate first.");
                     }
                 }
@@ -1068,6 +1086,29 @@ public class Calibrate extends LinearOpMode {
         return (Math.pow(input, 3) + input) / 2;
     }
 
+    // Show the raw input from the localization sensors.
+    void testLocalizationSensors() {
+        GoBildaPinpointDriver pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        UltrasonicDistanceSensor[] ultrasonics = new UltrasonicDistanceSensor[Poser.ultrasonics.length];
+        for (int i = 0; i < Poser.ultrasonics.length; i++) {
+            ultrasonics[i] = hardwareMap.tryGet(UltrasonicDistanceSensor.class, Poser.ultrasonics[i].name);
+        }
+        while (opModeIsActive()) {
+            for (int i = 0; i < Poser.ultrasonics.length; i++) {
+                if (ultrasonics[i] == null) {
+                    telemetry.addLine("Ultrasonic sensor not found: " + Poser.ultrasonics[i].name);
+                } else {
+                    double distance = ultrasonics[i].getDistance(DistanceUnit.INCH);
+                    telemetry.addLine(String.format("%s: %.1f inches", Poser.ultrasonics[i].name, distance));
+                }
+            }
+            telemetry.update();
+            if (io.guide()) {
+                return; // ====>
+            }
+        }
+    }
+
     // Measure fudge factors for the ultrasonic sensors and locations on the field, all determined
     // by starting the robot in a corner with a repeatable known pose.
     void tuneLocalization() {
@@ -1161,6 +1202,7 @@ public class Calibrate extends LinearOpMode {
         menu.add(new Menu.RunWidget("Calibrate arm joints", this::calibrateJoints));
         menu.add(new Menu.RunWidget("Tune arm kinematics", this::tuneKinematics));
         menu.add(new Menu.RunWidget("Adjust arm fudge factors", this::measureFudge));
+        menu.add(new Menu.RunWidget("Test localization sensors", this::testLocalizationSensors));
         menu.add(new Menu.RunWidget("Tune localization", this::tuneLocalization));
 
         waitForStart();
