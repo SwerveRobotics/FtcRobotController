@@ -633,6 +633,9 @@ class Arm {
 
             Joint joint = new Joint();
             joint.id = id;
+
+            // Instantiate the servos for this joint. If any are missing from the Configuration,
+            // disable the joint.
             joint.servos = new Servo[servoCount];
             for (int servoIndex = 0; servoIndex < servoCount; servoIndex++) {
                 joint.servos[servoIndex] = hardwareMap.tryGet(Servo.class, Id.DEVICE_NAMES[id][servoIndex]);
@@ -643,6 +646,9 @@ class Arm {
                     break; // ====>
                 }
             }
+
+            // If the calibration data is valid, use it. Otherwise, disable the joint and use
+            // a default calibration so as not to crash.
             if (calibration.jointCalibrations[id].isValid()) {
                 joint.calibration = calibration.jointCalibrations[id];
             } else {
@@ -653,7 +659,15 @@ class Arm {
                 joint.servos = new Servo[]{}; // Disable this joint by nulling the servos
                 joint.calibration = Calibration.getDefaultCalibration().jointCalibrations[id];
             }
-            joint.currentAngle = joint.homeInRadians();
+
+            // Get the initial angle of the joint from the servo itself. This is useful only
+            // when running a new OpMode after a previous OpMode, to inherit the positions.
+            if (joint.servos.length != 0) {
+                joint.currentAngle = joint.positionToRadians(joint.servos[0].getPosition());
+            } else {
+                joint.currentAngle = joint.homeInRadians();
+            }
+
             joint.targetAngle = joint.homeInRadians();
             joints[id] = joint;
         }
