@@ -835,7 +835,7 @@ public class Calibrate extends LinearOpMode {
     void measureFudge() {
         final int MEASUREMENT_COUNT = 10; // Number of samples to average
         final double TARGET_ARM_HEIGHT = 5; // Target arm height above the field, in inches
-        final double MAX_DISTANCE = 42 - WilyConfig.ROBOT_LENGTH/2 + Specs.Arm.TURRET_OFFSET.x;
+        final double MAX_DISTANCE = 42 - Specs.Robot.LENGTH/2 + Specs.Arm.TURRET_OFFSET.x;
         final double EXTENSION_INCHES_PER_SECOND = 5; // Arm movement speed for direct user control
 
         Arm arm = initializeArm();
@@ -1126,14 +1126,14 @@ public class Calibrate extends LinearOpMode {
         double lastUpdateTime = 0;
         String positionPrompt = "Position the robot in the human corner, facing TOWARDS the basket.\n";
         Pose2d startPose = new Pose2d(
-                72 - WilyConfig.ROBOT_LENGTH/2,
-                -72 + WilyConfig.ROBOT_WIDTH/2,
+                72 - Specs.Robot.LENGTH/2,
+                -72 + Specs.Robot.WIDTH/2,
                 Math.toRadians(180));
         if (MecanumDrive.isDevBot) {
             positionPrompt = "Position the robot in the human corner, facing AWAY FROM the basket.\n";
             startPose = new Pose2d(
-                    72 - WilyConfig.ROBOT_LENGTH/2,
-                    -72 - WilyConfig.ROBOT_WIDTH/2,
+                    72 - Specs.Robot.LENGTH/2,
+                    -72 - Specs.Robot.WIDTH/2,
                     0);
         }
 
@@ -1161,7 +1161,7 @@ public class Calibrate extends LinearOpMode {
                         poser.odometryPose.position.y,
                         Math.toDegrees(poser.odometryPose.heading.log()));
                 io.out("FieldSpecs.ABUTMENT_X if abutting (should be ~-15.5): %.2f\n",
-                        -poser.odometryPose.position.x + WilyConfig.ROBOT_LENGTH/2);
+                        -poser.odometryPose.position.x + Specs.Robot.LENGTH/2);
                 io.out("Drive the robot to face the corner to tune ultrasonic fudges.\n");
 
                 double time = System.nanoTime() * 1e-9;

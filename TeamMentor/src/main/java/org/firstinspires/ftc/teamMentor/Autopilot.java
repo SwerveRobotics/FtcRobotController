@@ -337,7 +337,7 @@ class Autopilot {
             }
         } else {
             // X value of the robot center if it's abutting the submersible wall:
-            double abutmentX = Specs.Field.ABUTMENT_X - WilyConfig.ROBOT_LENGTH / 2;
+            double abutmentX = Specs.Field.ABUTMENT_X - Specs.Robot.LENGTH / 2;
 
             // Wily Works doesn't support wall collisions properly yet, so just hack it here:
             if (WilyWorks.isSimulating) {
@@ -515,10 +515,10 @@ class Autopilot {
     public boolean update(Canvas canvas, Vector2d userInput) {
         Bounds bounds = new Bounds(); // Consider deprecating?
         double fudge = 1;
-        bounds.xMin = -WilyConfig.ROBOT_LENGTH/2 - fudge;
-        bounds.xMax = WilyConfig.ROBOT_LENGTH/2 + fudge;
-        bounds.yMin = -WilyConfig.ROBOT_WIDTH/2 - fudge;
-        bounds.yMax = WilyConfig.ROBOT_WIDTH/2 + fudge;
+        bounds.xMin = -Specs.Robot.LENGTH/2 - fudge;
+        bounds.xMax = Specs.Robot.LENGTH/2 + fudge;
+        bounds.yMin = -Specs.Robot.WIDTH/2 - fudge;
+        bounds.yMax = Specs.Robot.WIDTH/2 + fudge;
 
         // The close-enough threshold accommodates for epsilon errors when the final target is
         // very close to a boundary.

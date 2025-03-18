@@ -509,8 +509,8 @@ public class Poser {
     // Do the debug drawing for the robot's pose and the ultrasonic beams.
     public void draw(Canvas canvas) {
         // Draw the overhead view of the robot chassis:
-        double cx = WilyConfig.ROBOT_WIDTH/2;
-        double cy = WilyConfig.ROBOT_LENGTH/2;
+        double cx = Specs.Robot.WIDTH/2;
+        double cy = Specs.Robot.LENGTH/2;
         double[] robotPoints = new double[]{-cx, cy, cx, cy, cx, -cy, -cx, -cy, -cx, cy};
 
         // Check for annoying NaNs that hang FTC Dashboard:

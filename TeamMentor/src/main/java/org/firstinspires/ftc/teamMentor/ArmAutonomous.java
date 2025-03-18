@@ -17,8 +17,8 @@ import org.firstinspires.ftc.teamMentor.roadrunner.MecanumDrive;
 public class ArmAutonomous extends LinearOpMode {
     @Override
     public void runOpMode() {
-        Pose2d startPose = new Pose2d(-48 + WilyConfig.ROBOT_LENGTH / 2,
-                -72 + WilyConfig.ROBOT_WIDTH / 2,
+        Pose2d startPose = new Pose2d(-48 + Specs.Robot.LENGTH / 2,
+                -72 + Specs.Robot.WIDTH / 2,
                 Math.PI);
         Poser poser = Poser.getPoser(hardwareMap, telemetry, gamepad1, startPose);
         MecanumDrive drive = new MecanumDrive(hardwareMap, poser, telemetry, gamepad1);

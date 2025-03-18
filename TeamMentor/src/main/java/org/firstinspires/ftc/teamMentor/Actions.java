@@ -88,7 +88,7 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
     // Set the target pose for the robot so that it can reach to the submersible's (x, y)
     // focus point specified by the user. Returns the arm length to the focus point.
     double[] setTargetPose() {
-        final double X_ABUTTING = Specs.Field.SUBMERSIBLE_X - WilyConfig.ROBOT_LENGTH/2; // Robot's x when abutting
+        final double X_ABUTTING = Specs.Field.SUBMERSIBLE_X - Specs.Robot.LENGTH/2; // Robot's x when abutting
         final double MIN_X_GAP = 3; // When not abutting, minimum x gap between the robot and the submersible
         final double MIN_Y_GAP = 3; // Minimum y gap between the robot and the submersible
 
@@ -106,10 +106,10 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
                 focusPoint.y - Specs.Arm.TURRET_OFFSET.y - Specs.Arm.SHOULDER_OFFSET.y - Specs.Arm.CLAW_Y_OFFSET);
 
         // Compute the target number of inches beyond the robot's edge:
-        double xDistance = focusPoint.x - (robotCenter.x + WilyConfig.ROBOT_LENGTH/2);
+        double xDistance = focusPoint.x - (robotCenter.x + Specs.Robot.LENGTH/2);
         if (xDistance < arm.calibration.minReach) {
             abut = false;
-            robotCenter = new Point(focusPoint.x - arm.calibration.minReach - WilyConfig.ROBOT_LENGTH/2 - MIN_X_GAP,
+            robotCenter = new Point(focusPoint.x - arm.calibration.minReach - Specs.Robot.LENGTH/2 - MIN_X_GAP,
                     robotCenter.y);
         }
 
@@ -124,7 +124,7 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
         }
 
         // Check if the turret needs to rotate to reach the focus point:
-        double rotateLine = Specs.Field.SUBMERSIBLE_Y - MIN_Y_GAP - WilyConfig.ROBOT_WIDTH/2;
+        double rotateLine = Specs.Field.SUBMERSIBLE_Y - MIN_Y_GAP - Specs.Robot.WIDTH/2;
         if (robotCenter.y > rotateLine) {
             robotCenter = new Point(robotCenter.x, rotateLine);
 
@@ -140,7 +140,7 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
                 abut = false; // The robot has to rotate so we can't abut
 
                 // We have to turn, so make sure we're not too close to the submersible wall:
-                double maxX = Specs.Field.SUBMERSIBLE_X - WilyConfig.ROBOT_LENGTH/2 - MIN_X_GAP;
+                double maxX = Specs.Field.SUBMERSIBLE_X - Specs.Robot.LENGTH/2 - MIN_X_GAP;
                 if (robotCenter.x > maxX) {
                     robotCenter = new Point(maxX, robotCenter.y);
                 }

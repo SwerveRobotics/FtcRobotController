@@ -1,6 +1,35 @@
 package org.firstinspires.ftc.teamMentor;
 
+import android.util.Log;
+
+import org.firstinspires.inspection.InspectionState;
+
 public class Specs {
+    // Get the robot's SSID name:
+    public static String getBotName() {
+        InspectionState inspection=new InspectionState();
+        inspection.initializeLocal();
+        Log.d("roadrunner", String.format("Device name:" + inspection.deviceName));
+        return inspection.deviceName;
+    }
+
+    // Return true if running on the devbot; false if running on the competition bot:
+    public static boolean isDevBot = getBotName().equals("DevBot");
+
+    /**
+     * Robot constants.
+     */
+    static class Robot {
+        static final double DEVBOT_WIDTH = 18.25; // Inches
+        static final double DEVBOT_LENGTH = 17.5; // Inches
+
+        static final double MENTORBOT_WIDTH = 15.5; // Inches
+        static final double MENTORBOT_LENGTH = 14; // Inches
+
+        static final double WIDTH = isDevBot ? DEVBOT_WIDTH : MENTORBOT_WIDTH;
+        static final double LENGTH = isDevBot ? DEVBOT_LENGTH : MENTORBOT_LENGTH;
+    }
+
     /**
      * Arm constants.
      */

@@ -126,7 +126,7 @@ public class ArmTeleOp extends LinearOpMode {
             // While the guide button is held, show the error of the pose estimate:
             if (gamepad1.guide) {
                 // The robot's x value when it's abutted to the submersible, facing in:
-                final double xSubmersible = -16 - WilyConfig.ROBOT_LENGTH/2;
+                final double xSubmersible = -16 - Specs.Robot.LENGTH/2;
                 Pose2d pose = poser.getPose();
                 if (poser.getConfidence() == Poser.Confidence.HIGH) {
                     telemetry.addLine("Pose error, assuming robot is abutted to the submersible:");

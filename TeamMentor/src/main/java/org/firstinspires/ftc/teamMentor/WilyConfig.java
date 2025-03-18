@@ -10,18 +10,13 @@ import com.wilyworks.common.WilyWorks;
  */
 @Wily
 public class WilyConfig extends WilyWorks.Config {
-//    public static final double ROBOT_WIDTH = 13; // Inches
-//    public static final double ROBOT_LENGTH = 13; // Inches
-    public static final double ROBOT_WIDTH = 18.25; // Inches
-    public static final double ROBOT_LENGTH = 17.5; // Inches
-
     WilyConfig() {
-        // Impersonate the DevBot when running the simulator:
-        deviceName = "DevBot";
+        // Impersonate this robot when running the simulator:
+        deviceName = "99866-RC";
 
         // Use these dimensions for the robot:
-        robotWidth = ROBOT_WIDTH; // Inches
-        robotLength = ROBOT_LENGTH; // Inches
+        robotWidth = Specs.Robot.MENTORBOT_WIDTH; // Inches
+        robotLength = Specs.Robot.MENTORBOT_LENGTH; // Inches
 
         // Register where the LED indicators are on the robot:
         ledIndicators = new LEDIndicator[]{

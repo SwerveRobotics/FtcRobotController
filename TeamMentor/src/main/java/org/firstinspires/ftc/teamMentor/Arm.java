@@ -362,7 +362,7 @@ class Model {
     // Draw the bits that go on top of the arm
     void drawForeground(Canvas topCanvas, Canvas sideCanvas) {
         // The chassis side view:
-        double halfLength = WilyConfig.ROBOT_LENGTH / 2;
+        double halfLength = Specs.Robot.LENGTH / 2;
         double[] chassis = new double[]{-halfLength, 2.8,  halfLength, 2.8,  halfLength, 0.9,  -halfLength, 0.9,  -halfLength, 2.8};
         sideCanvas.setFill("#c0c0c0");
         sideCanvas.fillPolygon(Xform.getX(chassis), Xform.getY(chassis));
