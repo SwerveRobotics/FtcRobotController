@@ -292,7 +292,7 @@ class Autopilot {
 
         // Remember that volts = Ks*signum(vel) + Kv*vel + Ka*accel
         double batteryVoltage = WilyWorks.isSimulating ? 13 : drive.getVoltage();
-        double fullVoltageSpeed = (batteryVoltage - PARAMS.kS) / PARAMS.kV; // Assume no acceleration
+        double fullVoltageSpeed = (PARAMS.kS == 0) ? 60 : (batteryVoltage - PARAMS.kS) / PARAMS.kV; // Assume no acceleration
 
         double time = System.nanoTime() * 1e-9;
         double deltaT = time - previousTime;
@@ -479,6 +479,16 @@ class Autopilot {
                 (1 - blendFactor) * autoVelocity.linearVel.x + (blendFactor) * userFieldOrientedVelocity.x,
                 (1 - blendFactor) * autoVelocity.linearVel.y + (blendFactor) * userFieldOrientedVelocity.y),
                 autoVelocity.angVel);
+
+        if (Double.isNaN(drive.pose.position.x) ||
+                Double.isNaN(drive.pose.position.y) ||
+                Double.isNaN(drive.pose.heading.log()) ||
+                Double.isNaN(blendedVelocity.linearVel.x) ||
+                Double.isNaN(blendedVelocity.linearVel.y) ||
+                Double.isNaN(blendedVelocity.angVel)) {
+
+            throw new IllegalStateException("NaN detected in pose or velocity");
+        }
 
         drive.setDrivePowers(drive.pose, drive.poseVelocity, null, blendedVelocity);
 

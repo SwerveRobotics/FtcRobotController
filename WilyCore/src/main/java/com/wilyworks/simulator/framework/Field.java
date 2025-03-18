@@ -142,9 +142,10 @@ public class Field {
         g.setColor(Color.RED);
         setAlpha(g, 0.5);
 
+        // Remember, x-axis torward the front of the robot:
         g.draw(new Rectangle2D.Double(
-                -WilyCore.config.robotWidth / 2.0, -WilyCore.config.robotLength / 2.0,
-                WilyCore.config.robotWidth, WilyCore.config.robotLength));
+                -WilyCore.config.robotLength / 2.0, -WilyCore.config.robotWidth / 2.0,
+                WilyCore.config.robotLength, WilyCore.config.robotWidth));
 
         // Restore the graphics state:
         setAlpha(g, 1.0);
