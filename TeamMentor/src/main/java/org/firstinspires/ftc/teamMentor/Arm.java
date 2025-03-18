@@ -783,12 +783,14 @@ class Arm {
         joints[Id.ELBOW3].targetAngle = joints[Id.ELBOW3].currentAngle;
     }
     boolean start() {
+        // Note that bitwise AND is used to ensure all joints are set before returning.
         return joints[Id.SHOULDER].setTarget(joints[Id.SHOULDER].homeInRadians()) &
                 joints[Id.ELBOW1].setTarget(joints[Id.ELBOW1].homeInRadians()) &
                 joints[Id.ELBOW2].setTarget(joints[Id.ELBOW2].homeInRadians()) &
                 joints[Id.ELBOW3].setTarget(joints[Id.ELBOW3].homeInRadians());
     }
     boolean home() {
+        // Note that bitwise AND is used to ensure all joints are set before returning.
         return joints[Id.SHOULDER].setTarget(Math.toRadians(90)) &
                 joints[Id.ELBOW1].setTarget(Math.toRadians(-170)) &
                 joints[Id.ELBOW2].setTarget(Math.toRadians(170)) &
@@ -798,6 +800,7 @@ class Arm {
         boolean done = joints[Id.SHOULDER].setTarget(Math.toRadians(70));
         // Only once the shoulder is in position do we move the elbows:
         if (done) {
+            // Note that bitwise AND is used to ensure all joints are set before returning.
             done = joints[Id.ELBOW1].setTarget(Math.toRadians(0)) &
                     joints[Id.ELBOW2].setTarget(Math.toRadians(0)) &
                     joints[Id.ELBOW3].setTarget(Math.toRadians(-70));
@@ -944,7 +947,6 @@ class ReachAction extends RobotAction {
         if (thisInstance != activeInstance)
             return false; // This action has been superseded by another
 
-        // Note that bitwise AND is used to ensure all joints are set before returning.
         boolean done = false;
         if (state == State.HOME) {
             arm.model.setPickupTarget(0, 0);
