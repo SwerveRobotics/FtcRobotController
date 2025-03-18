@@ -26,8 +26,8 @@ public class WilyConfig extends WilyWorks.Config {
 
         // Register where the distance sensors are on the robot:
         distanceSensors = new DistanceSensor[]{
-            new DistanceSensor(Poser.ultrasonics[0].name, Poser.ultrasonics[0].x, Poser.ultrasonics[0].y, Poser.ultrasonics[0].orientation),
-            new DistanceSensor(Poser.ultrasonics[1].name, Poser.ultrasonics[1].x, Poser.ultrasonics[1].y, Poser.ultrasonics[1].orientation),
+            new DistanceSensor(Poser.mentorBotUltrasonics[0].name, Poser.mentorBotUltrasonics[0].x, Poser.mentorBotUltrasonics[0].y, Poser.mentorBotUltrasonics[0].orientation),
+            new DistanceSensor(Poser.mentorBotUltrasonics[1].name, Poser.mentorBotUltrasonics[1].x, Poser.mentorBotUltrasonics[1].y, Poser.mentorBotUltrasonics[1].orientation),
         };
     }
 }

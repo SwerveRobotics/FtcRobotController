@@ -52,10 +52,19 @@ public class Poser {
     final double MAX_SMOOTHING_VELOCITY = 12; // Smoothing velocity to prevent sudden jumps, inches per second
     final double DISABLE_ULTRASONICS_DISTANCE = 12; // When less than this distance from the target, disable ultrasonic corrections
 
-    public static Ultrasonic[] ultrasonics = { // Ultrasonic sensors
+    public static Ultrasonic[] devBotUltrasonics = { // DevBot
             new Ultrasonic("leftSonic45", new Point(7.5, 6), Math.toRadians(45), 0.35),
             new Ultrasonic("rightSonic45", new Point(7.5, -6), Math.toRadians(-45), 1.07)
     };
+    public static Ultrasonic[] mentorBotUltrasonics = { // MentorBot
+            new Ultrasonic("leftSonic45", new Point(6.0, 3), Math.toRadians(45), 0), // @@@ Tune fudges
+            new Ultrasonic("rightSonic45", new Point(6.0, -3), Math.toRadians(-45), 0)
+    };
+
+    // Return the getUltrasonics() descriptors for the current robot configuration:
+    public static Ultrasonic[] getUltrasonics() {
+        return Specs.isDevBot ? devBotUltrasonics : mentorBotUltrasonics;
+    }
 
     public enum Confidence {NONE, LOW, HIGH} // Confidence in the pose estimate
 
@@ -122,7 +131,7 @@ public class Poser {
         initializePinpointDriver(hardwareMap);
         setPose(pose, (pose != null) ? Confidence.HIGH : Confidence.NONE);
 
-        for (Ultrasonic ultrasonic : ultrasonics) {
+        for (Ultrasonic ultrasonic : getUltrasonics()) {
             ultrasonic.sensor = hardwareMap.tryGet(UltrasonicDistanceSensor.class, ultrasonic.name);
             if (ultrasonic.sensor == null) {
                 RobotLog.addGlobalWarningMessage("Missing sensor: " + ultrasonic.name);
@@ -145,7 +154,7 @@ public class Poser {
 
         xFixups.clear();
         yFixups.clear();
-        for (Ultrasonic ultrasonic : ultrasonics) {
+        for (Ultrasonic ultrasonic : getUltrasonics()) {
             ultrasonic.odometryPoseWhenTriggered = pose;
         }
 
@@ -452,7 +461,7 @@ public class Poser {
     // Use the odometry sensors to create a new pose fused from the odometry sensors.
     void updateFromUltrasonic() {
         if (confidence != Confidence.NONE) {
-            for (Ultrasonic ultrasonic : ultrasonics) {
+            for (Ultrasonic ultrasonic : getUltrasonics()) {
                 measureUltrasonic(ultrasonic);
             }
 
@@ -551,7 +560,7 @@ public class Poser {
 
     // Reset the fudge factors for the ultrasonic sensors for purposes of tuning:
     public void zeroFudges() {
-        for (Ultrasonic ultrasonic: ultrasonics) {
+        for (Ultrasonic ultrasonic: getUltrasonics()) {
             ultrasonic.fudge = 0;
         }
     }

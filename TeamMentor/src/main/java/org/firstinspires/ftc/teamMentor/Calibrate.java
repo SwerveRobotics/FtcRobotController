@@ -1093,17 +1093,17 @@ public class Calibrate extends LinearOpMode {
     // Show the raw input from the localization sensors.
     void testLocalizationSensors() {
         GoBildaPinpointDriver pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-        UltrasonicDistanceSensor[] ultrasonics = new UltrasonicDistanceSensor[Poser.ultrasonics.length];
-        for (int i = 0; i < Poser.ultrasonics.length; i++) {
-            ultrasonics[i] = hardwareMap.tryGet(UltrasonicDistanceSensor.class, Poser.ultrasonics[i].name);
+        UltrasonicDistanceSensor[] ultrasonics = new UltrasonicDistanceSensor[Poser.getUltrasonics().length];
+        for (int i = 0; i < Poser.getUltrasonics().length; i++) {
+            ultrasonics[i] = hardwareMap.tryGet(UltrasonicDistanceSensor.class, Poser.getUltrasonics()[i].name);
         }
         while (opModeIsActive()) {
-            for (int i = 0; i < Poser.ultrasonics.length; i++) {
+            for (int i = 0; i < Poser.getUltrasonics().length; i++) {
                 if (ultrasonics[i] == null) {
-                    telemetry.addLine("Ultrasonic sensor not found: " + Poser.ultrasonics[i].name);
+                    telemetry.addLine("Ultrasonic sensor not found: " + Poser.getUltrasonics()[i].name);
                 } else {
                     double distance = ultrasonics[i].getDistance(DistanceUnit.INCH);
-                    telemetry.addLine(String.format("%s: %.1f inches", Poser.ultrasonics[i].name, distance));
+                    telemetry.addLine(String.format("%s: %.1f inches", Poser.getUltrasonics()[i].name, distance));
                 }
             }
             telemetry.update();
