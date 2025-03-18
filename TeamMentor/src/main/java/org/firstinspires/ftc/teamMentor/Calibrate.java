@@ -1110,6 +1110,7 @@ public class Calibrate extends LinearOpMode {
             if (io.guide()) {
                 return; // ====>
             }
+            sleep(10); // Don't query the sensors sooner than the return signal
         }
     }
 
@@ -1234,8 +1235,6 @@ public class Calibrate extends LinearOpMode {
         menu.add(new Menu.RunWidget("Adjust arm fudge factors", this::measureFudge));
         menu.add(new Menu.RunWidget("Test localization sensors", this::testLocalizationSensors));
         menu.add(new Menu.RunWidget("Tune localization", this::tuneLocalization));
-        menu.add(new Menu.RunWidget("Enable servos", () -> enableServos(true)));
-        menu.add(new Menu.RunWidget("Disable servos", () -> enableServos(false)));
 
         waitForStart();
         while (opModeIsActive()) {
