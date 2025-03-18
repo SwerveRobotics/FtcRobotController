@@ -23,27 +23,6 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 
-/**
- * Arm constants.
- */
-class ArmSpecs {
-    static final String CALIBRATION_FILE = "/sdcard/arm_calibration.json";
-
-    static final double MAX_SERVO_SPEED = Math.toRadians(60) / 0.17; // Marcel's specs: 60 degrees in 0.17 seconds
-    static final Point TURRET_OFFSET = new Point(-4, 1); // Relative to robot center
-    static final Point SHOULDER_OFFSET = new Point(0, 0.5); // Offset of shoulder relative to turret base
-    static final double SEGMENT_WIDTH = 2.75; // Width of the arm segments
-    static final double CLAW_Y_OFFSET = -SEGMENT_WIDTH; // Offset of the claw in y, relative to the shoulder's center
-
-    static final double SHOULDER_HEIGHT = 8; // Height of the shoulder joint relative to floor
-    static final double SEGMENT_OVERHANG = 2; // Overhang of the arm segment past the joint
-    static final double SEGMENT_LENGTH = 13.0; // Length of an arm segment from joint to joint
-    static final double LAST_SEGMENT_LENGTH = 3.0; // Length of the last arm segment
-    static final double CLAW_OFFSET = 2; // Offset from the end of the last segment to the claw
-    static final double Y_BOUNDS = 4; // Positive Y value that bounds the arm, on either side of the turret base
-    static final double X_CLAW_BOUNDS = 2; // Additional X bounds to account for the claw
-    static final double SUBMERSIBLE_HEIGHT = 4; // Target distance from claw tip to floor when in submersible
-}
 
 /**
  * Joint enumerations.
@@ -140,7 +119,7 @@ class Calibration {
 
     // Apply some default kinematics:
     void setDefaultKinematics() {
-        maxSpeed = ArmSpecs.MAX_SERVO_SPEED; // Radians per second
+        maxSpeed = Specs.Arm.MAX_SERVO_SPEED; // Radians per second
         acceleration = maxSpeed / 0.1; // Up to max speed in 0.1 seconds
         deceleration = -maxSpeed / 0.1; // Down to 0 in 0.1 seconds
     }
@@ -198,7 +177,7 @@ class Calibration {
     // Save the calibration data to a JSON file:
     public boolean saveToFile() {
         Gson gson = new GsonBuilder().setPrettyPrinting().create();
-        try (FileWriter writer = new FileWriter(ArmSpecs.CALIBRATION_FILE)) {
+        try (FileWriter writer = new FileWriter(Specs.Arm.CALIBRATION_FILE)) {
             gson.toJson(this, writer);
         } catch (IOException e) {
             return false;
@@ -209,7 +188,7 @@ class Calibration {
     // Load the calibration data from a JSON file:
     public static Calibration loadFromFile() {
         Gson gson = new Gson();
-        try (FileReader reader = new FileReader(ArmSpecs.CALIBRATION_FILE)) {
+        try (FileReader reader = new FileReader(Specs.Arm.CALIBRATION_FILE)) {
             return gson.fromJson(reader, Calibration.class);
         } catch (IOException e) {
             return null;
@@ -397,7 +376,7 @@ class Model {
 
         // Draw the claw target on top:
         if (xClawTarget != 0) {
-            Point point = new Point(ArmSpecs.TURRET_OFFSET.x + xClawTarget, ArmSpecs.TURRET_OFFSET.y + yClawTarget); // @@@ Is this right?
+            Point point = new Point(Specs.Arm.TURRET_OFFSET.x + xClawTarget, Specs.Arm.TURRET_OFFSET.y + yClawTarget); // @@@ Is this right?
             sideCanvas.setFill("#00ff00");
             sideCanvas.fillCircle(point.x, point.y, 1);
         }
@@ -417,9 +396,9 @@ class Model {
         topCanvas.setFill(color);
         sideCanvas.setFill(color);
 
-        double x0 = -ArmSpecs.SEGMENT_OVERHANG;
-        double x1 = length + ArmSpecs.SEGMENT_OVERHANG;
-        double y = ArmSpecs.SEGMENT_WIDTH / 2;
+        double x0 = -Specs.Arm.SEGMENT_OVERHANG;
+        double x1 = length + Specs.Arm.SEGMENT_OVERHANG;
+        double y = Specs.Arm.SEGMENT_WIDTH / 2;
         double[] geometry = new double[]{x0, y, x1, y, x1, -y, x0, -y, x0, y};
 
         double[] sidePoints = sideXform.xform(geometry);
@@ -430,8 +409,8 @@ class Model {
 
         // Hack some end geometry for when segments are vertical:
         Point point = topXform.xform(0, 0);
-        topCanvas.fillRect(point.x - ArmSpecs.SEGMENT_WIDTH /2, point.y - ArmSpecs.SEGMENT_WIDTH /2,
-                ArmSpecs.SEGMENT_WIDTH, ArmSpecs.SEGMENT_WIDTH);
+        topCanvas.fillRect(point.x - Specs.Arm.SEGMENT_WIDTH /2, point.y - Specs.Arm.SEGMENT_WIDTH /2,
+                Specs.Arm.SEGMENT_WIDTH, Specs.Arm.SEGMENT_WIDTH);
     }
 
     // Draw a clasp of the claw.
@@ -490,8 +469,8 @@ class Model {
         drawBackground(topCanvas, sideCanvas);
 
         // Shoulder base:
-        Point shoulderBase = ArmSpecs.SHOULDER_OFFSET.rotate(hardwareAngles[Id.TURRET]).add(ArmSpecs.TURRET_OFFSET);
-        sideXform.translate(shoulderBase.x, ArmSpecs.SHOULDER_HEIGHT);
+        Point shoulderBase = Specs.Arm.SHOULDER_OFFSET.rotate(hardwareAngles[Id.TURRET]).add(Specs.Arm.TURRET_OFFSET);
+        sideXform.translate(shoulderBase.x, Specs.Arm.SHOULDER_HEIGHT);
         sideXform.scale(Math.cos(hardwareAngles[Id.TURRET]), 1);
 
         topXform.translate(shoulderBase.x, shoulderBase.y);
@@ -501,30 +480,30 @@ class Model {
         zAngle += hardwareAngles[Id.SHOULDER];
 
         sideXform.rotate(hardwareAngles[Id.SHOULDER]);
-        drawArmSegment(topCanvas, xScale(topXform, zAngle), sideCanvas, sideXform, ArmSpecs.SEGMENT_LENGTH, 0);
-        sideXform.translate(ArmSpecs.SEGMENT_LENGTH, 0);
-        topXform.translate(ArmSpecs.SEGMENT_LENGTH * Math.cos(zAngle), -ArmSpecs.SEGMENT_WIDTH);
+        drawArmSegment(topCanvas, xScale(topXform, zAngle), sideCanvas, sideXform, Specs.Arm.SEGMENT_LENGTH, 0);
+        sideXform.translate(Specs.Arm.SEGMENT_LENGTH, 0);
+        topXform.translate(Specs.Arm.SEGMENT_LENGTH * Math.cos(zAngle), -Specs.Arm.SEGMENT_WIDTH);
 
         // Arm segment #2:
         zAngle += hardwareAngles[Id.ELBOW1];
         sideXform.rotate(hardwareAngles[Id.ELBOW1]);
-        drawArmSegment(topCanvas, xScale(topXform, zAngle), sideCanvas, sideXform, ArmSpecs.SEGMENT_LENGTH, 1);
-        sideXform.translate(ArmSpecs.SEGMENT_LENGTH, 0);
-        topXform.translate(ArmSpecs.SEGMENT_LENGTH * Math.cos(zAngle), ArmSpecs.SEGMENT_WIDTH);
+        drawArmSegment(topCanvas, xScale(topXform, zAngle), sideCanvas, sideXform, Specs.Arm.SEGMENT_LENGTH, 1);
+        sideXform.translate(Specs.Arm.SEGMENT_LENGTH, 0);
+        topXform.translate(Specs.Arm.SEGMENT_LENGTH * Math.cos(zAngle), Specs.Arm.SEGMENT_WIDTH);
 
         // Arm segment #3:
         zAngle += hardwareAngles[Id.ELBOW2];
         sideXform.rotate(hardwareAngles[Id.ELBOW2]);
-        drawArmSegment(topCanvas, xScale(topXform, zAngle), sideCanvas, sideXform, ArmSpecs.SEGMENT_LENGTH, 2);
-        sideXform.translate(ArmSpecs.SEGMENT_LENGTH, 0);
-        topXform.translate(ArmSpecs.SEGMENT_LENGTH * Math.cos(zAngle), -ArmSpecs.SEGMENT_WIDTH);
+        drawArmSegment(topCanvas, xScale(topXform, zAngle), sideCanvas, sideXform, Specs.Arm.SEGMENT_LENGTH, 2);
+        sideXform.translate(Specs.Arm.SEGMENT_LENGTH, 0);
+        topXform.translate(Specs.Arm.SEGMENT_LENGTH * Math.cos(zAngle), -Specs.Arm.SEGMENT_WIDTH);
 
         // Arm segment #4 with the claw on the end:
         zAngle += hardwareAngles[Id.ELBOW3];
         sideXform.rotate(hardwareAngles[Id.ELBOW3]);
-        drawArmSegment(topCanvas, xScale(topXform, zAngle), sideCanvas, sideXform, ArmSpecs.LAST_SEGMENT_LENGTH, 3);
-        sideXform.translate(ArmSpecs.LAST_SEGMENT_LENGTH, 0);
-        topXform.translate(ArmSpecs.LAST_SEGMENT_LENGTH * Math.cos(zAngle), 0); // Don't offset by width
+        drawArmSegment(topCanvas, xScale(topXform, zAngle), sideCanvas, sideXform, Specs.Arm.LAST_SEGMENT_LENGTH, 3);
+        sideXform.translate(Specs.Arm.LAST_SEGMENT_LENGTH, 0);
+        topXform.translate(Specs.Arm.LAST_SEGMENT_LENGTH * Math.cos(zAngle), 0); // Don't offset by width
 
         // The clasps of the claw:
         drawClasp(topCanvas, topXform, sideCanvas, sideXform, 1, zAngle, hardwareAngles[Id.CLAW], hardwareAngles[Id.WRIST]);
@@ -736,12 +715,12 @@ class Arm {
     static double[] computeTheoreticalReach(double distance, double height) {
         // Within this class, height is considered relative to the base of the arm, but
         // user expects the height to be relative to the floor. Adjust the height accordingly:
-        height -= ArmSpecs.SHOULDER_HEIGHT;
+        height -= Specs.Arm.SHOULDER_HEIGHT;
 
-        double alpha = Math.asin((ArmSpecs.LAST_SEGMENT_LENGTH + ArmSpecs.CLAW_OFFSET + height) / ArmSpecs.SEGMENT_LENGTH);
-        double a = ArmSpecs.SEGMENT_LENGTH * Math.cos(alpha);
+        double alpha = Math.asin((Specs.Arm.LAST_SEGMENT_LENGTH + Specs.Arm.CLAW_OFFSET + height) / Specs.Arm.SEGMENT_LENGTH);
+        double a = Specs.Arm.SEGMENT_LENGTH * Math.cos(alpha);
         double b = distance - a;
-        double beta = Math.asin(b / (2 * ArmSpecs.SEGMENT_LENGTH));
+        double beta = Math.asin(b / (2 * Specs.Arm.SEGMENT_LENGTH));
 
         // Failure if the request is out of range (which results in NaNs):
         if (Double.isNaN(alpha) || Double.isNaN(beta))

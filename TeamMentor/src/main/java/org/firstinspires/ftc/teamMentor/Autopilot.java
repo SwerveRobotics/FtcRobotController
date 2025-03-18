@@ -337,7 +337,7 @@ class Autopilot {
             }
         } else {
             // X value of the robot center if it's abutting the submersible wall:
-            double abutmentX = FieldSpecs.ABUTMENT_X - WilyConfig.ROBOT_LENGTH / 2;
+            double abutmentX = Specs.Field.ABUTMENT_X - WilyConfig.ROBOT_LENGTH / 2;
 
             // Wily Works doesn't support wall collisions properly yet, so just hack it here:
             if (WilyWorks.isSimulating) {

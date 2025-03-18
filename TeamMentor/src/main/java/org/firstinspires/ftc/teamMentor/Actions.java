@@ -88,7 +88,7 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
     // Set the target pose for the robot so that it can reach to the submersible's (x, y)
     // focus point specified by the user. Returns the arm length to the focus point.
     double[] setTargetPose() {
-        final double X_ABUTTING = FieldSpecs.SUBMERSIBLE_X - WilyConfig.ROBOT_LENGTH/2; // Robot's x when abutting
+        final double X_ABUTTING = Specs.Field.SUBMERSIBLE_X - WilyConfig.ROBOT_LENGTH/2; // Robot's x when abutting
         final double MIN_X_GAP = 3; // When not abutting, minimum x gap between the robot and the submersible
         final double MIN_Y_GAP = 3; // Minimum y gap between the robot and the submersible
 
@@ -103,7 +103,7 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
         double turretAngle = 0;
         boolean abut = true;
         Point robotCenter = new Point(X_ABUTTING,
-                focusPoint.y - ArmSpecs.TURRET_OFFSET.y - ArmSpecs.SHOULDER_OFFSET.y - ArmSpecs.CLAW_Y_OFFSET);
+                focusPoint.y - Specs.Arm.TURRET_OFFSET.y - Specs.Arm.SHOULDER_OFFSET.y - Specs.Arm.CLAW_Y_OFFSET);
 
         // Compute the target number of inches beyond the robot's edge:
         double xDistance = focusPoint.x - (robotCenter.x + WilyConfig.ROBOT_LENGTH/2);
@@ -124,14 +124,14 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
         }
 
         // Check if the turret needs to rotate to reach the focus point:
-        double rotateLine = FieldSpecs.SUBMERSIBLE_Y - MIN_Y_GAP - WilyConfig.ROBOT_WIDTH/2;
+        double rotateLine = Specs.Field.SUBMERSIBLE_Y - MIN_Y_GAP - WilyConfig.ROBOT_WIDTH/2;
         if (robotCenter.y > rotateLine) {
             robotCenter = new Point(robotCenter.x, rotateLine);
 
-            Point turretPoint = ArmSpecs.TURRET_OFFSET.rotate(robotHeading).add(robotCenter);
+            Point turretPoint = Specs.Arm.TURRET_OFFSET.rotate(robotHeading).add(robotCenter);
             double distanceFromTurret = focusPoint.subtract(turretPoint).length();
             double angleFromTurret = focusPoint.subtract(turretPoint).atan2();
-            turretAngle = angleFromTurret - flipY * Math.asin((ArmSpecs.SHOULDER_OFFSET.y + ArmSpecs.CLAW_Y_OFFSET)
+            turretAngle = angleFromTurret - flipY * Math.asin((Specs.Arm.SHOULDER_OFFSET.y + Specs.Arm.CLAW_Y_OFFSET)
                     / distanceFromTurret);
 
             // If the turret angle is out of bounds, we'll have to rotate the robot:
@@ -140,16 +140,16 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
                 abut = false; // The robot has to rotate so we can't abut
 
                 // We have to turn, so make sure we're not too close to the submersible wall:
-                double maxX = FieldSpecs.SUBMERSIBLE_X - WilyConfig.ROBOT_LENGTH/2 - MIN_X_GAP;
+                double maxX = Specs.Field.SUBMERSIBLE_X - WilyConfig.ROBOT_LENGTH/2 - MIN_X_GAP;
                 if (robotCenter.x > maxX) {
                     robotCenter = new Point(maxX, robotCenter.y);
                 }
 
                 double distanceFromCenter = focusPoint.subtract(robotCenter).length();
                 double angleFromCenter = focusPoint.subtract(robotCenter).atan2();
-                Point shoulderOffset = ArmSpecs.SHOULDER_OFFSET.rotate(turretAngle).add(ArmSpecs.TURRET_OFFSET);
+                Point shoulderOffset = Specs.Arm.SHOULDER_OFFSET.rotate(turretAngle).add(Specs.Arm.TURRET_OFFSET);
                 double run = distanceFromCenter - shoulderOffset.x;
-                double rise = shoulderOffset.y + ArmSpecs.CLAW_Y_OFFSET;
+                double rise = shoulderOffset.y + Specs.Arm.CLAW_Y_OFFSET;
                 robotHeading = angleFromCenter - turretAngle - flipY * Math.atan2(rise, run);
             }
         }
@@ -171,24 +171,24 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
             robotHeading = pose.heading.log();
             robotCenter = new Point(pose.position);
 
-            Point turretPoint = ArmSpecs.TURRET_OFFSET.rotate(robotHeading).add(robotCenter);
+            Point turretPoint = Specs.Arm.TURRET_OFFSET.rotate(robotHeading).add(robotCenter);
             double distanceFromTurret = focusPoint.subtract(turretPoint).length();
             double angleFromTurret = focusPoint.subtract(turretPoint).atan2();
-            turretAngle = angleFromTurret - Math.asin((ArmSpecs.SHOULDER_OFFSET.y + ArmSpecs.CLAW_Y_OFFSET)
+            turretAngle = angleFromTurret - Math.asin((Specs.Arm.SHOULDER_OFFSET.y + Specs.Arm.CLAW_Y_OFFSET)
                     / distanceFromTurret);
             turretAngle = Math.min(maxTurretAngle, Math.max(minTurretAngle, turretAngle));
         }
 
-        Point turretPoint = ArmSpecs.TURRET_OFFSET.rotate(robotHeading).add(robotCenter);
-        Point shoulderPoint = ArmSpecs.SHOULDER_OFFSET.rotate(robotHeading + turretAngle).add(turretPoint);
+        Point turretPoint = Specs.Arm.TURRET_OFFSET.rotate(robotHeading).add(robotCenter);
+        Point shoulderPoint = Specs.Arm.SHOULDER_OFFSET.rotate(robotHeading + turretAngle).add(turretPoint);
         double armLength = focusPoint.subtract(shoulderPoint).length();
 
 {
     Canvas canvas = telemetryPacket.fieldOverlay();
-    Point focus = ArmSpecs.SHOULDER_OFFSET.rotate(turretAngle).add(turretPoint).add(
+    Point focus = Specs.Arm.SHOULDER_OFFSET.rotate(turretAngle).add(turretPoint).add(
             new Point(armLength * Math.cos(turretAngle + robotHeading),
                     armLength * Math.sin(turretAngle + robotHeading)));
-    Point clawOffset = new Point(0, ArmSpecs.CLAW_Y_OFFSET).rotate(turretAngle);
+    Point clawOffset = new Point(0, Specs.Arm.CLAW_Y_OFFSET).rotate(turretAngle);
     focus = focus.add(clawOffset);
 
     canvas.setStroke("#FF0000");
@@ -211,13 +211,13 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
 
         // Compute a partial bound box of the arm at its target position:
         Point[] polygon = new Point[]{
-                new Point(0, ArmSpecs.Y_BOUNDS),
-                new Point(currentArmLength + ArmSpecs.X_CLAW_BOUNDS, ArmSpecs.Y_BOUNDS),
-                new Point(currentArmLength + ArmSpecs.X_CLAW_BOUNDS, -ArmSpecs.Y_BOUNDS),
-                new Point(0, -ArmSpecs.Y_BOUNDS)
+                new Point(0, Specs.Arm.Y_BOUNDS),
+                new Point(currentArmLength + Specs.Arm.X_CLAW_BOUNDS, Specs.Arm.Y_BOUNDS),
+                new Point(currentArmLength + Specs.Arm.X_CLAW_BOUNDS, -Specs.Arm.Y_BOUNDS),
+                new Point(0, -Specs.Arm.Y_BOUNDS)
         };
-        Point turretPoint = ArmSpecs.TURRET_OFFSET.rotate(robotHeading).add(robotCenter);
-        Point shoulderPoint = ArmSpecs.SHOULDER_OFFSET.rotate(robotHeading + currentTurretHeading).add(turretPoint);
+        Point turretPoint = Specs.Arm.TURRET_OFFSET.rotate(robotHeading).add(robotCenter);
+        Point shoulderPoint = Specs.Arm.SHOULDER_OFFSET.rotate(robotHeading + currentTurretHeading).add(turretPoint);
         for (int i = 0; i < polygon.length; i++) {
             polygon[i] = polygon[i].rotate(robotHeading + currentTurretHeading).add(shoulderPoint);
         }
@@ -233,7 +233,7 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
         // @@@ Decide if I want to re-enable hit testing:
 
 //        for (Segment boundSegment: boundsSegments) {
-//            for (Segment wall : FieldSpecs.COLLISION_WALLS) {
+//            for (Segment wall : Specs.Field.COLLISION_WALLS) {
 //                if (LineSegmentIntersection.doSegmentsIntersect(boundSegment, wall)) {
 //                    // Woah, the arm would collide with the submersible! Retract it:
 //                    retract = true;
@@ -245,7 +245,7 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
 //        for (Segment boundSegment: boundsSegments) {
 //            canvas.strokeLine(boundSegment.p1.x, boundSegment.p1.y, boundSegment.p2.x, boundSegment.p2.y);
 //        }
-//        for (Segment wall : FieldSpecs.COLLISION_WALLS) {
+//        for (Segment wall : Specs.Field.COLLISION_WALLS) {
 //            canvas.strokeLine(wall.p1.x, wall.p1.y, wall.p2.x, wall.p2.y);
 //        }
 
@@ -260,7 +260,7 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
             subActions.add(new TurretAction(arm, 0));
         } else {
             // It's safe to extend the arm:
-            subActions.add(new ReachAction(arm, ReachAction.State.PICKUP, targetArmLength, ArmSpecs.SUBMERSIBLE_HEIGHT));
+            subActions.add(new ReachAction(arm, ReachAction.State.PICKUP, targetArmLength, Specs.Arm.SUBMERSIBLE_HEIGHT));
             subActions.add(new TurretAction(arm, targetTurretHeading));
         }
     }

@@ -835,7 +835,7 @@ public class Calibrate extends LinearOpMode {
     void measureFudge() {
         final int MEASUREMENT_COUNT = 10; // Number of samples to average
         final double TARGET_ARM_HEIGHT = 5; // Target arm height above the field, in inches
-        final double MAX_DISTANCE = 42 - WilyConfig.ROBOT_LENGTH/2 + ArmSpecs.TURRET_OFFSET.x;
+        final double MAX_DISTANCE = 42 - WilyConfig.ROBOT_LENGTH/2 + Specs.Arm.TURRET_OFFSET.x;
         final double EXTENSION_INCHES_PER_SECOND = 5; // Arm movement speed for direct user control
 
         Arm arm = initializeArm();

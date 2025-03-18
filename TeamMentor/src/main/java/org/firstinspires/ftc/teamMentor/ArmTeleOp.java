@@ -17,26 +17,6 @@ import org.firstinspires.ftc.teamMentor.roadrunner.MecanumDrive;
 import java.util.LinkedList;
 
 /**
- * Constants describing the field.
- */
-class FieldSpecs {
-    static final double ABUTMENT_X = -15.5; // X coordinate of the submersible abutment, measure using Calibrator
-    static final double SUBMERSIBLE_WIDTH = 27.5; // Inches
-    static final double SUBMERSIBLE_LENGTH = 44.5; // Inches
-    static final double HALF_SUBMERSIBLE_WIDTH = SUBMERSIBLE_WIDTH / 2;
-    static final double HALF_SUBMERSIBLE_LENGTH = SUBMERSIBLE_LENGTH / 2;
-    static final double SUBMERSIBLE_X = -15; // Robot has to stay to the left of this, in inches
-    static final double SUBMERSIBLE_Y = 21; // Robot has to stay below this y value, in inches
-
-    static final Segment[] COLLISION_WALLS = {
-            new Segment(18, 24, 24, 24),
-            new Segment(18, -24, 24, -24),
-            new Segment(-18, 24, -24, 24),
-            new Segment(-18, -24, -24, -24),
-    };
-}
-
-/**
  * State persisted from Auto to TeleOp.
  */
 class Orientation {
@@ -205,16 +185,16 @@ public class ArmTeleOp extends LinearOpMode {
                 telemetry.addLine(String.format("Touchpad: %.2f, %.2f",
                         gamepad1.touchpad_finger_1_x, gamepad1.touchpad_finger_1_y));
                 pickupPoint = new Point(
-                    gamepad1.touchpad_finger_1_x * FieldSpecs.HALF_SUBMERSIBLE_WIDTH,
-                    gamepad1.touchpad_finger_1_y * FieldSpecs.HALF_SUBMERSIBLE_LENGTH);
+                    gamepad1.touchpad_finger_1_x * Specs.Field.HALF_SUBMERSIBLE_WIDTH,
+                    gamepad1.touchpad_finger_1_y * Specs.Field.HALF_SUBMERSIBLE_LENGTH);
             }
 
             // The gamepad2 left stick provides relative positioning:
             pickupPoint = new Point(pickupPoint.x, pickupPoint.y);
             pickupPoint.x += gamepad2.left_stick_x * FOCUS_INCHES_PER_SECOND * dt;
             pickupPoint.y += -gamepad2.left_stick_y * FOCUS_INCHES_PER_SECOND * dt;
-            pickupPoint.x = Math.max(-FieldSpecs.HALF_SUBMERSIBLE_WIDTH, Math.min(FieldSpecs.HALF_SUBMERSIBLE_WIDTH, pickupPoint.x));
-            pickupPoint.y = Math.max(-FieldSpecs.HALF_SUBMERSIBLE_LENGTH, Math.min(FieldSpecs.HALF_SUBMERSIBLE_LENGTH, pickupPoint.y));
+            pickupPoint.x = Math.max(-Specs.Field.HALF_SUBMERSIBLE_WIDTH, Math.min(Specs.Field.HALF_SUBMERSIBLE_WIDTH, pickupPoint.x));
+            pickupPoint.y = Math.max(-Specs.Field.HALF_SUBMERSIBLE_LENGTH, Math.min(Specs.Field.HALF_SUBMERSIBLE_LENGTH, pickupPoint.y));
 
             // Draw the pickup point cross-hairs:
             final double SIZE = 2;
