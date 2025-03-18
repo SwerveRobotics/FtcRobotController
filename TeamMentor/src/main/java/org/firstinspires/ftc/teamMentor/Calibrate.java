@@ -1194,6 +1194,32 @@ public class Calibrate extends LinearOpMode {
         }
     }
 
+    // Enable or disable PWM for all servos.
+    void enableServos(boolean enable) {
+        int count = 0;
+        for (int id = 0; id < Id.COUNT; id++) {
+            for (int i = 0; i < Id.DEVICE_NAMES[id].length; i++) {
+                Servo servo = hardwareMap.tryGet(Servo.class, Id.DEVICE_NAMES[id][i]);
+                if (servo != null) {
+                    count++;
+                    ServoController controller = servo.getController();
+                    if (enable) {
+                        controller.pwmEnable();
+                    } else {
+                        controller.pwmDisable();
+                    }
+                }
+            }
+        }
+        while (opModeIsActive() && !io.guide()) {
+            telemetry.addLine(String.format("%d servos are now %s.", count, (enable ? "enabled" : "disabled")));
+            telemetry.update();
+            if (io.guide()) {
+                return; // ====>
+            }
+        }
+    }
+
     @Override
     public void runOpMode() {
         io = new Io(telemetry, gamepad1);
@@ -1208,6 +1234,8 @@ public class Calibrate extends LinearOpMode {
         menu.add(new Menu.RunWidget("Adjust arm fudge factors", this::measureFudge));
         menu.add(new Menu.RunWidget("Test localization sensors", this::testLocalizationSensors));
         menu.add(new Menu.RunWidget("Tune localization", this::tuneLocalization));
+        menu.add(new Menu.RunWidget("Enable servos", () -> enableServos(true)));
+        menu.add(new Menu.RunWidget("Disable servos", () -> enableServos(false)));
 
         waitForStart();
         while (opModeIsActive()) {
