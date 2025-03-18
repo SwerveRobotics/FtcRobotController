@@ -1107,11 +1107,12 @@ public class Calibrate extends LinearOpMode {
                     telemetry.addLine(String.format("%s: %.1f inches", ultrasonics[i].name, distance));
                 }
             }
+            telemetry.addLine("\nPress " + Io.GUIDE + " to exit.");
             telemetry.update();
             if (io.guide()) {
                 return; // ====>
             }
-            sleep(10); // Don't query the sensors sooner than the return signal
+            sleep(20); // Don't query the sensors sooner than the return signal
         }
     }
 
@@ -1198,13 +1199,13 @@ public class Calibrate extends LinearOpMode {
 
     // Enable or disable PWM for all servos.
     void enableServos(boolean enable) {
-        int count = 0;
+        ArrayList<ServoController> servoControllers = new ArrayList<>();
         for (int id = 0; id < Id.COUNT; id++) {
             for (int i = 0; i < Id.DEVICE_NAMES[id].length; i++) {
                 Servo servo = hardwareMap.tryGet(Servo.class, Id.DEVICE_NAMES[id][i]);
                 if (servo != null) {
-                    count++;
                     ServoController controller = servo.getController();
+                    servoControllers.add(controller); // Keep a reference
                     if (enable) {
                         controller.pwmEnable();
                     } else {
@@ -1214,7 +1215,7 @@ public class Calibrate extends LinearOpMode {
             }
         }
         while (opModeIsActive() && !io.guide()) {
-            telemetry.addLine(String.format("%d servos are now %s.", count, (enable ? "enabled" : "disabled")));
+            telemetry.addLine(String.format("%d servos are now %s.", servoControllers.size(), (enable ? "enabled" : "disabled")));
             telemetry.update();
             if (io.guide()) {
                 return; // ====>
@@ -1236,6 +1237,8 @@ public class Calibrate extends LinearOpMode {
         menu.add(new Menu.RunWidget("Adjust arm fudge factors", this::measureFudge));
         menu.add(new Menu.RunWidget("Test localization sensors", this::testLocalizationSensors));
         menu.add(new Menu.RunWidget("Tune localization", this::tuneLocalization));
+//        menu.add(new Menu.RunWidget("Enable servos", () -> enableServos(true)));
+//        menu.add(new Menu.RunWidget("Disable servos", () -> enableServos(false)));
 
         waitForStart();
         while (opModeIsActive()) {

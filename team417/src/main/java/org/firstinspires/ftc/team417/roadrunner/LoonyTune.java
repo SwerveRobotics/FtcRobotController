@@ -827,7 +827,7 @@ class Menu {
  * @noinspection UnnecessaryUnicodeEscape, AccessStaticViaInstance, ClassEscapesDefinedScope
  */
 @SuppressLint("DefaultLocale")
-@TeleOp(name="Loony Tune", group="Tuning")
+@TeleOp(name="Loony Tune", group="Utility")
 public class LoonyTune extends LinearOpMode {
     @SuppressLint("SdCardPath")
     static final String FILE_NAME = "/sdcard/loony_tune.dat";

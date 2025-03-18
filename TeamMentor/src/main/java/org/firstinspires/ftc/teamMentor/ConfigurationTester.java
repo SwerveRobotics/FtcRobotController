@@ -52,7 +52,7 @@ class Buttons {
     }
 }
 
-@TeleOp(name = "ConfigurationTester", group = "Tuning")
+@TeleOp(name = "ConfigurationTester", group = "Utility")
 public class ConfigurationTester extends LinearOpMode {
     ArrayList<String> deviceNames = new ArrayList<>();
     Buttons buttons;

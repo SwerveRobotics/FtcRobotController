@@ -311,9 +311,7 @@ class Autopilot {
         // Angular distance to the target:
         double positionalAngularDelta = Util.normalizeAngle(targetHeading - currentPose.heading.log());
 
-
         // Decide if we're done:
-
         boolean abut = !abutComplete && abutAtFinal && ((targetPoint.x == finalTarget.position.x) &&
                                                         (targetPoint.y == finalTarget.position.y));
         telemetry.addLine(String.format("<big>Abut: %b, Complete: %b, At final: %b</big>",
