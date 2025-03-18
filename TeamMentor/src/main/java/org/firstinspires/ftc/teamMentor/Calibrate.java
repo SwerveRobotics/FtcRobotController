@@ -750,7 +750,12 @@ public class Calibrate extends LinearOpMode {
         for (Screen screen: screens) {
             screen.servos = new Servo[Id.DEVICE_NAMES[screen.id].length];
             for (int i = 0; i < screen.servos.length; i++) {
-                screen.servos[i] = hardwareMap.tryGet(Servo.class, Id.DEVICE_NAMES[screen.id][i]);
+                Servo servo = hardwareMap.tryGet(Servo.class, Id.DEVICE_NAMES[screen.id][i]);
+                screen.servos[i] = servo;
+                if (servo != null) {
+                    ServoController controller = servo.getController();
+                    controller.pwmDisable(); // Disable power to the servo to allow it to be moved by hand
+                }
             }
         }
 
@@ -803,8 +808,7 @@ public class Calibrate extends LinearOpMode {
                     for (int i = 0; i < arm.joints.length; i++) {
                         for (Servo servo: arm.joints[i].servos) {
                             ServoController controller = servo.getController();
-                            controller.pwmDisable();
-                            controller.pwmEnable(); // Apply power to the servo to allow it to be moved by hand
+                            controller.pwmDisable(); // Disable power to the servo to allow it to be moved by hand
                         }
                     }
                 }
