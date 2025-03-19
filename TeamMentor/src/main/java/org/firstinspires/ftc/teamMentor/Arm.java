@@ -671,14 +671,10 @@ class Arm {
                 joint.calibration = Calibration.getDefaultCalibration().jointCalibrations[id];
             }
 
-            // Get the initial angle of the joint from the servo itself. This is useful only
-            // when running a new OpMode after a previous OpMode, to inherit the positions.
-            if (joint.servos.length != 0) {
-                joint.currentAngle = joint.positionToRadians(joint.servos[0].getPosition());
-            } else {
-                joint.currentAngle = joint.homeInRadians();
-            }
-
+            // Set the servo hardware to the home position at full speed. There's no avoiding this
+            // step.
+            joint.setHardwarePosition(joint.calibration.start);
+            joint.currentAngle = joint.homeInRadians();
             joint.targetAngle = joint.homeInRadians();
             joints[id] = joint;
         }
