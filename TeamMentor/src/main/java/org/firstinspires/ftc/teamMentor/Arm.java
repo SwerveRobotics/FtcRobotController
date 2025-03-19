@@ -57,9 +57,8 @@ class Calibration {
     double maxSpeed; // Radians per seconds
     double acceleration; // Radians per second squared
     double deceleration; // Radians per second squared (a negative value)
-    double minReach; // Minimum distance at which the arm can touch the floor, in inches
     JointCalibration[] jointCalibrations = new JointCalibration[Id.COUNT]; // Calibration for each joint
-    Fudge[] fudges = new Fudge[]{}; // Measured correction factors, in sorted order of increasing distance
+    PointCalibration[] pointCalibrations = new PointCalibration[]{}; // Measured correction factors, in sorted order of increasing distance
 
     // Calibration data for each joint:
     static class JointCalibration {
@@ -98,12 +97,13 @@ class Calibration {
             return true;
         }
     }
-    // Measured fudge factor
-    static class Fudge {
+
+    // Measured fudge factor calibration at various sample points.
+    static class PointCalibration {
         double measuredDistance; // Actual distance of the arm extension when the fudge was measured
         double computedDistance; // Theoretical distance of the arm extension when the fudge was measured
         double heightCorrection; // Correction to add to the requested height
-        Fudge(double measuredDistance, double computedDistance, double heightCorrection) {
+        PointCalibration(double measuredDistance, double computedDistance, double heightCorrection) {
             this.measuredDistance = measuredDistance;
             this.computedDistance = computedDistance;
             this.heightCorrection = heightCorrection;
@@ -124,10 +124,21 @@ class Calibration {
         deceleration = -maxSpeed / 0.1; // Down to 0 in 0.1 seconds
     }
 
-    // Apply an identity fudge to the arm, which means no correction:
-    void setDefaultFudges() {
-        minReach = 10;
-        fudges = new Fudge[]{new Fudge(42, 42, 0)};
+    // Apply an identity fudge to the arm, which means no correction, and set the minimum and
+    // maximum reach:
+    void setDefaultPointCalibrations() {
+        pointCalibrations = new PointCalibration[]{
+            new PointCalibration(10, 10, 0),
+            new PointCalibration(Specs.Arm.MAX_ARM_LENGTH, Specs.Arm.MAX_ARM_LENGTH, 0)
+        };
+    }
+
+    // Return the minimum and maximum reaches of the arm, as determined by calibration.
+    double minReach() {
+        return pointCalibrations[0].measuredDistance;
+    }
+    double maxReach() {
+        return pointCalibrations[pointCalibrations.length - 1].measuredDistance;
     }
 
     // Validate the calibration data:
@@ -139,7 +150,7 @@ class Calibration {
     static Calibration getDefaultCalibration() {
         Calibration calibration = new Calibration();
         calibration.setDefaultKinematics();
-        calibration.setDefaultFudges();
+        calibration.setDefaultPointCalibrations();
 
         for (int i = 0; i < Id.COUNT; i++) {
             JointCalibration joint = calibration.jointCalibrations[i];
@@ -726,12 +737,18 @@ class Arm {
 
     // Compute the theoretical joint angles for a given reach. Returns null if the reach is out of
     // range.
-    static double[] computeTheoreticalReach(double distance, double height) {
+    //
+    // 'distance' is the inches from the shoulder of the arm to the claw on the plane parallel to
+    // the floor at the height of the shoulder. 'floorHeight' is the inches above the floor to
+    // the tip of the claw; changing the height of the claw does not necessitate changing the
+    // distance.
+    static double[] computeTheoreticalReach(double distance, double floorHeight) {
         // Within this class, height is considered relative to the base of the arm, but
         // user expects the height to be relative to the floor. Adjust the height accordingly:
-        height -= Specs.Arm.SHOULDER_HEIGHT;
+        double relativeHeight = floorHeight - Specs.Arm.SHOULDER_HEIGHT;
 
-        double alpha = Math.asin((Specs.Arm.LAST_SEGMENT_LENGTH + Specs.Arm.CLAW_OFFSET + height) / Specs.Arm.SEGMENT_LENGTH);
+        double alpha = Math.asin((Specs.Arm.LAST_SEGMENT_LENGTH + Specs.Arm.CLAW_OFFSET + relativeHeight)
+                / Specs.Arm.SEGMENT_LENGTH);
         double a = Specs.Arm.SEGMENT_LENGTH * Math.cos(alpha);
         double b = distance - a;
         double beta = Math.asin(b / (2 * Specs.Arm.SEGMENT_LENGTH));
@@ -743,14 +760,19 @@ class Arm {
     }
 
     // Compute the joint angles for a given reach, taking measured fudge factors into account.
-    double[] computeCorrectedReach(double distance, double height) {
-        Calibration.Fudge lowerFudge = new Calibration.Fudge(0, 0, 0);
-        Calibration.Fudge upperFudge = null;
-        for (Calibration.Fudge fudge : calibration.fudges) {
-            if (fudge.measuredDistance <= distance) {
-                lowerFudge = fudge; // Keep the last fudge factor that is less than or equal to the distance
+    //
+    // 'distance' is the inches from the shoulder of the arm to the claw on the plane parallel to
+    // the floor at the height of the shoulder. 'floorHeight' is the inches above the floor to
+    // the tip of the claw; changing the height of the claw does not necessitate changing the
+    // distance.
+    double[] computeCorrectedReach(double distance, double floorHeight) {
+        Calibration.PointCalibration lowerFudge = new Calibration.PointCalibration(0, 0, 0);
+        Calibration.PointCalibration upperFudge = null;
+        for (Calibration.PointCalibration calibrationPoint : calibration.pointCalibrations) {
+            if (calibrationPoint.measuredDistance <= distance) {
+                lowerFudge = calibrationPoint; // Keep the last fudge factor that is less than or equal to the distance
             } else {
-                upperFudge = fudge; // The first fudge factor that is greater than the distance
+                upperFudge = calibrationPoint; // The first fudge factor that is greater than the distance
                 break; // Fudge factors are sorted by distance
             }
         }
@@ -770,7 +792,7 @@ class Arm {
         double heightCorrectionDelta = upperFudge.heightCorrection - lowerFudge.heightCorrection;
         double heightCorrection = lowerFudge.heightCorrection +
                 (heightCorrectionDelta * (distance - lowerFudge.measuredDistance) / distanceDelta);
-        double correctedHeight = height + heightCorrection;
+        double correctedHeight = floorHeight + heightCorrection;
 
         // Compute the angles based on the corrected distance and height:
         return computeTheoreticalReach(correctedDistance, correctedHeight);
@@ -807,6 +829,7 @@ class Arm {
         }
         return done;
     }
+
     boolean pickup(double distance, double height) {
         double[] angles = computeCorrectedReach(distance, height);
         if (angles == null)

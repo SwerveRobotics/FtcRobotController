@@ -105,14 +105,17 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
         Point robotCenter = new Point(X_ABUTTING,
                 focusPoint.y - Specs.Arm.TURRET_OFFSET.y - Specs.Arm.SHOULDER_OFFSET.y - Specs.Arm.CLAW_Y_OFFSET);
 
-        // Compute the target number of inches beyond the robot's edge:
-        double xDistance = focusPoint.x - (robotCenter.x + Specs.Robot.LENGTH/2);
-        if (xDistance < arm.calibration.minReach) {
+        // Compute the x coordinate of the shoulder:
+        double xShoulder = robotCenter.x + Specs.Arm.TURRET_OFFSET.x + Specs.Arm.SHOULDER_OFFSET.x;
+        if (focusPoint.x - xShoulder < arm.calibration.minReach()) {
             abut = false;
-            robotCenter = new Point(focusPoint.x - arm.calibration.minReach - Specs.Robot.LENGTH/2 - MIN_X_GAP,
+            xShoulder = focusPoint.x - arm.calibration.minReach() - MIN_X_GAP;
+            robotCenter = new Point(xShoulder - Specs.Arm.TURRET_OFFSET.x - Specs.Arm.SHOULDER_OFFSET.x,
                     robotCenter.y);
         }
 
+        // Use symmetry to handle the logic of being close to the upper or lower edges of the
+        // submersible:
         double flipY = 1;
         double maxAngle = maxTurretAngle;
         if (robotCenter.y < 0) {

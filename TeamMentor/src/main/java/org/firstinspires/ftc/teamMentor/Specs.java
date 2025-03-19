@@ -50,6 +50,19 @@ public class Specs {
         static final double Y_BOUNDS = 4; // Positive Y value that bounds the arm, on either side of the turret base
         static final double X_CLAW_BOUNDS = 2; // Additional X bounds to account for the claw
         static final double SUBMERSIBLE_HEIGHT = 4; // Target distance from claw tip to floor when in submersible
+
+        // Distance from the back of the robot to the shoulder joint:
+        static final double SHOULDER_DISTANCE_FROM_BACK = Specs.Arm.TURRET_OFFSET.x + Specs.Robot.LENGTH/2;
+        // Maximum X extent of the arm relative to the shoulder, in robot-space, as dictated by the
+        // rules of the game. The arm length can exceed this value when the y value is non zero.
+        static final double MAX_X_EXTENT = 42 - SHOULDER_DISTANCE_FROM_BACK - 0.5; // 0.5 for margin
+        // Permissible Y extents of the arm relative to the shoulder, in robot-space, as dictated
+        // by the rules of the game:
+        static final double MAX_Y_EXTENT = 10 - Arm.SHOULDER_OFFSET.y - 0.5; // 0.5 for margin
+        static final double MIN_Y_EXTENT = -10 - Arm.SHOULDER_OFFSET.y + 0.5;
+        // Maximum possible arm length when reaching into the furthest corner of the permissible
+        // box, as dictated by the rules of the game:
+        static final double MAX_ARM_LENGTH = Math.hypot(MAX_X_EXTENT, Math.max(MAX_Y_EXTENT, -MIN_Y_EXTENT));
     }
 
     /**

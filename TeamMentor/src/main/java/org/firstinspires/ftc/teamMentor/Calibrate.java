@@ -828,15 +828,16 @@ public class Calibrate extends LinearOpMode {
 
     // Structure to hold the distance input:
     static class Distance {
-        double distance;
+        double biasedDistance;
     }
 
     // Measure the distance and height correction factors for the arm's kinematics.
     void measureFudge() {
         final int MEASUREMENT_COUNT = 10; // Number of samples to average
         final double TARGET_ARM_HEIGHT = 5; // Target arm height above the field, in inches
-        final double MAX_DISTANCE = 42 - Specs.Robot.LENGTH/2 + Specs.Arm.TURRET_OFFSET.x;
         final double EXTENSION_INCHES_PER_SECOND = 5; // Arm movement speed for direct user control
+        final double MAX_DISTANCE = Specs.Arm.MAX_ARM_LENGTH; // Maximum permissible distance
+        final double DISTANCE_BIAS = (Specs.Robot.LENGTH - Specs.Arm.SHOULDER_DISTANCE_FROM_BACK);
 
         Arm arm = initializeArm();
         if (arm == null)
@@ -852,21 +853,19 @@ public class Calibrate extends LinearOpMode {
             if (io.guide())
                 return; // ====>
             if (io.a()) {
-                arm.calibration.setDefaultFudges();
+                arm.calibration.setDefaultPointCalibrations();
                 break; // ====>
             }
         }
 
-        Calibration.Fudge[] fudges = new Calibration.Fudge[MEASUREMENT_COUNT];
+        Calibration.PointCalibration[] calibrationPoints = new Calibration.PointCalibration[MEASUREMENT_COUNT];
         int measurement = 0;
         double theoreticalHeight = TARGET_ARM_HEIGHT; // Height to maintain while measuring
-        double theoreticalDistance = 0; // Start closest to the robot
-        double minMeasuredReach = 0;
-        double minTheoreticalReach = 0;
+        double theoreticalDistance = DISTANCE_BIAS;
         double lastTime = System.nanoTime() * 1e-9; // Time of the last measurement
         Distance measuredDistance = new Distance(); // Object to hold the measured distance
 
-        NumericInput inputter = new NumericInput(measuredDistance, "distance", -1, 2, 0, MAX_DISTANCE);
+        NumericInput inputter = new NumericInput(measuredDistance, "biasedDistance", -1, 2, 0, MAX_DISTANCE - DISTANCE_BIAS);
         while (opModeIsActive()) {
             double time = System.nanoTime() * 1e-9;
             double deltaT = time - lastTime;
@@ -878,8 +877,7 @@ public class Calibrate extends LinearOpMode {
                         Io.B + " to cancel and discard the results.\n");
                 io.update();
                 if (io.a()) {
-                    arm.calibration.minReach = minMeasuredReach;
-                    arm.calibration.fudges = fudges; // Save the fudge factors
+                    arm.calibration.pointCalibrations = calibrationPoints; // Save the fudge factors
                     arm.calibration.saveToFile(); // Save the resulting calibration
                     return; // ====> Done!
                 }
@@ -896,6 +894,12 @@ public class Calibrate extends LinearOpMode {
                             "the floor at the closest point to the robot. Measure the distance " +
                             "from the front of the robot and enter it using the Dpad and right " +
                             "stick.\n");
+                } else if (measurement == MEASUREMENT_COUNT - 1) {
+                    io.out("Last measurement.\n");
+                    io.out("Use the left stick to adjust the arm so that it touches " +
+                            "the floor at the furthest point from the robot. Measure the distance " +
+                            "from the front of the robot and enter it using the Dpad and right " +
+                            "stick.\n");
                 } else {
                     io.out("Fudge measurement %d of %d\n", measurement + 1, MEASUREMENT_COUNT);
                     io.out("Use the left stick to adjust the arm's height so that it " +
@@ -903,36 +907,31 @@ public class Calibrate extends LinearOpMode {
                             " robot and enter it using the Dpad and right stick.\n");
                 }
                 io.out("Enter measured distance: <big><big>%s</big></big> inches\n", inputter.update(gamepad1));
-                io.out("Theoretical distance: %.2f\", height: %.2f\"\n", theoreticalDistance, theoreticalHeight);
-                io.out("Press " + Io.A + " once touching the floor and the measured distance is entered.");
+                io.out("Theoretical distance: %.2f\", height: %.2f\"\n", theoreticalDistance - DISTANCE_BIAS, theoreticalHeight);
+                io.out("Press " + Io.X + " once touching the floor and the measured distance is entered.");
 
                 theoreticalHeight += -gamepad1.left_stick_y * deltaT * EXTENSION_INCHES_PER_SECOND;
                 theoreticalHeight = Math.max(-5, Math.min(theoreticalHeight, 12)); // Clamp height
-                if (measurement == 0) {
+                if ((measurement == 0) || (measurement == MEASUREMENT_COUNT - 1)) {
                     theoreticalDistance += gamepad1.left_stick_x * deltaT * EXTENSION_INCHES_PER_SECOND;
-                    theoreticalDistance = Math.max(0, Math.min(theoreticalDistance, MAX_DISTANCE)); // Clamp distance
+                    theoreticalDistance = Math.max(DISTANCE_BIAS, Math.min(theoreticalDistance, MAX_DISTANCE)); // Clamp distance
                 }
                 arm.pickup(theoreticalDistance, theoreticalHeight); // Move the arm to the requested position
 
-                if (io.a()) {
-                    // The very first measurement sets the minimum reach:
-                    if (measurement == 0) {
-                        minMeasuredReach = measuredDistance.distance;
-                        minTheoreticalReach = theoreticalDistance;
-                    }
-
+                if (io.x()) {
                     // Save the current results:
-                    fudges[measurement] = new Calibration.Fudge(
-                            measuredDistance.distance,
+                    calibrationPoints[measurement] = new Calibration.PointCalibration(
+                            measuredDistance.biasedDistance + DISTANCE_BIAS,
                             theoreticalDistance,
                             theoreticalHeight); // If theoretical height is 1", say, then dial 1" to get to true 0"
 
                     // Setup for the next measurement:
                     measurement++;
+                    double minTheoreticalReach = calibrationPoints[0].computedDistance;
                     theoreticalHeight = TARGET_ARM_HEIGHT;
                     theoreticalDistance = minTheoreticalReach
                             + (measurement * (MAX_DISTANCE - minTheoreticalReach) / (MEASUREMENT_COUNT - 1));
-                    measuredDistance.distance = theoreticalDistance; // Pre-seed
+                    measuredDistance.biasedDistance = theoreticalDistance - DISTANCE_BIAS; // Pre-seed
                 }
                 TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
                 arm.update(new Pose2d(0, 0, 0), packet.fieldOverlay());
