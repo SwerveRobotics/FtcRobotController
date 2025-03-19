@@ -543,11 +543,10 @@ public class Calibrate extends LinearOpMode {
         int id; // Joint ID
         int state; // Finite state machine state
         Servo[] servos; // Array of servos for this joint
-        BiConsumer<Screen, Calibration> method;
-        Screen(String name, int id, BiConsumer<Screen, Calibration> method, String description) {
+        double currentPosition; // Current position of the servo, used for smooth interpolation
+        Screen(String name, int id, String description) {
             this.name = name;
             this.id = id;
-            this.method = method;
             this.anglesDescription = description;
         }
     }
@@ -571,14 +570,17 @@ public class Calibrate extends LinearOpMode {
         }
     }
 
+    // The different UI states for calibrating a joint:
     static class CalibrateState {
         static final int INITIALIZE = 0;
         static final int ENTER_START = 1;
-        static final int ENTER_ALL = 2;
+        static final int GOTO_START = 2;
+        static final int ENTER_ALL = 3;
     }
 
     // Calibrate a specific joint. This is called within the UI input loop.
-    void calibrateJoint(Screen screen, Calibration calibration) {
+    void calibrateJoint(Screen screen, Calibration calibration, double deltaT) {
+        final double VELOCITY = 0.25; // Change in position value per second
         Calibration.JointCalibration joint = calibration.jointCalibrations[screen.id];
 
         // If either servo is null, we can't calibrate this joint:
@@ -607,6 +609,7 @@ public class Calibrate extends LinearOpMode {
                             new NumericInput(joint, "max", -3, 3, 0, 1))
             };
 
+            screen.currentPosition = Double.NaN;
             if (!joint.isValid()) {
                 screen.state = CalibrateState.ENTER_START;
             } else {
@@ -621,7 +624,7 @@ public class Calibrate extends LinearOpMode {
                         "from scratch for this joint.");
                 if (io.a()) {
                     // Edit the existing values:
-                    screen.state = CalibrateState.ENTER_ALL;
+                    screen.state = CalibrateState.GOTO_START;
                     for (int i = 0; i < screen.entries.length; i++) {
                         screen.entries[i].isEnabled = true;
                     }
@@ -637,11 +640,29 @@ public class Calibrate extends LinearOpMode {
             io.out("Enter the start position for the " + screen.name + " servo:\n");
             io.out("<big><big>&emsp;" + screen.entries[0].inputter.update(gamepad1) + "</big></big>\n");
             io.out("Use the right stick to adjust the value, Dpad to select digit, " +
-                    Io.A + " when ready to activate the servo.");
+                    Io.A + " when ready to activate the servo.\n");
+            io.out(Io.WARNING_ICON + "WARNING: When you press " + Io.A + ", the " + screen.name +
+                    " servo will move to the inputted position <b>at full speed!</b>\n");
+
             if (io.a()) {
                 screen.state = CalibrateState.ENTER_ALL;
                 screen.entries[0].isEnabled = true;
                 screen.entries[0].isEditing = true;
+                screen.currentPosition = screen.entries[0].inputter.getValue();
+                for (Servo servo: screen.servos) {
+                    servo.setPosition(screen.currentPosition);
+                }
+            }
+        } else if (screen.state == CalibrateState.GOTO_START) {
+            io.out(Io.WARNING_ICON + "WARNING: When you press " + Io.A + ", the " + screen.name +
+                    " servo will move to its start position of %.2f <b>at full speed!</b>\n", joint.start);
+            io.out("Press " + Io.A + " to start, " + Io.GUIDE + " to cancel.\n");
+            if (io.a()) {
+                screen.state = CalibrateState.ENTER_ALL;
+                screen.currentPosition = joint.start;
+                for (Servo servo: screen.servos) {
+                    servo.setPosition(screen.currentPosition);
+                }
             }
         } else if (screen.state == CalibrateState.ENTER_ALL) {
             io.out(screen.anglesDescription + " Servo's current angle according to calibration: %.1f\u00b0.\n",
@@ -673,8 +694,13 @@ public class Calibrate extends LinearOpMode {
 
                 // Tell the hardware the new position, assuming this isn't an angle entry:
                 if (!selectedEntry.isAngle) {
+                    // Smoothly interpolate to the target position:
+                    double targetPosition = selectedEntry.inputter.getValue();
+                    double delta = targetPosition - screen.currentPosition;
+                    double maxDelta = VELOCITY * deltaT; // Maximum change in position this update
+                    screen.currentPosition += Math.signum(delta) * Math.min(Math.abs(delta), maxDelta);
                     for (Servo servo: screen.servos) {
-                        servo.setPosition(selectedEntry.inputter.getValue());
+                        servo.setPosition(screen.currentPosition);
                     }
                 }
             } else {
@@ -723,23 +749,23 @@ public class Calibrate extends LinearOpMode {
             calibration = new Calibration();
 
         final Screen[] screens = {
-                new Screen("Shoulder", Id.SHOULDER, this::calibrateJoint,
+                new Screen("Shoulder", Id.SHOULDER,
                         "0\u00b0 is straight forward horizontally, 90\u00b0 is straight up."),
-                new Screen("Elbow1", Id.ELBOW1, this::calibrateJoint,
+                new Screen("Elbow1", Id.ELBOW1,
                         "0\u00b0 is when the joint is perfectly straight, -170ish\u00b0 when " +
                                 "folded in the home position."),
-                new Screen("Elbow2", Id.ELBOW2, this::calibrateJoint,
+                new Screen("Elbow2", Id.ELBOW2,
                         "-180\u00b0 is when the joint is perfectly straight, 10ish\u00b0 when " +
                                 "folded in the home position."),
-                new Screen("Elbow3", Id.ELBOW3, this::calibrateJoint,
+                new Screen("Elbow3", Id.ELBOW3,
                         "0\u00b0 is when the joint is perfectly straight, -170ish\u00b0 when " +
                                 "folded in the home position."),
-                new Screen("Wrist", Id.WRIST, this::calibrateJoint,
+                new Screen("Wrist", Id.WRIST,
                         "0\u00b0 is when the claw is aligned with the arm, positive when " +
                                 "turned to the left."),
-                new Screen("Claw", Id.CLAW, this::calibrateJoint,
+                new Screen("Claw", Id.CLAW,
                         "0\u00b0 is when the claw is closed, positive when open."),
-                new Screen("Turret", Id.TURRET, this::calibrateJoint,
+                new Screen("Turret", Id.TURRET,
                         "0\u00b0 is when the arm is perfectly straight forward, positive " +
                                 "when the arm is turned to the left."),
         };
@@ -759,7 +785,14 @@ public class Calibrate extends LinearOpMode {
             }
         }
 
+        double previousTime = System.nanoTime() * 1e-9; // Time of the previous update, in seconds
+        double deltaT = 0; // Time since the last update, in seconds
         while (opModeIsActive()) {
+            // Compute delta-t:
+            double time = System.nanoTime() * 1e-9; // Current time, in seconds
+            deltaT = time - previousTime; // Time since the last update
+            previousTime = time;
+
             // Handle the UI:
             if (io.guide())
                 return; // ====>
@@ -784,7 +817,7 @@ public class Calibrate extends LinearOpMode {
             telemetry.addLine(header.toString());
 
             // Call the current screen's method
-            screens[screenIndex].method.accept(screens[screenIndex], calibration);
+            calibrateJoint(screens[screenIndex], calibration, deltaT);
         }
     }
 
