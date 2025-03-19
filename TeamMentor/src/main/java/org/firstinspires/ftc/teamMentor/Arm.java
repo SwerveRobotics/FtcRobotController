@@ -167,11 +167,23 @@ class Calibration {
         calibration.jointCalibrations[Id.TURRET].degreesB = -15;
         calibration.jointCalibrations[Id.TURRET].start = 0.5;
 
-        calibration.jointCalibrations[Id.ELBOW1].degreesA = 170;
-        calibration.jointCalibrations[Id.ELBOW1].degreesB = -170;
+        calibration.jointCalibrations[Id.SHOULDER].start = 0.4;
+        calibration.jointCalibrations[Id.SHOULDER].positionA = 0.114;
+        calibration.jointCalibrations[Id.SHOULDER].degreesA = 0;
+        calibration.jointCalibrations[Id.SHOULDER].positionB = 1.0;
+        calibration.jointCalibrations[Id.SHOULDER].degreesA = 90;
 
-        calibration.jointCalibrations[Id.ELBOW2].degreesA = -170;
-        calibration.jointCalibrations[Id.ELBOW2].degreesB = 170;
+        calibration.jointCalibrations[Id.ELBOW1].start = 0;
+        calibration.jointCalibrations[Id.ELBOW1].positionA = 0.5;
+        calibration.jointCalibrations[Id.ELBOW1].degreesA = 0;
+        calibration.jointCalibrations[Id.ELBOW1].positionB = 0.2;
+        calibration.jointCalibrations[Id.ELBOW1].degreesA = 90;
+
+        calibration.jointCalibrations[Id.ELBOW2].start = 0;
+        calibration.jointCalibrations[Id.ELBOW2].positionA = 0.5;
+        calibration.jointCalibrations[Id.ELBOW2].degreesA = 0;
+        calibration.jointCalibrations[Id.ELBOW2].positionB = 0.210;
+        calibration.jointCalibrations[Id.ELBOW2].degreesA = -90;
 
         calibration.jointCalibrations[Id.ELBOW3].degreesA = 170;
         calibration.jointCalibrations[Id.ELBOW3].degreesB = -170;
@@ -762,6 +774,8 @@ class Arm {
     // the tip of the claw; changing the height of the claw does not necessitate changing the
     // distance.
     double[] computeCorrectedReach(double distance, double floorHeight) {
+        if (true) return computeTheoreticalReach(distance, floorHeight); // @@@@@@@@@@@@@@@@
+
         Calibration.PointCalibration lowerFudge = new Calibration.PointCalibration(0, 0, 0);
         Calibration.PointCalibration upperFudge = null;
         for (Calibration.PointCalibration calibrationPoint : calibration.pointCalibrations) {
