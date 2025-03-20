@@ -944,8 +944,12 @@ class ClawAction extends RobotAction {
  */
 class ReachAction extends RobotAction {
     enum State {
-        PICKUP,
+        // MentorBot v1.0:
+        KINEMATIC_PICKUP,
         HIGH_BASKET,
+        // MentorBot v2.0:
+        SIMPLE_PICKUP,
+        LOW_BASKET,
         HOME,
         START
     }
@@ -987,7 +991,7 @@ class ReachAction extends RobotAction {
             done = arm.home();
             if (done)
                 geometry = Geometry.HOME;
-        } else if (state == State.PICKUP) {
+        } else if (state == State.KINEMATIC_PICKUP) {
             if (geometry == Geometry.VERTICAL) {
                 if (arm.home())
                     geometry = Geometry.HOME;

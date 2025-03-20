@@ -263,7 +263,7 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
             subActions.add(new TurretAction(arm, 0));
         } else {
             // It's safe to extend the arm:
-            subActions.add(new ReachAction(arm, ReachAction.State.PICKUP, targetArmLength, Specs.Arm.SUBMERSIBLE_HEIGHT));
+            subActions.add(new ReachAction(arm, ReachAction.State.KINEMATIC_PICKUP, targetArmLength, Specs.Arm.SUBMERSIBLE_HEIGHT));
             subActions.add(new TurretAction(arm, targetTurretHeading));
         }
     }

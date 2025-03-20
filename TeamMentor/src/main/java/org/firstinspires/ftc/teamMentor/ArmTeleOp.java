@@ -228,7 +228,7 @@ public class ArmTeleOp extends LinearOpMode {
 
                 // Adjust the reach if it's changed:
                 if ((dx != 0) || (dy != 0)) {
-                    actions.add(new ReachAction(arm, ReachAction.State.PICKUP, distance, height));
+                    actions.add(new ReachAction(arm, ReachAction.State.KINEMATIC_PICKUP, distance, height));
                 }
 
                 // A button moves arm to the start position:
@@ -238,7 +238,7 @@ public class ArmTeleOp extends LinearOpMode {
 
                 // B button moves arm to the pickup position:
                 if ((gamepad1.b) && (!bWasPressed))
-                    actions.add(new ReachAction(arm, ReachAction.State.PICKUP, distance, height));
+                    actions.add(new ReachAction(arm, ReachAction.State.KINEMATIC_PICKUP, distance, height));
                 bWasPressed = gamepad1.b;
 
                 // X button moves arm to the home position:

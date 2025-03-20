@@ -56,8 +56,8 @@ public class ArmAutonomous extends LinearOpMode {
                 // Pickup the first sample and deposit it:
                 new ParallelAction(
                         new DriveToAction(autopilot, new Pose2d(-48, -48, Math.toRadians(90))),
-                        new ReachAction(arm, ReachAction.State.PICKUP, 30, 4)),
-                new ReachAction(arm, ReachAction.State.PICKUP, 30, 0),
+                        new ReachAction(arm, ReachAction.State.KINEMATIC_PICKUP, 30, 4)),
+                new ReachAction(arm, ReachAction.State.KINEMATIC_PICKUP, 30, 0),
                 new ClawAction(arm, false),
                 new BasketAutoPilotAction(arm, autopilot),
                 new ClawAction(arm, true));
