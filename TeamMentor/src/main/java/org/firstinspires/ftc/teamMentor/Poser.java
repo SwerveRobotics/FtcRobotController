@@ -257,36 +257,42 @@ public class Poser {
     void updateFromOdometry() {
         Pose2d oldOdometryPose = odometryPose;
         if (pinpointDriver != null) {
-            // Query the driver for position and velocity:
-            Stats.beginIo();
-            pinpointDriver.update();
-            Stats.endIo();
+            int tries = 0;
+            do {
+                tries++;
+                if (tries > 1) {
+                    System.out.printf("%d: PinPoint NaN! pose: %s, velocity: %s\n", tries - 1, odometryPose, poseVelocity);
+                    if (tries > 10) {
+                        throw new RuntimeException("PinPoint NaN!");
+                    }
+                }
 
-            Stats.beginIo();
-            Pose2D pose2D = pinpointDriver.getPosition();
-            Pose2D poseVelocity2D = pinpointDriver.getVelocity();
-            Stats.endIo();
+                // Query the driver for position and velocity:
+                Stats.beginIo();
+                pinpointDriver.update();
+                Stats.endIo();
 
-            // Convert to Road Runner format, remembering that the Pinpoint tracking sensor
-            // reports velocity as field-relative but Road Runner wants it robot-relative:
-            odometryPose = new Pose2d(
-                    pose2D.getX(DistanceUnit.INCH),
-                    pose2D.getY(DistanceUnit.INCH),
-                    pose2D.getHeading(AngleUnit.RADIANS));
-            double xVelocity = poseVelocity2D.getX(DistanceUnit.INCH);
-            double yVelocity = poseVelocity2D.getY(DistanceUnit.INCH);
-            poseVelocity = new PoseVelocity2d(
-                    rotateVector(new Vector2d(xVelocity, yVelocity), -odometryPose.heading.toDouble()),
-                    poseVelocity2D.getHeading(AngleUnit.RADIANS));
+                Stats.beginIo();
+                Pose2D pose2D = pinpointDriver.getPosition();
+                Pose2D poseVelocity2D = pinpointDriver.getVelocity();
+                Stats.endIo();
 
-            if ((Double.isNaN(odometryPose.position.x) || Double.isNaN(odometryPose.position.y) ||
+                // Convert to Road Runner format, remembering that the Pinpoint tracking sensor
+                // reports velocity as field-relative but Road Runner wants it robot-relative:
+                odometryPose = new Pose2d(
+                        pose2D.getX(DistanceUnit.INCH),
+                        pose2D.getY(DistanceUnit.INCH),
+                        pose2D.getHeading(AngleUnit.RADIANS));
+                double xVelocity = poseVelocity2D.getX(DistanceUnit.INCH);
+                double yVelocity = poseVelocity2D.getY(DistanceUnit.INCH);
+                poseVelocity = new PoseVelocity2d(
+                        rotateVector(new Vector2d(xVelocity, yVelocity), -odometryPose.heading.toDouble()),
+                        poseVelocity2D.getHeading(AngleUnit.RADIANS));
+            } while ((Double.isNaN(odometryPose.position.x) || Double.isNaN(odometryPose.position.y) ||
                     Double.isNaN(odometryPose.heading.toDouble())) ||
                     (Double.isNaN(poseVelocity.linearVel.x) || Double.isNaN(poseVelocity.linearVel.y) ||
-                            Double.isNaN(poseVelocity.angVel))) {
+                            Double.isNaN(poseVelocity.angVel)));
 
-                System.out.printf("PinPoint NaN! pose: %s, velocity: %s\n", odometryPose, poseVelocity);
-                throw new RuntimeException("PinPoint NaN!");
-            }
         } else if (otosDriver != null) {
             // Get the current pose and current pose velocity from the optical tracking sensor.
             // Reads over the I2C bus are very slow so for performance we query the velocity only
@@ -509,7 +515,7 @@ public class Poser {
 
     // Update the pose estimate. If quiesce is true, the ultrasonic sensors
     // will not be activated.
-    public void update(boolean quiesceUltrasonic) {
+    public void update() {
         beams.clear();
         updateFromOdometry();
         updateFromUltrasonic();

@@ -1225,7 +1225,7 @@ public class Calibrate extends LinearOpMode {
                 }
             }
 
-            drive.updatePoseEstimate(false);
+            drive.updatePoseEstimate();
             poser.draw(canvas); // Draw the robot's pose
 
             PoseVelocity2d velocity = new PoseVelocity2d(new Vector2d(

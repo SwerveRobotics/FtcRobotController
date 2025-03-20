@@ -44,6 +44,9 @@ public class MvpTeleOp extends LinearOpMode {
 
             drive.setDrivePowers(velocity);
             arm.update(poser.getPose(), canvas);
+            poser.update();
+
+            poser.draw(canvas);
 
             // Spew the stats:
             telemetry.addLine(Stats.getString());

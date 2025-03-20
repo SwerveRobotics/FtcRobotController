@@ -739,10 +739,9 @@ public final class MecanumDrive {
         lastLoopTime = nanoTime() * 1e-9;
     }
 
-    public PoseVelocity2d updatePoseEstimate() { return updatePoseEstimate(false); }
-    public PoseVelocity2d updatePoseEstimate(boolean quiesceUltrasonic) {
+    public PoseVelocity2d updatePoseEstimate() {
         if (poser != null) {
-            poser.update(quiesceUltrasonic);
+            poser.update();
             pose = poser.getPose();
             poseVelocity = poser.getPoseVelocity();
         } else {

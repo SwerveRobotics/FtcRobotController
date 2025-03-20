@@ -102,7 +102,7 @@ public class ArmTeleOp extends LinearOpMode {
             Canvas canvas = packet.fieldOverlay();
 
             // Update the current pose:
-            drive.updatePoseEstimate(false);
+            drive.updatePoseEstimate();
             StringBuilder builder = new StringBuilder();
             builder.append(String.format("Time: <big><big><big>%.1f</big></big></big>s, ", time - startTime));
             builder.append(String.format("orientation: <big><big><big>%s</big></big></big>, ",
