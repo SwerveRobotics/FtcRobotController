@@ -683,9 +683,12 @@ class Arm {
                 joint.calibration = Calibration.getDefaultCalibration().jointCalibrations[id];
             }
 
-            // Set the servo hardware to the home position at full speed. There's no avoiding this
-            // step.
-            joint.setHardwarePosition(joint.calibration.start);
+            if (joint.id == Id.SHOULDER) {
+                // Set the shoulder to its start position so that it fits within the sizing box.
+                // The other joints will have their first positions set once the first Arm.update()
+                // call is made, after Start is pressed.
+                joint.setHardwarePosition(joint.calibration.start);
+            }
             joint.currentAngle = joint.homeInRadians();
             joint.targetAngle = joint.homeInRadians();
             joints[id] = joint;

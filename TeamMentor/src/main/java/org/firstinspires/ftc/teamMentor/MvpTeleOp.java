@@ -43,6 +43,7 @@ public class MvpTeleOp extends LinearOpMode {
                     shapeStick(-gamepad1.right_stick_x));
 
             drive.setDrivePowers(velocity);
+            arm.update(poser.getPose(), canvas);
 
             // Spew the stats:
             telemetry.addLine(Stats.getString());
