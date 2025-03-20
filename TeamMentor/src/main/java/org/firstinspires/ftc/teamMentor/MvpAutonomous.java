@@ -9,14 +9,12 @@ import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.SequentialAction;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 
 import org.firstinspires.ftc.teamMentor.roadrunner.MecanumDrive;
 
-@Disabled
 @Autonomous(name="Autonomous", group="Mentor", preselectTeleOp="TeleOp")
-public class ArmAutonomous extends LinearOpMode {
+public class MvpAutonomous extends LinearOpMode {
     @Override
     public void runOpMode() {
         Pose2d startPose = new Pose2d(-48 + Specs.Robot.LENGTH / 2,
@@ -25,7 +23,6 @@ public class ArmAutonomous extends LinearOpMode {
         Poser poser = Poser.getPoser(hardwareMap, telemetry, gamepad1, startPose);
         MecanumDrive drive = new MecanumDrive(hardwareMap, poser, telemetry, gamepad1);
         Arm arm = new Arm(hardwareMap, telemetry);
-        Autopilot autopilot = new Autopilot(drive, telemetry, poser, ()->{});
 
         telemetry.addLine("Ready to start autonomous! Position the robot, please.");
         telemetry.update();
@@ -46,28 +43,7 @@ public class ArmAutonomous extends LinearOpMode {
         }
         drive.setPose(startPose); // Don't forget to reset the pose
 
-        Action autoAction = new SequentialAction(
-                // @@@ Autopilot can only abut once per instantiation
-
-                // Drop preload at the basket:
-                new BasketAutoPilotAction(arm, autopilot),
-                new ClawAction(arm, true),
-
-                // Pickup the first sample and deposit it:
-                new ParallelAction(
-                        new DriveToAction(autopilot, new Pose2d(-48, -48, Math.toRadians(90))),
-                        new ReachAction(arm, ReachAction.State.PICKUP, 30, 4)),
-                new ReachAction(arm, ReachAction.State.PICKUP, 30, 0),
-                new ClawAction(arm, false),
-                new BasketAutoPilotAction(arm, autopilot),
-                new ClawAction(arm, true));
-
-//                // Search in the submersible:
-//                copilot.search(),
-//                copilot.basket(),
-//                arm.openClaw(true)
-
-
+        Action autoAction = new SequentialAction();
 
         // Wait for the game to start (driver presses PLAY)
         waitForStart();
