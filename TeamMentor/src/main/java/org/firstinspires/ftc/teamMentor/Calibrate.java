@@ -865,31 +865,40 @@ public class Calibrate extends LinearOpMode {
     }
 
     // Measure the distance and height correction factors for the arm's kinematics.
-    void measureFudge() {
+    void adjustFudge() {
         final int MEASUREMENT_COUNT = 10; // Number of samples to average
         final double TARGET_ARM_HEIGHT = 5; // Target arm height above the field, in inches
         final double EXTENSION_INCHES_PER_SECOND = 5; // Arm movement speed for direct user control
         final double MAX_DISTANCE = Specs.Arm.MAX_ARM_LENGTH; // Maximum permissible distance
         final double DISTANCE_BIAS = (Specs.Robot.LENGTH - Specs.Arm.SHOULDER_DISTANCE_FROM_BACK);
 
-        Arm arm = initializeArm();
-        if (arm == null)
-            return; // ====> Abort tuning
-
         while (opModeIsActive()) {
-            io.out("This will measure new fudge factors for the arm's kinematics.\n");
-            io.out(Io.WARNING_ICON + "WARNING: Pressing " + Io.A + " will reset the existing " +
+            io.out("This will set new fudge factors for the arm's kinematics.\n");
+            io.out(Io.WARNING_ICON + "WARNING: This will reset the existing " +
                     "fudge factors!\n");
-            io.out("Press " + Io.A + " to continue, " + Io.GUIDE + " to cancel.");
+            io.out("Press " + Io.A + " to tune, " + Io.B + " to set to identity, " + Io.GUIDE + " to cancel.");
             io.update();
 
             if (io.guide())
                 return; // ====>
             if (io.a()) {
-                arm.calibration.setDefaultPointCalibrations();
                 break; // ====>
             }
+            if (io.b()) {
+                Calibration calibration = Calibration.loadFromFile();
+                calibration.pointCalibrations = Calibration.getIdentityPointCalibrations();
+                calibration.saveToFile();
+                return; // ====> Done!
+            }
         }
+
+        Arm arm = initializeArm();
+        if (arm == null)
+            return; // ====> Abort tuning
+
+        // Save away and then replace the current calibration points:
+        Calibration.PointCalibration[] originalPoints = arm.calibration.pointCalibrations;
+        arm.calibration.pointCalibrations = Calibration.getIdentityPointCalibrations();
 
         Calibration.PointCalibration[] calibrationPoints = new Calibration.PointCalibration[MEASUREMENT_COUNT];
         int measurement = 0;
@@ -920,6 +929,7 @@ public class Calibrate extends LinearOpMode {
             } else {
                 if (io.guide()) {
                     // Don't save the calibration if the user cancels before the final measurement:
+                    arm.calibration.pointCalibrations = originalPoints; // Restore the original calibration
                     return; // ====>
                 }
                 if (measurement == 0) {
@@ -1266,11 +1276,10 @@ public class Calibrate extends LinearOpMode {
         Menu menu = new Menu(io);
         menu.add(new Menu.RunWidget("Calibrate arm joints", this::calibrateJoints));
         menu.add(new Menu.RunWidget("Tune arm kinematics", this::tuneKinematics));
-        menu.add(new Menu.RunWidget("Adjust arm fudge factors", this::measureFudge));
+        menu.add(new Menu.RunWidget("Adjust arm fudge factors", this::adjustFudge));
         menu.add(new Menu.RunWidget("Test localization sensors", this::testLocalizationSensors));
         menu.add(new Menu.RunWidget("Tune localization", this::tuneLocalization));
-//        menu.add(new Menu.RunWidget("Enable servos", () -> enableServos(true)));
-//        menu.add(new Menu.RunWidget("Disable servos", () -> enableServos(false)));
+        menu.add(new Menu.RunWidget("Disable servos", () -> enableServos(false)));
 
         waitForStart();
         while (opModeIsActive()) {

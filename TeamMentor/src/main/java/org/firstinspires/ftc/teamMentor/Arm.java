@@ -126,8 +126,8 @@ class Calibration {
 
     // Apply an identity fudge to the arm, which means no correction, and set the minimum and
     // maximum reach:
-    void setDefaultPointCalibrations() {
-        pointCalibrations = new PointCalibration[]{
+    static PointCalibration[] getIdentityPointCalibrations() {
+        return new PointCalibration[]{
             new PointCalibration(10, 10, 0),
             new PointCalibration(Specs.Arm.MAX_ARM_LENGTH, Specs.Arm.MAX_ARM_LENGTH, 0)
         };
@@ -150,7 +150,7 @@ class Calibration {
     static Calibration getDefaultCalibration() {
         Calibration calibration = new Calibration();
         calibration.setDefaultKinematics();
-        calibration.setDefaultPointCalibrations();
+        calibration.pointCalibrations = getIdentityPointCalibrations();
 
         for (int i = 0; i < Id.COUNT; i++) {
             JointCalibration joint = calibration.jointCalibrations[i];
@@ -637,7 +637,7 @@ class Arm {
         Calibration loadedCalibration = Calibration.loadFromFile();
         if (WilyWorks.isSimulating) {
             // calibration = Calibration.getDefaultCalibration();
-            calibration = loadedCalibration; // @@@
+            calibration = loadedCalibration;
         } else if (loadedCalibration != null) {
             calibration = loadedCalibration;
         } else {
@@ -774,8 +774,6 @@ class Arm {
     // the tip of the claw; changing the height of the claw does not necessitate changing the
     // distance.
     double[] computeCorrectedReach(double distance, double floorHeight) {
-        if (true) return computeTheoreticalReach(distance, floorHeight); // @@@@@@@@@@@@@@@@
-
         Calibration.PointCalibration lowerFudge = new Calibration.PointCalibration(0, 0, 0);
         Calibration.PointCalibration upperFudge = null;
         for (Calibration.PointCalibration calibrationPoint : calibration.pointCalibrations) {
