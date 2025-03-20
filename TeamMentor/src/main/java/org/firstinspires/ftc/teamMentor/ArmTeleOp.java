@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.Action;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
@@ -43,6 +44,7 @@ enum AutoPilotState {
     PICKUP
 }
 
+@Disabled
 @TeleOp(name = "TeleOp", group = "MentorBot")
 public class ArmTeleOp extends LinearOpMode {
     final double EXTENSION_INCHES_PER_SECOND = 10; // Claw movement speed for direct user control
