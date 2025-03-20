@@ -2606,7 +2606,14 @@ public class LoonyTune extends LinearOpMode {
 
         // Call this regularly to update the tracked amount of rotation:
         void updateRotation() {
-            double newAccumulationHeading = getSensorHeading();
+            double newAccumulationHeading;
+            int retries = 0;
+            do {
+                if (++retries == 10)
+                    throw new IllegalStateException("Sensor heading is NaN");
+                newAccumulationHeading = getSensorHeading();
+            } while (Double.isNaN(newAccumulationHeading));
+
             accumulatedRotation += normalizeAngle(newAccumulationHeading - previousAccumulationHeading);
             previousAccumulationHeading = newAccumulationHeading;
         }
