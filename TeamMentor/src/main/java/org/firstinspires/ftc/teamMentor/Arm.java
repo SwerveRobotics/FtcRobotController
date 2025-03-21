@@ -820,6 +820,12 @@ class Arm {
                 joints[Id.ELBOW2].setTarget(joints[Id.ELBOW2].homeInRadians()) &
                 joints[Id.ELBOW3].setTarget(joints[Id.ELBOW3].homeInRadians());
     }
+    boolean home() {
+        return joints[Id.SHOULDER].setTarget(Math.toRadians(0)) &
+                joints[Id.ELBOW1].setTarget(Math.toRadians(170)) &
+                joints[Id.ELBOW2].setTarget(Math.toRadians(10)) &
+                joints[Id.ELBOW3].setTarget(joints[Id.ELBOW3].homeInRadians());
+    }
     boolean base() {
         // Note that bitwise AND is used to ensure all joints are set before returning.
         return joints[Id.SHOULDER].setTarget(Math.toRadians(90)) &
@@ -1015,7 +1021,7 @@ class FixedReachAction extends RobotAction {
     enum Geometry {
         VERTICAL,
         HORIZONTAL,
-        START
+        HOME
     }
 
     final Arm arm; // The arm to control
@@ -1026,7 +1032,7 @@ class FixedReachAction extends RobotAction {
     int thisInstance; // Identifier of this instance
 
     static int activeInstance = 0; // Identifier of the active action
-    static Geometry geometry = Geometry.START; // The arm's current geometry
+    static Geometry geometry = Geometry.HOME; // The arm's current geometry
 
     FixedReachAction(Arm arm, State state) { this(arm, state, 0, 0); }
     FixedReachAction(Arm arm, State state, double distance, double height) {
@@ -1047,22 +1053,23 @@ class FixedReachAction extends RobotAction {
         boolean done = false;
         if (state == State.START) {
             arm.model.setPickupTarget(0, 0);
-            done = arm.start();
+            done = arm.home();
             if (done)
-                geometry = Geometry.START;
+                geometry = Geometry.HOME;
         } else if (state == State.PICKUP) {
             if (geometry == Geometry.VERTICAL) {
                 if (arm.start())
-                    geometry = Geometry.START;
+                    geometry = Geometry.HOME;
             } else {
                 arm.model.setPickupTarget(distance, height);
-                done = arm.pickup(distance, height);
+                arm.pickup(distance, height);
                 geometry = Geometry.HORIZONTAL;
             }
+            done = false; // Continue picking up until a new state is requested
         } else if (state == State.LOW_BASKET) {
             if (geometry == Geometry.HORIZONTAL) {
                 if (arm.start())
-                    geometry = Geometry.START;
+                    geometry = Geometry.HOME;
             } else {
                 arm.model.setPickupTarget(0, 0);
                 done = arm.highBasket();
