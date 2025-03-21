@@ -163,10 +163,6 @@ class Calibration {
             joint.degreesB = 180;
         }
 
-        calibration.jointCalibrations[Id.TURRET].degreesA = 15;
-        calibration.jointCalibrations[Id.TURRET].degreesB = -15;
-        calibration.jointCalibrations[Id.TURRET].start = 0.5;
-
         calibration.jointCalibrations[Id.SHOULDER].start = 0.4;
         calibration.jointCalibrations[Id.SHOULDER].positionA = 0.114;
         calibration.jointCalibrations[Id.SHOULDER].degreesA = 0;
@@ -179,20 +175,38 @@ class Calibration {
         calibration.jointCalibrations[Id.ELBOW1].positionB = 0.2;
         calibration.jointCalibrations[Id.ELBOW1].degreesB = 90;
 
-        calibration.jointCalibrations[Id.ELBOW2].start = 0;
-        calibration.jointCalibrations[Id.ELBOW2].positionA = 0.5;
+        calibration.jointCalibrations[Id.ELBOW2].start = 0.600;
+        calibration.jointCalibrations[Id.ELBOW2].positionA = 0.530;
         calibration.jointCalibrations[Id.ELBOW2].degreesA = 0;
-        calibration.jointCalibrations[Id.ELBOW2].positionB = 0.210;
-        calibration.jointCalibrations[Id.ELBOW2].degreesB = -90;
+        calibration.jointCalibrations[Id.ELBOW2].positionB = 0.790;
+        calibration.jointCalibrations[Id.ELBOW2].degreesB = 90;
+        calibration.jointCalibrations[Id.ELBOW2].min = 0.3;
+        calibration.jointCalibrations[Id.ELBOW2].max = 1.0; // Ranges -80 to 163 degrees
 
-        calibration.jointCalibrations[Id.ELBOW3].degreesA = 170;
-        calibration.jointCalibrations[Id.ELBOW3].degreesB = -170;
+        calibration.jointCalibrations[Id.WRIST].start = 0.060;
+        calibration.jointCalibrations[Id.WRIST].positionA = 0.060;
+        calibration.jointCalibrations[Id.WRIST].degreesA = 0;
+        calibration.jointCalibrations[Id.WRIST].positionB = 0.530;
+        calibration.jointCalibrations[Id.WRIST].degreesB = 90;
+        calibration.jointCalibrations[Id.WRIST].min = 0.0;
+        calibration.jointCalibrations[Id.WRIST].max = 1.0; // Ranges -11.5 to 180 degrees
 
-        calibration.jointCalibrations[Id.WRIST].degreesA = 180;
-        calibration.jointCalibrations[Id.WRIST].degreesB = -180;
+        calibration.jointCalibrations[Id.CLAW].start = 0.500;
+        calibration.jointCalibrations[Id.CLAW].positionA = 0.500;
+        calibration.jointCalibrations[Id.CLAW].degreesA = 0;
+        calibration.jointCalibrations[Id.CLAW].positionB = 1.0;
+        calibration.jointCalibrations[Id.CLAW].degreesB = 30;
+        calibration.jointCalibrations[Id.CLAW].min = 0.5;
+        calibration.jointCalibrations[Id.CLAW].max = 1.0; // Ranges 0 to 30 degrees
 
-        calibration.jointCalibrations[Id.CLAW].degreesA = 180;
-        calibration.jointCalibrations[Id.CLAW].degreesB = -180;
+        calibration.jointCalibrations[Id.TURRET].start = 0.500;
+        calibration.jointCalibrations[Id.TURRET].positionA = 0.500;
+        calibration.jointCalibrations[Id.TURRET].degreesA = 0;
+        calibration.jointCalibrations[Id.TURRET].positionB = 0.700;
+        calibration.jointCalibrations[Id.TURRET].degreesB = 20;
+        calibration.jointCalibrations[Id.TURRET].min = 0.170;
+        calibration.jointCalibrations[Id.TURRET].max = 0.800; // Ranges -30 to 30 degrees when arm up!
+        
         return calibration;
     }
 
