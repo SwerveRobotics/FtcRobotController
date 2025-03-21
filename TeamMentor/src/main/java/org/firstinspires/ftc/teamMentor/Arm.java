@@ -189,11 +189,10 @@ class Calibration {
         calibration.jointCalibrations[Id.ELBOW3].degreesB = -170;
 
         calibration.jointCalibrations[Id.WRIST].degreesA = 180;
-        calibration.jointCalibrations[Id.WRIST].degreesA = -180;
+        calibration.jointCalibrations[Id.WRIST].degreesB = -180;
+
         calibration.jointCalibrations[Id.CLAW].degreesA = 180;
-        calibration.jointCalibrations[Id.CLAW].degreesA = -180;
-        calibration.jointCalibrations[Id.CLAW].start
-                = calibration.jointCalibrations[Id.CLAW].radiansToPosition(Math.toRadians(30));
+        calibration.jointCalibrations[Id.CLAW].degreesB = -180;
         return calibration;
     }
 
