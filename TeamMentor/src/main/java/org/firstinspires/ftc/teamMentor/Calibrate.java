@@ -1005,7 +1005,7 @@ public class Calibrate extends LinearOpMode {
         double maxDecelSeconds = arm.calibration.maxSpeed / -arm.calibration.deceleration;
 
         Menu.Widget modeWidget = new Menu.ListWidget("Position", 0,
-                new String[]{"High basket", "Pickup", "Start", "Wrist", "Claw", "Turret"}, (index, destination) -> {
+                new String[]{"Low basket", "Pickup", "Start", "Wrist", "Claw", "Turret"}, (index, destination) -> {
             state.descriptor = destination;
         });
         Menu.Widget maxVelWidget = new Menu.NumericWidget("Max velocity", "s/60\u00b0",
@@ -1078,17 +1078,17 @@ public class Calibrate extends LinearOpMode {
                         arm.turret(turretCalibration.positionToRadians(turretCalibration.min));
                         break;
                     default:
-                        arm.start();
+                        arm.initial();
                         break;
                 }
             } else if (io.gamepad.x) {
                 isMoving = true;
                 switch (state.descriptor) {
-                    case "High basket":
-                        arm.highBasket();
+                    case "Low basket":
+                        arm.lowBasket();
                         break;
                     case "Start":
-                        arm.start();
+                        arm.initial();
                         break;
                     case "Pickup":
                         double newDistance = distance + io.gamepad.left_stick_x * EXTENSION_INCHES_PER_SECOND * deltaT;

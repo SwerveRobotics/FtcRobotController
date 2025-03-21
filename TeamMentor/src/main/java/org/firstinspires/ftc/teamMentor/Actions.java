@@ -50,12 +50,12 @@ class BasketAutoPilotAction extends AutoPilotAction {
         if (elapsedTime == 0) {
             // Start the action:
             autoPilot.setTarget(new Pose2d(-54, -54, Math.toRadians(225)), AutoPilotState.BASKET, false);
-            subActions.add(new KinematicReachAction(arm, KinematicReachAction.State.BASE));
+            // @@@ subActions.add(new ThreeElbowAction(arm, ThreeElbowAction.State.BASE));
             subActions.add(new TurretAction(arm, 0));
             raised = false;
         }
         if ((!raised) && (autoPilot.distanceToFinalTarget() < 24)) {
-            subActions.add(new KinematicReachAction(arm, KinematicReachAction.State.HIGH_BASKET));
+            // @@@ subActions.add(new ThreeElbowAction(arm, ThreeElbowAction.State.HIGH_BASKET));
             raised = true;
         }
         return autoPilot.update(telemetryPacket.fieldOverlay(), userVelocity);
@@ -259,11 +259,11 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
         }
 
         if (retract) {
-            subActions.add(new KinematicReachAction(arm, KinematicReachAction.State.BASE));
+            // @@@ subActions.add(new ThreeElbowAction(arm, ThreeElbowAction.State.BASE));
             subActions.add(new TurretAction(arm, 0));
         } else {
             // It's safe to extend the arm:
-            subActions.add(new KinematicReachAction(arm, KinematicReachAction.State.PICKUP, targetArmLength, Specs.Arm.SUBMERSIBLE_HEIGHT));
+            // @@@ subActions.add(new ThreeElbowAction(arm, ThreeElbowAction.State.PICKUP, targetArmLength, Specs.Arm.SUBMERSIBLE_HEIGHT));
             subActions.add(new TurretAction(arm, targetTurretHeading));
         }
     }
@@ -272,7 +272,7 @@ class SubmersibleAutoPilotAction extends AutoPilotAction {
     public boolean run(double elapsedTime) {
         if (elapsedTime == 0) {
             // Start the action:
-            subActions.add(new KinematicReachAction(arm, KinematicReachAction.State.BASE));
+            // @@@ subActions.add(new ThreeElbowAction(arm, ThreeElbowAction.State.BASE));
         }
         double[] armControl = setTargetPose();
         setArmControl(telemetryPacket.fieldOverlay(), armControl[0], armControl[1]);

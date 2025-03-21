@@ -46,21 +46,21 @@ public class ArmAutonomous extends LinearOpMode {
         }
         drive.setPose(startPose); // Don't forget to reset the pose
 
-        Action autoAction = new SequentialAction(
+        Action autoAction = new SequentialAction();
                 // @@@ Autopilot can only abut once per instantiation
 
                 // Drop preload at the basket:
-                new BasketAutoPilotAction(arm, autopilot),
-                new ClawAction(arm, true),
-
-                // Pickup the first sample and deposit it:
-                new ParallelAction(
-                        new DriveToAction(autopilot, new Pose2d(-48, -48, Math.toRadians(90))),
-                        new KinematicReachAction(arm, KinematicReachAction.State.PICKUP, 30, 4)),
-                new KinematicReachAction(arm, KinematicReachAction.State.PICKUP, 30, 0),
-                new ClawAction(arm, false),
-                new BasketAutoPilotAction(arm, autopilot),
-                new ClawAction(arm, true));
+//                new BasketAutoPilotAction(arm, autopilot),
+//                new ClawAction(arm, true),
+//
+//                // Pickup the first sample and deposit it:
+//                new ParallelAction(
+//                        new DriveToAction(autopilot, new Pose2d(-48, -48, Math.toRadians(90))),
+//                        new ThreeElbowAction(arm, ThreeElbowAction.State.PICKUP, 30, 4)),
+//                new ThreeElbowAction(arm, ThreeElbowAction.State.PICKUP, 30, 0),
+//                new ClawAction(arm, false),
+//                new BasketAutoPilotAction(arm, autopilot),
+//                new ClawAction(arm, true));
 
 //                // Search in the submersible:
 //                copilot.search(),

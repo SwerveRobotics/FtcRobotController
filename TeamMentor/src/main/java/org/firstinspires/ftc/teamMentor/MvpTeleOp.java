@@ -45,11 +45,11 @@ public class MvpTeleOp extends LinearOpMode {
             // Driver 2
             ui.setGamepad(2);
             if (ui.a())
-                actions.add(new FixedReachAction(arm, FixedReachAction.State.PICKUP));
+                actions.add(new ReachAction(arm, ReachAction.State.USER_PICKUP));
             if (ui.b())
-                actions.add(new FixedReachAction(arm, FixedReachAction.State.LOW_BASKET));
+                actions.add(new ReachAction(arm, ReachAction.State.LOW_BASKET));
             if (ui.x())
-                actions.add(new FixedReachAction(arm, FixedReachAction.State.START));
+                actions.add(new ReachAction(arm, ReachAction.State.START));
             if (ui.rightBumper()) {
                 wristAngle = Util.normalizeAngle(wristAngle - Math.PI / 4);
                 actions.add(new WristAction(arm, wristAngle));
