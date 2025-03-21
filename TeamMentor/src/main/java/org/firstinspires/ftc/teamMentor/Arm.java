@@ -752,22 +752,23 @@ class Arm {
     }
 
     // Compute the theoretical joint angles for a given reach. Returns null if the reach is out of
-    // range.
+    // range. Thanks to ChatGPT for the derivation.
     //
     // 'distance' is the inches from the shoulder of the arm to the claw on the plane parallel to
     // the floor at the height of the shoulder. 'floorHeight' is the inches above the floor to
     // the tip of the claw; changing the height of the claw does not necessitate changing the
     // distance.
     static double[] computeTheoreticalReach(double distance, double floorHeight) {
-        // Within this class, height is considered relative to the base of the arm, but
-        // user expects the height to be relative to the floor. Adjust the height accordingly:
-        double relativeHeight = floorHeight - Specs.Arm.SHOULDER_HEIGHT;
+        double A = distance / Specs.Arm.SEGMENT_LENGTH;
+        double B = (floorHeight - Specs.Arm.SHOULDER_HEIGHT + Specs.Arm.CLAW_TIP_OFFSET) / Specs.Arm.SEGMENT_LENGTH;
+        double BdivA = B/A;
+        if (Double.isNaN(BdivA))
+            return null;
 
-        double alpha = Math.asin((Specs.Arm.LAST_SEGMENT_LENGTH + Specs.Arm.CLAW_OFFSET + relativeHeight)
-                / Specs.Arm.SEGMENT_LENGTH);
-        double a = Specs.Arm.SEGMENT_LENGTH * Math.cos(alpha);
-        double b = distance - a;
-        double beta = Math.asin(b / (2 * Specs.Arm.SEGMENT_LENGTH));
+        double acos = Math.acos(A/2 * Math.sqrt(1 + BdivA*BdivA));
+        double atan = Math.atan(BdivA);
+        double alpha = acos + atan;
+        double beta = acos - atan;
 
         // Failure if the request is out of range (which results in NaNs):
         if (Double.isNaN(alpha) || Double.isNaN(beta))
@@ -782,6 +783,9 @@ class Arm {
     // the tip of the claw; changing the height of the claw does not necessitate changing the
     // distance.
     double[] computeCorrectedReach(double distance, double floorHeight) {
+        if (true)
+            return computeTheoreticalReach(distance, floorHeight); // Remove this line to enable fudge factors
+
         Calibration.PointCalibration lowerFudge = new Calibration.PointCalibration(0, 0, 0);
         Calibration.PointCalibration upperFudge = null;
         for (Calibration.PointCalibration calibrationPoint : calibration.pointCalibrations) {
@@ -846,10 +850,9 @@ class Arm {
 
         double alpha = angles[0];
         double beta = angles[1];
-        return joints[Id.SHOULDER].setTarget(Math.PI / 2 - beta) &
-                joints[Id.ELBOW1].setTarget(-Math.PI + 2 * beta) &
-                joints[Id.ELBOW2].setTarget(Math.PI - beta - Math.PI / 2 + alpha) &
-                joints[Id.ELBOW3].setTarget(-Math.PI + (Math.PI / 2 - alpha));
+        return joints[Id.SHOULDER].setTarget(alpha) &
+                joints[Id.ELBOW1].setTarget(-alpha - beta) &
+                joints[Id.ELBOW2].setTarget(beta - Math.PI/2);
     }
     boolean wrist(double angle) { // Radians
         return joints[Id.WRIST].setTarget(angle);
