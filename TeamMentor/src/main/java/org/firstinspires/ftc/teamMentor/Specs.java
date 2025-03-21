@@ -45,7 +45,7 @@ public class Specs {
         static final double SHOULDER_HEIGHT = 8; // Height of the shoulder joint relative to floor
         static final double SEGMENT_OVERHANG = 2; // Overhang of the arm segment past the joint
         static final double SEGMENT_LENGTH = 13.0; // Length of an arm segment from joint to joint
-        static final double LAST_SEGMENT_LENGTH = 3.0; // Length of the last arm segment
+        static final double LAST_SEGMENT_LENGTH = 2.5; // Length of the last arm segment
         static final double CLAW_OFFSET = 2; // Offset from the end of the last segment to the claw
         static final double Y_BOUNDS = 4; // Positive Y value that bounds the arm, on either side of the turret base
         static final double X_CLAW_BOUNDS = 2; // Additional X bounds to account for the claw

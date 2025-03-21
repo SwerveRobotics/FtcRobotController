@@ -177,9 +177,9 @@ class Calibration {
 
         calibration.jointCalibrations[Id.ELBOW2].start = 0.600;
         calibration.jointCalibrations[Id.ELBOW2].positionA = 0.530;
-        calibration.jointCalibrations[Id.ELBOW2].degreesA = 0;
-        calibration.jointCalibrations[Id.ELBOW2].positionB = 0.790;
-        calibration.jointCalibrations[Id.ELBOW2].degreesB = 90;
+        calibration.jointCalibrations[Id.ELBOW2].degreesA = -180;
+        calibration.jointCalibrations[Id.ELBOW2].positionB = 0.800;
+        calibration.jointCalibrations[Id.ELBOW2].degreesB = -90;
         calibration.jointCalibrations[Id.ELBOW2].min = 0.3;
         calibration.jointCalibrations[Id.ELBOW2].max = 1.0; // Ranges -80 to 163 degrees
 
@@ -527,17 +527,10 @@ class Model {
         sideXform.translate(Specs.Arm.SEGMENT_LENGTH, 0);
         topXform.translate(Specs.Arm.SEGMENT_LENGTH * Math.cos(zAngle), Specs.Arm.SEGMENT_WIDTH);
 
-        // Arm segment #3:
+        // Stub segment #3:
         zAngle += hardwareAngles[Id.ELBOW2];
         sideXform.rotate(hardwareAngles[Id.ELBOW2]);
-        drawArmSegment(topCanvas, xScale(topXform, zAngle), sideCanvas, sideXform, Specs.Arm.SEGMENT_LENGTH, 2);
-        sideXform.translate(Specs.Arm.SEGMENT_LENGTH, 0);
-        topXform.translate(Specs.Arm.SEGMENT_LENGTH * Math.cos(zAngle), -Specs.Arm.SEGMENT_WIDTH);
-
-        // Arm segment #4 with the claw on the end:
-        zAngle += hardwareAngles[Id.ELBOW3];
-        sideXform.rotate(hardwareAngles[Id.ELBOW3]);
-        drawArmSegment(topCanvas, xScale(topXform, zAngle), sideCanvas, sideXform, Specs.Arm.LAST_SEGMENT_LENGTH, 3);
+        drawArmSegment(topCanvas, xScale(topXform, zAngle), sideCanvas, sideXform, Specs.Arm.LAST_SEGMENT_LENGTH, 2);
         sideXform.translate(Specs.Arm.LAST_SEGMENT_LENGTH, 0);
         topXform.translate(Specs.Arm.LAST_SEGMENT_LENGTH * Math.cos(zAngle), 0); // Don't offset by width
 
