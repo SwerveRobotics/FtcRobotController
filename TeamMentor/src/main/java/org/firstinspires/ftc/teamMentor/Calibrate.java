@@ -13,6 +13,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.ServoController;
+import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -1028,7 +1029,7 @@ public class Calibrate extends LinearOpMode {
                     state.arm.calibration.deceleration = state.arm.calibration.maxSpeed / -value;
                     state.arm.calibration.saveToFile();
                 });
-        Menu.Widget sloMoWidget = new Menu.ToggleWidget("Slo-mo", true,
+        Menu.Widget sloMoWidget = new Menu.ToggleWidget("Slo-mo", !WilyWorks.isSimulating,
                 enable -> {
                     state.arm.sloMo = enable;
                     maxVelWidget.isEnabled = !enable;
@@ -1078,7 +1079,7 @@ public class Calibrate extends LinearOpMode {
                         arm.turret(turretCalibration.positionToRadians(turretCalibration.min));
                         break;
                     default:
-                        arm.initial();
+                        arm.home();
                         break;
                 }
             } else if (io.gamepad.x) {
