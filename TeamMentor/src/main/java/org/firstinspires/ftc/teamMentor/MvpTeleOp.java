@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamMentor;
 
+import static java.lang.System.nanoTime;
+
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
@@ -15,6 +17,11 @@ import java.util.LinkedList;
 
 @TeleOp(name = "TeleOp", group = "MentorBot")
 public class MvpTeleOp extends LinearOpMode {
+    final double EXTENSION_INCHES_PER_SECOND = 10; // Claw movement speed for direct user control
+    final double MAX_HEIGHT = 8; // Max claw inches above the floor
+
+    double wristAngle = 0; // Radians
+    double height = 4; // Height of claw about floor during pickup, in inches
 
     // Shape the stick input for more precision at slow speeds:
     static double shapeStick(double input) {
@@ -24,7 +31,6 @@ public class MvpTeleOp extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
         LinkedList<Action> actions = new LinkedList<>(); // List of active actions
-        double wristAngle = 0; // Radians
 
         Poser poser = Poser.getPoser(hardwareMap, telemetry, gamepad1, null);
         Arm arm = new Arm(hardwareMap, telemetry);
@@ -37,15 +43,24 @@ public class MvpTeleOp extends LinearOpMode {
 
         waitForStart();
 
+        double previousTime = nanoTime() / 1e9; // Time, in seconds, of previous loop iteration
         while (opModeIsActive()) {
+            double time = nanoTime() / 1e9;
+            double dt = time - previousTime;
+            previousTime = time;
+
             Stats.beginLoop(Stats.Mode.REGULAR);
             TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
             Canvas canvas = packet.fieldOverlay();
 
             // Driver 2
             ui.setGamepad(2);
+
+            height += gamepad2.left_stick_y * EXTENSION_INCHES_PER_SECOND * dt;
+            height = Math.max(0, Math.min(height, MAX_HEIGHT)); // Don't let the claw dig into the floor
+
             if (ui.a())
-                actions.add(new ReachAction(arm, ReachAction.State.USER_PICKUP));
+                actions.add(new ReachAction(arm, ReachAction.State.USER_PICKUP, () -> height));
             if (ui.b())
                 actions.add(new ReachAction(arm, ReachAction.State.LOW_BASKET));
             if (ui.x())

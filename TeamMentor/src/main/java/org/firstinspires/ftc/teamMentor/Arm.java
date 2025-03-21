@@ -22,6 +22,7 @@ import org.firstinspires.ftc.teamMentor.roadrunner.RobotAction;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.function.Supplier;
 
 
 /**
@@ -844,15 +845,30 @@ class Arm {
     }
 
     boolean pickup(double distance, double height) {
-        double[] angles = computeCorrectedReach(distance, height);
+        // We employ a single fixed distance to compensate for all of the play in the joints.
+        // We also use a fixed height for the angle calculation so that we can keep elbow1
+        // locked at a fixed angle for the duration of picking up. Just the shoulder and the
+        // wrist will be dynamically changed:
+        double fixedDistance = 23;
+        double fixedHeight = 4;
+        double[] angles = computeCorrectedReach(fixedDistance, fixedHeight);
         if (angles == null)
             return true; // An impossible configuration was requested so we're already done
 
         double alpha = angles[0];
         double beta = angles[1];
-        return joints[Id.SHOULDER].setTarget(alpha) &
-                joints[Id.ELBOW1].setTarget(-alpha - beta) &
-                joints[Id.ELBOW2].setTarget(beta - Math.PI/2);
+
+        double shoulder = alpha;
+        double elbow1 = -(alpha +beta);
+        double elbow2 = beta - Math.PI/2;
+
+        double spanLength = Math.hypot(fixedDistance, Specs.Arm.SHOULDER_HEIGHT - fixedHeight);
+        double deltaHeight = height - fixedHeight;
+        double deltaShoulder = Math.asin(deltaHeight / spanLength);
+
+        return joints[Id.SHOULDER].setTarget(shoulder + deltaShoulder) &
+                joints[Id.ELBOW1].setTarget(elbow1) &
+                joints[Id.ELBOW2].setTarget(elbow2 - deltaShoulder);
     }
     boolean wrist(double angle) { // Radians
         return joints[Id.WRIST].setTarget(angle);
@@ -958,20 +974,18 @@ class ReachAction extends RobotAction {
 
     final Arm arm; // The arm to control
     final State state; // Requested reach action
-    final double distance; // Distance to reach
-    final double height; // Height to reach
+    final Supplier<Double> heightSupplier; // Callback to get the requested height
 
     int thisInstance; // Identifier of this instance
 
     static int activeInstance = 0; // Identifier of the active action
     static Geometry geometry = Geometry.HOME; // The arm's current geometry
 
-    ReachAction(Arm arm, State state) { this(arm, state, 0, 0); }
-    ReachAction(Arm arm, State state, double distance, double height) {
+    ReachAction(Arm arm, State state) { this(arm, state, () -> 0.0); }
+    ReachAction(Arm arm, State state, Supplier<Double> heightSupplier) {
         this.arm = arm;
         this.state = state;
-        this.distance = distance;
-        this.height = height;
+        this.heightSupplier = heightSupplier;
     }
 
     @Override
@@ -981,6 +995,9 @@ class ReachAction extends RobotAction {
         }
         if (thisInstance != activeInstance)
             return false; // This action has been superseded by another
+
+        double requestedHeight = heightSupplier.get(); // Get latest requested height
+        double requestedDistance = 0;
 
         boolean done = false;
         if (state == State.START) {
@@ -993,8 +1010,8 @@ class ReachAction extends RobotAction {
                 if (arm.initial())
                     geometry = Geometry.HOME;
             } else {
-                arm.model.setPickupTarget(distance, height);
-                arm.pickup(distance, height);
+                arm.model.setPickupTarget(requestedDistance, requestedHeight);
+                arm.pickup(requestedDistance, requestedHeight);
                 geometry = Geometry.HORIZONTAL;
             }
             done = false; // Continue picking up until a new state is requested
