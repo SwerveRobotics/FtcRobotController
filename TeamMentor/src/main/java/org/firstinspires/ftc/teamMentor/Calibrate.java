@@ -1077,11 +1077,8 @@ public class Calibrate extends LinearOpMode {
                     case "Turret":
                         arm.turret(turretCalibration.positionToRadians(turretCalibration.min));
                         break;
-                    case "High basket":
-                        arm.start();
-                        break;
                     default:
-                        arm.home();
+                        arm.start();
                         break;
                 }
             } else if (io.gamepad.x) {

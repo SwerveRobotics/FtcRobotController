@@ -820,7 +820,7 @@ class Arm {
                 joints[Id.ELBOW2].setTarget(joints[Id.ELBOW2].homeInRadians()) &
                 joints[Id.ELBOW3].setTarget(joints[Id.ELBOW3].homeInRadians());
     }
-    boolean home() {
+    boolean base() {
         // Note that bitwise AND is used to ensure all joints are set before returning.
         return joints[Id.SHOULDER].setTarget(Math.toRadians(90)) &
                 joints[Id.ELBOW1].setTarget(Math.toRadians(-170)) &
@@ -936,16 +936,11 @@ class ClawAction extends RobotAction {
 /**
  * Action to control the arm's reach by operating the shoulder and elbow joints.
  */
-class ReachAction extends RobotAction {
+class KinematicReachAction extends RobotAction {
     enum State {
-        // MentorBot v1.0:
-        KINEMATIC_PICKUP,
+        PICKUP,
         HIGH_BASKET,
-        // MentorBot v2.0:
-        SIMPLE_PICKUP,
-        LOW_BASKET,
-        HOME,
-        START
+        BASE
     }
     enum Geometry {
         VERTICAL,
@@ -963,8 +958,8 @@ class ReachAction extends RobotAction {
     static int activeInstance = 0; // Identifier of the active action
     static Geometry geometry = Geometry.HOME; // The arm's current geometry
 
-    ReachAction(Arm arm, State state) { this(arm, state, 0, 0); }
-    ReachAction(Arm arm, State state, double distance, double height) {
+    KinematicReachAction(Arm arm, State state) { this(arm, state, 0, 0); }
+    KinematicReachAction(Arm arm, State state, double distance, double height) {
         this.arm = arm;
         this.state = state;
         this.distance = distance;
@@ -980,14 +975,14 @@ class ReachAction extends RobotAction {
             return false; // This action has been superseded by another
 
         boolean done = false;
-        if (state == State.HOME) {
+        if (state == State.BASE) {
             arm.model.setPickupTarget(0, 0);
-            done = arm.home();
+            done = arm.base();
             if (done)
                 geometry = Geometry.HOME;
-        } else if (state == State.KINEMATIC_PICKUP) {
+        } else if (state == State.PICKUP) {
             if (geometry == Geometry.VERTICAL) {
-                if (arm.home())
+                if (arm.base())
                     geometry = Geometry.HOME;
             } else {
                 arm.model.setPickupTarget(distance, height);
@@ -996,21 +991,85 @@ class ReachAction extends RobotAction {
             }
         } else if (state == State.HIGH_BASKET) {
             if (geometry == Geometry.HORIZONTAL) {
-                if (arm.home())
+                if (arm.base())
                     geometry = Geometry.HOME;
             } else {
                 arm.model.setPickupTarget(0, 0);
                 done = arm.highBasket();
                 geometry = Geometry.VERTICAL;
             }
-        } else if (state == State.START) {
-            if (geometry != Geometry.HOME) {
-                if (arm.home())
-                    geometry = Geometry.HOME;
+        }
+        return !done; // Return true if more calls are needed
+    }
+}
+
+/**
+ * Action to control the arm's reach by operating the shoulder and elbow joints.
+ */
+class FixedReachAction extends RobotAction {
+    enum State {
+        PICKUP,
+        LOW_BASKET,
+        START
+    }
+    enum Geometry {
+        VERTICAL,
+        HORIZONTAL,
+        START
+    }
+
+    final Arm arm; // The arm to control
+    final State state; // Requested reach action
+    final double distance; // Distance to reach
+    final double height; // Height to reach
+
+    int thisInstance; // Identifier of this instance
+
+    static int activeInstance = 0; // Identifier of the active action
+    static Geometry geometry = Geometry.START; // The arm's current geometry
+
+    FixedReachAction(Arm arm, State state) { this(arm, state, 0, 0); }
+    FixedReachAction(Arm arm, State state, double distance, double height) {
+        this.arm = arm;
+        this.state = state;
+        this.distance = distance;
+        this.height = height;
+    }
+
+    @Override
+    public boolean run(double elapsedTime) {
+        if (elapsedTime == 0) {
+            thisInstance = ++activeInstance;
+        }
+        if (thisInstance != activeInstance)
+            return false; // This action has been superseded by another
+
+        boolean done = false;
+        if (state == State.START) {
+            arm.model.setPickupTarget(0, 0);
+            done = arm.start();
+            if (done)
+                geometry = Geometry.START;
+        } else if (state == State.PICKUP) {
+            if (geometry == Geometry.VERTICAL) {
+                if (arm.start())
+                    geometry = Geometry.START;
             } else {
-                done = arm.start();
+                arm.model.setPickupTarget(distance, height);
+                done = arm.pickup(distance, height);
+                geometry = Geometry.HORIZONTAL;
+            }
+        } else if (state == State.LOW_BASKET) {
+            if (geometry == Geometry.HORIZONTAL) {
+                if (arm.start())
+                    geometry = Geometry.START;
+            } else {
+                arm.model.setPickupTarget(0, 0);
+                done = arm.highBasket();
+                geometry = Geometry.VERTICAL;
             }
         }
         return !done; // Return true if more calls are needed
     }
 }
+

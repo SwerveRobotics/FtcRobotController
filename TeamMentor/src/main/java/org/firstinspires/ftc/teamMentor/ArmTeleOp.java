@@ -228,27 +228,27 @@ public class ArmTeleOp extends LinearOpMode {
 
                 // Adjust the reach if it's changed:
                 if ((dx != 0) || (dy != 0)) {
-                    actions.add(new ReachAction(arm, ReachAction.State.KINEMATIC_PICKUP, distance, height));
+                    actions.add(new KinematicReachAction(arm, KinematicReachAction.State.PICKUP, distance, height));
                 }
 
                 // A button moves arm to the start position:
                 if ((gamepad1.a) && (!aWasPressed))
-                    actions.add(new ReachAction(arm, ReachAction.State.START));
+                    actions.add(new KinematicReachAction(arm, KinematicReachAction.State.BASE));
                 aWasPressed = gamepad1.a;
 
                 // B button moves arm to the pickup position:
                 if ((gamepad1.b) && (!bWasPressed))
-                    actions.add(new ReachAction(arm, ReachAction.State.KINEMATIC_PICKUP, distance, height));
+                    actions.add(new KinematicReachAction(arm, KinematicReachAction.State.PICKUP, distance, height));
                 bWasPressed = gamepad1.b;
 
                 // X button moves arm to the home position:
                 if ((gamepad1.x) && (!xWasPressed))
-                    actions.add(new ReachAction(arm, ReachAction.State.HOME));
+                    actions.add(new KinematicReachAction(arm, KinematicReachAction.State.BASE));
                 xWasPressed = gamepad1.x;
 
                 // Y button moves arm to the basket position:
                 if ((gamepad1.y) && (!yWasPressed))
-                    actions.add(new ReachAction(arm, ReachAction.State.HIGH_BASKET));
+                    actions.add(new KinematicReachAction(arm, KinematicReachAction.State.HIGH_BASKET));
                 yWasPressed = gamepad1.y;
 
                 // Right stick button toggles the claw open/closed:

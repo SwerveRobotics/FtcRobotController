@@ -33,7 +33,6 @@ public class MvpTeleOp extends LinearOpMode {
 
         ui.out("Ready to start!");
         ui.update();
-        ui.setGamepad(2); // All of the interesting buttons are on gamepad2
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
 
         waitForStart();
@@ -43,18 +42,20 @@ public class MvpTeleOp extends LinearOpMode {
             TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
             Canvas canvas = packet.fieldOverlay();
 
+            // Driver 2
+            ui.setGamepad(2);
             if (ui.a())
-                actions.add(new ReachAction(arm, ReachAction.State.KINEMATIC_PICKUP));
+                actions.add(new FixedReachAction(arm, FixedReachAction.State.PICKUP));
             if (ui.b())
-                actions.add(new ReachAction(arm, ReachAction.State.LOW_BASKET));
+                actions.add(new FixedReachAction(arm, FixedReachAction.State.LOW_BASKET));
             if (ui.x())
-                actions.add(new ReachAction(arm, ReachAction.State.HOME));
-            if (ui.leftBumper()) {
-                wristAngle = Util.normalizeAngle(wristAngle + Math.PI / 4);
-                actions.add(new WristAction(arm, wristAngle));
-            }
+                actions.add(new FixedReachAction(arm, FixedReachAction.State.START));
             if (ui.rightBumper()) {
                 wristAngle = Util.normalizeAngle(wristAngle - Math.PI / 4);
+                actions.add(new WristAction(arm, wristAngle));
+            }
+            if (ui.leftBumper()) {
+                wristAngle = Util.normalizeAngle(wristAngle + Math.PI / 4);
                 actions.add(new WristAction(arm, wristAngle));
             }
             if (ui.rightTrigger()) {
@@ -64,7 +65,9 @@ public class MvpTeleOp extends LinearOpMode {
                 actions.add(new ClawAction(arm, true)); // Open claw
             }
 
-            // Player 1's right trigger slows the robot for precision driving. When fully pressed,
+            // Driver 1.
+            ui.setGamepad(1);
+            // The right trigger slows the robot for precision driving. When fully pressed,
             // it slows down to a factor of 0.3 (30% of full speed):
             double speedMultiplier = 1.0 - (gamepad1.right_trigger * 0.7);
             PoseVelocity2d velocity = new PoseVelocity2d(new Vector2d(
