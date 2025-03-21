@@ -830,15 +830,11 @@ class Arm {
                 joints[Id.ELBOW3].setTarget(Math.toRadians(-90));
     }
     boolean highBasket() {
-        boolean done = joints[Id.SHOULDER].setTarget(Math.toRadians(70));
-        // Only once the shoulder is in position do we move the elbows:
-        if (done) {
-            // Note that bitwise AND is used to ensure all joints are set before returning.
-            done = joints[Id.ELBOW1].setTarget(Math.toRadians(0)) &
-                    joints[Id.ELBOW2].setTarget(Math.toRadians(0)) &
-                    joints[Id.ELBOW3].setTarget(Math.toRadians(-70));
-        }
-        return done;
+        // Note that bitwise AND is used to ensure all joints are set before returning.
+        return joints[Id.SHOULDER].setTarget(Math.toRadians(70)) &
+                joints[Id.ELBOW1].setTarget(Math.toRadians(0)) &
+                joints[Id.ELBOW2].setTarget(Math.toRadians(0)) &
+                joints[Id.ELBOW3].setTarget(Math.toRadians(-70));
     }
 
     boolean pickup(double distance, double height) {
