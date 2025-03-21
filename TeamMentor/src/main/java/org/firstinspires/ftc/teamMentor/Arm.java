@@ -171,19 +171,19 @@ class Calibration {
         calibration.jointCalibrations[Id.SHOULDER].positionA = 0.114;
         calibration.jointCalibrations[Id.SHOULDER].degreesA = 0;
         calibration.jointCalibrations[Id.SHOULDER].positionB = 1.0;
-        calibration.jointCalibrations[Id.SHOULDER].degreesA = 90;
+        calibration.jointCalibrations[Id.SHOULDER].degreesB = 90;
 
         calibration.jointCalibrations[Id.ELBOW1].start = 0;
         calibration.jointCalibrations[Id.ELBOW1].positionA = 0.5;
         calibration.jointCalibrations[Id.ELBOW1].degreesA = 0;
         calibration.jointCalibrations[Id.ELBOW1].positionB = 0.2;
-        calibration.jointCalibrations[Id.ELBOW1].degreesA = 90;
+        calibration.jointCalibrations[Id.ELBOW1].degreesB = 90;
 
         calibration.jointCalibrations[Id.ELBOW2].start = 0;
         calibration.jointCalibrations[Id.ELBOW2].positionA = 0.5;
         calibration.jointCalibrations[Id.ELBOW2].degreesA = 0;
         calibration.jointCalibrations[Id.ELBOW2].positionB = 0.210;
-        calibration.jointCalibrations[Id.ELBOW2].degreesA = -90;
+        calibration.jointCalibrations[Id.ELBOW2].degreesB = -90;
 
         calibration.jointCalibrations[Id.ELBOW3].degreesA = 170;
         calibration.jointCalibrations[Id.ELBOW3].degreesB = -170;
@@ -636,8 +636,7 @@ class Arm {
 
         Calibration loadedCalibration = Calibration.loadFromFile();
         if (WilyWorks.isSimulating) {
-            // calibration = Calibration.getDefaultCalibration();
-            calibration = loadedCalibration;
+            calibration = Calibration.getDefaultCalibration();
         } else if (loadedCalibration != null) {
             calibration = loadedCalibration;
         } else {
@@ -831,10 +830,10 @@ class Arm {
     }
     boolean highBasket() {
         // Note that bitwise AND is used to ensure all joints are set before returning.
-        return joints[Id.SHOULDER].setTarget(Math.toRadians(70)) &
+        return joints[Id.SHOULDER].setTarget(Math.toRadians(85)) &
                 joints[Id.ELBOW1].setTarget(Math.toRadians(0)) &
                 joints[Id.ELBOW2].setTarget(Math.toRadians(0)) &
-                joints[Id.ELBOW3].setTarget(Math.toRadians(-70));
+                joints[Id.ELBOW3].setTarget(Math.toRadians(-85));
     }
 
     boolean pickup(double distance, double height) {
