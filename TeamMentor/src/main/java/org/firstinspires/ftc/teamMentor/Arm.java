@@ -600,6 +600,12 @@ class Arm {
             double minAngle = Math.min(end1, end2);
             double maxAngle = Math.max(end1, end2);
             targetAngle = Math.min(maxAngle, Math.max(minAngle, target));
+if (id == Id.CLAW) {
+    System.out.printf("target = %.3f, minAngle = %.3f, maxAngle = %.3f, result = %.3f\n",
+            Math.toDegrees(target), Math.toDegrees(minAngle), Math.toDegrees(maxAngle), Math.toDegrees(targetAngle));
+}
+
+
             return Math.abs(targetAngle - currentAngle) < EPSILON;
         }
 
@@ -877,7 +883,7 @@ class Arm {
         return joints[Id.TURRET].setTarget(angle);
     }
     boolean claw(boolean open) {
-        return joints[Id.CLAW].setTarget(open ? Math.toRadians(90) : Math.toRadians(15));
+        return joints[Id.CLAW].setTarget(open ? Math.toRadians(90) : Math.toRadians(0));
     }
 }
 
@@ -902,7 +908,7 @@ class TurretAction extends RobotAction {
         }
         if (thisInstance != activeInstance)
             return false; // This action has been superseded by another
-        return !arm.joints[Id.TURRET].setTarget(value);
+        return !arm.turret(value);
     }
 }
 
@@ -927,7 +933,7 @@ class WristAction extends RobotAction {
         }
         if (thisInstance != activeInstance)
             return false; // This action has been superseded by another
-        return !arm.joints[Id.WRIST].setTarget(Math.toRadians(angle));
+        return !arm.wrist(angle);
     }
 }
 
@@ -952,7 +958,7 @@ class ClawAction extends RobotAction {
         }
         if (thisInstance != activeInstance)
             return false; // This action has been superseded by another
-        return !arm.joints[Id.CLAW].setTarget(open ? Math.toRadians(90) : Math.toRadians(15));
+        return !arm.claw(open); // Set the claw to open or close
     }
 }
 
@@ -1007,7 +1013,7 @@ class ReachAction extends RobotAction {
                 geometry = Geometry.HOME;
         } else if (state == State.USER_PICKUP) {
             if (geometry == Geometry.VERTICAL) {
-                if (arm.initial())
+                if (arm.home())
                     geometry = Geometry.HOME;
             } else {
                 arm.model.setPickupTarget(requestedDistance, requestedHeight);
@@ -1017,7 +1023,7 @@ class ReachAction extends RobotAction {
             done = false; // Continue picking up until a new state is requested
         } else if (state == State.LOW_BASKET) {
             if (geometry == Geometry.HORIZONTAL) {
-                if (arm.initial())
+                if (arm.home())
                     geometry = Geometry.HOME;
             } else {
                 arm.model.setPickupTarget(0, 0);

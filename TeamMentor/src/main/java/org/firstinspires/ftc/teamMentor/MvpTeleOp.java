@@ -56,7 +56,7 @@ public class MvpTeleOp extends LinearOpMode {
             // Driver 2
             ui.setGamepad(2);
 
-            height += gamepad2.left_stick_y * EXTENSION_INCHES_PER_SECOND * dt;
+            height -= gamepad2.left_stick_y * EXTENSION_INCHES_PER_SECOND * dt; // Invert the y axis
             height = Math.max(0, Math.min(height, MAX_HEIGHT)); // Don't let the claw dig into the floor
 
             if (ui.a())

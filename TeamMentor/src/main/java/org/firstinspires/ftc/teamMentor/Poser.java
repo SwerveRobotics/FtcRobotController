@@ -111,7 +111,7 @@ public class Poser {
     // Debug spew:
     void spew(String string) {
         if (!WilyWorks.isSimulating) {
-            spew(string);
+            System.out.print(string);
         }
     }
 
