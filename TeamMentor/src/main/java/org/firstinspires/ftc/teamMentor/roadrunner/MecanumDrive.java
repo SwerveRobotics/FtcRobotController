@@ -130,11 +130,11 @@ public final class MecanumDrive {
                 kV = 0.197;
                 kA = 0.0110;
 
-                axialGain      = 0.0;
+                axialGain      = 5.60;
                 axialVelGain   = 0.0;
-                lateralGain    = 0.0;
+                lateralGain    = 5.40;
                 lateralVelGain = 0.0;
-                headingGain    = 0.0;
+                headingGain    = 6.40;
                 headingVelGain = 0.0;
 
                 otos.offset.x = 0;

@@ -414,9 +414,11 @@ public class Poser {
         // the reference.
         Pose2d originatingOdometryPose = ultrasonic.odometryPoseWhenTriggered;
 
+        System.out.print("Beginning raw I/O...\n");
         Stats.beginIo();
         double measuredDistance = ultrasonic.sensor.getDistance(DistanceUnit.INCH) + ultrasonic.fudge;
         Stats.endIo();
+        System.out.print("...done raw I/O!\n");
 
         ultrasonic.odometryPoseWhenTriggered = odometryPose;
 
@@ -456,20 +458,24 @@ public class Poser {
         }
 
         // Trim the fixup lists to remove outdated entries:
+        System.out.print("Trimming...\n");
         double currentTime = nanoTime() * 1e-9;
         while (!xFixups.isEmpty() && (currentTime - xFixups.getFirst().time > FIXUP_RETENTION_TIME))
             xFixups.removeFirst();
         while (!yFixups.isEmpty() && (currentTime - yFixups.getFirst().time > FIXUP_RETENTION_TIME))
             yFixups.removeFirst();
+        System.out.print("...done trim!\n");
         return true;
     }
 
     // Use the odometry sensors to create a new pose fused from the odometry sensors.
     void updateFromUltrasonic() {
         if (confidence != Confidence.NONE) {
+            System.out.print("Starting measurements...\n");
             for (Ultrasonic ultrasonic : getUltrasonics()) {
                 measureUltrasonic(ultrasonic);
             }
+            System.out.print("...done measurements!\n");
 
             // Compute a new filtered offset unless we're too close to a driving target. This prevents
             // the robot from gyrating at its stopping point due to pose correction from the sensors.
@@ -489,6 +495,7 @@ public class Poser {
                     onHighConfidence.run();
                 }
             }
+            System.out.print("Done report!\n");
         }
 
         // The fused pose is the odometry pose plus the offset from the ultrasonic sensors.
@@ -517,8 +524,11 @@ public class Poser {
     // will not be activated.
     public void update() {
         beams.clear();
+        System.out.print("Starting odometry update...\n");
         updateFromOdometry();
+        System.out.print("Starting ultrasonic update...\n");
         updateFromUltrasonic();
+        System.out.print("Done update()!\n");
     }
 
     // Do the debug drawing for the robot's pose and the ultrasonic beams.
