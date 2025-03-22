@@ -39,7 +39,7 @@ public class MvpTeleOp extends LinearOpMode {
         MecanumDrive drive = new MecanumDrive(hardwareMap, poser, telemetry, gamepad1);
         Ui ui = new Ui(telemetry, gamepad1, gamepad2);
 
-        ui.out("Ready to start!");
+        ui.out("Version 1.0.0, ready to start!");
         ui.update();
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
 
