@@ -996,6 +996,7 @@ class ReachAction extends RobotAction {
         START
     }
     enum Geometry {
+        INITIAL,
         VERTICAL,
         HORIZONTAL,
         HOME
@@ -1008,7 +1009,7 @@ class ReachAction extends RobotAction {
     int thisInstance; // Identifier of this instance
 
     static int activeInstance = 0; // Identifier of the active action
-    static Geometry geometry = Geometry.HOME; // The arm's current geometry
+    static Geometry geometry = Geometry.INITIAL; // The arm's current geometry
 
     ReachAction(Arm arm, State state) { this(arm, state, () -> 0.0); }
     ReachAction(Arm arm, State state, Supplier<Double> heightSupplier) {
@@ -1035,7 +1036,7 @@ class ReachAction extends RobotAction {
             if (done)
                 geometry = Geometry.HOME;
         } else if (state == State.USER_PICKUP) {
-            if (geometry == Geometry.VERTICAL) {
+            if (geometry == Geometry.INITIAL) {
                 if (arm.home())
                     geometry = Geometry.HOME;
             } else {
@@ -1045,7 +1046,7 @@ class ReachAction extends RobotAction {
             }
             done = false; // Continue picking up until a new state is requested
         } else if (state == State.LOW_BASKET) {
-            if (geometry == Geometry.HORIZONTAL) {
+            if (geometry == Geometry.INITIAL) {
                 if (arm.home())
                     geometry = Geometry.HOME;
                 else
