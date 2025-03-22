@@ -600,12 +600,6 @@ class Arm {
             double minAngle = Math.min(end1, end2);
             double maxAngle = Math.max(end1, end2);
             targetAngle = Math.min(maxAngle, Math.max(minAngle, target));
-if (id == Id.CLAW) {
-    System.out.printf("target = %.3f, minAngle = %.3f, maxAngle = %.3f, result = %.3f\n",
-            Math.toDegrees(target), Math.toDegrees(minAngle), Math.toDegrees(maxAngle), Math.toDegrees(targetAngle));
-}
-
-
             return Math.abs(targetAngle - currentAngle) < EPSILON;
         }
 
@@ -717,45 +711,61 @@ if (id == Id.CLAW) {
         previousUpdateTime = time;
 
         for (Joint joint: joints) {
-            double delta = joint.targetAngle - joint.currentAngle; // Do not normalize!
-            double signum = Math.signum(delta);
-            double distance = Math.abs(delta);
-            double velocity = signum * joint.currentVelocity;
-            double maxSpeed = calibration.maxSpeed;
-            double acceleration = calibration.acceleration;
-            double deceleration = calibration.deceleration;
+            if ((joint.id == Id.WRIST) || (joint.id == Id.CLAW)) {
+                // Don't bother interpolating for the wrist or claw:
+                double position = joint.radiansToPosition(joint.targetAngle);
+                position = Math.max(joint.calibration.min, Math.min(joint.calibration.max, position));
+                joint.setHardwarePosition(position);
+                model.setHardwarePosition(joint.id, joint.calibration, position);
+            } else {
+                // For most joints, we do our own speed control and acceleration/deceleration:
+                double delta = joint.targetAngle - joint.currentAngle; // Do not normalize!
+                double signum = Math.signum(delta);
+                double distance = Math.abs(delta);
+                double velocity = signum * joint.currentVelocity;
+                double maxSpeed = calibration.maxSpeed;
+                double acceleration = calibration.acceleration;
+                double deceleration = calibration.deceleration;
 
-            if (sloMo) {
-                // Slow down the arm for testing
-                maxSpeed *= 0.1;
-                acceleration *= 0.1;
-                deceleration *= 0.1;
+                if (sloMo) {
+                    // Slow down the arm for testing
+                    maxSpeed *= 0.1;
+                    acceleration *= 0.1;
+                    deceleration *= 0.1;
+                }
+                if (joint.id == Id.SHOULDER) {
+                    maxSpeed *= 0.5; // Slow down the shoulder as a hack
+                }
+
+                double increasingVelocity = velocity + acceleration * dt; // Speed if we accelerate
+                double decreasingVelocity = Math.sqrt(-2 * deceleration * distance); // Speed if we decelerate
+                double newSpeed = Math.min(maxSpeed, Math.min(increasingVelocity, decreasingVelocity));
+
+                double angleDelta = Math.min(newSpeed * dt, distance);
+                joint.currentVelocity = signum * newSpeed;
+                joint.currentAngle += signum * angleDelta;
+
+                // LERP to convert to ticks/position:
+                double position = joint.radiansToPosition(joint.currentAngle);
+
+                // Saturate to the allowed range:
+                position = Math.max(joint.calibration.min, Math.min(joint.calibration.max, position));
+
+                joint.setHardwarePosition(position);
+                model.setHardwarePosition(joint.id, joint.calibration, position);
             }
-            if (joint.id == Id.SHOULDER) {
-                maxSpeed *= 0.5; // Slow down the shoulder as a hack
-            }
-
-            double increasingVelocity = velocity + acceleration * dt; // Speed if we accelerate
-            double decreasingVelocity = Math.sqrt(-2 * deceleration * distance); // Speed if we decelerate
-            double newSpeed = Math.min(maxSpeed, Math.min(increasingVelocity, decreasingVelocity));
-
-            double angleDelta = Math.min(newSpeed * dt, distance);
-            joint.currentVelocity = signum * newSpeed;
-            joint.currentAngle += signum * angleDelta;
-
-            // LERP to convert to ticks/position:
-            double position = joint.radiansToPosition(joint.currentAngle);
-
-            // Saturate to the allowed range:
-            if (position < joint.calibration.min)
-                position = joint.calibration.min;
-            if (position > joint.calibration.max)
-                position = joint.calibration.max;
-
-            joint.setHardwarePosition(position);
-            model.setHardwarePosition(joint.id, joint.calibration, position);
         }
         model.update(canvas, pose);
+    }
+
+    // Add an offset to the wrist angle, wrapping as necessary:
+    double offsetWristAngle(double wristAngle, double offset) { // Both in radians
+        wristAngle += offset;
+        while (wristAngle < 0)
+            wristAngle += Math.PI;
+        while (wristAngle > Math.PI)
+            wristAngle -= Math.PI;
+        return wristAngle;
     }
 
     // Compute the theoretical joint angles for a given reach. Returns null if the reach is out of
@@ -936,7 +946,6 @@ class WristAction extends RobotAction {
         return !arm.wrist(angle);
     }
 }
-
 
 /**
  * Action to control the claw by opening or closing it.

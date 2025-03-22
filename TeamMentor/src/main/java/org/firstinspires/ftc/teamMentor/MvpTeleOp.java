@@ -19,9 +19,11 @@ import java.util.LinkedList;
 public class MvpTeleOp extends LinearOpMode {
     final double EXTENSION_INCHES_PER_SECOND = 10; // Claw movement speed for direct user control
     final double MAX_HEIGHT = 8; // Max claw inches above the floor
+    final double DEFAULT_HEIGHT = 8; // Default claw height, in inches
 
     double wristAngle = 0; // Radians
-    double height = 4; // Height of claw about floor during pickup, in inches
+    double height = DEFAULT_HEIGHT; // Height of claw about floor during pickup, in inches
+    boolean clawOpen = false; // Claw open/close state, starts closed
 
     // Shape the stick input for more precision at slow speeds:
     static double shapeStick(double input) {
@@ -55,40 +57,43 @@ public class MvpTeleOp extends LinearOpMode {
 
             // Driver 2
             ui.setGamepad(2);
-
-            height -= gamepad2.left_stick_y * EXTENSION_INCHES_PER_SECOND * dt; // Invert the y axis
+            height -= ui.gamepad().left_stick_y * EXTENSION_INCHES_PER_SECOND * dt; // Invert the y axis
             height = Math.max(0, Math.min(height, MAX_HEIGHT)); // Don't let the claw dig into the floor
 
-            if (ui.a())
+            if (ui.a()) {
+                clawOpen = !clawOpen; // Toggle claw open/close
+                actions.add(new ClawAction(arm, clawOpen));
+            }
+            if (ui.dpadRight() || ui.dpadLeft()) {
                 actions.add(new ReachAction(arm, ReachAction.State.USER_PICKUP, () -> height));
-            if (ui.b())
+            }
+            if (ui.dpadUp()) {
                 actions.add(new ReachAction(arm, ReachAction.State.LOW_BASKET));
-            if (ui.x())
+                height = DEFAULT_HEIGHT;
+            }
+            if (ui.dpadDown()) {
                 actions.add(new ReachAction(arm, ReachAction.State.START));
+                height = DEFAULT_HEIGHT;
+            }
             if (ui.rightBumper()) {
-                wristAngle = Util.normalizeAngle(wristAngle - Math.PI / 4);
+                wristAngle = arm.offsetWristAngle(wristAngle, -Math.PI / 4);
                 actions.add(new WristAction(arm, wristAngle));
             }
             if (ui.leftBumper()) {
-                wristAngle = Util.normalizeAngle(wristAngle + Math.PI / 4);
+                wristAngle = arm.offsetWristAngle(wristAngle, Math.PI / 4);
                 actions.add(new WristAction(arm, wristAngle));
-            }
-            if (ui.rightTrigger()) {
-                actions.add(new ClawAction(arm, false)); // Close claw
-            }
-            if (ui.leftTrigger()) {
-                actions.add(new ClawAction(arm, true)); // Open claw
             }
 
             // Driver 1.
             ui.setGamepad(1);
-            // The right trigger slows the robot for precision driving. When fully pressed,
-            // it slows down to a factor of 0.3 (30% of full speed):
-            double speedMultiplier = 1.0 - (gamepad1.right_trigger * 0.7);
+            // By default, the robot runs slow at 60% of max speed, for precision driving.
+            // The left trigger proportionally decreases the speed down to 30% of max speed,
+            // the right trigger up to 100%.
+            double speedMultiplier = 0.6 + (ui.gamepad().right_trigger * 0.4) - (ui.gamepad().left_trigger * 0.3);
             PoseVelocity2d velocity = new PoseVelocity2d(new Vector2d(
-                    shapeStick(-gamepad1.left_stick_y * speedMultiplier),
-                    shapeStick(-gamepad1.left_stick_x * speedMultiplier)),
-                    shapeStick(-gamepad1.right_stick_x * speedMultiplier));
+                    shapeStick(-ui.gamepad().left_stick_y * speedMultiplier),
+                    shapeStick(-ui.gamepad().left_stick_x * speedMultiplier)),
+                    shapeStick(-ui.gamepad().right_stick_x * speedMultiplier));
 
             drive.setDrivePowers(velocity);
             arm.update(poser.getPose(), canvas);

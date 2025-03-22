@@ -73,10 +73,10 @@ class Ui {
     boolean b(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].b, gamepadIndex, 1); }
     boolean x(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].x, gamepadIndex, 2); }
     boolean y(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].y, gamepadIndex, 3); }
-    boolean up(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].dpad_up, gamepadIndex, 4); }
-    boolean down(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].dpad_down, gamepadIndex, 5); }
-    boolean left(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].dpad_left, gamepadIndex, 6); }
-    boolean right(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].dpad_right, gamepadIndex, 7); }
+    boolean dpadUp(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].dpad_up, gamepadIndex, 4); }
+    boolean dpadDown(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].dpad_down, gamepadIndex, 5); }
+    boolean dpadLeft(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].dpad_left, gamepadIndex, 6); }
+    boolean dpadRight(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].dpad_right, gamepadIndex, 7); }
     boolean leftTrigger(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].left_trigger >= ANALOG_THRESHOLD, gamepadIndex, 8); }
     boolean rightTrigger(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].right_trigger >= ANALOG_THRESHOLD, gamepadIndex, 9); }
     boolean leftBumper(int gamepadIndex) { return repeatableButtonPress(gamepads[gamepadIndex].left_bumper, gamepadIndex, 10); }
@@ -93,10 +93,10 @@ class Ui {
     boolean b() { return b(defaultGamepad); }
     boolean x() { return x(defaultGamepad); }
     boolean y() { return y(defaultGamepad); }
-    boolean up() { return up(defaultGamepad); }
-    boolean down() { return down(defaultGamepad); }
-    boolean left() { return left(defaultGamepad); }
-    boolean right() { return right(defaultGamepad); }
+    boolean dpadUp() { return dpadUp(defaultGamepad); }
+    boolean dpadDown() { return dpadDown(defaultGamepad); }
+    boolean dpadLeft() { return dpadLeft(defaultGamepad); }
+    boolean dpadRight() { return dpadRight(defaultGamepad); }
     boolean leftTrigger() { return leftTrigger(defaultGamepad); }
     boolean rightTrigger() { return rightTrigger(defaultGamepad); }
     boolean leftBumper() { return leftBumper(defaultGamepad); }
@@ -113,6 +113,10 @@ class Ui {
         if (gamepadIndex < 1 || gamepadIndex > 2)
             throw new IllegalArgumentException("gamepadIndex must be 1 or 2");
         this.defaultGamepad = gamepadIndex;
+    }
+    // Return the default gamepad:
+    Gamepad gamepad() {
+        return gamepads[defaultGamepad];
     }
 
     // Incrementally add a string to the telemetry without emitting an newline character:

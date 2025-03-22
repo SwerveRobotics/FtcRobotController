@@ -275,9 +275,11 @@ public class Poser {
                 }
 
                 // Query the driver for position and velocity:
+                spew("Upading pinpoint...");
                 Stats.beginIo();
                 pinpointDriver.update();
                 Stats.endIo();
+                spew("...done pinpoint!");
 
                 Stats.beginIo();
                 Pose2D pose2D = pinpointDriver.getPosition();
