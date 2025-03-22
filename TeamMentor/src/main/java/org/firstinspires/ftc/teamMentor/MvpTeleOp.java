@@ -56,7 +56,7 @@ public class MvpTeleOp extends LinearOpMode {
             Canvas canvas = packet.fieldOverlay();
 
             // Driver 2
-            ui.setGamepad(1); // @@@@@@@@@@@@@@@@@@@@@@@@@@
+            ui.setGamepad(2);
             height -= ui.gamepad().right_stick_y * EXTENSION_INCHES_PER_SECOND * dt; // Invert the y axis
             height = Math.max(0, Math.min(height, MAX_HEIGHT)); // Don't let the claw dig into the floor
 
@@ -65,6 +65,8 @@ public class MvpTeleOp extends LinearOpMode {
                 actions.add(new ClawAction(arm, clawOpen));
             }
             if (ui.dpadRight() || ui.dpadLeft()) {
+                clawOpen = true; // Always open the claw when getting ready for picking up
+                actions.add(new ClawAction(arm, clawOpen));
                 actions.add(new ReachAction(arm, ReachAction.State.USER_PICKUP, () -> height));
             }
             if (ui.dpadUp()) {
@@ -97,7 +99,7 @@ public class MvpTeleOp extends LinearOpMode {
 
             drive.setDrivePowers(velocity);
             arm.update(poser.getPose(), canvas);
-            poser.update();
+            // TODO: Re-enable this update() once the hang is figured out: "poser.update();"
 
             // Run all of our active Road Runner actions, removing any that return false:
             actions.removeIf(action -> !action.run(packet));

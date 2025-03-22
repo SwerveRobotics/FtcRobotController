@@ -1053,7 +1053,6 @@ class ReachAction extends RobotAction {
                     System.out.printf("Never made it home\n");
             } else {
                 done = arm.lowBasket();
-                System.out.printf("Low basket done: " + done + "\n"); // @@@@@@@@@@
                 geometry = Geometry.VERTICAL;
             }
         }
