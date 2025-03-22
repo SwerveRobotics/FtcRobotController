@@ -569,6 +569,7 @@ class Arm {
     Joint[] joints = new Joint[Id.COUNT]; // Joint states
     double previousUpdateTime; // Time of previous update call, in seconds
     boolean sloMo = false; // Slow motion mode
+    boolean clawOpen = false; // Initializes closed
 
     // Per-joint state:
     static class Joint {
@@ -668,7 +669,7 @@ class Arm {
             joint.servos = new Servo[servoCount];
             for (int servoIndex = 0; servoIndex < servoCount; servoIndex++) {
                 joint.servos[servoIndex] = hardwareMap.tryGet(Servo.class, Id.DEVICE_NAMES[id][servoIndex]);
-                if (joint.servos[servoIndex] == null) {
+                if ((joint.servos[servoIndex] == null) && (id != Id.ELBOW3)) {
                     if (!MecanumDrive.isDevBot)
                         RobotLog.addGlobalWarningMessage("Missing servo in RC configuration: " + Id.DEVICE_NAMES[id][servoIndex]);
                     joint.servos = new Servo[]{}; // Disable this joint by nulling the servos
@@ -681,7 +682,7 @@ class Arm {
             if (calibration.jointCalibrations[id].isValid()) {
                 joint.calibration = calibration.jointCalibrations[id];
             } else {
-                if (!MecanumDrive.isDevBot)
+                if ((!MecanumDrive.isDevBot) & (id != Id.ELBOW3))
                     // Disable the joint if the calibration is invalid and ensure no divide-by-zeroes:
                     RobotLog.addGlobalWarningMessage("Invalid servo calibration: " + Id.DEVICE_NAMES[joint.id][0]);
 
@@ -689,7 +690,8 @@ class Arm {
                 joint.calibration = Calibration.getDefaultCalibration().jointCalibrations[id];
             }
 
-            if (joint.id == Id.SHOULDER) {
+            // The claw and wrist have to be initialized right away since they're never deferred:
+            if ((joint.id == Id.SHOULDER) || (joint.id == Id.WRIST) || (joint.id == Id.CLAW)) {
                 // Set the shoulder to its start position so that it fits within the sizing box.
                 // The other joints will have their first positions set once the first Arm.update()
                 // call is made, after Start is pressed.
@@ -711,14 +713,8 @@ class Arm {
         previousUpdateTime = time;
 
         for (Joint joint: joints) {
-            if ((joint.id == Id.WRIST) || (joint.id == Id.CLAW)) {
-                // Don't bother interpolating for the wrist or claw:
-                double position = joint.radiansToPosition(joint.targetAngle);
-                position = Math.max(joint.calibration.min, Math.min(joint.calibration.max, position));
-                joint.setHardwarePosition(position);
-                model.setHardwarePosition(joint.id, joint.calibration, position);
-            } else {
-                // For most joints, we do our own speed control and acceleration/deceleration:
+            // The wrist and claw are set immediately:
+            if ((joint.id != Id.WRIST) && (joint.id != Id.CLAW)) {
                 double delta = joint.targetAngle - joint.currentAngle; // Do not normalize!
                 double signum = Math.signum(delta);
                 double distance = Math.abs(delta);
@@ -845,7 +841,9 @@ class Arm {
         // Note that bitwise AND is used to ensure all joints are set before returning.
         return joints[Id.SHOULDER].setTarget(joints[Id.SHOULDER].homeInRadians()) &
                 joints[Id.ELBOW1].setTarget(joints[Id.ELBOW1].homeInRadians()) & // @@@ Deactivate
-                joints[Id.ELBOW2].setTarget(joints[Id.ELBOW2].homeInRadians()); // @@@ Deactivate
+                joints[Id.ELBOW2].setTarget(joints[Id.ELBOW2].homeInRadians()) & // @@@ Deactivate
+                joints[Id.CLAW].setTarget(joints[Id.CLAW].homeInRadians()) &
+                joints[Id.WRIST].setTarget(joints[Id.WRIST].homeInRadians());
     }
     boolean home() {
         return joints[Id.SHOULDER].setTarget(Math.toRadians(90)) &
@@ -881,19 +879,35 @@ class Arm {
         double spanLength = Math.hypot(fixedDistance, Specs.Arm.SHOULDER_HEIGHT - fixedHeight);
         double deltaHeight = height - fixedHeight;
         double deltaShoulder = Math.asin(deltaHeight / spanLength);
+        double elbow2fudge = Math.toRadians(20); // Fudge to make the claw more vertical
 
-        return joints[Id.SHOULDER].setTarget(shoulder + deltaShoulder) &
-                joints[Id.ELBOW1].setTarget(elbow1) &
-                joints[Id.ELBOW2].setTarget(elbow2 - deltaShoulder);
-    }
-    boolean wrist(double angle) { // Radians
-        return joints[Id.WRIST].setTarget(angle);
+        if (!(joints[Id.ELBOW1].setTarget(elbow1) & joints[Id.ELBOW2].setTarget(elbow2 + elbow2fudge)))
+            return false; // Elbow1 and Elbow2 needs to be at the target before moving the shoulder
+
+        return joints[Id.SHOULDER].setTarget(shoulder + deltaShoulder);
     }
     boolean turret(double angle) { // Radians
         return joints[Id.TURRET].setTarget(angle);
     }
+    boolean wrist(double angle) { // Radians
+        joints[Id.WRIST].currentAngle = angle;
+        joints[Id.WRIST].targetAngle = angle;
+        joints[Id.WRIST].setHardwarePosition(joints[Id.WRIST].radiansToPosition(angle));
+
+        // Work around shaking:
+        if (clawOpen) {
+            joints[Id.CLAW].setHardwarePosition(joints[Id.CLAW].radiansToPosition(Math.toRadians(29)));
+            joints[Id.CLAW].setHardwarePosition(joints[Id.CLAW].radiansToPosition(Math.toRadians(30)));
+        }
+        return true;
+    }
     boolean claw(boolean open) {
-        return joints[Id.CLAW].setTarget(open ? Math.toRadians(90) : Math.toRadians(0));
+        clawOpen = open;
+        double targetAngle = open ? Math.toRadians(30) : Math.toRadians(0);
+        joints[Id.CLAW].currentAngle = targetAngle;
+        joints[Id.CLAW].targetAngle = targetAngle;
+        joints[Id.CLAW].setHardwarePosition(joints[Id.CLAW].radiansToPosition(targetAngle));
+        return true;
     }
 }
 
@@ -1034,9 +1048,11 @@ class ReachAction extends RobotAction {
             if (geometry == Geometry.HORIZONTAL) {
                 if (arm.home())
                     geometry = Geometry.HOME;
+                else
+                    System.out.printf("Never made it home\n");
             } else {
-                arm.model.setPickupTarget(0, 0);
                 done = arm.lowBasket();
+                System.out.printf("Low basket done: " + done + "\n"); // @@@@@@@@@@
                 geometry = Geometry.VERTICAL;
             }
         }

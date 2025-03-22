@@ -36,7 +36,7 @@ public class Specs {
     static class Arm {
         static final String CALIBRATION_FILE = "/sdcard/arm_calibration.json";
 
-        static final double MAX_SERVO_SPEED = Math.toRadians(60) / (4 * 0.17); // Marcel's specs: 60 degrees in 0.17 seconds
+        static final double MAX_SERVO_SPEED = Math.toRadians(60) / (2 * 0.17); // Marcel's specs: 60 degrees in 0.17 seconds
 
         static final Point TURRET_OFFSET = new Point(-4, 1); // Relative to robot center
         static final Point SHOULDER_OFFSET = new Point(0, 0.5); // Offset of shoulder relative to turret base

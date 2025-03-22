@@ -18,8 +18,8 @@ import java.util.LinkedList;
 @TeleOp(name = "TeleOp", group = "MentorBot")
 public class MvpTeleOp extends LinearOpMode {
     final double EXTENSION_INCHES_PER_SECOND = 10; // Claw movement speed for direct user control
-    final double MAX_HEIGHT = 8; // Max claw inches above the floor
-    final double DEFAULT_HEIGHT = 8; // Default claw height, in inches
+    final double MAX_HEIGHT = 15; // Max claw inches above the floor
+    final double DEFAULT_HEIGHT = 12; // Default claw height, in inches
 
     double wristAngle = 0; // Radians
     double height = DEFAULT_HEIGHT; // Height of claw about floor during pickup, in inches
@@ -56,8 +56,8 @@ public class MvpTeleOp extends LinearOpMode {
             Canvas canvas = packet.fieldOverlay();
 
             // Driver 2
-            ui.setGamepad(2);
-            height -= ui.gamepad().left_stick_y * EXTENSION_INCHES_PER_SECOND * dt; // Invert the y axis
+            ui.setGamepad(1); // @@@@@@@@@@@@@@@@@@@@@@@@@@
+            height -= ui.gamepad().right_stick_y * EXTENSION_INCHES_PER_SECOND * dt; // Invert the y axis
             height = Math.max(0, Math.min(height, MAX_HEIGHT)); // Don't let the claw dig into the floor
 
             if (ui.a()) {

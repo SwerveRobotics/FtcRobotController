@@ -77,8 +77,8 @@ class Ui {
     boolean dpadDown(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].dpad_down, gamepadIndex, 5); }
     boolean dpadLeft(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].dpad_left, gamepadIndex, 6); }
     boolean dpadRight(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].dpad_right, gamepadIndex, 7); }
-    boolean leftTrigger(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].left_trigger >= ANALOG_THRESHOLD, gamepadIndex, 8); }
-    boolean rightTrigger(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].right_trigger >= ANALOG_THRESHOLD, gamepadIndex, 9); }
+    boolean leftTriggerBoolean(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].left_trigger >= ANALOG_THRESHOLD, gamepadIndex, 8); }
+    boolean rightTriggerBoolean(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].right_trigger >= ANALOG_THRESHOLD, gamepadIndex, 9); }
     boolean leftBumper(int gamepadIndex) { return repeatableButtonPress(gamepads[gamepadIndex].left_bumper, gamepadIndex, 10); }
     boolean rightBumper(int gamepadIndex) { return repeatableButtonPress(gamepads[gamepadIndex].right_bumper, gamepadIndex, 11); }
     boolean guide(int gamepadIndex) { return buttonPress(gamepads[gamepadIndex].guide, gamepadIndex, 12); }
@@ -97,8 +97,8 @@ class Ui {
     boolean dpadDown() { return dpadDown(defaultGamepad); }
     boolean dpadLeft() { return dpadLeft(defaultGamepad); }
     boolean dpadRight() { return dpadRight(defaultGamepad); }
-    boolean leftTrigger() { return leftTrigger(defaultGamepad); }
-    boolean rightTrigger() { return rightTrigger(defaultGamepad); }
+    boolean leftTriggerBoolean() { return leftTriggerBoolean(defaultGamepad); }
+    boolean rightTriggerBoolean() { return rightTriggerBoolean(defaultGamepad); }
     boolean leftBumper() { return leftBumper(defaultGamepad); }
     boolean rightBumper() { return rightBumper(defaultGamepad); }
     boolean guide() { return guide(defaultGamepad); }
