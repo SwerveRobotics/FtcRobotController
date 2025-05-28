@@ -1,45 +1,21 @@
 package com.example.javaclasses.examples.session1;
 
-// This line imports the Scanner class, making it available for one to use.
-import java.util.Scanner;
+/* Usually, programmers only comment on code that is unclear or needs special attention. If a line
+of code is super long, like this one, line breaks are usually inserted to keep all the code to the
+left of the grey line on the right. To help with line breaks in comments, multi-line comments were
+invented! */
 
 // This class takes input from the console and does something with it.
 public class Operations {
     public static void main(String[] args) {
-        // This creates a new Scanner object, allowing the program to take input from System.in, the
-        //     standard input.
-        Scanner scanner = new Scanner(System.in);
-
-        // This initializes the variables xInt and yInt as integers.
-        int xInt;
-        int yInt;
+        // This initializes the variables xDouble as an double.
+        double xDouble;
+        xDouble = 4;
+        // Or, just:
+        double yDouble = 3;
 
         // Another way to initialize
-        double xDouble, yDouble;
-
-        // Or, you can assign a value to a variable when initializing it
-        String prompt = "Enter a decimal number or integer: ";
-
-        // System.out.print(String) prints a statement without adding a new line after it.
-        System.out.print(prompt);
-
-        // This method provides data from the input as a String. The result from the method is
-        //     assigned to the variable xString.
-        String xString = scanner.nextLine();
-
-        // System.out.println(String) prints a statement while adding a new line after it.
-        System.out.print(prompt);
-
-        // This statements assigns the result to yString.
-        String yString = scanner.nextLine();
-
-        // This method turns the Strings into doubles. Then we assign the doubles to our xDouble and
-        //     yDouble variables.
-        xDouble = Double.parseDouble(xString);
-        yDouble = Double.parseDouble(yString);
-
-        xInt = Integer.parseInt(xString);
-        yInt = Integer.parseInt(yString);
+        int xInt, yInt;
 
         // Here we turn the doubles into integers. Some precision is lost (anything after the
         //     decimal point).
@@ -71,11 +47,12 @@ public class Operations {
         // Prints a blank line
         System.out.println();
 
+        // You can store results of calculations in variables too!
         int result;
 
         result = xInt + yInt;
 
-        // Notice the difference specifically in integer division. For example, try x = 4 and y = 3.
+        // Notice the difference specifically in integer division.
         System.out.println("Integer addition: " + result);
         System.out.println("Integer subtraction: " + (xInt - yInt));
         System.out.println("Integer multiplication: " + (xInt * yInt));
@@ -85,6 +62,6 @@ public class Operations {
         System.out.println();
 
         // Parentheses are very important!
-        System.out.println("Double concatenation: " + xDouble + yDouble);
+        System.out.println("Concatenation: " + xDouble + yDouble);
     }
 }

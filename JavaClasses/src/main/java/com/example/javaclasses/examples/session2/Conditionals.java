@@ -1,19 +1,18 @@
 package com.example.javaclasses.examples.session2;
 
-/* Usually, programmers only comment on code that is unclear or needs special attention. If a line
-of code is super long, like this one, line breaks are usually inserted to keep all the code to the
-left of the grey line on the right. To help with line breaks in comments, multi-line comments were
-invented! */
-
 import java.util.Scanner;
 
 // Demonstration of if, else, and else-if.
 public class Conditionals {
     public static void main(String[] args) {
+        // Create a "scanner" that takes text input.
         Scanner scanner = new Scanner(System.in);
 
         System.out.print("Enter a number: ");
-        int number = Integer.parseInt(scanner.nextLine());
+        // Get whatever the user types before they press Enter and store it.
+        String numberString = scanner.nextLine();
+        // Convert it to an integer.
+        int number = Integer.parseInt(numberString);
 
         if (number > 10) { // If the number entered is greater than 10
             System.out.println("That's a big number!"); // Execute this statement
@@ -41,6 +40,7 @@ public class Conditionals {
         // Note that Java is case-sensitive!
         System.out.print("Enter your name: ");
         String name = scanner.nextLine();
+
         boolean nameIsJeremy = name.equals("Jeremy");
         System.out.println("You are Jeremy: " + nameIsJeremy);
 
