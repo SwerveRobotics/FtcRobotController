@@ -84,9 +84,7 @@ public class Conditionals {
         System.out.println();
 
         // What happens if you don't use break at the end of every case?
-        // (Because Java sees a quotation mark as ending a string, put a slash in front
-        //     to "escape" it. Ask the instructor for more details if interested.)
-        System.out.print("Enter a letter grade (\"A\", \"B\", or \"C\"): ");
+        System.out.print("Enter a letter grade ('A', 'B', or 'C'): ");
         String grade = scanner.nextLine();
 
         switch (grade) {

@@ -30,10 +30,6 @@ apply plugin: 'org.team11260.fast-load-plugin'
 android {
     namespace = 'org.firstinspires.ftc.teamcode'
 
-    buildFeatures {
-        buildConfig true
-    }
-
     packagingOptions {
         jniLibs.useLegacyPackaging true
     }

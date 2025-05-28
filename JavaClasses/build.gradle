@@ -6,10 +6,3 @@ java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
 }
-
-android {
-    buildFeatures {
-        buildConfig true
-        android.buildFeatures.buildConfig true
-    }
-}
