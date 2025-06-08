@@ -56,7 +56,7 @@ class SeededFruit extends Fruit {
         this.seedNumber = seedNumber;
     }
 
-    // A constructor can also have its own methods.
+    // A child can also have its own methods.
     public int countSeeds() {
         System.out.println("Counting seeds of an " + name + "!");
         return seedNumber;
