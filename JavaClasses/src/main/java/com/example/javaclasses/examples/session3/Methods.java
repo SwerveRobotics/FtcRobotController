@@ -38,20 +38,20 @@ public class Methods {
         System.out.println("The message is: " + message);
         System.out.println();
         return; // Go back to wherever this method was called from
-        //System.out.println("This line of code will never run...");
+        System.out.println("This line of code will never run...");
     }
 
     private // Let only this class be able to use this method
     static // Let this method be used even if an object of this class is not created
     int // Let this method return an integer
     exponent // Create a method called exponent
-    (int x, // That takes an integer "x"
-     int y // And an integer "y"
+    (int x, // That takes an integer `x`
+     int y // And an integer `y`
     ) // As parameters
     {
         System.out.println("Raising " + x + " to the " + y + "th power...");
 
-        // Repeatedly multiply x y times:
+        // Repeatedly multiply `x` `y` times:
         int result = 1;
         for (int i = 0; i < y; i++) {
             result = result * x;
@@ -70,7 +70,7 @@ public class Methods {
         // It's best to close the scanner after using it. This saves a bit of system resources.
         scanner.close();
 
-        return Integer.parseInt(response); // Go back and send the value of response cast to an int
+        return Integer.parseInt(response); // Go back and send the value of response turned into an int
     }
 
     // You can also choose not to add a modifier or any parameters.
