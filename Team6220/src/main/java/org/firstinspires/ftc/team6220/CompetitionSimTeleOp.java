@@ -7,20 +7,31 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.Servo;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.team6220.roadrunner.Drawing;
 import org.firstinspires.ftc.team6220.roadrunner.MecanumDrive;
+import org.firstinspires.ftc.team6220.roadrunner.RobotAction;
 
 /**
  * This class exposes the competition version of TeleOp. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@TeleOp(name="TeleOp", group="Competition")
-public class CompetitionTeleOp extends BaseOpMode {
+@TeleOp(name="CompSimTeleOp", group="Competition")
+public class CompetitionSimTeleOp extends BaseOpMode {
 
+    // Action for controlling the arm in Auto trajectories.
+
+    private DcMotorEx armBaseMotor = null;
+    private DcMotorEx slidesMotor = null;
+    private CRServo intakeCRServo = null;
+    private Servo dumperServo = null;
+    private Servo armElbowServo = null;
     private NormalizedColorSensor colorSensor = null;
     private AllianceColor allianceColor;
 
@@ -34,9 +45,27 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         //colorSensor.setGain(Constants.COLOR_SENSOR_GAIN);
 
+        armBaseMotor = hardwareMap.get(DcMotorEx.class, DRIFTConstants.ARM_BASE_MOTOR_HARDWARE_IDENTIFIER);
+        //slidesMotor = hardwareMap.get(DcMotorEx.class,DRIFTConstants.SLIDES_MOTOR_HARDWARE_IDENTIFIER);
+        intakeCRServo = hardwareMap.get(CRServo.class, DRIFTConstants.INTAKE_SERVO_HARDWARE_IDENTIFIER);
+        //dumperServo = hardwareMap.get(Servo.class,DRIFTConstants.DUMPER_SERVO_HARDWARE_IDENTIFIER);
+        armElbowServo = hardwareMap.get(Servo.class,DRIFTConstants.ARM_ELBOW_SERVO_HARDWARE_IDENTIFIER);
 
-        initializeHardware();
-        //armElbowServo.setPosition(0);
+        armBaseMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+        //slidesMotor.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
+
+        armBaseMotor.setCurrentAlert(5, CurrentUnit.AMPS);
+        //slidesMotor.setCurrentAlert(5, CurrentUnit.AMPS);
+
+        armBaseMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        //slidesMotor.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
+        armBaseMotor.setTargetPosition(0);
+        //slidesMotor.setTargetPosition(0);
+        armBaseMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+        //slidesMotor.setMode(DcMotorEx.RunMode.RUN_TO_POSITION);
+
+        //armBaseMotor.setVelocity(Constants.ARM_BASE_MOTOR_VELOCITY);
+        //slidesMotor.setVelocity(Constants.SLIDES_MOTOR_VELOCITY);
 
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
@@ -53,34 +82,20 @@ public class CompetitionTeleOp extends BaseOpMode {
                 telemetry.addLine("WEEWOO WEEWOO! EJECT IMMEDIATELY");
             }*/
 
+            telemetry.update();
 
             controls.update(getRuntime());
 
-            /*
-            telemetry.addLine("Slides Motor Target Position: " + controls.getSlidesMotorPosition());
-            telemetry.addLine("Slides Motor Current Position: " + slidesMotor.getCurrentPosition());
-            telemetry.addLine("GP2 Right Stick Y: " + -gamepad2.right_stick_y);
-            */
-
+            armBaseMotor.setPower(1.0);
             armBaseMotor.setTargetPosition(controls.getArmBaseMotorPosition());
-            slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
+            telemetry.addLine("Target Position: " + controls.getArmBaseMotorPosition());
+            //slidesMotor.setTargetPosition(controls.getSlidesMotorPosition());
             intakeCRServo.setPower(controls.getIntakeServoPower());
-            dumperServo.setPosition(controls.getDumperServoPosition());
+            //dumperServo.setPosition(controls.getDumperServoPosition());
             armElbowServo.setPosition(controls.getArmElbowServoPosition());
 
-            // Backup control in case slides stop working mid-game
-            if (controls.shouldResetSlideEncoder()) {
-                slidesMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-                slidesMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            }
-
-            // speed modifier
+            // jank ass speed modifier
             float speedModifier = 1 - (gamepad1.right_trigger * 0.5f);
-
-            // if transferring, halve drive speed
-            if (controls.isTransferring()) {
-                speedModifier *= 0.5F;
-            }
 
             // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(
@@ -94,8 +109,6 @@ public class CompetitionTeleOp extends BaseOpMode {
             // Update the current pose:
             drive.updatePoseEstimate();
 
-            // update telemetry
-            telemetry.update();
             // 'packet' is the object used to send data to FTC Dashboard:
             TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
 

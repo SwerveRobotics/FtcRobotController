@@ -65,6 +65,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
+import org.firstinspires.ftc.team6220.DRIFTConstants;
 import org.firstinspires.ftc.team6220.roadrunner.messages.DriveCommandMessage;
 import org.firstinspires.ftc.team6220.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team6220.roadrunner.messages.MecanumLocalizerInputsMessage;
@@ -80,6 +81,7 @@ import java.util.List;
 public final class MecanumDrive {
     public static class Params {
         Params() {
+            // Speed of wheels
             maxWheelVel = 50;
             minProfileAccel = -30;
             maxProfileAccel = 50;
@@ -93,25 +95,26 @@ public final class MecanumDrive {
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
                 inPerTick = 1.0;
-                lateralInPerTick = 1.0;
-                trackWidthTicks = 0;
+                lateralInPerTick = 0.812;
+                trackWidthTicks = 14.80; // Was 15.99
 
-                kS = 0;
-                kV = 0;
-                kA = 0;
+                kS = 0.693; // Was 0.695
+                kV = 0.194; // Was 0.185
+                kA = 0.0100;
 
-                axialGain      = 0;
-                axialVelGain   = 0;
-                lateralGain    = 0;
-                lateralVelGain = 0;
-                headingGain    = 0;
+                axialGain      = 9.00;
+                axialVelGain   = 1.80;
+                lateralGain    = 7.50;
+                lateralVelGain = 1.00;
+                headingGain    = 2.0;
                 headingVelGain = 0;
 
-                otos.offset.x = 0;
-                otos.offset.y = 0;
-                otos.offset.h = Math.toRadians(0);
-                otos.linearScalar = 0;
-                otos.angularScalar = 0;
+                otos.offset.x = -0.202; // Was -0.029
+                otos.offset.y = -0.496; // Was 0.600
+                otos.offset.h = Math.toRadians(-89.82);
+                // Was Math.toRadians(89.72)
+                otos.linearScalar = 0.988; // Was 1.000
+                otos.angularScalar = 1.0037; // Was 0.0000
 
                 pinpoint.ticksPerMm = 0;
                 pinpoint.xReversed = false;
@@ -124,31 +127,31 @@ public final class MecanumDrive {
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
                 inPerTick = 1;
-                lateralInPerTick = inPerTick;
-                trackWidthTicks = 0;
+                lateralInPerTick = 0.792;
+                trackWidthTicks = 15.17;
 
-                kS = 0;
-                kV = 0;
-                kA = 0;
+                kS = 0.719;
+                kV = 0.181;
+                kA = 0.0157;
 
-                axialGain      = 0.0;
-                axialVelGain   = 0.0;
-                lateralGain    = 0.0;
-                lateralVelGain = 0.0;
-                headingGain    = 0.0;
-                headingVelGain = 0.0;
+                axialGain      = 9.5;
+                axialVelGain   = 0.3;
+                lateralGain    = 1.8;
+                lateralVelGain = 0.5;
+                headingGain    = 6.4;
+                headingVelGain = 0.1;
 
-                otos.offset.x = 0;
-                otos.offset.y = 0;
-                otos.offset.h = Math.toRadians(0);
-                otos.linearScalar = 0;
-                otos.angularScalar = 0;
+                otos.offset.x = 3.313;
+                otos.offset.y = 0.383;
+                otos.offset.h = Math.toRadians(-87.34);
+                otos.linearScalar = 1.07;
+                otos.angularScalar = 0.9998;
 
-                pinpoint.ticksPerMm = 0;
+                pinpoint.ticksPerMm = 19.66;
                 pinpoint.xReversed = false;
                 pinpoint.yReversed = false;
-                pinpoint.xOffset = 0;
-                pinpoint.yOffset = 0;
+                pinpoint.xOffset = 15.2;
+                pinpoint.yOffset = 81.9;
             }
         }
 
@@ -205,7 +208,7 @@ public final class MecanumDrive {
         Log.d("roadrunner", String.format("Device name:" + inspection.deviceName));
         return inspection.deviceName;
     }
-    public static boolean isDevBot = getBotName().equals("DevBot");
+    public static boolean isDevBot = getBotName().equals("8923-RC-sw");
 
     public static Params PARAMS = new Params();
 
@@ -338,7 +341,7 @@ public final class MecanumDrive {
             module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
         }
 
-        configure(hardwareMap);
+        initializeHardware(hardwareMap);
 
         // Enable brake mode on the motors:
         leftFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -355,33 +358,34 @@ public final class MecanumDrive {
     }
 
     // This is where you configure Road Runner to work with your hardware:
-    public void configure(HardwareMap hardwareMap) {
+    public void initializeHardware(HardwareMap hardwareMap) {
         // TODO: make sure your config has motors with these names (or change them)
         //   see https://ftc-docs.firstinspires.org/en/latest/hardware_and_software_configuration/configuring/index.html
         if (isDevBot) {
-            otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
+            otosDriver = hardwareMap.get(SparkFunOTOS.class, DRIFTConstants.OTOS_HARDWARE_IDENTIFIER);
 
-            leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-            leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
-            rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-            rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+            leftFront = hardwareMap.get(DcMotorEx.class, DRIFTConstants.LEFT_FRONT_MOTOR_HARDWARE_IDENTIFIER);
+            leftBack = hardwareMap.get(DcMotorEx.class, DRIFTConstants.LEFT_BACK_MOTOR_HARDWARE_IDENTIFIER);
+            rightBack = hardwareMap.get(DcMotorEx.class, DRIFTConstants.RIGHT_BACK_MOTOR_HARDWARE_IDENTIFIER);
+            rightFront = hardwareMap.get(DcMotorEx.class, DRIFTConstants.RIGHT_FRONT_MOTOR_HARDWARE_IDENTIFIER);
 
-            leftFront.setDirection(DcMotorEx.Direction.REVERSE);
-            leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+            rightFront.setDirection(DcMotorEx.Direction.REVERSE);
+            rightBack.setDirection(DcMotorEx.Direction.REVERSE);
         } else {
             // TODO: Create the optical tracking object:
             //   opticalTracking = hardwareMap.get(SparkFunOTOS.class, "optical");
 
-            otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
+            // otosDriver = hardwareMap.get(SparkFunOTOS.class, DRIFTConstants.OTOS_HARDWARE_IDENTIFIER);
+            pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, DRIFTConstants.PINPOINT_ODOMETRY_HARDWARE_IDENTIFIER);
 
-            leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
-            leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
-            rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
-            rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
+            leftFront = hardwareMap.get(DcMotorEx.class, DRIFTConstants.LEFT_FRONT_MOTOR_HARDWARE_IDENTIFIER);
+            leftBack = hardwareMap.get(DcMotorEx.class, DRIFTConstants.LEFT_BACK_MOTOR_HARDWARE_IDENTIFIER);
+            rightBack = hardwareMap.get(DcMotorEx.class, DRIFTConstants.RIGHT_BACK_MOTOR_HARDWARE_IDENTIFIER);
+            rightFront = hardwareMap.get(DcMotorEx.class, DRIFTConstants.RIGHT_FRONT_MOTOR_HARDWARE_IDENTIFIER);
 
             // TODO: reverse motor directions if needed
+            leftFront.setDirection(DcMotorEx.Direction.REVERSE);
             leftBack.setDirection(DcMotorEx.Direction.REVERSE);
-            rightBack.setDirection(DcMotorEx.Direction.REVERSE);
         }
 
         // Initialize the tracking drivers, if any:
