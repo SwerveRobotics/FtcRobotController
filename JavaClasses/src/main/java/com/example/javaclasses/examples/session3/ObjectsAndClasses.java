@@ -47,7 +47,7 @@ class SeededFruit extends Fruit {
     // The child class can have its own attributes as well.
     public int seedNumber;
 
-    // A constructor must also be declared in the child class.
+    // A constructor may also be declared in the child class.
     public SeededFruit(String name, int nutritionValue, int seedNumber) {
         // super(Object arg1, Object arg2...) is basically the constructor of the parent class.
         // It must be the first statement in the constructor of the child class.
@@ -60,6 +60,18 @@ class SeededFruit extends Fruit {
     public int countSeeds() {
         System.out.println("Counting seeds of an " + name + "!");
         return seedNumber;
+    }
+
+    void juice(int addedSugars) {
+        if (!juiced) {
+            // Once again, it's best to split lines that are too long.
+            System.out.println("Juicing an " + name + " and adding "
+                    + addedSugars + " grams of sugar!");
+            juiced = true;
+            // A shorter way of writing nutritionValue = nutritionValue - addedSugars.
+            nutritionValue -= addedSugars;
+            seedNumber = 0;
+        }
     }
 }
 
@@ -191,6 +203,5 @@ public class ObjectsAndClasses {
 
         // Programming doesn't need to make sense. However, it should.
         System.out.println("Strange how an apple has seeds even after it's juiced, huh!");
-
     }
 }

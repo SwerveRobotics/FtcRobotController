@@ -8,7 +8,7 @@ public class Methods {
         // Call the printMessage(String) function:
         printMessage("The program is starting!");
 
-        // Call the exponent(int, int) function inside of the printMessage(String) function:
+        // Call the exponent(int, int) method inside of the printMessage(String) function:
         printMessage("2 ^ 3 = " + exponent(2, 3));
 
         // Methods are great for things that must be done multiple times.
@@ -35,10 +35,9 @@ public class Methods {
     printMessage // Create a method called "printStart"
     (String message // That takes a string "message"
     ) {
-        System.out.println("The message is: " + message);
+        System.out.println("The mesage is: " + message);
         System.out.println();
         return; // Go back to wherever this method was called from
-        System.out.println("This line of code will never run...");
     }
 
     private // Let only this class be able to use this method
@@ -53,8 +52,8 @@ public class Methods {
 
         // Repeatedly multiply `x` `y` times:
         int result = 1;
-        for (int i = 0; i < y; i++) {
-            result = result * x;
+        for (int i = 0; i < 3; i = i + 1) {
+            result = result * 2;
         }
         return result; // Go to wherever this method was called from and send the value of result
     }
