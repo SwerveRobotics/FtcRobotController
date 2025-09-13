@@ -357,7 +357,7 @@ public final class MecanumDrive {
     // This is where you configure Road Runner to work with your hardware:
     public void configure(HardwareMap hardwareMap) {
         if (isDevBot) {
-            otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
+            pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
             leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");
@@ -367,7 +367,7 @@ public final class MecanumDrive {
             leftFront.setDirection(DcMotorEx.Direction.REVERSE);
             leftBack.setDirection(DcMotorEx.Direction.REVERSE);
         } else {
-            otosDriver = hardwareMap.get(SparkFunOTOS.class, "otos");
+            pinpointDriver = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
             leftFront = hardwareMap.get(DcMotorEx.class, "leftFront");
             leftBack = hardwareMap.get(DcMotorEx.class, "leftBack");

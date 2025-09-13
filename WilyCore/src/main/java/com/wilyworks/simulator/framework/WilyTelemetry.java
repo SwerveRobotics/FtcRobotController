@@ -11,6 +11,8 @@ import static org.firstinspires.ftc.robotcore.external.Telemetry.DisplayFormat;
 
 import androidx.annotation.Nullable;
 
+import com.qualcomm.robotcore.robocol.TelemetryMessage;
+
 import java.awt.Canvas;
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -654,6 +656,13 @@ public class WilyTelemetry implements Telemetry {
 
         canvas.getBufferStrategy().show();
         lineList.clear();
+
+        // For testing Sidekick:
+        saveToTransmitter(true, new TelemetryMessage());
         return true;
+    }
+
+    protected void saveToTransmitter(boolean recompose, TelemetryMessage transmitter) {
+
     }
 }

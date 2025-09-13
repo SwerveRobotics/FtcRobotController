@@ -143,18 +143,27 @@ public class Simulation {
         if (requestedVelocity == null)
             requestedVelocity = new PoseVelocity2d(new Vector2d(0, 0), 0);
 
+        boolean brake = requestedVelocity.linearVel.x == 0
+                     && requestedVelocity.linearVel.y == 0
+                     && requestedVelocity.angVel == 0;
+        // ^^^ brake = false; // @@@@@@@@@@@@@@@@@@@@@@@@@
+
+        // Brake if the requested velocity is zero, otherwise decelerate normally:
+        double linearDeceleration = (brake) ? config.maxLinearBraking : config.maxLinearDeceleration;
+        double angularAcceleration = (brake) ? config.maxAngularBraking : config.maxAngularAcceleration;
+
         // Handle the rotational velocity:
         double currentAngular = poseVelocity.angVel;
         double requestedAngular = requestedVelocity.angVel;
         double deltaAngular = requestedAngular - currentAngular;
         if (deltaAngular >= 0) {
             // Increase the angular velocity:
-            currentAngular += config.maxAngularAcceleration * dt;
+            currentAngular += angularAcceleration * dt;
             currentAngular = Math.min(currentAngular, config.maxAngularSpeed);
             currentAngular = Math.min(currentAngular, requestedAngular);
         } else {
             // Decrease the angular velocity:
-            currentAngular -= config.maxAngularAcceleration * dt; // maxAngAccel is positive
+            currentAngular -= angularAcceleration * dt; // maxAngAccel is positive
             currentAngular = Math.max(currentAngular, -config.maxAngularSpeed);
             currentAngular = Math.max(currentAngular, requestedAngular);
         }
@@ -181,13 +190,13 @@ public class Simulation {
         requestedVelocity = Math.min(requestedVelocity, config.maxLinearSpeed);
 
         // Perpendicular velocity is the current velocity component away from
-        // the requested velocity. We reduce this by the deceleration:
+        // the requested velocity vector. We reduce this by the deceleration:
         double perpVelocity = Math.sin(theta) * currentVelocity;
         if (perpVelocity >= 0) {
-            perpVelocity += config.maxLinearDeceleration * dt; // minProfileAccel is negative
+            perpVelocity += linearDeceleration * dt; // minProfileAccel is negative
             perpVelocity = Math.max(perpVelocity, 0);
         } else {
-            perpVelocity -= config.maxLinearDeceleration * dt;
+            perpVelocity -= linearDeceleration * dt;
             perpVelocity = Math.min(perpVelocity, 0);
         }
 
@@ -208,7 +217,7 @@ public class Simulation {
             parallelVelocity = Math.min(parallelVelocity, maxParallelVelocity);
             parallelVelocity = Math.min(parallelVelocity, requestedVelocity);
         } else { // Decrease the parallel velocity:
-            parallelVelocity -= config.maxLinearAcceleration * dt; // maxProfileAccel is positive
+            parallelVelocity += linearDeceleration * dt; // maxProfileAccel is positive
             parallelVelocity = Math.max(parallelVelocity, -maxParallelVelocity);
             parallelVelocity = Math.max(parallelVelocity, requestedVelocity);
         }

@@ -44,10 +44,12 @@ public class WilyWorks {
 
         // Maximum linear acceleration and deceleration, in inches/s/s:
         public double maxLinearAcceleration = 50;
-        public double maxLinearDeceleration = -30; // Should be negative
+        public double maxLinearDeceleration = -50; // Should be negative
+        public double maxLinearBraking = 10 * maxLinearDeceleration;
 
         // Maximum angular acceleration and deceleration, in radians/s/s:
         public double maxAngularAcceleration = Math.PI;
+        public double maxAngularBraking = 10 * maxAngularAcceleration;
 
         // Fill this out to describe cameras on the robot:
         public Camera[] cameras = {
@@ -211,12 +213,13 @@ public class WilyWorks {
         return false;
     }
 
-    // Get the simulation's introduced-error pose:
-    static public Pose2d getPose() {
+    // Get the simulation's introduced-error pose if false, the true pose if true:
+    static public Pose2d getPose() { return getPose(false); }
+    static public Pose2d getPose(boolean truePose) {
         if (wilyCore != null) {
             try {
                 Method getPose = wilyCore.getMethod("getPose", boolean.class);
-                return (Pose2d) getPose.invoke(null, false);
+                return (Pose2d) getPose.invoke(null, truePose);
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 throw new RuntimeException(e);
             }
