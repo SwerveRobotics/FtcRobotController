@@ -1,5 +1,6 @@
 package com.acmerobotics.dashboard.canvas;
 
+import com.acmerobotics.roadrunner.Vector2d;
 import com.wilyworks.simulator.framework.Field;
 
 import java.awt.AlphaComposite;
@@ -274,8 +275,8 @@ public class Canvas {
     }
 
     public Canvas strokeRect(double x, double y, double width, double height) {
-        strokePolygon(new double[] { x, x + width, x + width, x },
-                new double[] { y, y, y + height, y + height });
+        strokePolygon(new double[] { x, x + width, x + width, x, x },
+                new double[] { y, y, y + height, y + height, y });
         return this;
     }
 
@@ -385,11 +386,18 @@ public class Canvas {
 
     private static int round(double x) { return (int) Math.round(x); }
 
+    // This routine is modeled after the FTC Dashboard's Field.js.
     private void setUserTransform(Graphics2D g) {
         g.setTransform(defaultTransform);
         g.translate(userOriginX, userOriginY);
         g.rotate(userRotation);
         g.scale(userScaleX, userScaleY);
+    }
+
+    static public Vector2d rotateVector(Vector2d vector, double theta) {
+        return new Vector2d(
+                Math.cos(theta) * vector.x - Math.sin(theta) * vector.y,
+                Math.sin(theta) * vector.x + Math.cos(theta) * vector.y);
     }
 
     public void render(Graphics2D g) {
@@ -418,9 +426,11 @@ public class Canvas {
                 userRotation = Math.toRadians(90) + rotation.rotation;
                 setUserTransform(g);
             } else if (op instanceof Translate) {
+                // As above, we have to adjust for the different default orientation of the field:
                 Translate translate = (Translate) op;
-                userOriginX = translate.x;
-                userOriginY = translate.y;
+                Vector2d rotated = rotateVector(new Vector2d(translate.x, translate.y), Math.toRadians(90));
+                userOriginX = rotated.x;
+                userOriginY = rotated.y;
                 setUserTransform(g);
             } else if (op instanceof Stroke) {
                 // c.setStroke("#3F51B5");

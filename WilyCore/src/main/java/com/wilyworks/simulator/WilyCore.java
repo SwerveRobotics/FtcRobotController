@@ -306,7 +306,10 @@ public class WilyCore {
         Graphics2D g = (Graphics2D) dashboardCanvas.getBufferStrategy().getDrawGraphics();
         g.clearRect(0, 0, dashboardCanvas.getWidth(), dashboardCanvas.getHeight());
 
-        field.render(g);
+        String caption = "";
+        if (startTime != 0)
+            caption = String.format("Seconds: %.1f, %s", wallClockTime() - startTime, inputManager.getMappings());
+        field.render(g, caption);
         if (startScreenOverlay)
             field.renderStartScreenOverlay(g);
 
@@ -322,6 +325,13 @@ public class WilyCore {
         }
         elapsedTime += deltaT;
         lastUpdateWallClockTime = nanoTime() * 1e-9;
+
+        // We're not guaranteed to be called at regular intervals, as when single stepping
+        // or when the program has a loop that is not calling updateSimulation(). So we need
+        // to cap the delta-t to prevent the simulation from jumping:
+        if (deltaT > 0.1) {
+            deltaT = 0.1;
+        }
         return deltaT;
     }
 
@@ -344,6 +354,7 @@ public class WilyCore {
     // Set the robot to a given pose and (optional) velocity in the simulation. The
     // localizer will not register a move.
     static public void setStartPose(Pose2d pose, PoseVelocity2d velocity) {
+        lastUpdateWallClockTime = nanoTime() * 1e-9; // Reset the detla-t calculations
         simulation.setStartPose(pose, velocity);
     }
 

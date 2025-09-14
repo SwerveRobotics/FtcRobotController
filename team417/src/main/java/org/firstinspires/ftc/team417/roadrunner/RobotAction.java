@@ -10,10 +10,12 @@ import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Action;
 import com.qualcomm.robotcore.util.RobotLog;
 
+import java.util.Iterator;
+import java.util.LinkedList;
+
 /**
  * This class wraps Road Runner actions to implement easier-to-use support for state-machine
  * cooperative multitasking, with additional error checking to prevent robot destruction.
- * @noinspection unused
  */
 @SuppressLint("DefaultLocale")
 abstract public class RobotAction implements Action {
@@ -106,6 +108,7 @@ abstract public class RobotAction implements Action {
     }
 
     // This function is called by Road Runner. We, in turn, call the user's RobotAction.
+    // Returns true if the Action should be called again; false otherwise.
     @Override
     public boolean run(@NonNull TelemetryPacket telemetryPacket) {
         // Start the watchdog thread if it hasn't already started:
@@ -118,50 +121,64 @@ abstract public class RobotAction implements Action {
 
         // Update the member field with the current telemetry packet:
         this.telemetryPacket = telemetryPacket;
-        boolean callAgain;
 
-        // Use globals to tell the watchdog thread that a run() has started:
-        synchronized(runLock) {
-            runAction = this;
-            runStartTime = time();
-        }
+        boolean callAgain = false;
 
-        // Invoke the run!
-        if (actionStartTime == 0) {
-            actionStartTime = time();
-            callAgain = run(0.0);
-        } else {
-            callAgain = run(time() - actionStartTime);
-        }
-        double runTime = time() - runStartTime;
-
-        // Let the watchdog thread know that the run() has completed:
-        synchronized(runLock) {
-            runAction = null;
-            runStartTime = 0;
-        }
-
-        if ((runTime > WARNING_TIMEOUT) && (!warned)) {
-            String message;
-            if (name.isEmpty()) {
-                message = String.format("WARNING: Unidentified RobotAction took %.0fms in its run() call, "
-                        + "should take no more than 10ms. Call SetName() to identify actions.",
-                        runTime * 1000.0);
-            } else {
-                message = String.format("WARNING: RobotAction '%s' took %.0fms in its run() call, "
-                                + "should take no more than 10ms.",
-                        name, runTime * 1000.0);
+        // If the subActions list is non-empty and actionStartTime is zero, that means that
+        // this action has completed but not all of the sub-actions have:
+        if ((actionStartTime != 0) || (subActions.isEmpty())) {
+            // Use globals to tell the watchdog thread that a run() has started:
+            synchronized (runLock) {
+                runAction = this;
+                runStartTime = time();
             }
-            RobotLog.addGlobalWarningMessage(message);
-            Log.w("RobotAction", message);
-            warned = true;
+
+            // Invoke the run!
+            if (actionStartTime == 0) {
+                actionStartTime = time();
+                callAgain = run(0.0);
+            } else {
+                callAgain = run(time() - actionStartTime);
+            }
+            double runTime = time() - runStartTime;
+
+            // Let the watchdog thread know that the run() has completed:
+            synchronized (runLock) {
+                runAction = null;
+                runStartTime = 0;
+            }
+
+            if ((runTime > WARNING_TIMEOUT) && (!warned)) {
+                String message;
+                if (name.isEmpty()) {
+                    message = String.format("WARNING: Unidentified RobotAction took %.0fms in its run() call, "
+                                    + "should take no more than 10ms. Call SetName() to identify actions.",
+                            runTime * 1000.0);
+                } else {
+                    message = String.format("WARNING: RobotAction '%s' took %.0fms in its run() call, "
+                                    + "should take no more than 10ms.",
+                            name, runTime * 1000.0);
+                }
+                RobotLog.addGlobalWarningMessage(message);
+                Log.w("RobotAction", message);
+                warned = true;
+            }
+            if (!callAgain) {
+                // The action is complete. Reset the start time in preparation for next time the
+                // action is invoked:
+                actionStartTime = 0;
+            }
         }
-        if (!callAgain) {
-            // The action is complete. Reset the start time in preparation for next time the
-            // action is invoked:
-            actionStartTime = 0;
+
+        // Run all of the sub-actions to completion:
+        Iterator<Action> iterator = subActions.iterator();
+        while (iterator.hasNext()) {
+            Action action = iterator.next();
+            if (!action.run(telemetryPacket)) {
+                iterator.remove();
+            }
         }
-        return callAgain;
+        return callAgain || !subActions.isEmpty();
     }
 
     @Override
@@ -175,6 +192,9 @@ abstract public class RobotAction implements Action {
     // This Dashboard telemetry packet will always be non-null when run() is called. It can be
     // used to send Field View drawing to the FTC Dashboard or other telemetry:
     public TelemetryPacket telemetryPacket;
+
+    // Sub-actions are actions that can be invoked by the current action to run in parallel:
+    public LinkedList<Action> subActions = new LinkedList<>();
 
     // Set the name of this action, primarily so it can be identified if it takes too long
     // to run:

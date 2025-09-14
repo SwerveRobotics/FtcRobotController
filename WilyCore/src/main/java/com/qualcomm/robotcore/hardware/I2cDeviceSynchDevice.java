@@ -35,4 +35,6 @@ public abstract class I2cDeviceSynchDevice<DEVICE_CLIENT extends I2cDeviceSynchS
     {
         return "";
     }
+
+    public DEVICE_CLIENT getDeviceClient() { return null; }
 }

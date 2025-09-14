@@ -19,12 +19,15 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
+import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.Shape;
 import java.awt.Transparency;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
@@ -130,18 +133,33 @@ public class Field {
                 round(ROBOT_IMAGE_HEIGHT * DIRECTION_LINE_HEIGHT));
     }
 
-    // Render just the robot:
+    // Render the outline of the robot's true position:
     void renderRobot(Graphics2D g) {
-        Pose2d simulationPose = simulation.getPose(0, true);
-        AffineTransform imageTransform = new AffineTransform();
-        imageTransform.translate(simulationPose.position.x, simulationPose.position.y);
-        imageTransform.scale(1.0 / ROBOT_IMAGE_WIDTH,1.0 / ROBOT_IMAGE_HEIGHT);
-        imageTransform.rotate(simulationPose.heading.log() + Math.toRadians(90));
-        imageTransform.scale(WilyCore.config.robotWidth, WilyCore.config.robotLength);
-        imageTransform.translate(-ROBOT_IMAGE_HEIGHT / 2.0, -ROBOT_IMAGE_HEIGHT / 2.0);
+        Pose2d pose = simulation.getPose(0, true);
+        AffineTransform oldTransform = g.getTransform();
+        g.translate(pose.position.x, pose.position.y);
+        g.rotate(pose.heading.log());
+        g.setColor(Color.RED);
         setAlpha(g, 0.5);
-        g.drawImage(robotImage, imageTransform, null);
+
+        g.draw(new Rectangle2D.Double(
+                -WilyCore.config.robotWidth / 2.0, -WilyCore.config.robotLength / 2.0,
+                WilyCore.config.robotWidth, WilyCore.config.robotLength));
+
+        // Restore the graphics state:
         setAlpha(g, 1.0);
+        g.setTransform(oldTransform);
+
+//        Pose2d simulationPose = simulation.getPose(0, true);
+//        AffineTransform imageTransform = new AffineTransform();
+//        imageTransform.translate(simulationPose.position.x, simulationPose.position.y);
+//        imageTransform.scale(1.0 / ROBOT_IMAGE_WIDTH,1.0 / ROBOT_IMAGE_HEIGHT);
+//        imageTransform.rotate(simulationPose.heading.log() + Math.toRadians(90));
+//        imageTransform.scale(WilyCore.config.robotWidth, WilyCore.config.robotLength);
+//        imageTransform.translate(-ROBOT_IMAGE_HEIGHT / 2.0, -ROBOT_IMAGE_HEIGHT / 2.0);
+//        setAlpha(g, 0.5);
+//        g.drawImage(robotImage, imageTransform, null);
+//        setAlpha(g, 1.0);
     }
 
     // Set the transform to use inches and have the origin at the center of field. This
@@ -220,13 +238,10 @@ public class Field {
 
     // Render the field, the robot, and the field overlay:
     @SuppressLint("DefaultLocale")
-    public void render(Graphics2D g) {
+    public void render(Graphics2D g, String caption) {
         // Print the time above the field:
         g.setColor(new Color(0x808080));
-        if (WilyCore.startTime != 0) {
-            g.drawString(String.format("Seconds: %.1f", WilyCore.wallClockTime() - WilyCore.startTime),
-                    FIELD_VIEW.x + FIELD_INSET, FIELD_VIEW.y + FIELD_INSET - 3);
-        }
+        g.drawString(caption, FIELD_VIEW.x + FIELD_INSET, FIELD_VIEW.y + FIELD_INSET - 3);
 
         // Lay down the background image without needing a transform:
         g.drawImage(backgroundImage, FIELD_VIEW.x + FIELD_INSET, FIELD_VIEW.y + FIELD_INSET, null);

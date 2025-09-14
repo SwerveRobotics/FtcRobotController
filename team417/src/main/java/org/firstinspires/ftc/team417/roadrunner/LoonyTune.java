@@ -1320,8 +1320,10 @@ public class LoonyTune extends LinearOpMode {
 
     // Set the hardware to the current parameters:
     public void initializeTrackerHardware() {
-        drive.initializeOtosDriver();
-        drive.initializePinpointDriver();
+        if (drive.otosDriver != null)
+            drive.initializeOtosDriver();
+        if (drive.pinpointDriver != null)
+            drive.initializePinpointDriver();
     }
 
     // Return true if the optical tracker hardware is responding:
@@ -3758,7 +3760,7 @@ public class LoonyTune extends LinearOpMode {
                     previewer.update(); // Animate the trajectory preview
                     updateGamepadDriving(); // Let the user drive
                     io.out("The robot will strafe left then right for up to "
-                            + testDistance(DISTANCE) + ". This will measure the following:\n");
+                            + testDistance(DISTANCE) + ". This will tune the following:\n");
                     io.out("\n"
                             + "\u2022 <b>lateralInPerTick</b> is the factor of how "
                             + "much shorter the robot will move sideways than forward for the same "
