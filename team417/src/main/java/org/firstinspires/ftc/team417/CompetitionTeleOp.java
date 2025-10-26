@@ -58,11 +58,11 @@ public class CompetitionTeleOp extends BaseOpMode {
             // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
-                            -gamepad1.left_stick_y * doSLOWMODE(),
-                            -gamepad1.left_stick_x * doSLOWMODE()
+                            halfLinearHalfCubic(-gamepad1.left_stick_y * doSLOWMODE()),
+                            halfLinearHalfCubic(-gamepad1.left_stick_x * doSLOWMODE())
 
                     ),
-                    -gamepad1.right_stick_x
+                    halfLinearHalfCubic(-gamepad1.right_stick_x * doSLOWMODE())
 
 
             ));
@@ -137,10 +137,14 @@ public class CompetitionTeleOp extends BaseOpMode {
     }
 
     public double doSLOWMODE() {
-        if (gamepad1.left_stick_button) {
-            return SLOWDRIVE_SPEED;
+        if (gamepad1.right_trigger != 0) {
+            return -gamepad1.right_trigger + 1.1;
         } else {
-            return FASTDRIVE_SPEED;
+            return 1;
         }
+    }
+
+    public static double halfLinearHalfCubic(double input) {
+        return (Math.pow(input, 3) + input) / 2;
     }
 }
