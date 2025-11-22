@@ -34,13 +34,13 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double FULL_SPEED = 1.0; //We send this power to the servos when we want them to feed an artifact to the launcher
     public static double SLOW_REV_SPEED = -0.15; //speed for the constant reverse rotation
     public static double REV_SPEED = -1.0;//speed used for the reverse launch function
-    public static double LAUNCHER_HIGH_MAX_VELOCITY = 2000; //high target velocity + 50 (will need adjusting)
-    public static double LAUNCHER_HIGH_TARGET_VELOCITY = 1950;
-    public static double LAUNCHER_HIGH_MIN_VELOCITY = 1900;
+    public static double LAUNCHER_HIGH_MAX_VELOCITY = 1480; //high target velocity + 50 (will need adjusting)
+    public static double LAUNCHER_HIGH_TARGET_VELOCITY = 1430;
+    public static double LAUNCHER_HIGH_MIN_VELOCITY = 1380;
 
-    public static double LAUNCHER_LOW_MAX_VELOCITY = 1175; //low target velocity + 50 (will need adjusting)
-    public static double LAUNCHER_LOW_TARGET_VELOCITY = 1125;
-    public static double LAUNCHER_LOW_MIN_VELOCITY = 1075;// jonathan was here
+    public static double LAUNCHER_LOW_MAX_VELOCITY = 1270; //low target velocity + 50 (will need adjusting)
+    public static double LAUNCHER_LOW_TARGET_VELOCITY = 1220;
+    public static double LAUNCHER_LOW_MIN_VELOCITY = 1170;
 
     public static double LAUNCHER_SORTER_MAX_VELOCITY = 550; //sorter target velocity + 50 (will need adjusting)
     public static double LAUNCHER_SORTER_TARGET_VELOCITY = 500;
@@ -162,15 +162,17 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     }
     class SpinUpAction extends RobotAction {
-        public boolean run(double ElapsedTime) {
-            launcher.setVelocity(LAUNCHER_LOW_TARGET_VELOCITY);
-            if(ElapsedTime < 2) {
-                return true;
-            }
-            else {
-                return false;
-            }
+        private double launcherVelocity;
+        public SpinUpAction(double launcherVelocity) {
+            this.launcherVelocity = launcherVelocity;
         }
+        @Override
+        public boolean run(double ElapsedTime) {
+            launcher.setVelocity(launcherVelocity);
+            return ElapsedTime < 2;
+        }
+
+
     }
 
     public void launch(boolean shotRequested) {

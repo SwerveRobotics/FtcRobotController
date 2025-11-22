@@ -91,13 +91,13 @@ public class CompetitionAuto extends BaseOpMode {
         Action redNear = drive.actionBuilder(redNearStartPose)
 
                 .setTangent(Math.toRadians(-49))
-                //.splineToLinearHeading(new Pose2d(-54,46, Math.toRadians(41)),Math.toRadians(-49))
-                .stopAndAdd(new SpinUpAction())
+                .splineToLinearHeading(new Pose2d(-36,36, Math.toRadians(36)),Math.toRadians(-49))
+                .stopAndAdd(new SpinUpAction(1220))
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
-
-                .splineToLinearHeading(new Pose2d(-32,54,Math.toRadians(0)), Math.toRadians(90))
+                .setTangent(Math.toRadians(90))
+                .splineToLinearHeading(new Pose2d(-28,54,Math.toRadians(0)), Math.toRadians(90))
                 .build();
 
         Action redFar = drive.actionBuilder(redFarStartPose)
@@ -112,13 +112,13 @@ public class CompetitionAuto extends BaseOpMode {
                 .build();*/
 
                 .setTangent(Math.toRadians(180))
-                .splineToLinearHeading(new Pose2d(-50, 50, Math.toRadians(41)), Math.toRadians(90))
-                .stopAndAdd(new SpinUpAction())
+                .splineToLinearHeading(new Pose2d(-36, 36, Math.toRadians(36)), Math.toRadians(90))
+                .stopAndAdd(new SpinUpAction(1220))
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
-                .setTangent(Math.toRadians(-90))
-                .splineToLinearHeading(new Pose2d(-57, 12, Math.toRadians(0)), Math.toRadians(-90))
+                .setTangent(Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-57, 12, Math.toRadians(0)), Math.toRadians(180))
                 .build();
 
         Action redFarMinimal = drive.actionBuilder(redFarStartPose)
@@ -129,25 +129,26 @@ public class CompetitionAuto extends BaseOpMode {
         // Blue alliance auto paths
         Action blueNear = drive.actionBuilder(blueNearStartPose)
                 .setTangent(Math.toRadians(49))
-                .splineToLinearHeading(new Pose2d(-48,-48, Math.toRadians(139)),Math.toRadians(49))
-                .stopAndAdd(new SpinUpAction())
+                .splineToLinearHeading(new Pose2d(-36,-36, Math.toRadians(134)),Math.toRadians(49))
+                .stopAndAdd(new SpinUpAction(1220))
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
 //                .splineTo(new Vector2d(-44, -44), Math.toRadians(49))
-//                .setTangent(Math.toRadians(139))
-                .splineToLinearHeading(new Pose2d(-32,-54 ,Math.toRadians(180)), Math.toRadians(-90))
+                .setTangent(Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-28,-54 ,Math.toRadians(180)), Math.toRadians(-90))
                 .build();
 
         Action blueFar = drive.actionBuilder(blueFarStartPose)
                 .setTangent(Math.toRadians(-135))
-                .splineToLinearHeading(new Pose2d(-49, -49, Math.toRadians(139)), Math.toRadians(-90))
-                .stopAndAdd(new SpinUpAction())
+                .stopAndAdd(new SpinUpAction(1220))
+                .splineToLinearHeading(new Pose2d(-36, -36, Math.toRadians(134)), Math.toRadians(-90))
+
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
-                .setTangent(Math.toRadians(90))
-                .splineToLinearHeading(new Pose2d(-57, -12, Math.toRadians(180)), Math.toRadians(90))
+                .setTangent(Math.toRadians(-180))
+                .splineToLinearHeading(new Pose2d(-57, -12, Math.toRadians(-180)), Math.toRadians(90))
                 .build();
 
         Action blueFarMinimal = drive.actionBuilder(blueFarStartPose)
