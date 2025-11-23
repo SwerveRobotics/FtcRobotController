@@ -89,10 +89,10 @@ public class CompetitionAuto extends BaseOpMode {
 
         // Red alliance auto paths
         Action redNear = drive.actionBuilder(redNearStartPose)
-
+                .stopAndAdd(new SpinUpAction(1220))
                 .setTangent(Math.toRadians(-49))
                 .splineToLinearHeading(new Pose2d(-36,36, Math.toRadians(36)),Math.toRadians(-49))
-                .stopAndAdd(new SpinUpAction(1220))
+
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
@@ -110,10 +110,10 @@ public class CompetitionAuto extends BaseOpMode {
                 .setTangent(Math.toRadians(-90))
                 .splineToLinearHeading(new Pose2d(-57, 12, Math.toRadians(0)), Math.toRadians(-90))
                 .build();*/
-
-                .setTangent(Math.toRadians(180))
-                .splineToLinearHeading(new Pose2d(-36, 36, Math.toRadians(36)), Math.toRadians(90))
                 .stopAndAdd(new SpinUpAction(1220))
+                .setTangent(Math.toRadians(180))
+                .splineToLinearHeading(new Pose2d(-36, 36, Math.toRadians(36)), Math.toRadians(139))
+
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
@@ -128,9 +128,10 @@ public class CompetitionAuto extends BaseOpMode {
 
         // Blue alliance auto paths
         Action blueNear = drive.actionBuilder(blueNearStartPose)
+                .stopAndAdd(new SpinUpAction(1220))
                 .setTangent(Math.toRadians(49))
                 .splineToLinearHeading(new Pose2d(-36,-36, Math.toRadians(134)),Math.toRadians(49))
-                .stopAndAdd(new SpinUpAction(1220))
+
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
@@ -142,7 +143,7 @@ public class CompetitionAuto extends BaseOpMode {
         Action blueFar = drive.actionBuilder(blueFarStartPose)
                 .setTangent(Math.toRadians(-135))
                 .stopAndAdd(new SpinUpAction(1220))
-                .splineToLinearHeading(new Pose2d(-36, -36, Math.toRadians(134)), Math.toRadians(-90))
+                .splineToLinearHeading(new Pose2d(-36, -36, Math.toRadians(134)), Math.toRadians(-139))
 
                 .stopAndAdd(new LaunchAction())
                 .stopAndAdd(new LaunchAction())
