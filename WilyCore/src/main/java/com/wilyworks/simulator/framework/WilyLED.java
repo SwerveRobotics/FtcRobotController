@@ -1,12 +1,16 @@
 package com.wilyworks.simulator.framework;
 
 import com.qualcomm.robotcore.hardware.LED;
+import com.qualcomm.robotcore.hardware.configuration.annotations.DeviceProperties;
+import com.qualcomm.robotcore.hardware.configuration.annotations.DigitalIoDeviceType;
 import com.wilyworks.common.WilyWorks;
 import com.wilyworks.simulator.WilyCore;
 
 /**
  * Wily Works LED implementation.
  */
+@DigitalIoDeviceType
+@DeviceProperties(name = "@string/configTypeLED", xmlTag = "Led", builtIn = true, description = "@string/led_description")
 public class WilyLED extends LED {
     // Assume that every digital channels is a REV LED indicator. Doesn't hurt if that's not
     // the case:

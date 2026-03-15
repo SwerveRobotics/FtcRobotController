@@ -2,10 +2,12 @@ package com.wilyworks.simulator.framework;
 
 import com.qualcomm.robotcore.hardware.ColorSensor;
 import com.qualcomm.robotcore.hardware.I2cAddr;
+import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
 
 /**
  * Wily Works color sensor implementation.
  */
+@I2cDeviceType
 public class WilyColorSensor extends WilyHardwareDevice implements ColorSensor {
     @Override
     public int red() {

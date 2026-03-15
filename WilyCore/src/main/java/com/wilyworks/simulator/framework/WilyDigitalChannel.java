@@ -1,10 +1,12 @@
 package com.wilyworks.simulator.framework;
 
 import com.qualcomm.robotcore.hardware.DigitalChannel;
+import com.qualcomm.robotcore.hardware.configuration.annotations.DigitalIoDeviceType;
 
 /**
  * Wily Works DigitalChannel implementation.
  */
+@DigitalIoDeviceType
 public class WilyDigitalChannel extends WilyHardwareDevice implements DigitalChannel {
     boolean state;
 

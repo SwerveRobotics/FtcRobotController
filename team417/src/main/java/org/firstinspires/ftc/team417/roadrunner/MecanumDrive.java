@@ -511,8 +511,7 @@ public final class MecanumDrive {
     // Set the drive powers for when driving manually via the controller:
     public void setDrivePowers(PoseVelocity2d powers) {
         // If running under Wily Works, request the drive powers directly:
-        if (WilyWorks.setDrivePowers(powers, new PoseVelocity2d(new Vector2d(0, 0), 0)))
-            return; // ====>
+        WilyWorks.setDrivePowers(powers, new PoseVelocity2d(new Vector2d(0, 0), 0));
 
         MecanumKinematics.WheelVelocities<Time> wheelVels = new MecanumKinematics(1).inverse(
                 PoseVelocity2dDual.constant(powers, 1));

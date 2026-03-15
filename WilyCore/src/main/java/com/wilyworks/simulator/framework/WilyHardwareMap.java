@@ -8,6 +8,8 @@ import androidx.annotation.Nullable;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.hardware.lynx.LynxVoltageSensor;
 import com.qualcomm.hardware.sparkfun.SparkFunLEDStick;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.eventloop.opmode.OpModeManagerNotifier;
@@ -30,6 +32,7 @@ import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.swerverobotics.ftc.UltrasonicDistanceSensor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,6 +47,7 @@ import java.util.TreeSet;
  * Wily Works hardware map.
  */
 public class WilyHardwareMap implements Iterable<HardwareDevice> {
+    static public LynxModule lynxModule = new LynxModule(); // Wily-specific
 
     public DeviceMapping<VoltageSensor>            voltageSensor            = new DeviceMapping<>(VoltageSensor.class);
     public DeviceMapping<DcMotor>                  dcMotor                  = new DeviceMapping<>(DcMotor.class);
@@ -71,13 +75,23 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
         // Road Runner expects this object to be already created because it references
         // hardwareMap.voltageSensor.iterator().next() directly:
         put("voltage_sensor", VoltageSensor.class);
+        allDevicesMap.put("lynx_module", new ArrayList<>(Arrays.asList(lynxModule)));
     }
 
     public final Context appContext = new Context();
     protected final Object lock = new Object();
+    private LinkedList<LynxModule> lynxModules = new LinkedList<>(Arrays.asList(lynxModule));
 
     public <T> List<T> getAll(Class<? extends T> classOrInterface) {
         List<T> result = new LinkedList<T>();
+        for (Map.Entry<String, List<HardwareDevice>> pair : allDevicesMap.entrySet()) {
+            List<HardwareDevice> deviceList = pair.getValue();
+            for (HardwareDevice device : deviceList) {
+                if (classOrInterface.isAssignableFrom(device.getClass())) {
+                    result.add((T) device);
+                }
+            }
+        }
         return result;
     }
 
@@ -116,6 +130,33 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
         throw new IllegalArgumentException("Use the typed version of get(), e.g. get(DcMotorEx.class, \"leftMotor\")");
     }
 
+    public @Nullable <T> T get(Class<? extends T> classOrInterface, SerialNumber serialNumber) {
+        return null; // @@@
+    }
+
+    public SortedSet<String> getAllNames(Class<? extends HardwareDevice> classOrInterface) {
+        SortedSet<String> result = new TreeSet<>();
+        for (String userName: allDevicesMap.keySet()) {
+            HardwareDevice device = allDevicesMap.get(userName).get(0);
+            if (classOrInterface.isInstance(device)) {
+                result.add(userName);
+            }
+        }
+        return result;
+    }
+
+    public @NonNull Set<String> getNamesOf(HardwareDevice device) {
+        for (Map.Entry<String, List<HardwareDevice>> pair : allDevicesMap.entrySet()) {
+            List<HardwareDevice> hardwareList = pair.getValue();
+            for (HardwareDevice hardwareDevice : hardwareList) {
+                if (hardwareDevice == device) {
+                    return new HashSet<String>(Arrays.asList(pair.getKey()));
+                }
+            }
+        }
+        return new HashSet<>(); // Failure case
+    }
+
     // Wily Works way to add devices to the hardware map:
     public synchronized void put(String deviceName, Class klass) {
         deviceName = deviceName.trim();
@@ -135,7 +176,7 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
             device = new WilyDcMotorEx();
             dcMotor.put(deviceName, (DcMotor) device);
         } else if (VoltageSensor.class.isAssignableFrom(klass)) {
-            device = new WilyVoltageSensor();
+            device = new LynxVoltageSensor(); // Must be Lynx version for Sidekick cache priming
             voltageSensor.put(deviceName, (VoltageSensor) device);
         } else if (DistanceSensor.class.isAssignableFrom(klass)) {
             device = new WilyDistanceSensor();
@@ -198,20 +239,19 @@ public class WilyHardwareMap implements Iterable<HardwareDevice> {
         }
     }
 
-    public SortedSet<String> getAllNames(Class<? extends HardwareDevice> classOrInterface) {
-        SortedSet<String> result = new TreeSet<>();
-        for (String userName: allDevicesMap.keySet()) {
-            HardwareDevice device = allDevicesMap.get(userName).get(0);
-            if (classOrInterface.isInstance(device)) {
-                result.add(userName);
-            }
-        }
-        return result;
-    }
-
     @Override
     public @NonNull Iterator<HardwareDevice> iterator() {
         return new ArrayList<HardwareDevice>(allDevicesList).iterator();
+    }
+
+    public @NonNull Iterable<HardwareDevice> unsafeIterable() {
+        return new Iterable<HardwareDevice>() {
+            @NonNull @Override public Iterator<HardwareDevice> iterator() {
+                synchronized (lock) {
+                    return new ArrayList<>(allDevicesList).iterator();
+                }
+            }
+        };
     }
 
     // A DeviceMapping contains a sub-collection of the devices registered in a HardwareMap

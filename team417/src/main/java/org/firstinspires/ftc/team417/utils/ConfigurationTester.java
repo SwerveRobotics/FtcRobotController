@@ -4,10 +4,12 @@ import static java.lang.System.nanoTime;
 
 import android.annotation.SuppressLint;
 import android.graphics.Color;
+import android.os.Environment;
 
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLStatus;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -30,7 +32,10 @@ import com.wilyworks.common.WilyWorks;
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.TempUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.VoltageUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -38,9 +43,11 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -84,14 +91,14 @@ class Html {
         return "<span style='color: " + foregroundColor + "; background: " + backgroundColor + "'>" + string + "</span>";
     }
 
-    // Make a string big according to the specified count: 1.25^count times bigger.
-    public static String big(int count, String string) {
-        return repeat(count, "<big>") + string + repeat(count, "</big>");
+    // Make a string big according to the specified factor: 1.25^factor times bigger.
+    public static String big(int factor, String string) {
+        return repeat(factor, "<big>") + string + repeat(factor, "</big>");
     }
 
-    // Make a string smaller according to the specified count: 0.8^count times smaller.
-    public static String small(int count, String string) {
-        return repeat(count, "<small>") + string + repeat(count, "</small>");
+    // Make a string smaller according to the specified factor: 0.8^factor times smaller.
+    public static String small(int factor, String string) {
+        return repeat(factor, "<small>") + string + repeat(factor, "</small>");
     }
 
     // Leading spaces on a line will be trimmed unless this is used:
@@ -113,6 +120,7 @@ class Html {
 @SuppressLint("DefaultLocale")
 public class ConfigurationTester extends LinearOpMode {
     double nextAdvanceTime; // Time, relative to time(), at which an auto-repeat happens
+    double lastPromptTime; // Time, relative to time(), of the last menu loop
 
     // Show and process input for a menu.
     //
@@ -161,6 +169,7 @@ public class ConfigurationTester extends LinearOpMode {
                 }
             }
             ui.update();
+            sleep(25);
             int advance = 0;
             if (gamepad1.dpadUpWasPressed()) {
                 advance = -1;
@@ -288,20 +297,18 @@ public class ConfigurationTester extends LinearOpMode {
             return false;
         }
         String gray = "#808080";
-        ui.line(Html.big(2,Html.bold("\"%s\"")), testDescriptor.deviceName);
+        ui.line(Html.big(2, Html.bold("\"%s\"")), testDescriptor.deviceName);
         ui.line(Html.color(gray, "Description: %s"), testDescriptor.hardwareDevice.getDeviceName());
         ui.line(Html.color(gray, "Connection: %s"), testDescriptor.hardwareDevice.getConnectionInfo());
         ui.line(Html.color(gray, "Loop I/O performance: %s"), loopTimer.get());
+
+        // Always wait at least one millisecond between prompts (so that loop timing works):
+        if (time() - lastPromptTime < 0.001) {
+            sleep(1);
+        }
+        lastPromptTime = time();
         return true;
     }
-
-    // Exclude the following device names from the enumeration because they're for built-in
-    // devices that are boring.
-    ArrayList<String> EXCLUDE_DEVICE_NAMES = new ArrayList<>(Arrays.asList(
-            "Control Hub Portal",
-            "Control Hub",
-            "Expansion Hub 2"
-    ));
 
     // Helper class for doing formatted output to the Driver Station.
     static class Ui {
@@ -380,47 +387,75 @@ public class ConfigurationTester extends LinearOpMode {
     public void runOpMode() {
         ui = new Ui(telemetry);
 
+        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
+
         // Show a splash screen while we initialize:
         double splashTime = time();
         ui.line(Html.big(5, Html.color(Ui.HIGHLIGHT_COLOR, Html.bold("Configuration Tester!"))));
-        ui.line(Html.big(2, "By Swerve Robotics, Woodinville\n"));
+        ui.line(Html.big(2, "By Loonybot\n"));
         ui.line("Initializing...");
         ui.update();
 
         // If running Wily Works, register all of the potential classes:
         if (WilyWorks.isSimulating) {
             for (int i = 0; i < TESTS.length; i++) {
-                hardwareMap.get(TESTS[i].klass, String.valueOf(i));
+                Class<?> klass = TESTS[i].klass;
+                if (klass != LynxModule.class) {
+                    hardwareMap.get(klass, String.valueOf(i));
+                }
             }
         }
 
         // Query the hardwareMap for all of the registered device, instantiate them, and create
         // corresponding test entries:
         List<TestDescriptor> testList = new LinkedList<>();
-        for (String name: hardwareMap.getAllNames(HardwareDevice.class)) {
-            // Exclude some (boring built-in) devices based on their names:
-            if (!EXCLUDE_DEVICE_NAMES.contains(name)) {
-                HardwareDevice device = hardwareMap.get(name);
-                // System.out.println(String.format("\"%s\": %s", name, device.getClass().getName()));
+        for (HardwareDevice device: hardwareMap.getAll(HardwareDevice.class)) {
+            String classSimpleName = device.getClass().getSimpleName();
+            // Truncate the name at "$Sidekick" if running with Sidekick enabled:
+            if (classSimpleName.contains("$Sidekick")) {
+                classSimpleName = classSimpleName.substring(0, classSimpleName.indexOf("$Sidekick"));
+            }
+            final HashSet<String> ignoredClassNames = new HashSet<>(Arrays.asList(
+                    "LynxAnalogInputController",
+                    "LynxDcMotorController",
+                    "LynxDigitalChannelController",
+                    "LynxServoController",
+                    "LynxUsbDeviceDelegate"
+            ));
+            if (ignoredClassNames.contains(classSimpleName))
+                continue; // Ignore this class
 
-                // Find a test for this device type:
-                int i;
-                for (i = 0; i < TESTS.length; i++) {
-                    Test test = TESTS[i];
-                    if (test.klass.isAssignableFrom(device.getClass())) {
-                        testList.add(new TestDescriptor(name, test.klass.getSimpleName(), device, test.test));
-                        break;
-                    }
-                }
-                // If we couldn't find a test that's appropriate for this type, use a generic one:
-                if (i == TESTS.length) {
-                    testList.add(new TestDescriptor(name, device.getClass().getSimpleName(), device, this::testGeneric));
-                }
+            // Determine the configuration name. getNamesOf() can return 0 or more than one name:
+            Set<String> names = hardwareMap.getNamesOf(device);
+            StringBuilder name = new StringBuilder();
+            for (String string: names) {
+                if (name.length() > 0)
+                    name.append(", ");
+                name.append(string);
+            }
+            if (name.length() == 0) {
+                name = new StringBuilder("???");
+            }
 
-                // CRServos annoyingly default to a power of -1. Set it to zero here.
-                if (device instanceof CRServo) {
-                    ((CRServo) device).setPower(0);
+            // Find a test for this device type:
+            int i;
+            for (i = 0; i < TESTS.length; i++) {
+                Test test = TESTS[i];
+                if (test.klass.isAssignableFrom(device.getClass())) {
+                    testList.add(new TestDescriptor(name.toString(), test.klass.getSimpleName(), device, test.test));
+                    break;
                 }
+            }
+            // If we couldn't find a test that's appropriate for this type, use a generic one:
+            if (i == TESTS.length) {
+                testList.add(new TestDescriptor(name.toString(), classSimpleName, device, this::testGeneric));
+            }
+
+            // CRServos annoyingly default to a power of -1. Set it to zero here.
+            if (device instanceof CRServo) {
+                ((CRServo) device).setPower(0);
             }
         }
 
@@ -444,10 +479,12 @@ public class ConfigurationTester extends LinearOpMode {
                     Html.color("#05BD05", "\u25B6"));
 
             selection = menu(header + "\n", 6, options, selection, true);
-            testDescriptor = testList.get(selection);
-            loopTimer = new LoopTimer();
-            // Invoke the test method:
-            testDescriptor.testMethod.accept(testDescriptor.hardwareDevice);
+            if (selection < testList.size()) { // Mainly to handle case of no devices at all
+                testDescriptor = testList.get(selection);
+                loopTimer = new LoopTimer();
+                // Invoke the test method:
+                testDescriptor.testMethod.accept(testDescriptor.hardwareDevice);
+            }
         }
         ui.line("Configuration Tester is done!");
         ui.update();
@@ -479,6 +516,20 @@ public class ConfigurationTester extends LinearOpMode {
         VoltageSensor voltage = (VoltageSensor) device;
         do {
             ui.line(Html.big(3, "Voltage: %.2f"), voltage.getVoltage());
+        } while (prompt());
+    }
+
+    // Test the Lynx module.
+    void testLynxModule(HardwareDevice device) {
+        LynxModule module = (LynxModule) device;
+        do {
+            ui.line("sdcard: '%s'", Environment.getExternalStorageDirectory().getPath()); // @@@
+            ui.line("Current: %.2f mA", module.getCurrent(CurrentUnit.MILLIAMPS));
+            ui.line("GPIO bus current: %.2f mA", module.getGpioBusCurrent(CurrentUnit.MILLIAMPS));
+            ui.line("I2C bus current: %.2f mA", module.getI2cBusCurrent(CurrentUnit.MILLIAMPS));
+            ui.line("Input (battery) voltage: %.2f V", module.getInputVoltage(VoltageUnit.VOLTS));
+            ui.line("Auxiliary (5V) voltage: %.2f V", module.getAuxiliaryVoltage(VoltageUnit.VOLTS));
+            ui.line("Module temperature: %.1f F", module.getTemperature(TempUnit.FARENHEIT));
         } while (prompt());
     }
 
@@ -735,7 +786,6 @@ public class ConfigurationTester extends LinearOpMode {
             ui.line("Connected: %s", limelight.isConnected());
             ui.line("Name: %s", status.getName());
             ui.line("Temperature: %.1f°", status.getTemp());
-            sleep(10);
         } while (prompt());
     }
 
@@ -745,6 +795,7 @@ public class ConfigurationTester extends LinearOpMode {
     final Test[] TESTS = {
             new Test(IMU.class, this::testIMU),
             new Test(VoltageSensor.class, this::testVoltage),
+            new Test(LynxModule.class, this::testLynxModule),
             new Test(CRServo.class, this::testCRServo),
             new Test(Servo.class, this::testServo),
             new Test(DcMotor.class, this::testMotor),

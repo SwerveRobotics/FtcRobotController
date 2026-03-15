@@ -13,8 +13,11 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy<ClassLo
     }
 
     public static class Wrapping extends AndroidClassLoadingStrategy {
-
         public Wrapping(File privateDirectory) {
+        }
+    }
+    public static class Injecting extends AndroidClassLoadingStrategy {
+        public Injecting(File privateDirectory) {
         }
     }
 }

@@ -74,7 +74,6 @@ import org.firstinspires.ftc.robotcore.internal.system.Misc;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.HashMap;
-import java.util.UUID;
 
 /**
  */
@@ -155,7 +154,7 @@ public abstract class SerialNumber implements Serializable {
      * Expansion Hub inside a Rev Control Hub.
      */
     public boolean isEmbedded() {
-        return false;
+        return true;
     }
 
     /**

@@ -61,12 +61,15 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.qualcomm.robotcore.hardware;
 
+import com.qualcomm.robotcore.hardware.configuration.annotations.DigitalIoDeviceType;
+
 /**
  * {@link DigitalChannel} is an interface by which digital channels can be controlled.
  * Such channels have a boolean state, and are modal as to direction, being either input
  * channels or output channels.
  */
 @SuppressWarnings("WeakerAccess")
+@DigitalIoDeviceType
 public interface DigitalChannel extends HardwareDevice
 {
     /**

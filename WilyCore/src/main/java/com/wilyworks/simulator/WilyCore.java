@@ -23,6 +23,7 @@ import com.wilyworks.simulator.framework.WilyTelemetry;
 import com.wilyworks.simulator.framework.mechsim.MechSim;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.internal.ui.GamepadUser;
 import org.reflections.Reflections;
 
 import java.awt.BorderLayout;
@@ -34,6 +35,8 @@ import java.awt.Image;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
@@ -41,11 +44,15 @@ import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
+import java.util.function.BiFunction;
 import java.util.prefs.Preferences;
 
 import javax.imageio.ImageIO;
@@ -156,6 +163,7 @@ class DashboardWindow extends JFrame {
                     WilyCore.opModeNotification("onOpModePreInit", opMode);
                     WilyCore.status = new WilyCore.Status(WilyCore.State.INITIALIZED, opMode, button);
                     WilyCore.startTime = 0;
+
                     dropDown.setMaximumSize(new Dimension(0, 0));
                     dropDown.setVisible(false); // Needed for long opMode names, for whatever reason
                     button.setText("\u25B6");
@@ -581,28 +589,63 @@ public class WilyCore {
         telemetry.log().clear();
     }
 
+    // Callback for Sidekick to enlighten the Wily Works emulator.
+    static public Object sidekickCallback(int id, Object object) {
+        if (id == 0) {
+            WilyCore.createLogCat((String) object);
+        }
+        return null;
+    }
+
     // Call Sidekick Core's "onOpModePreInit", "onOpModePreStart", "onOpModePostStop" notifications.
+    static Object sidekickInstance;
     public static void opModeNotification(String method, OpMode opMode) {
-        Class<?> sidekickCore;
+        Class<?> sidekickClass;
         try {
-            sidekickCore = getSystemClassLoader().loadClass("com.loonybot.sidekick.Sidekick");
+            sidekickClass = getSystemClassLoader().loadClass("com.loonybot.sidekick.Sidekick");
         } catch (ClassNotFoundException e) {
             return;
         }
         try {
-            Method getInstance = sidekickCore.getMethod("getWilyWorksInstance");
-            Object core = getInstance.invoke(null);
-            Method notification = sidekickCore.getMethod(method, OpMode.class);
-            notification.invoke(core, opMode);
+            // Only call emulatorInitialization() once:
+            if (sidekickInstance == null) {
+                BiFunction<Integer, Object, Object> sidekickCallbackFunction = WilyCore::sidekickCallback;
+                Method emulatorInitializationMethod = sidekickClass.getMethod("emulatorInitialization", BiFunction.class);
+                sidekickInstance = emulatorInitializationMethod.invoke(sidekickCallbackFunction, sidekickCallbackFunction);
+            }
+            // Now call the specified notification:
+            Method opModeNotification = sidekickClass.getMethod(method, OpMode.class);
+            opModeNotification.invoke(sidekickInstance, opMode);
         } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new RuntimeException(e);
         }
     }
 
+    // Create a test LogCat file starting from the current time.
+    public static void createLogCat(String logCatFilename) {
+        SimpleDateFormat dateFormatter = new SimpleDateFormat("MM-dd HH:mm:ss.SSS", Locale.US);
+        // return dateFormatter.format(date);
+        String pidAndTid = "   970  1129 ";
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(logCatFilename))) {
+            // 12-31 16:00:32.427   970  1129 V RobotCore: Creating user sensor SparkFun Ultrasonic
+            Date date = new Date();
+            writer.write(dateFormatter.format(date) + pidAndTid + "V RobotCore: Creating user sensor SparkFun Ultrasonic");
+            writer.newLine();
+
+            date.setTime(date.getTime() + 1000); // Plus one second
+            writer.write(dateFormatter.format(date) + pidAndTid + "I RobotCore: LynxFirmwareVersionManager: LynxI2cDeviceSynchV2");
+            writer.newLine();
+
+            date.setTime(date.getTime() + 1000); // Plus one second
+            writer.write(dateFormatter.format(date) + pidAndTid + "V LynxI2cDeviceSynch: initializeHardware() mod#=2");
+            writer.newLine();
+        } catch (IOException ignored) { }
+    }
+
     ////////////////////////////////////////////////////////////////////////////////////////////////
     // This is the application entry point that starts up all of Wily Works!
-    public static void main(String[] args)
-    {
+    public static void main(String[] args) {
         Thread.currentThread().setName("Wily core thread");
 
         // Enumerate all opModes and find a configuration class:
@@ -625,8 +668,8 @@ public class WilyCore {
         simulation = new Simulation(config);
         field = new Field(simulation);
 
-        gamepad1 = new Gamepad();
-        gamepad2 = new Gamepad();
+        gamepad1 = new Gamepad(GamepadUser.ONE);
+        gamepad2 = new Gamepad(GamepadUser.TWO);
         inputManager = new InputManager(gamepad1, gamepad2);
 
         // Render the field once and then wait for input:

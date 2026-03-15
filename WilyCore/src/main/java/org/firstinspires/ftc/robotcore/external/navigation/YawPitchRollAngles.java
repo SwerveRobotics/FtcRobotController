@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 package org.firstinspires.ftc.robotcore.external.navigation;
 
 import java.util.Locale;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 /**
  * A simplified view of a robot's orientation, according to the Robot Coordinate System, relative to
@@ -116,6 +115,19 @@ public class YawPitchRollAngles {
     public double getRoll(AngleUnit angleUnit) {
         return angleUnit.fromDegrees(rollDegrees);
     }
+
+    public double getRoll() {
+        return rollDegrees;
+    }
+
+    public double getPitch() {
+        return pitchDegrees;
+    }
+
+    public double getYaw() {
+        return yawDegrees;
+    }
+
 
     /**
      * @return The time on the System.nanoTime() clock at which the data was acquired. If no

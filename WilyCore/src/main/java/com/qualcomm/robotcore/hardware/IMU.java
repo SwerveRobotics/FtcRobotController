@@ -32,6 +32,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
 package com.qualcomm.robotcore.hardware;
 
+import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AngularVelocity;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
@@ -85,6 +87,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.YawPitchRollAngles;
  * with the USB ports facing the front of the robot and the REV logo facing the ceiling. To specify
  * a non-default orientation on the robot, you need to call {@link #initialize(Parameters)}.
  */
+@I2cDeviceType
 public interface IMU extends HardwareDevice {
     /**
      * Settings to change the IMU's behavior. Used as the parameter of {@link #initialize(Parameters)}.

@@ -1,9 +1,13 @@
 package com.wilyworks.simulator.framework;
 
+import static java.lang.System.nanoTime;
+
 import com.qualcomm.robotcore.hardware.Gamepad;
 
 import org.firstinspires.ftc.robotcore.internal.ui.GamepadUser;
 
+import java.nio.BufferOverflowException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 /**
@@ -137,6 +141,8 @@ public class WilyGamepad {
     public Type type() {
         return type;
     }
+    public LegacyType legacyType() { return LegacyType.XBOX_360; }
+
 
     @SuppressWarnings("UnusedAssignment")
     public volatile Type type = Type.XBOX_360; // IntelliJ thinks this is redundant, but it is NOT. Must be a bug in the analyzer?
@@ -178,7 +184,17 @@ public class WilyGamepad {
     public volatile float touchpad_finger_2_x;
     public volatile float touchpad_finger_2_y;
 
-    public WilyGamepad() {
+    protected volatile byte user = -1;
+
+    public WilyGamepad(GamepadUser user) {
+        this.user = user.id;
+    }
+
+    public GamepadUser getUser() {
+        return GamepadUser.from(user);
+    }
+    public void setUser(GamepadUser user) {
+        this.user = user.id;
     }
 
     /**
@@ -233,8 +249,64 @@ public class WilyGamepad {
         }
     }
 
-    public GamepadUser getUser() {
-        return GamepadUser.ONE;
+    private static final short PAYLOAD_SIZE = 60;
+    private static final byte ROBOCOL_GAMEPAD_VERSION = 5;
+
+    public byte[] toByteArray() {
+        ByteBuffer buffer = ByteBuffer.allocate(PAYLOAD_SIZE);
+
+        try {
+            int buttons = 0;
+
+            buffer.put(ROBOCOL_GAMEPAD_VERSION);
+            buffer.putInt(0); // Ignored ID
+            buffer.putLong((long) (nanoTime() * 1e-6)).array(); // convert nanoseconds to milliseconds
+            buffer.putFloat(left_stick_x).array();
+            buffer.putFloat(left_stick_y).array();
+            buffer.putFloat(right_stick_x).array();
+            buffer.putFloat(right_stick_y).array();
+            buffer.putFloat(left_trigger).array();
+            buffer.putFloat(right_trigger).array();
+
+            buttons = (buttons << 1) + (touchpad_finger_1 ? 1 : 0);
+            buttons = (buttons << 1) + (touchpad_finger_2 ? 1 : 0);
+            buttons = (buttons << 1) + (touchpad ? 1 : 0);
+            buttons = (buttons << 1) + (left_stick_button ? 1 : 0);
+            buttons = (buttons << 1) + (right_stick_button ? 1 : 0);
+            buttons = (buttons << 1) + (dpad_up ? 1 : 0);
+            buttons = (buttons << 1) + (dpad_down ? 1 : 0);
+            buttons = (buttons << 1) + (dpad_left ? 1 : 0);
+            buttons = (buttons << 1) + (dpad_right ? 1 : 0);
+            buttons = (buttons << 1) + (a ? 1 : 0);
+            buttons = (buttons << 1) + (b ? 1 : 0);
+            buttons = (buttons << 1) + (x ? 1 : 0);
+            buttons = (buttons << 1) + (y ? 1 : 0);
+            buttons = (buttons << 1) + (guide ? 1 : 0);
+            buttons = (buttons << 1) + (start ? 1 : 0);
+            buttons = (buttons << 1) + (back ? 1 : 0);
+            buttons = (buttons << 1) + (left_bumper ? 1 : 0);
+            buttons = (buttons << 1) + (right_bumper ? 1 : 0);
+            buffer.putInt(buttons);
+
+            // Version 2
+            buffer.put(user);
+
+            // Version 3
+            buffer.put((byte) legacyType().ordinal());
+
+            // Version 4
+            buffer.put((byte) type.ordinal());
+
+            // Version 5
+            buffer.putFloat(touchpad_finger_1_x);
+            buffer.putFloat(touchpad_finger_1_y);
+            buffer.putFloat(touchpad_finger_2_x);
+            buffer.putFloat(touchpad_finger_2_y);
+        } catch (BufferOverflowException e) {
+            throw new RuntimeException(e);
+        }
+
+        return buffer.array();
     }
 
     /**

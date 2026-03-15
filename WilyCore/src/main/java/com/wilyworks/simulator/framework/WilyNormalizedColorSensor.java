@@ -3,12 +3,15 @@ package com.wilyworks.simulator.framework;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.NormalizedColorSensor;
 import com.qualcomm.robotcore.hardware.NormalizedRGBA;
+import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 /**
  * Wily Works normalized color sensor implementation.
  */
+
+@I2cDeviceType
 public class WilyNormalizedColorSensor extends WilyHardwareDevice implements NormalizedColorSensor, DistanceSensor {
     @Override
     public NormalizedRGBA getNormalizedColors() {

@@ -1,24 +1,32 @@
 package com.wilyworks.simulator.framework;
 
+import static java.lang.System.nanoTime;
+
+import com.qualcomm.hardware.lynx.LynxDcMotorController;
 import com.qualcomm.robotcore.hardware.DcMotorController;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorImpl;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.configuration.annotations.MotorType;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Rotation;
 
 /**
  * Wily Works DcMotorEx implementation.
  */
-public class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
+@MotorType(ticksPerRev=288, gearing=36.25, maxRPM=137, orientation= Rotation.CCW)
+public class WilyDcMotorEx extends DcMotorImpl implements DcMotorEx {
     RunMode mode;
     double velocity;
     double power;
     Direction direction;
+    DcMotorController controller = new LynxDcMotorController();
 
     @Override
     public DcMotorController getController() {
-        return null;
+        return controller;
     }
 
     @Override
@@ -158,7 +166,11 @@ public class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
     }
 
     @Override
-    public void setPower(double power) { this.power = power; }
+    public void setPower(double power) {
+        this.power = power;
+        long startTime = nanoTime();
+        while (nanoTime() - startTime < 500_000) {}
+    }
 
     @Override
     public double getPower() {

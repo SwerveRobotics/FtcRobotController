@@ -1,15 +1,16 @@
 package com.wilyworks.simulator.framework;
 
 import com.acmerobotics.roadrunner.Pose2d;
+import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
 import com.wilyworks.common.WilyWorks;
 import com.wilyworks.simulator.WilyCore;
 import com.wilyworks.simulator.helpers.Globals;
 import com.wilyworks.simulator.helpers.Point;
 
-import java.util.Random;
-
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.swerverobotics.ftc.UltrasonicDistanceSensor;
+
+import java.util.Random;
 
 class Segment {
     public Point p1, p2;
@@ -27,6 +28,7 @@ class Ray {
     }
 }
 
+@I2cDeviceType
 public class WilyUltrasonicDistanceSensor extends UltrasonicDistanceSensor {
     final double FIELD_OF_VIEW = Math.toRadians(40); // Specs say 80 degrees but real is less
     final double MAX_DISTANCE = 75; // 150 inches is the theoretical maximum range

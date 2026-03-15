@@ -31,7 +31,9 @@ package com.qualcomm.robotcore.hardware;
  */
 
 import com.qualcomm.robotcore.hardware.configuration.annotations.DeviceProperties;
+import com.qualcomm.robotcore.hardware.configuration.annotations.DigitalIoDeviceType;
 
+@DigitalIoDeviceType
 @DeviceProperties(name = "@string/configTypeLED", xmlTag = "Led", builtIn = true, description = "@string/led_description")
 public class LED implements HardwareDevice, SwitchableLight {
     @Override

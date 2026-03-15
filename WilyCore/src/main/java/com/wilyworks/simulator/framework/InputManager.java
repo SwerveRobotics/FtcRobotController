@@ -1,14 +1,18 @@
 package com.wilyworks.simulator.framework;
 
+import com.qualcomm.robotcore.exception.RobotCoreException;
 import com.qualcomm.robotcore.hardware.Gamepad;
+import com.qualcomm.robotcore.robocol.RobocolDatagram;
 import com.wilyworks.simulator.WilyCore;
 
+import org.firstinspires.ftc.robotcore.internal.network.NetworkConnectionHandler;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.glfw.GLFWGamepadState;
 
 import java.awt.KeyEventDispatcher;
 import java.awt.KeyboardFocusManager;
 import java.awt.event.KeyEvent;
+import java.net.DatagramPacket;
 
 // import uk.co.electronstudio.sdl2gdx.SDL2ControllerManager;
 
@@ -305,8 +309,8 @@ public class InputManager extends Thread {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            update(gamepad1, 1);
-            update(gamepad2, 2);
+            update(gamepad1);
+            update(gamepad2);
         }
     }
 
@@ -325,10 +329,11 @@ public class InputManager extends Thread {
     }
 
     // Poll the attached game controller to update the button and axis states
-    void update(Gamepad gamepad, int gamepadId) {
+    void update(Gamepad gamepad) {
         gamepadInput.poll();
 
         // Now set the state:
+        int gamepadId = gamepad.getUser().id;
         gamepad.a = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_A);
         gamepad.b = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_B);
         gamepad.x = getButton(gamepadId, SDL.SDL_CONTROLLER_BUTTON_X);
@@ -354,6 +359,8 @@ public class InputManager extends Thread {
 
         gamepad.updateButtonAliases();
         gamepad.updateEdgeDetection();
+
+        notifyHooks(gamepad);
     }
 
     // Get a string describing which gamepads the inputs correspond to.
@@ -363,5 +370,23 @@ public class InputManager extends Thread {
             result += ", Controller: gamepad" + gamepadInput.associatedGamepad;
         }
         return result;
+    }
+
+    // Notify Sidekick of the new input:
+    void notifyHooks(Gamepad gamepad) {
+        byte[] byteArray = gamepad.toByteArray();
+
+        // Prepend 5 bytes to the beginning of the message:
+        byte[] message = new byte[byteArray.length + 5];
+        System.arraycopy(byteArray, 0, message, 5, byteArray.length);
+
+        if (NetworkConnectionHandler.wilyRecvLoopCallback != null) {
+            RobocolDatagram packet = new RobocolDatagram(new DatagramPacket(message, 0, message.length));
+            try {
+                NetworkConnectionHandler.wilyRecvLoopCallback.gamepadEvent(packet);
+            } catch (RobotCoreException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }

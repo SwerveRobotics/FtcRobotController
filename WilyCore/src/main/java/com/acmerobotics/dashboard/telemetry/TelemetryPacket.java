@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Thunk for FTC Dashboard's TelemetryPacket class.
+ * Proxy for FTC Dashboard's TelemetryPacket class.
  */
 public class TelemetryPacket {
     public TreeMap<String, String> data;

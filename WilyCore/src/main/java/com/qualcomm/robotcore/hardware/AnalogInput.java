@@ -1,10 +1,12 @@
 package com.qualcomm.robotcore.hardware;
 
+import com.qualcomm.robotcore.hardware.configuration.annotations.AnalogSensorType;
 import com.qualcomm.robotcore.hardware.configuration.annotations.DeviceProperties;
 
 /**
  * Control a single analog device
  */
+@AnalogSensorType
 @DeviceProperties(name = "@string/configTypeAnalogInput", xmlTag = "AnalogInput", builtIn = true)
 public class AnalogInput implements HardwareDevice {
     @Override public Manufacturer getManufacturer()  { return Manufacturer.Other; }
