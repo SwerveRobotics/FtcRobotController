@@ -1,5 +1,6 @@
 package com.wilyworks.simulator;
 
+import static java.lang.ClassLoader.getSystemClassLoader;
 import static java.lang.System.nanoTime;
 import static java.lang.Thread.currentThread;
 import static java.lang.Thread.sleep;
@@ -11,15 +12,15 @@ import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.wilyworks.common.Wily;
 import com.wilyworks.common.WilyWorks;
+import com.wilyworks.simulator.framework.Field;
 import com.wilyworks.simulator.framework.InputManager;
 import com.wilyworks.simulator.framework.Simulation;
 import com.wilyworks.simulator.framework.WilyTelemetry;
-import com.qualcomm.robotcore.hardware.Gamepad;
-
-import com.wilyworks.simulator.framework.Field;
+import com.wilyworks.simulator.framework.mechsim.MechSim;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.reflections.Reflections;
@@ -30,8 +31,6 @@ import java.awt.Choice;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import java.awt.Image;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferStrategy;
@@ -41,6 +40,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -105,7 +105,7 @@ class DashboardWindow extends JFrame {
         });
 
         setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-        setLocation(400, 0);
+        setLocation(250, 0);
         setResizable(false);
 
         Choice dropDown = new Choice();
@@ -148,10 +148,13 @@ class DashboardWindow extends JFrame {
 
         button.addActionListener(actionEvent -> {
             switch (WilyCore.status.state) {
-                case STOPPED:
-                    // Inform the main thread of the choice and save the preference:
+                case STOPPED: // It was in STOPPED state, now transition to INITIALIZED
                     OpModeChoice opModeChoice = opModeChoices.get(dropDown.getSelectedIndex());
-                    WilyCore.status = new WilyCore.Status(WilyCore.State.INITIALIZED, opModeChoice.klass, button);
+                    OpMode opMode = WilyCore.createOpMode(opModeChoice.klass);
+
+                    // Inform the main thread of the choice and save the preference:
+                    WilyCore.opModeNotification("onOpModePreInit", opMode);
+                    WilyCore.status = new WilyCore.Status(WilyCore.State.INITIALIZED, opMode, button);
                     WilyCore.startTime = 0;
                     dropDown.setMaximumSize(new Dimension(0, 0));
                     dropDown.setVisible(false); // Needed for long opMode names, for whatever reason
@@ -162,15 +165,21 @@ class DashboardWindow extends JFrame {
                     label.setText(opModeName);
                     break;
 
-                case INITIALIZED:
-                    WilyCore.status = new WilyCore.Status(WilyCore.State.STARTED, WilyCore.status.klass, button);
+                case INITIALIZED: // It was in INITIALIZED state, now transition to STARTED
+                    WilyCore.opModeNotification("onOpModePreStart", WilyCore.status.opMode);
+                    WilyCore.status = new WilyCore.Status(WilyCore.State.STARTED, null, button);
                     WilyCore.startTime = WilyCore.wallClockTime();
                     button.setText("Stop");
                     break;
 
-                case STARTED:
-                    WilyCore.opModeThread.interrupt();
+                case STARTED: // It was in STARTED state, now transition to STOPPED
+                    // I used to call WilyCore.opModeThread.interrupt(); here, but that prevented
+                    // any user code from running after the Stop button was pressed. But maybe
+                    // that's how it works on the robot, too?
+                    //      WilyCore.opModeThread.interrupt();
                     WilyCore.status = new WilyCore.Status(WilyCore.State.STOPPED, null, null);
+                    WilyCore.opModeNotification("onOpModePostStop", WilyCore.status.opMode);
+                    WilyCore.terminateOpMode();
                     button.setText("Init");
                     dropDown.setMaximumSize(new Dimension(400, 100));
                     dropDown.setVisible(true);
@@ -262,6 +271,7 @@ public class WilyCore {
     public static Gamepad gamepad1;
     public static Gamepad gamepad2;
     public static HardwareMap hardwareMap;
+    public static MechSim mechSim;
     public static InputManager inputManager;
     public static DashboardWindow dashboardWindow;
     public static Telemetry telemetry;
@@ -291,11 +301,11 @@ public class WilyCore {
      */
     public enum State { STOPPED, INITIALIZED, STARTED }
     public static class Status {
-        public Class<?> klass;
+        public OpMode opMode;
         public State state;
         public JButton stopButton;
-        public Status(State state, Class<?> klass, JButton button) {
-            this.state = state; this.klass = klass; this.stopButton = button;
+        public Status(State state, OpMode opMode, JButton button) {
+            this.state = state; this.opMode = opMode; this.stopButton = button;
         }
     }
 
@@ -318,7 +328,7 @@ public class WilyCore {
         dashboardWindow.errorLabel.setText(simulation.getErrorLabel());
     }
 
-    // Advance the time:
+    // Advance the time. Zero means to use the realtime clock.
     static double advanceTime(double deltaT) {
         if (deltaT <= 0) {
             deltaT = nanoTime() * 1e-9 - lastUpdateWallClockTime;
@@ -339,23 +349,22 @@ public class WilyCore {
     // Callbacks provided to the guest. These are all called via reflection from the WilyWorks
     // class.
 
-    // The guest can specify the delta-t (which is handy when single stepping):
-    static public void updateSimulation(double deltaT) {
-        // Advance the time then advance the simulation:
-        deltaT = advanceTime(deltaT);
-        simulation.advance(deltaT);
-
-        // Render everything:
-        render();
-
-        simulationUpdated = true;
-    }
-
     // Set the robot to a given pose and (optional) velocity in the simulation. The
     // localizer will not register a move.
     static public void setStartPose(Pose2d pose, PoseVelocity2d velocity) {
         lastUpdateWallClockTime = nanoTime() * 1e-9; // Reset the detla-t calculations
         simulation.setStartPose(pose, velocity);
+    }
+
+    // The guest can specify the delta-t (which is handy when single stepping). Zero means to
+    // use the real-time clock.
+    static public void updateSimulation(double deltaT) {
+        // Advance the time then advance the simulation:
+        deltaT = advanceTime(deltaT);
+        simulation.advance(deltaT);
+        mechSim.advance(deltaT);
+        simulationUpdated = true;
+        render();
     }
 
     // MecanumDrive uses this while running a trajectory to update the simulator as to its
@@ -365,6 +374,7 @@ public class WilyCore {
         // If the user didn't explicitly call the simulation update() API, do it now:
         double deltaT = advanceTime(0);
         simulation.runTo(deltaT, pose, velocity);
+        mechSim.advance(deltaT);
         simulationUpdated = true;
         render();
     }
@@ -479,25 +489,34 @@ public class WilyCore {
         return new WilyWorks.Config();
     }
 
-    // Call from the window manager to invoke the user's chosen "runOpMode" method:
-    static void runOpMode(Class<?> klass) {
+    // Create the opMode from the user's choice of class.
+    static OpMode createOpMode(Class<?> opModeClass) {
         OpMode opMode;
         try {
             //noinspection deprecation
-            opMode = (OpMode) klass.newInstance();
-        } catch (InstantiationException|IllegalAccessException e) {
+            opMode = (OpMode) opModeClass.newInstance();
+        } catch (InstantiationException | IllegalAccessException e) {
             throw new RuntimeException(e);
         }
 
+        // Before we initialize the HardwareMap, create this year's game simulation to go with
+        // the new opMode. It may override some of the HardwareMap.
+        mechSim = MechSim.create();
+
         // We need to re-instantiate hardware map on every run:
         hardwareMap = new HardwareMap();
-
         opMode.hardwareMap = hardwareMap;
         opMode.gamepad1 = gamepad1;
         opMode.gamepad2 = gamepad2;
         opMode.telemetry = telemetry;
 
-        if (LinearOpMode.class.isAssignableFrom(klass)) {
+        return opMode;
+    }
+
+    // Call from the window manager to invoke the user's chosen "runOpMode" method. Instantiates
+    // the user's chosen opMode and invokes it.
+    static void runOpMode(OpMode opMode) {
+        if (LinearOpMode.class.isAssignableFrom(opMode.getClass())) {
             LinearOpMode linearOpMode = (LinearOpMode) opMode;
             try {
                 linearOpMode.runOpMode();
@@ -527,15 +546,15 @@ public class WilyCore {
 
     // Thread dedicated to running the user's opMode:
     static class OpModeThread extends Thread {
-        Class<?> opModeClass;
-        OpModeThread(Class<?> opModeClass) {
-            this.opModeClass = opModeClass;
+        OpMode opMode;
+        OpModeThread(OpMode opMode) {
+            this.opMode = opMode;
             setName("Wily OpMode thread");
             start();
         }
         @Override
         public void run() {
-            WilyCore.runOpMode(status.klass);
+            WilyCore.runOpMode(opMode);
         }
     }
 
@@ -554,6 +573,30 @@ public class WilyCore {
             throw new RuntimeException(e);
         }
         return image;
+    }
+
+    // Do some cleanup when an OpMode is terminated:
+    public static void terminateOpMode() {
+        telemetry.clearAll();
+        telemetry.log().clear();
+    }
+
+    // Call Sidekick Core's "onOpModePreInit", "onOpModePreStart", "onOpModePostStop" notifications.
+    public static void opModeNotification(String method, OpMode opMode) {
+        Class<?> sidekickCore;
+        try {
+            sidekickCore = getSystemClassLoader().loadClass("com.loonybot.sidekick.Sidekick");
+        } catch (ClassNotFoundException e) {
+            return;
+        }
+        try {
+            Method getInstance = sidekickCore.getMethod("getWilyWorksInstance");
+            Object core = getInstance.invoke(null);
+            Method notification = sidekickCore.getMethod(method, OpMode.class);
+            notification.invoke(core, opMode);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -593,7 +636,7 @@ public class WilyCore {
         // noinspection InfiniteLoopStatement
         while (true) {
             // Wait for the DashboardWindow UI to tell us what opMode to run:
-            while (status.state == State.STOPPED) {
+            while ((status.state == State.STOPPED) || (status.opMode == null)) {
                 try {
                     //noinspection BusyWait
                     sleep(30);
@@ -605,7 +648,7 @@ public class WilyCore {
             // The user has selected an opMode and pressed Init! Run the opMode on a dedicated
             // thread so that it can be interrupted as necessary:
             simulation.totalDistance = 0;
-            opModeThread = new OpModeThread(status.klass);
+            opModeThread = new OpModeThread(status.opMode);
             try {
                 // Wait for the opMode thread to complete:
                 opModeThread.join();

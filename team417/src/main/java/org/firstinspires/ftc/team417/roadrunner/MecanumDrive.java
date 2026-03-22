@@ -21,9 +21,9 @@ import com.acmerobotics.roadrunner.IdentityPoseMap;
 import com.acmerobotics.roadrunner.MecanumKinematics;
 import com.acmerobotics.roadrunner.MinVelConstraint;
 import com.acmerobotics.roadrunner.MotorFeedforward;
-import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Pose2dDual;
+import com.acmerobotics.roadrunner.PoseMap;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.PoseVelocity2dDual;
 import com.acmerobotics.roadrunner.ProfileAccelConstraint;
@@ -48,6 +48,7 @@ import com.acmerobotics.roadrunner.ftc.LynxFirmware;
 import com.acmerobotics.roadrunner.ftc.OverflowEncoder;
 import com.acmerobotics.roadrunner.ftc.PositionVelocityPair;
 import com.acmerobotics.roadrunner.ftc.RawEncoder;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
@@ -57,7 +58,6 @@ import com.qualcomm.robotcore.hardware.Gamepad;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
-
 import com.wilyworks.common.WilyWorks;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -70,7 +70,6 @@ import org.firstinspires.ftc.team417.roadrunner.messages.MecanumCommandMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.MecanumLocalizerInputsMessage;
 import org.firstinspires.ftc.team417.roadrunner.messages.PoseMessage;
 import org.firstinspires.inspection.InspectionState;
-import org.swerverobotics.ftc.GoBildaPinpointDriver;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -92,20 +91,20 @@ public final class MecanumDrive {
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
-                inPerTick = 1.0;
-                lateralInPerTick = 1.0;
-                trackWidthTicks = 0;
+                inPerTick = 1.000;
+                lateralInPerTick = 0.772;
+                trackWidthTicks = 16.35;
 
-                kS = 0;
-                kV = 0;
-                kA = 0;
+                kS = 0.722;
+                kV = 0.174;
+                kA = 0.0080;
 
-                axialGain      = 0;
-                axialVelGain   = 0;
-                lateralGain    = 0;
-                lateralVelGain = 0;
-                headingGain    = 0;
-                headingVelGain = 0;
+                axialGain      = 8.50;
+                axialVelGain   = 0.20;
+                lateralGain    = 6.70;
+                lateralVelGain = 0.20;
+                headingGain    = 1.11;
+                headingVelGain = 0.00;
 
                 otos.offset.x = 0;
                 otos.offset.y = 0;
@@ -113,29 +112,29 @@ public final class MecanumDrive {
                 otos.linearScalar = 0;
                 otos.angularScalar = 0;
 
-                pinpoint.ticksPerMm = 0;
-                pinpoint.xReversed = false;
+                pinpoint.ticksPerMm = 71.665;
+                pinpoint.xReversed = true;
                 pinpoint.yReversed = false;
-                pinpoint.xOffset = 0;
-                pinpoint.yOffset = 0;
-            } else {
+                pinpoint.xOffset = -199.4;
+                pinpoint.yOffset = -120.2;
+            } else if (isFastBot) {
                 // Your competition robot Loony Tune configuration is here:
                 logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
                 usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
 
-                inPerTick = 1;
-                lateralInPerTick = inPerTick;
-                trackWidthTicks = 0;
+                inPerTick = 1.0;
+                lateralInPerTick = 0.798;
+                trackWidthTicks = 13.82;
 
-                kS = 0;
-                kV = 0;
-                kA = 0;
+                kS = 0.625;
+                kV = 0.183;
+                kA = 0.0110;
 
-                axialGain      = 0.0;
-                axialVelGain   = 0.0;
-                lateralGain    = 0.0;
-                lateralVelGain = 0.0;
-                headingGain    = 0.0;
+                axialGain      = 2.0;
+                axialVelGain   = 0.55;
+                lateralGain    = 9.0;
+                lateralVelGain = 2.0;
+                headingGain    = 9.4;
                 headingVelGain = 0.0;
 
                 otos.offset.x = 0;
@@ -144,11 +143,43 @@ public final class MecanumDrive {
                 otos.linearScalar = 0;
                 otos.angularScalar = 0;
 
-                pinpoint.ticksPerMm = 0;
+                pinpoint.ticksPerMm = 19.589;
+                pinpoint.xReversed = false;
+                pinpoint.yReversed = true;
+                pinpoint.xOffset = 119.9;
+                pinpoint.yOffset = 5.4;
+            }
+            else {
+                // Your competition robot Loony Tune configuration is here:
+                logoFacingDirection = RevHubOrientationOnRobot.LogoFacingDirection.UP;
+                usbFacingDirection = RevHubOrientationOnRobot.UsbFacingDirection.FORWARD;
+
+                inPerTick = 1.0;
+                lateralInPerTick = 0.714;
+                trackWidthTicks = 15.05;
+
+                kS = 0.895;
+                kV = 0.185;
+                kA = 0.0180;
+
+                axialGain      = 4.0;
+                axialVelGain   = 0.55;
+                lateralGain    = 8.40;
+                lateralVelGain = 2.0;
+                headingGain    = 5.9;
+                headingVelGain = 0.0;
+
+                otos.offset.x = 0;
+                otos.offset.y = 0;
+                otos.offset.h = Math.toRadians(0);
+                otos.linearScalar = 0;
+                otos.angularScalar = 0;
+
+                pinpoint.ticksPerMm = 19.692;
                 pinpoint.xReversed = false;
                 pinpoint.yReversed = false;
-                pinpoint.xOffset = 0;
-                pinpoint.yOffset = 0;
+                pinpoint.xOffset = -80.6;
+                pinpoint.yOffset = -50.9;
             }
         }
 
@@ -164,7 +195,7 @@ public final class MecanumDrive {
 
         public double inPerTick; // Inches-per-tick for encoders (set to 1.0 if using Optical Tracking)
         public double lateralInPerTick; // Lateral inches-per-tick for encoders
-        public double trackWidthTicks; // Diameter of the circle that a wheel travels to turn the robot 360 degrees, in ticks
+        public double trackWidthTicks; // Radius of the circle that a wheel travels to turn the robot 360 degrees, in ticks
 
         public double kS; // Feed-forward voltage to overcome static friction
         public double kV; // Feed-forward voltage factor to achieve target velocity, in tick units
@@ -206,7 +237,8 @@ public final class MecanumDrive {
         return inspection.deviceName;
     }
     public static boolean isDevBot = getBotName().equals("DevBot");
-
+    public static boolean isFastBot = getBotName().equals("417-RC");
+    public static boolean isSlowBot = getBotName().equals("417-B-RC");
     public static Params PARAMS = new Params();
 
     public MecanumKinematics kinematics; // Initialized by initializeKinematics()
@@ -228,6 +260,7 @@ public final class MecanumDrive {
     public Pose2d targetPose; // Target pose when actively traversing a trajectory
     public SparkFunOTOS otosDriver; // Can be null which means no OTOS
     public GoBildaPinpointDriver pinpointDriver; // Can be null which means no Pinpoint
+    public double durationExtension; // Seconds to extend the duration of a trajectory, usually 0
 
     public double lastLinearGainError = 0; // Most recent gain error in inches and radians
     public double lastHeadingGainError = 0;
@@ -255,6 +288,9 @@ public final class MecanumDrive {
             leftBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.leftBack));
             rightBack = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightBack));
             rightFront = new OverflowEncoder(new RawEncoder(MecanumDrive.this.rightFront));
+            leftFront.setDirection(DcMotorEx.Direction.REVERSE);
+            leftBack.setDirection(DcMotorEx.Direction.REVERSE);
+
 
             // TODO: reverse encoders if needed
             //   leftFront.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -374,8 +410,8 @@ public final class MecanumDrive {
             rightBack = hardwareMap.get(DcMotorEx.class, "rightBack");
             rightFront = hardwareMap.get(DcMotorEx.class, "rightFront");
 
+            leftFront.setDirection(DcMotorEx.Direction.REVERSE);
             leftBack.setDirection(DcMotorEx.Direction.REVERSE);
-            rightBack.setDirection(DcMotorEx.Direction.REVERSE);
         }
 
         // Initialize the tracking drivers, if any:
@@ -393,8 +429,8 @@ public final class MecanumDrive {
         if (pinpointDriver == null)
             return; // ====>
 
-        pinpointDriver.setOffsets(PARAMS.pinpoint.xOffset, PARAMS.pinpoint.yOffset);
-        pinpointDriver.setEncoderResolution(PARAMS.pinpoint.ticksPerMm);
+        pinpointDriver.setOffsets(PARAMS.pinpoint.xOffset, PARAMS.pinpoint.yOffset, DistanceUnit.MM);
+        pinpointDriver.setEncoderResolution(PARAMS.pinpoint.ticksPerMm, DistanceUnit.MM);
         pinpointDriver.setEncoderDirections(
                 PARAMS.pinpoint.xReversed ? GoBildaPinpointDriver.EncoderDirection.REVERSED : GoBildaPinpointDriver.EncoderDirection.FORWARD,
                 PARAMS.pinpoint.yReversed ? GoBildaPinpointDriver.EncoderDirection.REVERSED : GoBildaPinpointDriver.EncoderDirection.FORWARD);
@@ -635,7 +671,7 @@ public final class MecanumDrive {
                 t = Actions.now() - beginTs;
             }
 
-            if (t >= timeTrajectory.duration) {
+            if (t >= timeTrajectory.duration + durationExtension) {
                 leftFront.setPower(0);
                 leftBack.setPower(0);
                 rightBack.setPower(0);
@@ -734,7 +770,7 @@ public final class MecanumDrive {
                 t = Actions.now() - beginTs;
             }
 
-            if (t >= turn.duration) {
+            if (t >= turn.duration + durationExtension) {
                 leftFront.setPower(0);
                 leftBack.setPower(0);
                 rightBack.setPower(0);
@@ -827,7 +863,12 @@ public final class MecanumDrive {
             // Query the driver for position and velocity:
             pinpointDriver.update();
             Pose2D pose2D = pinpointDriver.getPosition();
-            Pose2D poseVelocity2D = pinpointDriver.getVelocity();
+            Pose2D poseVelocity2D = new Pose2D(
+                    DistanceUnit.INCH,
+                    pinpointDriver.getVelX(DistanceUnit.INCH),
+                    pinpointDriver.getVelY(DistanceUnit.INCH),
+                    AngleUnit.RADIANS,
+                    pinpointDriver.getHeading(AngleUnit.RADIANS));
 
             // Convert to Road Runner format, remembering that the Pinpoint tracking sensor
             // reports velocity as field-relative but Road Runner wants it robot-relative:
@@ -941,6 +982,9 @@ public final class MecanumDrive {
 
     // Override the current pose for Road Runner and the optical tracking sensor:
     public void setPose(Pose2d pose) {
+        // Tell Wily Works about the new pose:
+        WilyWorks.setStartPose(pose, new PoseVelocity2d(new Vector2d(0, 0), 0));
+
         // Set the Road Runner pose:
         this.pose = pose;
         this.targetPose = pose;
@@ -1021,7 +1065,7 @@ public final class MecanumDrive {
         // rendering.
         Canvas canvas = packet.fieldOverlay();
         if (showField) {
-            canvas.drawImage("/dash/into-the-deep.png", 0, 0, 144, 144,
+            canvas.drawImage("/dash/decode.webp", 0, 0, 144, 144,
                     Math.toRadians(90), 0, 144, true);
         } else {
             canvas.setFill("#000000");
@@ -1042,5 +1086,11 @@ public final class MecanumDrive {
     // When done with an FTC Dashboard telemetry packet, send it!
     public static void sendTelemetryPacket(TelemetryPacket packet) {
         FtcDashboard.getInstance().sendTelemetryPacket(packet);
+    }
+
+    // Give extra time at the end of the trajectory for the PID to get the robot into exactly
+    // the right position:
+    public void setDurationExtension(double seconds) {
+        durationExtension = seconds;
     }
 }

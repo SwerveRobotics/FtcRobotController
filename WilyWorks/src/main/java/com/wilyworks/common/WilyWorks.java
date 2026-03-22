@@ -277,7 +277,8 @@ public class WilyWorks {
         return null;
     }
 
-    // Ask the simulation to update by a specified amount of time:
+    // Ask the simulation to update by a specified amount of time. 0 means to use the real-time
+    // clock.
     static public void updateSimulation(double deltaTime) {
         if (wilyCore != null) {
             try {

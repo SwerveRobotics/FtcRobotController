@@ -1,28 +1,24 @@
-package org.swerverobotics.ftc;
-
-import static com.qualcomm.robotcore.util.TypeConversion.byteArrayToInt;
+package com.qualcomm.hardware.gobilda;
 
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
-import com.qualcomm.robotcore.hardware.I2cAddr;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchDevice;
 import com.qualcomm.robotcore.hardware.I2cDeviceSynchSimple;
 import com.qualcomm.robotcore.hardware.configuration.annotations.DeviceProperties;
 import com.qualcomm.robotcore.hardware.configuration.annotations.I2cDeviceType;
-import com.qualcomm.robotcore.util.TypeConversion;
 import com.wilyworks.simulator.WilyCore;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Arrays;
 
 @I2cDeviceType
 @DeviceProperties(
-        name = "goBILDA® Pinpoint Odometry Computer",
+        name = "Home-compiled goBILDA® Pinpoint Odometry Computer",
         xmlTag = "goBILDAPinpoint",
         description ="goBILDA® Pinpoint Odometry Computer (IMU Sensor Fusion for 2 Wheel Odometry)"
 )
@@ -79,7 +75,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
         X_VELOCITY      (11),
         Y_VELOCITY      (12),
         H_VELOCITY      (13),
-        MM_PER_TICK     (14),
+        TICKS_PER_MM    (14),
         X_POD_OFFSET    (15),
         Y_POD_OFFSET    (16),
         YAW_SCALAR      (17),
@@ -94,13 +90,14 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
 
     //Device Status enum that captures the current fault condition of the device
     public enum DeviceStatus{
-        NOT_READY                (0),
-        READY                    (1),
-        CALIBRATING              (1 << 1),
-        FAULT_X_POD_NOT_DETECTED (1 << 2),
-        FAULT_Y_POD_NOT_DETECTED (1 << 3),
-        FAULT_NO_PODS_DETECTED   (1 << 2 | 1 << 3),
-        FAULT_IMU_RUNAWAY        (1 << 4);
+        NOT_READY(0),
+        READY(1),
+        CALIBRATING(1 << 1),
+        FAULT_X_POD_NOT_DETECTED(1 << 2),
+        FAULT_Y_POD_NOT_DETECTED(1 << 3),
+        FAULT_NO_PODS_DETECTED(1 << 2 | 1 << 3),
+        FAULT_IMU_RUNAWAY(1 << 4),
+        FAULT_BAD_READ(1 << 5);
 
         private final int status;
 
@@ -121,7 +118,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
         goBILDA_4_BAR_POD;
     }
     //enum that captures a limited scope of read data. More options may be added in future update
-    public enum readData {
+    public enum ReadData {
         ONLY_UPDATE_HEADING,
     }
 
@@ -130,7 +127,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      @param reg the register to write the int to
      @param i the integer to write to the register
      */
-    private void writeInt(final Register reg, int i){
+    private void writeInt(final GoBildaPinpointDriver.Register reg, int i){
     }
 
     /**
@@ -138,7 +135,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * @param reg the register to read from
      * @return returns an int that contains the value stored in the read register
      */
-    private int readInt(Register reg){
+    private int readInt(GoBildaPinpointDriver.Register reg){
         return 0;
     }
 
@@ -157,7 +154,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * @return the float value stored in that register
      */
 
-    private float readFloat(Register reg){
+    private float readFloat(GoBildaPinpointDriver.Register reg){
         return 0;
     }
 
@@ -176,7 +173,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * @param reg the register to write to
      * @param bytes the byte array to write
      */
-    private void writeByteArray (Register reg, byte[] bytes){
+    private void writeByteArray (GoBildaPinpointDriver.Register reg, byte[] bytes){
 
     }
 
@@ -185,7 +182,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * @param reg the register to write to
      * @param f the float to write
      */
-    private void writeFloat (Register reg, float f){
+    private void writeFloat (GoBildaPinpointDriver.Register reg, float f){
     }
 
     /**
@@ -193,30 +190,30 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * @param s int to lookup
      * @return the Odometry Computer state
      */
-    private DeviceStatus lookupStatus (int s){
-        if ((s & DeviceStatus.CALIBRATING.status) != 0){
-            return DeviceStatus.CALIBRATING;
+    private GoBildaPinpointDriver.DeviceStatus lookupStatus (int s){
+        if ((s & GoBildaPinpointDriver.DeviceStatus.CALIBRATING.status) != 0){
+            return GoBildaPinpointDriver.DeviceStatus.CALIBRATING;
         }
-        boolean xPodDetected = (s & DeviceStatus.FAULT_X_POD_NOT_DETECTED.status) == 0;
-        boolean yPodDetected = (s & DeviceStatus.FAULT_Y_POD_NOT_DETECTED.status) == 0;
+        boolean xPodDetected = (s & GoBildaPinpointDriver.DeviceStatus.FAULT_X_POD_NOT_DETECTED.status) == 0;
+        boolean yPodDetected = (s & GoBildaPinpointDriver.DeviceStatus.FAULT_Y_POD_NOT_DETECTED.status) == 0;
 
         if(!xPodDetected  && !yPodDetected){
-            return DeviceStatus.FAULT_NO_PODS_DETECTED;
+            return GoBildaPinpointDriver.DeviceStatus.FAULT_NO_PODS_DETECTED;
         }
         if (!xPodDetected){
-            return DeviceStatus.FAULT_X_POD_NOT_DETECTED;
+            return GoBildaPinpointDriver.DeviceStatus.FAULT_X_POD_NOT_DETECTED;
         }
         if (!yPodDetected){
-            return DeviceStatus.FAULT_Y_POD_NOT_DETECTED;
+            return GoBildaPinpointDriver.DeviceStatus.FAULT_Y_POD_NOT_DETECTED;
         }
-        if ((s & DeviceStatus.FAULT_IMU_RUNAWAY.status) != 0){
-            return DeviceStatus.FAULT_IMU_RUNAWAY;
+        if ((s & GoBildaPinpointDriver.DeviceStatus.FAULT_IMU_RUNAWAY.status) != 0){
+            return GoBildaPinpointDriver.DeviceStatus.FAULT_IMU_RUNAWAY;
         }
-        if ((s & DeviceStatus.READY.status) != 0){
-            return DeviceStatus.READY;
+        if ((s & GoBildaPinpointDriver.DeviceStatus.READY.status) != 0){
+            return GoBildaPinpointDriver.DeviceStatus.READY;
         }
         else {
-            return DeviceStatus.NOT_READY;
+            return GoBildaPinpointDriver.DeviceStatus.NOT_READY;
         }
     }
 
@@ -232,8 +229,8 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * is supported.
      * @param data GoBildaPinpointDriver.readData.ONLY_UPDATE_HEADING
      */
-    public void update(readData data) {
-        if (data == readData.ONLY_UPDATE_HEADING) {
+    public void update(ReadData data) {
+        if (data == ReadData.ONLY_UPDATE_HEADING) {
             hOrientation = 0;
         }
     }
@@ -241,14 +238,16 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
     /**
      * Sets the odometry pod positions relative to the point that the odometry computer tracks around.<br><br>
      * The most common tracking position is the center of the robot. <br> <br>
-     * The X pod offset refers to how far sideways (in mm) from the tracking point the X (forward) odometry pod is. Left of the center is a positive number, right of center is a negative number. <br>
-     * the Y pod offset refers to how far forwards (in mm) from the tracking point the Y (strafe) odometry pod is. forward of center is a positive number, backwards is a negative number.<br>
-     * @param xOffset how sideways from the center of the robot is the X (forward) pod? Left increases
-     * @param yOffset how far forward from the center of the robot is the Y (Strafe) pod? forward increases
+     * The X pod offset refers to how far sideways from the tracking point the X (forward) odometry pod is. Left of the center is a positive number, right of center is a negative number. <br>
+     * the Y pod offset refers to how far forwards from the tracking point the Y (strafe) odometry pod is. forward of center is a positive number, backwards is a negative number.<br>
+     *
+     * @param xOffset      how sideways from the center of the robot is the X (forward) pod? Left increases
+     * @param yOffset      how far forward from the center of the robot is the Y (Strafe) pod? forward increases
+     * @param distanceUnit the unit of distance used for offsets.
      */
-    public void setOffsets(double xOffset, double yOffset){
-        writeFloat(Register.X_POD_OFFSET, (float) xOffset);
-        writeFloat(Register.Y_POD_OFFSET, (float) yOffset);
+    public void setOffsets(double xOffset, double yOffset, DistanceUnit distanceUnit) {
+        writeFloat(Register.X_POD_OFFSET, (float) distanceUnit.toMm(xOffset));
+        writeFloat(Register.Y_POD_OFFSET, (float) distanceUnit.toMm(yOffset));
     }
 
     /**
@@ -256,56 +255,62 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * <strong> Robot MUST be stationary </strong> <br><br>
      * Device takes a large number of samples, and uses those as the gyroscope zero-offset. This takes approximately 0.25 seconds.
      */
-    public void recalibrateIMU(){writeInt(Register.DEVICE_CONTROL,1<<0);}
+    public void recalibrateIMU(){writeInt(GoBildaPinpointDriver.Register.DEVICE_CONTROL,1<<0);}
 
     /**
      * Resets the current position to 0,0,0 and recalibrates the Odometry Computer's internal IMU. <br><br>
      * <strong> Robot MUST be stationary </strong> <br><br>
      * Device takes a large number of samples, and uses those as the gyroscope zero-offset. This takes approximately 0.25 seconds.
      */
-    public void resetPosAndIMU(){writeInt(Register.DEVICE_CONTROL,1<<1);}
+    public void resetPosAndIMU(){writeInt(GoBildaPinpointDriver.Register.DEVICE_CONTROL,1<<1);}
 
     /**
      * Can reverse the direction of each encoder.
      * @param xEncoder FORWARD or REVERSED, X (forward) pod should increase when the robot is moving forward
      * @param yEncoder FORWARD or REVERSED, Y (strafe) pod should increase when the robot is moving left
      */
-    public void setEncoderDirections(EncoderDirection xEncoder, EncoderDirection yEncoder){
-        if (xEncoder == EncoderDirection.FORWARD){
-            writeInt(Register.DEVICE_CONTROL,1<<5);
+    public void setEncoderDirections(GoBildaPinpointDriver.EncoderDirection xEncoder, GoBildaPinpointDriver.EncoderDirection yEncoder){
+        if (xEncoder == GoBildaPinpointDriver.EncoderDirection.FORWARD){
+            writeInt(GoBildaPinpointDriver.Register.DEVICE_CONTROL,1<<5);
         }
-        if (xEncoder == EncoderDirection.REVERSED) {
-            writeInt(Register.DEVICE_CONTROL,1<<4);
+        if (xEncoder == GoBildaPinpointDriver.EncoderDirection.REVERSED) {
+            writeInt(GoBildaPinpointDriver.Register.DEVICE_CONTROL,1<<4);
         }
 
-        if (yEncoder == EncoderDirection.FORWARD){
-            writeInt(Register.DEVICE_CONTROL,1<<3);
+        if (yEncoder == GoBildaPinpointDriver.EncoderDirection.FORWARD){
+            writeInt(GoBildaPinpointDriver.Register.DEVICE_CONTROL,1<<3);
         }
-        if (yEncoder == EncoderDirection.REVERSED){
-            writeInt(Register.DEVICE_CONTROL,1<<2);
+        if (yEncoder == GoBildaPinpointDriver.EncoderDirection.REVERSED){
+            writeInt(GoBildaPinpointDriver.Register.DEVICE_CONTROL,1<<2);
         }
     }
 
+
     /**
-     * If you're using goBILDA odometry pods, the ticks-per-mm values are stored here for easy access.<br><br>
+     * This allows you to set the encoder resolution by the type of GoBilda pod you are using.
+     * If you aren't using a GoBilda pod, use setEncoderResolution(double) instead. <br><br>
+     *
      * @param pods goBILDA_SWINGARM_POD or goBILDA_4_BAR_POD
      */
-    public void setEncoderResolution(GoBildaOdometryPods pods){
+    public void setEncoderResolution(GoBildaOdometryPods pods) {
         if (pods == GoBildaOdometryPods.goBILDA_SWINGARM_POD) {
-            writeByteArray(Register.MM_PER_TICK, (floatToByteArray(goBILDA_SWINGARM_POD, ByteOrder.LITTLE_ENDIAN)));
+            setEncoderResolution(goBILDA_SWINGARM_POD, DistanceUnit.MM);
         }
-        if (pods == GoBildaOdometryPods.goBILDA_4_BAR_POD){
-            writeByteArray(Register.MM_PER_TICK,(floatToByteArray(goBILDA_4_BAR_POD, ByteOrder.LITTLE_ENDIAN)));
+        if (pods == GoBildaOdometryPods.goBILDA_4_BAR_POD) {
+            setEncoderResolution(goBILDA_4_BAR_POD, DistanceUnit.MM);
         }
     }
 
     /**
      * Sets the encoder resolution in ticks per mm of the odometry pods. <br>
      * You can find this number by dividing the counts-per-revolution of your encoder by the circumference of the wheel.
-     * @param ticks_per_mm should be somewhere between 10 ticks/mm and 100 ticks/mm a goBILDA Swingarm pod is ~13.26291192
+     *
+     * @param ticksPerUnit should be somewhere between 10 ticks/mm and 100 ticks/mm a goBILDA Swingarm pod is ~13.26291192
+     * @param distanceUnit   unit used for distance
      */
-    public void setEncoderResolution(double ticks_per_mm){
-        writeByteArray(Register.MM_PER_TICK,(floatToByteArray((float) ticks_per_mm,ByteOrder.LITTLE_ENDIAN)));
+    public void setEncoderResolution(double ticksPerUnit, DistanceUnit distanceUnit) {
+        double resolution = distanceUnit.toMm(ticksPerUnit);
+        writeByteArray(Register.TICKS_PER_MM, (floatToByteArray((float) resolution, ByteOrder.LITTLE_ENDIAN)));
     }
 
     /**
@@ -318,7 +323,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * @param yawOffset A scalar for the robot's heading.
      */
     public void setYawScalar(double yawOffset){
-        writeByteArray(Register.YAW_SCALAR,(floatToByteArray((float) yawOffset, ByteOrder.LITTLE_ENDIAN)));
+        writeByteArray(GoBildaPinpointDriver.Register.YAW_SCALAR,(floatToByteArray((float) yawOffset, ByteOrder.LITTLE_ENDIAN)));
     }
 
     /**
@@ -344,9 +349,9 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * @param pos a Pose2D describing the robot's new position.
      */
     public Pose2D setPosition(Pose2D pos){
-        writeByteArray(Register.X_POSITION,(floatToByteArray((float) pos.getX(DistanceUnit.MM), ByteOrder.LITTLE_ENDIAN)));
-        writeByteArray(Register.Y_POSITION,(floatToByteArray((float) pos.getY(DistanceUnit.MM),ByteOrder.LITTLE_ENDIAN)));
-        writeByteArray(Register.H_ORIENTATION,(floatToByteArray((float) pos.getHeading(AngleUnit.RADIANS),ByteOrder.LITTLE_ENDIAN)));
+        writeByteArray(GoBildaPinpointDriver.Register.X_POSITION,(floatToByteArray((float) pos.getX(DistanceUnit.MM), ByteOrder.LITTLE_ENDIAN)));
+        writeByteArray(GoBildaPinpointDriver.Register.Y_POSITION,(floatToByteArray((float) pos.getY(DistanceUnit.MM),ByteOrder.LITTLE_ENDIAN)));
+        writeByteArray(GoBildaPinpointDriver.Register.H_ORIENTATION,(floatToByteArray((float) pos.getHeading(AngleUnit.RADIANS),ByteOrder.LITTLE_ENDIAN)));
         return pos;
     }
 
@@ -354,14 +359,14 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * Checks the deviceID of the Odometry Computer. Should return 1.
      * @return 1 if device is functional.
      */
-    public int getDeviceID(){return readInt(Register.DEVICE_ID);}
+    public int getDeviceID(){return readInt(GoBildaPinpointDriver.Register.DEVICE_ID);}
 
     /**
      * @return the firmware version of the Odometry Computer
      */
-    public int getDeviceVersion(){return readInt(Register.DEVICE_VERSION); }
+    public int getDeviceVersion(){return readInt(GoBildaPinpointDriver.Register.DEVICE_VERSION); }
 
-    public float getYawScalar(){return readFloat(Register.YAW_SCALAR); }
+    public float getYawScalar(){return readFloat(GoBildaPinpointDriver.Register.YAW_SCALAR); }
 
     /**
      * Device Status stores any faults the Odometry Computer may be experiencing. These faults include:
@@ -373,7 +378,7 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
      * FAULT_X_POD_NOT_DETECTED - The device does not detect an X pod plugged in. BLUE LED <br>
      * FAULT_Y_POD_NOT_DETECTED - The device does not detect a Y pod plugged in. ORANGE LED <br>
      */
-    public DeviceStatus getDeviceStatus(){return DeviceStatus.READY; }
+    public GoBildaPinpointDriver.DeviceStatus getDeviceStatus(){return GoBildaPinpointDriver.DeviceStatus.READY; }
 
     /**
      * Checks the Odometry Computer's most recent loop time.<br><br>
@@ -419,34 +424,43 @@ public class GoBildaPinpointDriver extends I2cDeviceSynchDevice<I2cDeviceSynchSi
     /**
      * @return the estimated H (heading) position of the robot in Radians
      */
-    public double getHeading(){return hOrientation;}
+    public double getHeading(AngleUnit angleUnit) {
+        return angleUnit.fromRadians(hOrientation);
+    }
+
 
     /**
-     * @return the estimated X (forward) velocity of the robot in mm/sec
+     * @return the estimated X (forward) velocity of the robot in specified unit/sec
      */
-    public double getVelX(){return xVelocity; }
+    public double getVelX(DistanceUnit distanceUnit) {
+        return distanceUnit.fromMm(xVelocity);
+    }
 
     /**
-     * @return the estimated Y (strafe) velocity of the robot in mm/sec
+     * @return the estimated Y (strafe) velocity of the robot in specified unit/sec
      */
-    public double getVelY(){return yVelocity; }
+    public double getVelY(DistanceUnit distanceUnit) {
+        return distanceUnit.fromMm(yVelocity);
+    }
 
     /**
-     * @return the estimated H (heading) velocity of the robot in radians/sec
+     * @return the estimated H (heading) velocity of the robot in specified unit/sec
      */
-    public double getHeadingVelocity(){return hVelocity; }
+    public double getHeadingVelocity(UnnormalizedAngleUnit unnormalizedAngleUnit) {
+        return unnormalizedAngleUnit.fromRadians(hVelocity);
+    }
 
     /**
      * <strong> This uses its own I2C read, avoid calling this every loop. </strong>
      * @return the user-set offset for the X (forward) pod
      */
-    public float getXOffset(){return readFloat(Register.X_POD_OFFSET);}
+    public float getXOffset(){return readFloat(GoBildaPinpointDriver.Register.X_POD_OFFSET);}
 
     /**
      * <strong> This uses its own I2C read, avoid calling this every loop. </strong>
      * @return the user-set offset for the Y (strafe) pod
      */
-    public float getYOffset(){return readFloat(Register.Y_POD_OFFSET);}
+    public float getYOffset(){return readFloat(GoBildaPinpointDriver.Register.Y_POD_OFFSET);}
 
     /**
      * @return a Pose2D containing the estimated position of the robot

@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.team417;
+package org.firstinspires.ftc.team417.utils;
 
 import com.wilyworks.common.Wily;
 import com.wilyworks.common.WilyWorks;
@@ -12,7 +12,7 @@ import com.wilyworks.common.WilyWorks;
 public class WilyConfig extends WilyWorks.Config {
     WilyConfig() {
         // Impersonate the DevBot when running the simulator:
-        deviceName = "DevBot";
+        deviceName = "417-B-RC";
 
         // Use these dimensions for the robot:
         robotWidth = 18.0;
