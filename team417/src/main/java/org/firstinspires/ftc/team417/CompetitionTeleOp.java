@@ -8,6 +8,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
 import com.acmerobotics.roadrunner.Twist2d;
 import com.acmerobotics.roadrunner.Vector2d;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
@@ -71,9 +72,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         PixelColor[] preloads = new PixelColor[]{PixelColor.NONE, PixelColor.NONE, PixelColor.NONE};
         MechGlob mechGlob = ComplexMechGlob.create(hardwareMap, telemetry, storedColors);
         AmazingAutoAim amazingAutoAim = null;
-        detector = new LimelightAprilTagDetector(hardwareMap, drive);
-
-        detector.poseCorrectEnabled = TransferState.usePoseCorrection;
+        IntakeAutoAim intakeAutoAim = null;
 
         telemetry.setDisplayFormat(Telemetry.DisplayFormat.HTML);
         //Variable for auto aim
@@ -87,8 +86,12 @@ public class CompetitionTeleOp extends BaseOpMode {
         while (opModeIsActive()) {
             telemetry.addLine("Running TeleOp!");
 
+
             if (gamepad1.rightBumperWasPressed()) {
                 amazingAutoAim = new AmazingAutoAim(telemetry, alliance);
+            }
+            if (gamepad1.leftBumperWasPressed()) {
+                intakeAutoAim = new IntakeAutoAim(telemetry, detector.suspend());
             }
 
             if (gamepad1.right_bumper && TransferState.trustPose) {
@@ -113,9 +116,9 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             detector.updateRobotYaw(drive.pose.heading.log());
 
-            telemetry.addData("Pose trusted", TransferState.trustPose ? "✅" : "❌");
+            telemetry.addData("Pose trusted", TransferState.trustPose ? " " : " ");
             telemetry.addLine(String.format("Last pose correction %s (%.2f\", %.2f\")",
-                    detector.lastWithinRange ? "✅" : "❌", detector.lastXDistance, detector.lastYDistance));
+                    detector.lastWithinRange ? " " : " ", detector.lastXDistance, detector.lastYDistance));
             telemetry.addLine(String.format("Last manual reset (%.2f\", %.2f\", %.2f°)",
                     lastError.line.x, lastError.line.y,
                     AngleUnit.normalizeDegrees(Math.toDegrees(lastError.angle))));
@@ -153,7 +156,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             } else if (gamepad2.dpadRightWasPressed()) {
                 // turns off the flywheels
                 mechGlob.setLaunchVelocity(LaunchDistance.OFF);
-            //Manually stop the transfer process
+                //Manually stop the transfer process
             } else if (gamepad2.rightBumperWasPressed()) {
                 mechGlob.stopLaunch();
             }
@@ -260,6 +263,48 @@ class AmazingAutoAim {
 
 }
 
+class IntakeAutoAim {
+    Telemetry telemetry = null;
+    // Constants to tune in FTC dashboard
+    Limelight3A limelightDetector = null;
+    public static double KP = 1.5;
+    public static double KI = 0;
+    public static double KD = 0.1;
+    double targetX;
+    double targetY;
+    PIDController pid;
+
+    IntakeAutoAim(Telemetry telemetry, Limelight3A limelightDetector) {
+        this.telemetry = telemetry;
+        this.limelightDetector = limelightDetector;
+
+        pid = new PIDController(KP, KI, KD);
+
+    }
+
+    public double get(Pose2d pose) {
+        double deltaY = targetY - pose.position.y;
+        double deltaX = targetX - pose.position.x;
+
+        double beta = Math.atan2(deltaY, deltaX);
+        double alpha = pose.heading.toDouble();
+        double angle = beta - alpha;
+        double normalizedAngle = AngleUnit.normalizeRadians(angle);
+
+        double pidOutput = pid.calculate(normalizedAngle);
+
+        if (pidOutput <= -1) {
+            return -1;
+        } else if (pidOutput >= 1) {
+            return 1;
+        } else {
+            return pidOutput;
+        }
+    }
+
+}
+
+
 
 class PIDController {
 
@@ -323,6 +368,3 @@ class PIDController {
         lastTimestamp = System.nanoTime();
     }
 }
-
-
-

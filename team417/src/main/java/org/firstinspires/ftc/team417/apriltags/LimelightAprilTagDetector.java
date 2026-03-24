@@ -110,6 +110,17 @@ public class LimelightAprilTagDetector implements Closeable {
         this.drive = drive;
     }
 
+    // Suspend the April Tag detector while the Intake Auto Aim takes over
+    public Limelight3A suspend() {
+        return limelight;
+    }
+
+    // Resume the April Tag detector after the Intake Auto Aim is over
+    public void resume() {
+        limelight.pipelineSwitch(7);
+    }
+
+
     /**
      * Default is no verbosity.
      */
