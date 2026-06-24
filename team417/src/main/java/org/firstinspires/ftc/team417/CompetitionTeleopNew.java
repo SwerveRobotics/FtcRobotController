@@ -27,6 +27,8 @@ public class CompetitionTeleopNew extends BaseOpMode {
     public static double JOYSTICK_DEADZONE = 0.1;
     @Override
     public void runOpMode() {
+        initializeHardware();
+
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
@@ -62,8 +64,11 @@ public class CompetitionTeleopNew extends BaseOpMode {
             MecanumDrive.sendTelemetryPacket(packet);
 
             // Controls Below
-            if(gamepad2.left_stick_y != 0){
+            if (gamepad2.left_stick_y == 0) {
+                intakeMot.setVelocity(REVERSE_INTAKE_SPEED);
 
+            } else {
+                intakeMot.setVelocity(gamepad2.left_stick_y * INTAKE_SPEED_MULTIPLIER);
             }
 
         }
