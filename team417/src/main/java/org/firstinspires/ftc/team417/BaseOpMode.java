@@ -40,7 +40,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         upperFlywheelMot = hardwareMap.get(DcMotorEx.class, "upperFlywheelMot");
         lowerFlywheelMot = hardwareMap.get(DcMotorEx.class, "lowerFlywheelMot");
         transferWheelMot = hardwareMap.get(DcMotorEx.class, "transferWheelMot");
-        intakeMot = hardwareMap.get(DcMotorEx.class, "intakeMot");
+        intakeMot = hardwareMap.get(DcMotorEx.class, "motIntake");
 
         // Initializing motor behaviors
         upperFlywheelMot.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);

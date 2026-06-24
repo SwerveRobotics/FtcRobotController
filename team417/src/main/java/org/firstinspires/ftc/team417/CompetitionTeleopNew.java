@@ -61,6 +61,32 @@ public class CompetitionTeleopNew extends BaseOpMode {
             MecanumDrive.sendTelemetryPacket(packet);
 
             // Controls Below
+            //Intake -HELP this is probably wrong
+            if(gamepad2.left_stick_y>0.1 || gamepad2.left_stick_y < -0.1){
+                intakeMot.setPower(gamepad2.left_stick_y);
+            }
+            else{
+                intakeMot.setPower(-0.5);
+            }
+            //Flywheel on near
+            if(gamepad2.dpadDownWasPressed()){
+                upperFlywheelMot.setPower(FLYWHEEL_NEAR_SPEED);
+                lowerFlywheelMot.setPower(FLYWHEEL_NEAR_SPEED - FLYWHEEL_BACKSPIN);
+            }
+            //Flywheel on far
+            if(gamepad2.dpadUpWasPressed()){
+                upperFlywheelMot.setPower(FLYWHEEL_FAR_SPEED);
+                lowerFlywheelMot.setPower(FLYWHEEL_FAR_SPEED - FLYWHEEL_BACKSPIN);
+            }
+            if(gamepad2.dpadRightWasPressed()){
+                upperFlywheelMot.setPower(WHEEL_STOP_SPEED);
+                lowerFlywheelMot.setPower(WHEEL_STOP_SPEED);
+                transferWheelMot.setPower(WHEEL_STOP_SPEED);
+            }
+            //Transfer Wheel On/Launch button
+            if(gamepad2.yWasPressed()){
+                transferWheelMot.setPower( TRANSFER_WHEEL_START_SPEED);
+            }
 
 
         }
