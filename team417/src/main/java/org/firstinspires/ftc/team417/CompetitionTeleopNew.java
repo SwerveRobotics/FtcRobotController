@@ -71,6 +71,24 @@ public class CompetitionTeleopNew extends BaseOpMode {
                 intakeMot.setVelocity(gamepad2.left_stick_y * INTAKE_SPEED_MULTIPLIER);
             }
 
+            if (gamepad2.dpadDownWasPressed()) {
+                upperFlywheelMot.setVelocity(FLYWHEEL_NEAR_SPEED - FLYWHEEL_BACKSPIN);
+                lowerFlywheelMot.setVelocity(FLYWHEEL_NEAR_SPEED);
+
+            } else if (gamepad2.dpadUpWasPressed()) {
+                upperFlywheelMot.setVelocity(FLYWHEEL_FAR_SPEED - FLYWHEEL_BACKSPIN);
+                lowerFlywheelMot.setVelocity(FLYWHEEL_FAR_SPEED);
+
+            } else if (gamepad2.dpadRightWasPressed()) {
+                upperFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
+                lowerFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
+                transferWheelMot.setVelocity(WHEEL_STOP_SPEED);
+            }
+
+            if (gamepad2.y) {
+                transferWheelMot.setVelocity(TRANSFER_WHEEL_START_SPEED);
+            }
+
         }
     }
 }
