@@ -19,7 +19,6 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     public static double ROBOT_WIDTH = 16.15;
     public static double ROBOT_LENGTH = 16.5;
-
     public static double MOTOR_D_VALUE = 1;
 
     // TODO: tune constants in ftc dashboard
@@ -28,12 +27,14 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double FLYWHEEL_BACKSPIN = 300;
     public static double WHEEL_STOP_SPEED = 0;
     public static double TRANSFER_WHEEL_START_SPEED = 100;
+    public static double REVERSE_INTAKE_SPEED = 500;
+    public static double INTAKE_SPEED_MULTIPLIER = 1000;
 
 
-    DcMotorEx upperFlywheelMot;
-    DcMotorEx lowerFlywheelMot;
-    DcMotorEx transferWheelMot;
-    DcMotorEx intakeMot;
+    protected DcMotorEx upperFlywheelMot;
+    protected DcMotorEx lowerFlywheelMot;
+    protected DcMotorEx transferWheelMot;
+    protected DcMotorEx intakeMot;
 
     void initializeHardware() {
         // Hardware map initialization
