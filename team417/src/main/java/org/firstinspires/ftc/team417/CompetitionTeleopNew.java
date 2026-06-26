@@ -26,6 +26,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
 
     @Override
     public void runOpMode() {
+        initializeHardware();
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
