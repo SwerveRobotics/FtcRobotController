@@ -195,9 +195,9 @@ class VisionAutoAim {
 }
 
 class PIDControllerNEW {
-    private double kP;
-    private double kI;
-    private double kD;
+    private final double kP;
+    private final double kI;
+    private final double kD;
     private double setpoint;
     private double previousError = 0;
     private double integral = 0;
