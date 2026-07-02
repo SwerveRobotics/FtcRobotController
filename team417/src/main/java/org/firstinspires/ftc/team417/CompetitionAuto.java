@@ -493,7 +493,6 @@ class WaitAction extends RobotAction {
     public WaitAction(double time) {
         this.time = time;
     }
-
     @Override
     public boolean run(double elapsedTime) {
         return elapsedTime < time;
