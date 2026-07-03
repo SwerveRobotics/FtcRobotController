@@ -43,7 +43,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
         CompetitionAuto.Alliance alliance = CompetitionAuto.Alliance.BLUE;
 
         // VARIABLE TO STORE HOW MUCH TO TURN
-        double amountToTurn = 0;
+        double amountToTurn = 0  ;
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
@@ -95,27 +95,27 @@ public class CompetitionTeleopNew extends BaseOpMode {
 
             // intake controls
             if (gamepad2.left_stick_y == 0) {
-                intakeMot.setVelocity(REVERSE_INTAKE_SPEED);
+                intakeMot.setPower(1);
             } else {
-                intakeMot.setVelocity(gamepad2.left_stick_y * INTAKE_SPEED_MULTIPLIER);
+                intakeMot.setPower(gamepad2.left_stick_y);
             }
             //launch controls
             if (gamepad2.dpadUpWasPressed()) {
-                upperFlywheelMot.setVelocity(FLYWHEEL_FAR_SPEED);
-                lowerFlywheelMot.setVelocity(FLYWHEEL_FAR_SPEED);
+                upperFlywheelMot.setVelocity(FLYWHEEL_FAR_SPEED - FLYWHEEL_BACKSPIN);
+                lowerFlywheelMot.setVelocity(FLYWHEEL_FAR_SPEED + FLYWHEEL_BACKSPIN);
             } else if (gamepad2.dpadDownWasPressed()) {
-                upperFlywheelMot.setVelocity(FLYWHEEL_NEAR_SPEED);
-                lowerFlywheelMot.setVelocity(FLYWHEEL_NEAR_SPEED);
+                upperFlywheelMot.setVelocity(FLYWHEEL_NEAR_SPEED - FLYWHEEL_BACKSPIN);
+                lowerFlywheelMot.setVelocity(FLYWHEEL_NEAR_SPEED + FLYWHEEL_BACKSPIN);
             } else if (gamepad2.dpadRightWasPressed()) {
                 // turns off the flywheels
                 upperFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
                 lowerFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
             }
             // Fire shot
-            if (gamepad2.yWasPressed()) {
-                transferWheelMot.setVelocity(TRANSFER_WHEEL_START_SPEED);
-            } else if (gamepad2.bWasPressed()) {
-                transferWheelMot.setVelocity(WHEEL_STOP_SPEED);
+            if (gamepad2.y) {
+                transferWheelMot.setPower(1);
+            } else {
+                transferWheelMot.setPower(0);
             }
         }
     }
