@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.team417;
 
+import static org.firstinspires.ftc.team417.CompetitionTeleOp.halfLinearHalfCubic;
+
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
@@ -73,8 +75,8 @@ public class CompetitionTeleopNew extends BaseOpMode {
             // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
-                            -gamepad1.left_stick_y,
-                            -gamepad1.left_stick_x
+                        halfLinearHalfCubic(-gamepad1.left_stick_y * doSLOWMODE()),
+                        halfLinearHalfCubic(-gamepad1.left_stick_x * doSLOWMODE())
                     ),
                     amountToTurn
             ));
@@ -94,10 +96,10 @@ public class CompetitionTeleopNew extends BaseOpMode {
             MecanumDrive.sendTelemetryPacket(packet);
 
             // intake controls
-            if (gamepad2.left_stick_y == 0) {
-                intakeMot.setPower(1);
-            } else {
+            if (gamepad2.left_stick_y > 0) {
                 intakeMot.setPower(gamepad2.left_stick_y);
+            } else if (gamepad2.left_stick_y < 0){
+                intakeMot.setPower(-gamepad2.left_stick_y);
             }
             //launch controls
             if (gamepad2.dpadUpWasPressed()) {
@@ -117,8 +119,21 @@ public class CompetitionTeleopNew extends BaseOpMode {
             } else {
                 transferWheelMot.setPower(0);
             }
+            if (gamepad1.rightBumperWasPressed());
+
+        }
+
+
+    }
+    public double doSLOWMODE() {
+        if (gamepad1.right_trigger != 0) {
+            return -gamepad1.right_trigger + 1.1;
+        } else {
+            return 1;
         }
     }
+
+
 }
 
 class VisionAutoAim {
