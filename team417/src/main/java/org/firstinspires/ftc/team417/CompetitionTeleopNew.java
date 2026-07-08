@@ -39,7 +39,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
         Limelight3A limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
         // CREATE AUTO-AIM OBJECT (null until button pressed)
-        VisionAutoAim amazingAutoAim = null;
+        VisionAutoAim visionAutoAim = null;
 
         // SET ALLIANCE COLOR (change to RED if red alliance)
         CompetitionAuto.Alliance alliance = CompetitionAuto.Alliance.BLUE;
@@ -56,19 +56,21 @@ public class CompetitionTeleopNew extends BaseOpMode {
             // AUTO-AIM CONTROLS
             // if right bumper was pressed create auto aim object
             if (gamepad1.rightBumperWasPressed()) {
-                amazingAutoAim = new VisionAutoAim(telemetry, limelight, alliance);
+                visionAutoAim = new VisionAutoAim(telemetry, limelight, alliance);
             }
 
-            // IF RIGHT BUMPER IS HELD AND AUTO-AIM EXISTS, USE VISION
-            if (gamepad1.right_bumper && amazingAutoAim != null) {
-                // GET TURN POWER FROM LIMELIGHT
-                amountToTurn = amazingAutoAim.get();
-                telemetry.addData("AutoAim", "ON");
-            } else {
-                // ELSE USE MANUAL JOYSTICK CONTROL
-                amountToTurn = -gamepad1.right_stick_x;
-                telemetry.addData("AutoAim", "OFF");
-            }
+
+
+//             IF RIGHT BUMPER IS HELD AND AUTO-AIM EXISTS, USE VISION
+//            if (gamepad1.right_bumper && visionAutoAim != null) {
+//                // GET TURN POWER FROM LIMELIGHT
+//                amountToTurn = VisionAutoAim.get();
+//                telemetry.addData("AutoAim", "ON");
+//            } else {
+//                // ELSE USE MANUAL JOYSTICK CONTROL
+//                amountToTurn = -gamepad1.right_stick_x;
+//                telemetry.addData("AutoAim", "OFF");
+//            }
 
 
 
@@ -78,7 +80,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
                         halfLinearHalfCubic(-gamepad1.left_stick_y * doSLOWMODE()),
                         halfLinearHalfCubic(-gamepad1.left_stick_x * doSLOWMODE())
                     ),
-                    amountToTurn
+                    -gamepad1.right_stick_x * doSLOWMODE()
             ));
 
 
@@ -96,10 +98,12 @@ public class CompetitionTeleopNew extends BaseOpMode {
             MecanumDrive.sendTelemetryPacket(packet);
 
             // intake controls
-            if (gamepad2.left_stick_y > 0) {
-                intakeMot.setPower(gamepad2.left_stick_y);
-            } else if (gamepad2.left_stick_y < 0){
-                intakeMot.setPower(-gamepad2.left_stick_y);
+            if (gamepad2.left_stick_y > 0.05) {
+                intakeMot.setPower(1);
+            } else if (gamepad2.left_stick_y < -0.05){
+                intakeMot.setPower(-1);
+            } else {
+                intakeMot.setPower(0);
             }
             //launch controls
             if (gamepad2.dpadUpWasPressed()) {
@@ -120,6 +124,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
                 transferWheelMot.setPower(0);
             }
             if (gamepad1.rightBumperWasPressed());
+
 
         }
 
