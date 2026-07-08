@@ -62,15 +62,15 @@ public class CompetitionTeleopNew extends BaseOpMode {
 
 
 //             IF RIGHT BUMPER IS HELD AND AUTO-AIM EXISTS, USE VISION
-//            if (gamepad1.right_bumper && visionAutoAim != null) {
-//                // GET TURN POWER FROM LIMELIGHT
-//                amountToTurn = VisionAutoAim.get();
-//                telemetry.addData("AutoAim", "ON");
-//            } else {
-//                // ELSE USE MANUAL JOYSTICK CONTROL
-//                amountToTurn = -gamepad1.right_stick_x;
-//                telemetry.addData("AutoAim", "OFF");
-//            }
+            if (gamepad1.right_bumper && visionAutoAim != null) {
+                // GET TURN POWER FROM LIMELIGHT
+                amountToTurn = visionAutoAim.get();
+                telemetry.addData("AutoAim", "ON");
+            } else {
+                // ELSE USE MANUAL JOYSTICK CONTROL
+                amountToTurn = -gamepad1.right_stick_x;
+                telemetry.addData("AutoAim", "OFF");
+            }
 
 
 
@@ -80,7 +80,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
                         halfLinearHalfCubic(-gamepad1.left_stick_y * doSLOWMODE()),
                         halfLinearHalfCubic(-gamepad1.left_stick_x * doSLOWMODE())
                     ),
-                    -gamepad1.right_stick_x * doSLOWMODE()
+                    amountToTurn * doSLOWMODE()
             ));
 
 
@@ -132,7 +132,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
     }
     public double doSLOWMODE() {
         if (gamepad1.right_trigger != 0) {
-            return -gamepad1.right_trigger + 1.1;
+            return ((-gamepad1.right_trigger + 1)/2) + 0.5;
         } else {
             return 1;
         }
