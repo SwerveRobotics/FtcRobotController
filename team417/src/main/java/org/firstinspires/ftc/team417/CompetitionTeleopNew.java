@@ -66,6 +66,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
                 // GET TURN POWER FROM LIMELIGHT
                 amountToTurn = visionAutoAim.get();
                 telemetry.addData("AutoAim", "ON");
+                telemetry.addData("amountToTurn", amountToTurn);
             } else {
                 // ELSE USE MANUAL JOYSTICK CONTROL
                 amountToTurn = -gamepad1.right_stick_x;
