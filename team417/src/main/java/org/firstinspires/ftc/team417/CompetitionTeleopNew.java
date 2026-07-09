@@ -52,7 +52,6 @@ public class CompetitionTeleopNew extends BaseOpMode {
 
         while (opModeIsActive()) {
             telemetry.addLine("Running TeleOp!");
-            telemetry.update();
             // AUTO-AIM CONTROLS
             // if right bumper was pressed create auto aim object
             if (gamepad1.rightBumperWasPressed()) {
@@ -60,14 +59,13 @@ public class CompetitionTeleopNew extends BaseOpMode {
             }
 
 
-//             IF RIGHT BUMPER IS HELD AND AUTO-AIM EXISTS, USE VISION
+//      IF RIGHT BUMPER IS HELD AND AUTO-AIM EXISTS, USE VISION
             if (gamepad1.right_bumper) {
                 // GET TURN POWER FROM LIMELIGHT
                 amountToTurn = visionAutoAim.get();
                 telemetry.addData("VisionAutoAIm: ", visionAutoAim);
                 telemetry.addData("AutoAim", "ON");
                 telemetry.addData("amountToTurn", amountToTurn);
-
 
             } else {
                 // ELSE USE MANUAL JOYSTICK CONTROL
@@ -128,10 +126,11 @@ public class CompetitionTeleopNew extends BaseOpMode {
             } else {
                 transferWheelMot.setPower(0);
             }
+
+            telemetry.update();
+
         }
     }
-
-
     public double doSLOWMODE() {
         if (gamepad1.right_trigger != 0) {
             return ((-gamepad1.right_trigger + 1)/2) + 0.5;
@@ -185,6 +184,9 @@ class VisionAutoAim {
 
         // Pick alliance based on tag detected
         LLResultTypes.FiducialResult target = null;
+        telemetry.addData("Tag Detected", target.getFiducialId());
+
+        telemetry.update();
         if (alliance == CompetitionAuto.Alliance.RED) {
             // RED
             target = detections.stream()
@@ -196,9 +198,8 @@ class VisionAutoAim {
                     .max(Comparator.comparingDouble(LLResultTypes.FiducialResult::getTargetXDegrees))
                     .orElse(null);
         }
-
         if (target == null) return 0;
-        telemetry.addData("Tag Detected", target.getFiducialId());
+
 
         // horizontal offset
         // (negative = tag is to the left, positive = tag is to the right)
@@ -209,7 +210,6 @@ class VisionAutoAim {
 
         // SEND DEBUG INFO TO TELEMETRY
         telemetry.addData("tx", tx);
-
 
 
         // Make sure the output stays between -1 and 1, then send it back
@@ -270,3 +270,15 @@ class PIDControllerNEW {
         return output;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
