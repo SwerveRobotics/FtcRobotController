@@ -62,7 +62,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
 
 
 //             IF RIGHT BUMPER IS HELD AND AUTO-AIM EXISTS, USE VISION
-            if (gamepad1.right_bumper && visionAutoAim != null) {
+Added Eters            if (gamepad1.right_bumper) {
                 // GET TURN POWER FROM LIMELIGHT
                 amountToTurn = visionAutoAim.get();
                 telemetry.addData("AutoAim", "ON");
@@ -171,12 +171,15 @@ class VisionAutoAim {
         //if no data dont turn
         if (result == null || !result.isValid()) {
             return 0;
+
         }
 
         // Get all detected April Tags
         List<LLResultTypes.FiducialResult> detections = result.getFiducialResults();
 
         // REMOVE TAGS THAT AREN'T THE GOAL (IDs 21, 22, 23 are the obelisk goal tags)
+
+
         detections.removeIf(d -> d.getFiducialId() != 21 && d.getFiducialId() != 22 && d.getFiducialId() != 23);
 
         if (detections.isEmpty()) {
