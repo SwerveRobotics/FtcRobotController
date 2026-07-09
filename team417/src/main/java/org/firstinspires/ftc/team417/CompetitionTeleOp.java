@@ -66,7 +66,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         } else {
             storedColors = new PixelColor[] {PixelColor.NONE, PixelColor.NONE, PixelColor.NONE};
         }
-
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
         PixelColor[] preloads = new PixelColor[]{PixelColor.NONE, PixelColor.NONE, PixelColor.NONE};
         MechGlob mechGlob = ComplexMechGlob.create(hardwareMap, telemetry, storedColors);

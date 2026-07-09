@@ -60,13 +60,15 @@ public class CompetitionTeleopNew extends BaseOpMode {
             }
 
 
-
 //             IF RIGHT BUMPER IS HELD AND AUTO-AIM EXISTS, USE VISION
-            if (gamepad1.right_bumper && visionAutoAim != null) {
+            if (gamepad1.right_bumper) {
                 // GET TURN POWER FROM LIMELIGHT
                 amountToTurn = visionAutoAim.get();
+                telemetry.addData("VisionAutoAIm: ", visionAutoAim);
                 telemetry.addData("AutoAim", "ON");
                 telemetry.addData("amountToTurn", amountToTurn);
+
+
             } else {
                 // ELSE USE MANUAL JOYSTICK CONTROL
                 amountToTurn = -gamepad1.right_stick_x;
@@ -118,19 +120,18 @@ public class CompetitionTeleopNew extends BaseOpMode {
                 upperFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
                 lowerFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
             }
+
             // Fire shot
             if (gamepad2.y) {
                 transferWheelMot.setPower(1);
+                intakeMot.setPower(1);
             } else {
                 transferWheelMot.setPower(0);
             }
-            if (gamepad1.rightBumperWasPressed());
-
-
         }
-
-
     }
+
+
     public double doSLOWMODE() {
         if (gamepad1.right_trigger != 0) {
             return ((-gamepad1.right_trigger + 1)/2) + 0.5;
@@ -138,7 +139,6 @@ public class CompetitionTeleopNew extends BaseOpMode {
             return 1;
         }
     }
-
 
 }
 
@@ -198,6 +198,7 @@ class VisionAutoAim {
         }
 
         if (target == null) return 0;
+        telemetry.addData("Tag Detected", target.getFiducialId());
 
         // horizontal offset
         // (negative = tag is to the left, positive = tag is to the right)
@@ -208,7 +209,8 @@ class VisionAutoAim {
 
         // SEND DEBUG INFO TO TELEMETRY
         telemetry.addData("tx", tx);
-        telemetry.addData("pidOutput", pidOutput);
+
+
 
         // Make sure the output stays between -1 and 1, then send it back
         return Math.max(-1, Math.min(1, pidOutput));
