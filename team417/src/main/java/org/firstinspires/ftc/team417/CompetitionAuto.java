@@ -548,6 +548,7 @@ class IntakeAction extends RobotAction {
 class GetColor {
     public int orderCount;   // 0, 1 or 2 to find color pattern
     public RequestedColor[] array;
+    //Can get rid of
     public void setPattern(Pattern pattern) {
         if (pattern == Pattern.GPP) {
             array = new RequestedColor[] {RequestedColor.GREEN, RequestedColor.PURPLE, RequestedColor.PURPLE};
@@ -558,6 +559,7 @@ class GetColor {
         }
         orderCount = 0;
     }
+    //Can get rid of
     public void increment() {
         if (orderCount == 2) {
             orderCount = 0;
@@ -567,7 +569,7 @@ class GetColor {
 
     }
 
-
+    //Can get rid of
     public RequestedColor getColor() {
         return array[orderCount];
     }
