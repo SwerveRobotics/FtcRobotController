@@ -27,6 +27,21 @@ import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 import org.firstinspires.ftc.team417.roadrunner.RobotAction;
 
-public class CompetitionAutoNew {
+@Autonomous(name="CompetitionAutoNew", group="Competition", preselectTeleOp="CompetitionTeleOpNew")
 
-}
+public class CompetitionAutoNew extends BaseOpMode {
+
+
+
+        @Override
+        public void runOpMode() {
+            TextMenu menu = new TextMenu();
+            MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
+            initializeHardware();
+
+
+        }
+    }
+
+
+
