@@ -38,10 +38,10 @@ public class CompetitionTeleopNew extends BaseOpMode {
         // GET THE LIMELIGHT HARDWARE
         Limelight3A limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
-        // CREATE AUTO-AIM OBJECT (null until button pressed)
+        // CREATE AUTO-AIM OBJECT (null (empty) until button pressed)
         VisionAutoAim visionAutoAim = null;
 
-        // SET ALLIANCE COLOR (change to RED if red alliance)
+        // SET ALLIANCE COLOR (change to red if red alliance)
         CompetitionAuto.Alliance alliance = CompetitionAuto.Alliance.BLUE;
 
         // VARIABLE TO STORE HOW MUCH TO TURN
@@ -58,8 +58,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
                 visionAutoAim = new VisionAutoAim(telemetry, limelight, alliance);
             }
 
-
-//      IF RIGHT BUMPER IS HELD AND AUTO-AIM EXISTS, USE VISION
+            //if right bumper is held use auto aim
             if (gamepad1.right_bumper) {
                 // GET TURN POWER FROM LIMELIGHT
                 amountToTurn = visionAutoAim.get();
@@ -184,7 +183,6 @@ class VisionAutoAim {
 
         // Pick alliance based on tag detected
         LLResultTypes.FiducialResult target = null;
-        telemetry.addData("Tag Detected", target.getFiducialId());
 
         telemetry.update();
         if (alliance == CompetitionAuto.Alliance.RED) {
@@ -198,7 +196,15 @@ class VisionAutoAim {
                     .max(Comparator.comparingDouble(LLResultTypes.FiducialResult::getTargetXDegrees))
                     .orElse(null);
         }
-        if (target == null) return 0;
+        //if (target == null) return 0;
+
+        if (target == null) {
+            telemetry.addData("Debug", "No valid target found");
+            return 0;
+        }
+
+        // Only reaches here if target is NOT null
+        telemetry.addData("Tag Detected", target.getFiducialId());
 
 
         // horizontal offset
