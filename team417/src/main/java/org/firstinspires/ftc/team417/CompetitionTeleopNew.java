@@ -38,10 +38,10 @@ public class CompetitionTeleopNew extends BaseOpMode {
         // GET THE LIMELIGHT HARDWARE
         Limelight3A limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
-        // CREATE AUTO-AIM OBJECT (null until button pressed)
+        // CREATE AUTO-AIM OBJECT (null (empty) until button pressed)
         VisionAutoAim visionAutoAim = null;
 
-        // SET ALLIANCE COLOR (change to RED if red alliance)
+        // SET ALLIANCE COLOR (change to red if red alliance)
         CompetitionAuto.Alliance alliance = CompetitionAuto.Alliance.BLUE;
 
         // VARIABLE TO STORE HOW MUCH TO TURN
@@ -52,21 +52,20 @@ public class CompetitionTeleopNew extends BaseOpMode {
 
         while (opModeIsActive()) {
             telemetry.addLine("Running TeleOp!");
-            telemetry.update();
             // AUTO-AIM CONTROLS
             // if right bumper was pressed create auto aim object
             if (gamepad1.rightBumperWasPressed()) {
                 visionAutoAim = new VisionAutoAim(telemetry, limelight, alliance);
             }
 
-
-
-//             IF RIGHT BUMPER IS HELD AND AUTO-AIM EXISTS, USE VISION
-            if (gamepad1.right_bumper && visionAutoAim != null) {
+            //if right bumper is held use auto aim
+            if (gamepad1.right_bumper) {
                 // GET TURN POWER FROM LIMELIGHT
                 amountToTurn = visionAutoAim.get();
+                telemetry.addData("VisionAutoAIm: ", visionAutoAim);
                 telemetry.addData("AutoAim", "ON");
                 telemetry.addData("amountToTurn", amountToTurn);
+
             } else {
                 // ELSE USE MANUAL JOYSTICK CONTROL
                 amountToTurn = -gamepad1.right_stick_x;
@@ -118,18 +117,18 @@ public class CompetitionTeleopNew extends BaseOpMode {
                 upperFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
                 lowerFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
             }
+
             // Fire shot
             if (gamepad2.y) {
                 transferWheelMot.setPower(1);
+                intakeMot.setPower(1);
             } else {
                 transferWheelMot.setPower(0);
             }
-            if (gamepad1.rightBumperWasPressed());
 
+            telemetry.update();
 
         }
-
-
     }
     public double doSLOWMODE() {
         if (gamepad1.right_trigger != 0) {
@@ -138,7 +137,6 @@ public class CompetitionTeleopNew extends BaseOpMode {
             return 1;
         }
     }
-
 
 }
 
@@ -185,6 +183,8 @@ class VisionAutoAim {
 
         // Pick alliance based on tag detected
         LLResultTypes.FiducialResult target = null;
+
+        telemetry.update();
         if (alliance == CompetitionAuto.Alliance.RED) {
             // RED
             target = detections.stream()
@@ -196,8 +196,16 @@ class VisionAutoAim {
                     .max(Comparator.comparingDouble(LLResultTypes.FiducialResult::getTargetXDegrees))
                     .orElse(null);
         }
+        //if (target == null) return 0;
 
-        if (target == null) return 0;
+        if (target == null) {
+            telemetry.addData("Debug", "No valid target found");
+            return 0;
+        }
+
+        // Only reaches here if target is NOT null
+        telemetry.addData("Tag Detected", target.getFiducialId());
+
 
         // horizontal offset
         // (negative = tag is to the left, positive = tag is to the right)
@@ -208,7 +216,7 @@ class VisionAutoAim {
 
         // SEND DEBUG INFO TO TELEMETRY
         telemetry.addData("tx", tx);
-        telemetry.addData("pidOutput", pidOutput);
+
 
         // Make sure the output stays between -1 and 1, then send it back
         return Math.max(-1, Math.min(1, pidOutput));
@@ -268,3 +276,15 @@ class PIDControllerNEW {
         return output;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+
