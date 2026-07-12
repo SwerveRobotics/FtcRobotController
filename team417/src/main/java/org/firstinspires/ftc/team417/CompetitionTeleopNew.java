@@ -48,6 +48,8 @@ public class CompetitionTeleopNew extends BaseOpMode {
         double amountToTurn = 0  ;
 
         // Wait for Start to be pressed on the Driver Hub!
+        limelight.start();
+        limelight.pipelineSwitch(3);
         waitForStart();
 
         while (opModeIsActive()) {
@@ -150,7 +152,6 @@ class VisionAutoAim {
     Limelight3A limelight;
     CompetitionAuto.Alliance alliance;
     PIDControllerNEW pid;
-
     // Set up the auto-aim system with the limelight camera and alliance color
     VisionAutoAim(Telemetry telemetry, Limelight3A limelight, CompetitionAuto.Alliance alliance) {
         this.telemetry = telemetry;
@@ -164,8 +165,9 @@ class VisionAutoAim {
     public double get() {
         // get updated limelight data
         LLResult result = limelight.getLatestResult();
-        telemetry.addData("Testing", result);
+        //limelight.get
 
+        telemetry.addData("Status", limelight.getStatus().toString());
 
         //if no data dont turn
         if (result == null || !result.isValid()) {
