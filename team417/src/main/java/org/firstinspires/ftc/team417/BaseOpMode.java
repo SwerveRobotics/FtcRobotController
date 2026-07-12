@@ -64,6 +64,11 @@ abstract public class BaseOpMode extends LinearOpMode {
 
 
     }
+    void setFlywheelVelocity(double velocity) {
+        upperFlywheelMot.setVelocity(velocity-FLYWHEEL_BACKSPIN);
+        lowerFlywheelMot.setVelocity(velocity+FLYWHEEL_BACKSPIN);
+    }
+
 }
 
 
