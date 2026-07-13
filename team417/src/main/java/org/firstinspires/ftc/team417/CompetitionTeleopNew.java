@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.team417;
 
-import static org.firstinspires.ftc.team417.CompetitionTeleOp.halfLinearHalfCubic;
+
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -48,6 +48,8 @@ public class CompetitionTeleopNew extends BaseOpMode {
         double amountToTurn = 0  ;
 
         // Wait for Start to be pressed on the Driver Hub!
+        limelight.start();
+        limelight.pipelineSwitch(3);
         waitForStart();
 
         while (opModeIsActive()) {
@@ -62,7 +64,6 @@ public class CompetitionTeleopNew extends BaseOpMode {
             if (gamepad1.right_bumper) {
                 // GET TURN POWER FROM LIMELIGHT
                 amountToTurn = visionAutoAim.get();
-                telemetry.addData("VisionAutoAIm: ", visionAutoAim);
                 telemetry.addData("AutoAim", "ON");
                 telemetry.addData("amountToTurn", amountToTurn);
 
@@ -71,6 +72,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
                 amountToTurn = -gamepad1.right_stick_x;
                 telemetry.addData("AutoAim", "OFF");
             }
+
 
 
 
@@ -137,6 +139,9 @@ public class CompetitionTeleopNew extends BaseOpMode {
             return 1;
         }
     }
+    public static double halfLinearHalfCubic(double input) {
+        return (Math.pow(input, 3) + input) / 2;
+    }
 
 }
 
@@ -151,7 +156,6 @@ class VisionAutoAim {
     Limelight3A limelight;
     CompetitionAuto.Alliance alliance;
     PIDControllerNEW pid;
-
     // Set up the auto-aim system with the limelight camera and alliance color
     VisionAutoAim(Telemetry telemetry, Limelight3A limelight, CompetitionAuto.Alliance alliance) {
         this.telemetry = telemetry;
@@ -165,9 +169,13 @@ class VisionAutoAim {
     public double get() {
         // get updated limelight data
         LLResult result = limelight.getLatestResult();
+        //limelight.get
+
+        telemetry.addData("Status", limelight.getStatus().toString());
 
         //if no data dont turn
         if (result == null || !result.isValid()) {
+            telemetry.addData("Problem in first if", result);
             return 0;
         }
 
@@ -178,6 +186,7 @@ class VisionAutoAim {
         detections.removeIf(d -> d.getFiducialId() != 21 && d.getFiducialId() != 22 && d.getFiducialId() != 23);
 
         if (detections.isEmpty()) {
+            telemetry.addData("Problem in second if", 0);
             return 0;
         }
 
