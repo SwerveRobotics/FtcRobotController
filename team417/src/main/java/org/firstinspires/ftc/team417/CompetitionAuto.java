@@ -54,7 +54,7 @@ class BaseCompetitonMode extends BaseOpMode {
     double maxWaitTime = 30.0;
 
     double minIntakes = 0.0;
-    double maxIntakes = 3.0;
+    double maxIntakes = 6.0;
     TextMenu menu = new TextMenu();
     MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
     Pattern pattern;
@@ -101,11 +101,14 @@ class BaseCompetitonMode extends BaseOpMode {
 
 
     class IntakeAction extends RobotAction {
-
+        double time;
+        public IntakeAction(double time) {
+            this.time = time;
+        }
 
         @Override
         public boolean run(double elapsedTime) {
-            if (elapsedTime < 2) {
+            if (elapsedTime < time) {
                 intakeMot.setPower(1);
                 return true;
             }
@@ -114,6 +117,17 @@ class BaseCompetitonMode extends BaseOpMode {
                 return false;
             }
 
+        }
+    }
+    class WaitOnAction extends RobotAction {
+        RobotAction actionToWaitOn;
+        WaitOnAction(RobotAction actionToWaitOn) {
+            this.actionToWaitOn = actionToWaitOn;
+        }
+
+        @Override
+        public boolean run(double elapsedTime) {
+            return actionToWaitOn.isRunning();
         }
     }
 
@@ -141,7 +155,7 @@ class BaseCompetitonMode extends BaseOpMode {
                         .stopAndAdd(new LaunchAction())
                         .stopAndAdd(new WaitAction(FEEDER_TIME))
                         .setTangent(Math.toRadians(90))
-                        .afterDisp(0,new IntakeAction())
+                        .afterDisp(0,new IntakeAction(6))
                         .splineToSplineHeading(new Pose2d(12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake closest from goal
                         .setTangent(Math.toRadians(90))
                         .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(90))
@@ -149,26 +163,15 @@ class BaseCompetitonMode extends BaseOpMode {
                         .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(-90)) //go to launch position
                         .stopAndAdd(new LaunchAction())
                         .stopAndAdd(new WaitAction(FEEDER_TIME));
-                if (intakeCycles > 1) {
+                for (int i = 0; i < intakeCycles; i++) {
                     trajectoryAction = trajectoryAction.setTangent(Math.toRadians(45))
-                            .splineToSplineHeading(new Pose2d(12, 32, Math.toRadians(90)), Math.toRadians(45)) //go to intake middle from goal
-                            .setTangent(Math.toRadians(90))
-                            .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(90),new TranslationalVelConstraint(ROBOT_SPEED))
+                            .afterDisp(0, new IntakeAction(8))
+                            .splineToSplineHeading(new Pose2d(0, 57, Math.toRadians(90)), Math.toRadians(90)) //go to intake middle from goal
+                            .setTangent(Math.toRadians(0))
+                            .splineToSplineHeading(new Pose2d(20,59,Math.toRadians(120)),Math.toRadians(120))
                             .setTangent(Math.toRadians(-123))
-                            .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(-123)); //go to launch position
+                            .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(180)); //go to launch position
 
-
-                    if (intakeCycles > 2) {
-                        trajectoryAction = trajectoryAction.setTangent(Math.toRadians(0))
-                                .splineToSplineHeading(new Pose2d(36, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake  farthest from goal
-                                .setTangent(Math.toRadians(90))
-                                .splineToConstantHeading(new Vector2d(36, 50), Math.toRadians(90),new TranslationalVelConstraint(ROBOT_SPEED))
-                                .setTangent(Math.toRadians(-90))
-                                .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(180)); //go to launch position
-
-
-
-                    }
                 }
                 trajectoryAction = trajectoryAction.stopAndAdd(new WaitAction(FEEDER_TIME))
                         .setTangent(Math.toRadians(45))
@@ -180,32 +183,30 @@ class BaseCompetitonMode extends BaseOpMode {
                 trajectoryAction = drive.actionBuilder(beginPose, poseMap);
 
                     trajectoryAction = trajectoryAction.setTangent(Math.toRadians(157.5))
+                            .stopAndAdd(new SpinUpAction(FLYWHEEL_FAR_SPEED))
+                            .stopAndAdd(new WaitOnAction(new SpinUpAction(FLYWHEEL_FAR_SPEED)))
                             .splineToSplineHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-90))  //go to launch position
+                            .stopAndAdd(new LaunchAction())
                             .stopAndAdd(new WaitAction(FEEDER_TIME));
 
                 trajectoryAction = trajectoryAction.splineToSplineHeading(new Pose2d(36, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake farthest from goal
+                        .afterDisp(0,new IntakeAction(6))
                         .setTangent(Math.toRadians(90))
                         .splineToConstantHeading(new Vector2d(36, 60), Math.toRadians(90), new TranslationalVelConstraint(ROBOT_SPEED))
                         .setTangent(Math.toRadians(-90))
                         .splineToSplineHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-90))  //go to launch position
+                        .stopAndAdd(new LaunchAction())
                         .stopAndAdd(new WaitAction(FEEDER_TIME));
-                if (intakeCycles > 1) {
-                    trajectoryAction = trajectoryAction.setTangent(Math.toRadians(180))
-                            .splineToSplineHeading(new Pose2d(12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake middle from goal
-                            .setTangent(Math.toRadians(90))
-                            .splineToConstantHeading(new Vector2d(12, 60), Math.toRadians(90), new TranslationalVelConstraint(ROBOT_SPEED))
+                for(int i = 0; i < intakeCycles; i++) {
+                    trajectoryAction = trajectoryAction.setTangent(Math.toRadians(90))
+                            .afterDisp(0, new IntakeAction(9))
+                            .splineToSplineHeading(new Pose2d(62, 62, Math.toRadians(90)), Math.toRadians(90)) //go to intake middle from goal
                             .setTangent(Math.toRadians(-90))
+                            .splineToConstantHeading(new Vector2d(57, 62), Math.toRadians(-90))
+                            .setTangent(Math.toRadians(90))
+                            .splineToConstantHeading(new Vector2d(62,62),Math.toRadians(90))
                             .splineToSplineHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-90)) //go to launch position
                             .stopAndAdd(new WaitAction(FEEDER_TIME));
-                    if (intakeCycles > 2) {
-                        trajectoryAction = trajectoryAction.setTangent(Math.toRadians(180))
-                                .splineToSplineHeading(new Pose2d(-12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake closest to goal
-                                .setTangent(Math.toRadians(90))
-                                .splineToConstantHeading(new Vector2d(-12, 55), Math.toRadians(90), new TranslationalVelConstraint(ROBOT_SPEED))
-                                .setTangent(Math.toRadians(-90))
-                                .splineToSplineHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-90)) //go to launch position
-                                .stopAndAdd(new WaitAction(FEEDER_TIME));
-                    }
                 }
                 trajectoryAction = trajectoryAction.setTangent(Math.toRadians(157.5))
                         .splineToConstantHeading(new Vector2d(48,24), Math.toRadians(157.5));
