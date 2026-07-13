@@ -66,7 +66,8 @@ class BaseCompetitonMode extends BaseOpMode {
         }
         @Override
         public boolean run(double elapsedTime) {
-            setFlywheelVelocity(velocity);
+            upperFlywheelMot.setVelocity(velocity-FLYWHEEL_BACKSPIN);
+            lowerFlywheelMot.setVelocity(velocity+FLYWHEEL_BACKSPIN);
             return false;
         }
     }
@@ -135,14 +136,18 @@ class BaseCompetitonMode extends BaseOpMode {
             case NEAR:
                 trajectoryAction = drive.actionBuilder(beginPose, poseMap);
                 trajectoryAction = trajectoryAction.setTangent(Math.toRadians(-51))
+                        .stopAndAdd(new SpinUpAction(FLYWHEEL_NEAR_SPEED))
                         .splineToSplineHeading(new Pose2d(-12, 12,Math.toRadians(135)), Math.toRadians(-51))
+                        .stopAndAdd(new LaunchAction())
                         .stopAndAdd(new WaitAction(FEEDER_TIME))
                         .setTangent(Math.toRadians(90))
-                        .splineToSplineHeading(new Pose2d(-12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake closest from goal
+                        .afterDisp(0,new IntakeAction())
+                        .splineToSplineHeading(new Pose2d(12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake closest from goal
                         .setTangent(Math.toRadians(90))
-                        .splineToConstantHeading(new Vector2d(-12, 50), Math.toRadians(90),new TranslationalVelConstraint(ROBOT_SPEED))
+                        .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(90))
                         .setTangent(Math.toRadians(-90))
                         .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(-90)) //go to launch position
+                        .stopAndAdd(new LaunchAction())
                         .stopAndAdd(new WaitAction(FEEDER_TIME));
                 if (intakeCycles > 1) {
                     trajectoryAction = trajectoryAction.setTangent(Math.toRadians(45))
@@ -250,7 +255,7 @@ class BaseCompetitonMode extends BaseOpMode {
 
     @Override
     public void runOpMode() {
-
+    initializeHardware();
 
 
         // Text menu for FastBot
