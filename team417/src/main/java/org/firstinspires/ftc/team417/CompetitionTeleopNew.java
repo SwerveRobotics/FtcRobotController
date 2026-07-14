@@ -1,6 +1,6 @@
 package org.firstinspires.ftc.team417;
 
-import static org.firstinspires.ftc.team417.CompetitionTeleOp.halfLinearHalfCubic;
+
 
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -80,6 +80,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
 
 
 
+
             // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
@@ -142,6 +143,9 @@ public class CompetitionTeleopNew extends BaseOpMode {
         } else {
             return 1;
         }
+    }
+    public static double halfLinearHalfCubic(double input) {
+        return (Math.pow(input, 3) + input) / 2;
     }
 
 }

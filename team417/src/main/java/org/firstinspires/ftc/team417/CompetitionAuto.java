@@ -54,13 +54,84 @@ class BaseCompetitonMode extends BaseOpMode {
     double maxWaitTime = 30.0;
 
     double minIntakes = 0.0;
-    double maxIntakes = 3.0;
+    double maxIntakes = 6.0;
     TextMenu menu = new TextMenu();
     MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
     Pattern pattern;
+    class SpinUpAction extends RobotAction {
+
+        double velocity;
+        public SpinUpAction(double velocity) {
+            this.velocity = velocity;
+        }
+        @Override
+        public boolean run(double elapsedTime) {
+            upperFlywheelMot.setVelocity(velocity-FLYWHEEL_BACKSPIN);
+            lowerFlywheelMot.setVelocity(velocity+FLYWHEEL_BACKSPIN);
+            return false;
+        }
+    }
+    class LaunchAction extends RobotAction {
+        @Override
+        public boolean run(double elapsedTime) {
+            if (elapsedTime < 1.5) {
+                transferWheelMot.setPower(1);
+                intakeMot.setPower(1);
+                return true;
+            }
+            else {
+                transferWheelMot.setPower(0);
+                intakeMot.setPower(0);
+                return false;
+            }
+        }
+
+    }
+    class WaitAction extends RobotAction {
+        double time;
+        public WaitAction(double time) {
+            this.time = time;
+        }
+        @Override
+        public boolean run(double elapsedTime) {
+            return elapsedTime < time;
+        }
+    }
 
 
-    public Action getPath(SlowBotMovement chosenMovement, Alliance chosenAlliance, double intakeCycles, MecanumDrive drive, MechGlob mechGlob, GetColor countBalls) {
+
+    class IntakeAction extends RobotAction {
+        double time;
+        public IntakeAction(double time) {
+            this.time = time;
+        }
+
+        @Override
+        public boolean run(double elapsedTime) {
+            if (elapsedTime < time) {
+                intakeMot.setPower(1);
+                return true;
+            }
+            else {
+                intakeMot.setPower(0);
+                return false;
+            }
+
+        }
+    }
+    class WaitOnAction extends RobotAction {
+        RobotAction actionToWaitOn;
+        WaitOnAction(RobotAction actionToWaitOn) {
+            this.actionToWaitOn = actionToWaitOn;
+        }
+
+        @Override
+        public boolean run(double elapsedTime) {
+            return actionToWaitOn.isRunning();
+        }
+    }
+
+    public Action getPath(SlowBotMovement chosenMovement, Alliance chosenAlliance, double intakeCycles, MecanumDrive drive) {
         Pose2d beginPose = drive.pose;
         PoseMap poseMap = pose -> new Pose2dDual<>(
 
@@ -79,53 +150,49 @@ class BaseCompetitonMode extends BaseOpMode {
             case NEAR:
                 trajectoryAction = drive.actionBuilder(beginPose, poseMap);
                 trajectoryAction = trajectoryAction.setTangent(Math.toRadians(-51))
-                        .afterDisp(0,new SpinUpAction(mechGlob, LaunchDistance.NEAR_AUTO))
-                        .afterDisp(0,new PreLaunchAction(mechGlob, countBalls))
-                        .splineToSplineHeading(new Pose2d(-12, 12,Math.toRadians(135)), Math.toRadians(-51))
-                        .stopAndAdd(new LaunchAction(mechGlob, countBalls, detector))
-                        .stopAndAdd(new WaitAction(FEEDER_TIME))
+                        .stopAndAdd(new SpinUpAction(FLYWHEEL_NEAR_SPEED-25))
+                        .afterTime( 2,new LaunchAction())
+                        .splineToConstantHeading(new Vector2d(-12, 12), Math.toRadians(-45))
+
+                        .stopAndAdd(new WaitAction(FEEDER_TIME+.5))
                         .setTangent(Math.toRadians(90))
-                        .afterDisp(0, new IntakeAction(mechGlob, INTAKE_SPEED))
-                        .splineToSplineHeading(new Pose2d(-12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake closest from goal
+                        .afterDisp(0,new IntakeAction(6))
+                        .splineToSplineHeading(new Pose2d(12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake closest from goal
                         .setTangent(Math.toRadians(90))
-                        .splineToConstantHeading(new Vector2d(-12, 50), Math.toRadians(90),new TranslationalVelConstraint(ROBOT_SPEED))
-                        .afterDisp(0, new IntakeAction(mechGlob, 0))
-                        .afterDisp(0, new SpinUpAction(mechGlob, LaunchDistance.NEAR_AUTO))
-                        .afterDisp(1, new PreLaunchAction(mechGlob, countBalls))
+                        .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(90))
                         .setTangent(Math.toRadians(-90))
-                        .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(-90)) //go to launch position
-                        .stopAndAdd(new LaunchAction(mechGlob, countBalls, detector))
+                        .splineToConstantHeading(new Vector2d(0,50), Math.toRadians(90))
+                        .setTangent(Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(0,54), Math.toRadians(90))
+                        .setTangent(Math.toRadians(-90))
+                        .splineToConstantHeading(new Vector2d(0,12),Math.toRadians(-90))
+                        .setTangent(Math.toRadians(180))
+                        .afterTime(2.5,new LaunchAction())
+                        .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(180)) //go to launch position
+
                         .stopAndAdd(new WaitAction(FEEDER_TIME));
                 if (intakeCycles > 1) {
-                    trajectoryAction = trajectoryAction.setTangent(Math.toRadians(45))
-                            .afterDisp(0, new IntakeAction(mechGlob, INTAKE_SPEED))
-                            .splineToSplineHeading(new Pose2d(12, 32, Math.toRadians(90)), Math.toRadians(45)) //go to intake middle from goal
+                    trajectoryAction = trajectoryAction.setTangent(Math.toRadians(0))
+                            .splineToSplineHeading(new Pose2d(0,50, Math.toRadians(90)),Math.toRadians(90))
+                            .setTangent(Math.toRadians(-90))
+                            .splineToConstantHeading(new Vector2d(0,24),Math.toRadians(180))
+                            .setTangent(Math.toRadians(180))
+                            .splineToConstantHeading(new Vector2d(-12,32), Math.toRadians(90))
                             .setTangent(Math.toRadians(90))
-                            .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(90),new TranslationalVelConstraint(ROBOT_SPEED))
-                            .afterDisp(0,new IntakeAction(mechGlob, 0))
-                            .afterDisp(0, new SpinUpAction(mechGlob, LaunchDistance.NEAR_AUTO))
-                            .afterDisp(1, new PreLaunchAction(mechGlob, countBalls))
+                            .splineToConstantHeading(new Vector2d(-12, 50),Math.toRadians(90))
+                            .afterTime(2,new LaunchAction())
+                            .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(-90));
+                }
+                for (int i = 0; i < intakeCycles; i++) {
+                    trajectoryAction = trajectoryAction.setTangent(Math.toRadians(45))
+                            .afterDisp(0, new IntakeAction(8))
+                            .splineToSplineHeading(new Pose2d(12, 54, Math.toRadians(130)), Math.toRadians(90)) //go to intake middle from goal
+                            .setTangent(Math.toRadians(-90))
+                            .splineToConstantHeading(new Vector2d(20,56),Math.toRadians(60))
                             .setTangent(Math.toRadians(-123))
-                            .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(-123)) //go to launch position
-                            .stopAndAdd(new LaunchAction(mechGlob, countBalls, detector));
+                            .afterTime(2,new LaunchAction())
+                            .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(180));
 
-
-                    if (intakeCycles > 2) {
-                        trajectoryAction = trajectoryAction.setTangent(Math.toRadians(0))
-                                .splineToSplineHeading(new Pose2d(36, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake  farthest from goal
-                                .afterDisp(0,new IntakeAction(mechGlob, INTAKE_SPEED))
-                                .setTangent(Math.toRadians(90))
-                                .splineToConstantHeading(new Vector2d(36, 50), Math.toRadians(90),new TranslationalVelConstraint(ROBOT_SPEED))
-                                .afterDisp(0, new IntakeAction(mechGlob, 0))
-                                .afterDisp(0, new SpinUpAction(mechGlob, LaunchDistance.NEAR_AUTO))
-                                .afterDisp(1, new PreLaunchAction(mechGlob, countBalls))
-                                .setTangent(Math.toRadians(-90))
-                                .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(180)) //go to launch position
-                                .stopAndAdd(new LaunchAction(mechGlob, countBalls, detector));
-
-
-
-                    }
                 }
                 trajectoryAction = trajectoryAction.stopAndAdd(new WaitAction(FEEDER_TIME))
                         .setTangent(Math.toRadians(45))
@@ -137,49 +204,30 @@ class BaseCompetitonMode extends BaseOpMode {
                 trajectoryAction = drive.actionBuilder(beginPose, poseMap);
 
                     trajectoryAction = trajectoryAction.setTangent(Math.toRadians(157.5))
-                            .afterDisp(0, new SpinUpAction(mechGlob, LaunchDistance.FAR))
+                            .stopAndAdd(new SpinUpAction(FLYWHEEL_FAR_SPEED))
+                            .stopAndAdd(new WaitOnAction(new SpinUpAction(FLYWHEEL_FAR_SPEED)))
                             .splineToSplineHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-90))  //go to launch position
-                            .stopAndAdd(new LaunchAction(mechGlob, countBalls, detector))
+                            .stopAndAdd(new LaunchAction())
                             .stopAndAdd(new WaitAction(FEEDER_TIME));
 
                 trajectoryAction = trajectoryAction.splineToSplineHeading(new Pose2d(36, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake farthest from goal
-                        .afterDisp(0, new IntakeAction(mechGlob, 1))
+                        .afterDisp(0,new IntakeAction(6))
                         .setTangent(Math.toRadians(90))
                         .splineToConstantHeading(new Vector2d(36, 60), Math.toRadians(90), new TranslationalVelConstraint(ROBOT_SPEED))
-                        .afterDisp(0, new IntakeAction(mechGlob, 0))
-                        .afterDisp(0, new SpinUpAction(mechGlob, LaunchDistance.FAR))
-                        .afterDisp(1, new PreLaunchAction(mechGlob, countBalls))
                         .setTangent(Math.toRadians(-90))
                         .splineToSplineHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-90))  //go to launch position
-                        .stopAndAdd(new LaunchAction(mechGlob, countBalls, detector))
+                        .stopAndAdd(new LaunchAction())
                         .stopAndAdd(new WaitAction(FEEDER_TIME));
-                if (intakeCycles > 1) {
-                    trajectoryAction = trajectoryAction.setTangent(Math.toRadians(180))
-                            .splineToSplineHeading(new Pose2d(12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake middle from goal
-                            .afterDisp(0,new IntakeAction(mechGlob, 1))
-                            .setTangent(Math.toRadians(90))
-                            .splineToConstantHeading(new Vector2d(12, 60), Math.toRadians(90), new TranslationalVelConstraint(ROBOT_SPEED))
-                            .afterDisp(0, new IntakeAction(mechGlob, 0))
-                            .afterDisp(0, new SpinUpAction(mechGlob, LaunchDistance.FAR))
-                            .afterDisp(1, new PreLaunchAction(mechGlob, countBalls))
+                for(int i = 0; i < intakeCycles; i++) {
+                    trajectoryAction = trajectoryAction.setTangent(Math.toRadians(90))
+                            .afterDisp(0, new IntakeAction(9))
+                            .splineToSplineHeading(new Pose2d(62, 62, Math.toRadians(90)), Math.toRadians(90)) //go to intake middle from goal
                             .setTangent(Math.toRadians(-90))
+                            .splineToConstantHeading(new Vector2d(57, 62), Math.toRadians(-90))
+                            .setTangent(Math.toRadians(90))
+                            .splineToConstantHeading(new Vector2d(62,62),Math.toRadians(90))
                             .splineToSplineHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-90)) //go to launch position
-                            .stopAndAdd(new LaunchAction(mechGlob, countBalls, detector))
                             .stopAndAdd(new WaitAction(FEEDER_TIME));
-                    if (intakeCycles > 2) {
-                        trajectoryAction = trajectoryAction.setTangent(Math.toRadians(180))
-                                .splineToSplineHeading(new Pose2d(-12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake closest to goal
-                                .afterDisp(0,new IntakeAction(mechGlob, 1))
-                                .setTangent(Math.toRadians(90))
-                                .splineToConstantHeading(new Vector2d(-12, 55), Math.toRadians(90), new TranslationalVelConstraint(ROBOT_SPEED))
-                                .afterDisp(0, new IntakeAction(mechGlob, 0))
-                                .afterDisp(0, new SpinUpAction(mechGlob, LaunchDistance.FAR))
-                                .afterDisp(1, new PreLaunchAction(mechGlob, countBalls))
-                                .setTangent(Math.toRadians(-90))
-                                .splineToSplineHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-90)) //go to launch position
-                                .stopAndAdd(new LaunchAction(mechGlob, countBalls, detector))
-                                .stopAndAdd(new WaitAction(FEEDER_TIME));
-                    }
                 }
                 trajectoryAction = trajectoryAction.setTangent(Math.toRadians(157.5))
                         .splineToConstantHeading(new Vector2d(48,24), Math.toRadians(157.5));
@@ -189,40 +237,27 @@ class BaseCompetitonMode extends BaseOpMode {
                 // 3 launch actions
                 // after disp intake action
                 trajectoryAction = drive.actionBuilder(beginPose, poseMap);
-                trajectoryAction = trajectoryAction.afterDisp(0, new SpinUpAction(mechGlob, LaunchDistance.FAR))
-                        .setTangent(Math.toRadians(157.5))
-                        .splineToLinearHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-157.5))
-                        .stopAndAdd(new LaunchAction(mechGlob, countBalls, detector))
+                        trajectoryAction.splineToLinearHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-157.5))
                         .stopAndAdd(new WaitAction(FEEDER_TIME))
                         .setTangent(Math.toRadians(90))
-                        .afterDisp(5, new IntakeAction(mechGlob, 1))
                         .splineToSplineHeading(new Pose2d(60, 61, Math.toRadians(90)), Math.toRadians(90))
                         .setTangent(Math.toRadians(-90))
                         .splineToSplineHeading(new Pose2d(60,46,Math.toRadians(90)), Math.toRadians(-90))
                         .setTangent(Math.toRadians(90))
                         .splineToSplineHeading(new Pose2d(71-(ROBOT_WIDTH/2), 61, Math.toRadians(90)), Math.toRadians(90))
                         .setTangent(Math.toRadians(-90))
-                        .afterDisp(0,new IntakeAction(mechGlob, 0))
-                        .afterDisp(0, new SpinUpAction(mechGlob, LaunchDistance.NEAR))
-                        .afterDisp(0,new PreLaunchAction(mechGlob, countBalls))
                         .splineToLinearHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-90))
-                        .stopAndAdd(new LaunchAction(mechGlob, countBalls, detector))
                         .stopAndAdd(new WaitAction(FEEDER_TIME));
 
                 if (intakeCycles > 1) {
                     trajectoryAction = trajectoryAction.setTangent(Math.toRadians(90))
-                            .afterDisp(5, new IntakeAction(mechGlob, 1))
                             .splineToSplineHeading(new Pose2d(60, 61, Math.toRadians(90)), Math.toRadians(90))
                             .setTangent(Math.toRadians(-90))
                             .splineToSplineHeading(new Pose2d(60,46,Math.toRadians(90)), Math.toRadians(-90))
                             .setTangent(Math.toRadians(90))
                             .splineToSplineHeading(new Pose2d(71-(ROBOT_WIDTH/2), 61, Math.toRadians(90)), Math.toRadians(90))
                             .setTangent(Math.toRadians(-90))
-                            .afterDisp(0,new IntakeAction(mechGlob, 0))
-                            .afterDisp(0, new SpinUpAction(mechGlob, LaunchDistance.NEAR))
-                            .afterDisp(0,new PreLaunchAction(mechGlob, countBalls))
                             .splineToLinearHeading(new Pose2d(54, 12, Math.toRadians(157.5)), Math.toRadians(-90))
-                            .stopAndAdd(new LaunchAction(mechGlob, countBalls, detector))
                             .stopAndAdd(new WaitAction(FEEDER_TIME));
                 }
                 trajectoryAction = trajectoryAction.setTangent(Math.toRadians(157.5))
@@ -242,7 +277,7 @@ class BaseCompetitonMode extends BaseOpMode {
 
     @Override
     public void runOpMode() {
-
+    initializeHardware();
 
 
         // Text menu for FastBot
@@ -298,9 +333,6 @@ class BaseCompetitonMode extends BaseOpMode {
         Pose2d SBRedFarStartPose = new Pose2d(72 - ROBOT_LENGTH / 2, ROBOT_WIDTH / 2, Math.toRadians(180));
         Pose2d SBBlueFarStartPose = new Pose2d(72 - ROBOT_LENGTH / 2, -ROBOT_WIDTH / 2, Math.toRadians(180));
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, startPose);
-        PixelColor[] preloads = new PixelColor[]{PixelColor.PURPLE, PixelColor.GREEN, PixelColor.PURPLE};
-        MechGlob mechGlob = ComplexMechGlob.create(hardwareMap, telemetry, preloads);
-        GetColor countBalls = new GetColor();
 
 
         detector = new LimelightAprilTagDetector(hardwareMap, drive);
@@ -369,7 +401,7 @@ class BaseCompetitonMode extends BaseOpMode {
         drive.rightBack.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         drive.rightFront.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        trajectoryAction = getPath(chosenMovement, chosenAlliance, intakeCycles, drive, mechGlob, countBalls);
+        trajectoryAction = getPath(chosenMovement, chosenAlliance, intakeCycles, drive);
         Canvas previewCanvas = new Canvas();
         trajectoryAction.preview(previewCanvas);
 
@@ -383,20 +415,13 @@ class BaseCompetitonMode extends BaseOpMode {
 
 
 
-        // Assume unknown pattern unless detected otherwise.
 
-        // Detect the pattern with the AprilTags from the camera!
         // Wait for Start to be pressed on the Driver Hub!
         while (opModeInInit()) {
-            Pattern last = detector.detectPatternAndTelemeter(chosenAlliance, telemetry);
-            if (last != Pattern.UNKNOWN) {
-                pattern = last;
-            }
 
                 telemetry.addData("Chosen alliance: ", chosenAlliance);
                 telemetry.addData("Chosen movement: ", chosenMovement);
                 telemetry.addData("Chosen wait time: ", waitTime);
-                telemetry.addData("Last valid pattern: ", pattern);
 
                     telemetry.update();
 
@@ -404,7 +429,6 @@ class BaseCompetitonMode extends BaseOpMode {
                         break;
                     }
                 }
-        countBalls.setPattern(pattern);
         sleep((long) waitTime * 1000);
         boolean more = true;
         while (opModeIsActive() && more) {
@@ -423,20 +447,12 @@ class BaseCompetitonMode extends BaseOpMode {
             }
 
             more = trajectoryAction.run(packet);
-            mechGlob.update();
             WilyWorks.updateSimulation(0); // Advance the simulation when not driving
 
             detector.updateRobotYaw(drive.pose.heading.log());
 
             // Only send the packet if there's more to do in order to keep the very last
             // drawing up on the field once the robot is done:
-            if (gamepad1.b) {
-                drive.setDrivePowers(new PoseVelocity2d(new Vector2d(0,0),0));
-                mechGlob.setLaunchVelocity(LaunchDistance.OFF);
-                mechGlob.intake(0);
-                mechGlob.update();
-                break;
-            }
             if (more)
                 MecanumDrive.sendTelemetryPacket(packet);
 
@@ -445,135 +461,13 @@ class BaseCompetitonMode extends BaseOpMode {
 
         // Stores these so they can be transferred to teleop
         TransferState.chosenAlliance = chosenAlliance;
-        TransferState.storedColors = new PixelColor[] {mechGlob.getSlotColor(0), mechGlob.getSlotColor(1), mechGlob.getSlotColor(2)};
-        TransferState.pose = drive.pose;
 
         detector.close();
     }
 }
 
-class LaunchAction extends RobotAction {
-    MechGlob mechGlob;
-    Pattern pattern;
-    GetColor orderCount;
-    LimelightAprilTagDetector detector;
-
-    public LaunchAction(MechGlob mechGlob, GetColor orderCount, LimelightAprilTagDetector detector) {
-        this.mechGlob = mechGlob;
-        this.pattern = Pattern.PPG;
-        this.orderCount = orderCount;
-        this.detector = detector;
-    }
-
-    @Override
-    public boolean run(double elapsedTime) {
-        if (elapsedTime == 0) {
-            if (mechGlob.launch(orderCount.getColor(), detector)) {
-                orderCount.increment();
-            } else if (mechGlob.launch(RequestedColor.EITHER, detector)) {
-                orderCount.increment();
-            }
-            if (mechGlob.launch(orderCount.getColor(), detector)) {
-                orderCount.increment();
-            } else if (mechGlob.launch(RequestedColor.EITHER, detector)) {
-                orderCount.increment();
-            }
-            if (mechGlob.launch(orderCount.getColor(), detector)) {
-                orderCount.increment();
-            } else if (mechGlob.launch(RequestedColor.EITHER, detector)) {
-                orderCount.increment();
-            }
-        }
-        return !mechGlob.isDoneLaunching();    //we are done
-    }
-
-}
-class WaitAction extends RobotAction {
-    double time;
-    public WaitAction(double time) {
-        this.time = time;
-    }
-    @Override
-    public boolean run(double elapsedTime) {
-        return elapsedTime < time;
-    }
-}
-class SpinUpAction extends RobotAction {
-    MechGlob mechGlob;
-    LaunchDistance launchDistance;
-    public SpinUpAction(MechGlob mechGlob, LaunchDistance distance) {
-        this.mechGlob = mechGlob;
-        this.launchDistance = distance;
-    }
-    @Override
-    public boolean run(double elapsedTime) {
-        mechGlob.setLaunchVelocity(launchDistance);
-        return false;
-    }
-}
-
-class PreLaunchAction extends RobotAction {
-    MechGlob mechGlob;
-    GetColor orderCount;
-    public PreLaunchAction(MechGlob mechGlob, GetColor orderCount) {
-        this.orderCount = orderCount;
-        this.mechGlob = mechGlob;
-    }
 
 
-    @Override
-    public boolean run(double elapsedTime) {
-        mechGlob.preLaunch(orderCount.getColor());
-        return false;
-    }
-}
-
-
-class IntakeAction extends RobotAction {
-    double intakeSpeed;
-    MechGlob mechGlob;
-    public IntakeAction(MechGlob mechGlob, double intakeSpeed) {
-        this.intakeSpeed = intakeSpeed;
-        this.mechGlob = mechGlob;
-
-    }
-
-    @Override
-    public boolean run(double elapsedTime) {
-
-        mechGlob.intake(intakeSpeed);
-        return elapsedTime < 3;
-    }
-}
-class GetColor {
-    public int orderCount;   // 0, 1 or 2 to find color pattern
-    public RequestedColor[] array;
-    //Can get rid of
-    public void setPattern(Pattern pattern) {
-        if (pattern == Pattern.GPP) {
-            array = new RequestedColor[] {RequestedColor.GREEN, RequestedColor.PURPLE, RequestedColor.PURPLE};
-        } else if (pattern == Pattern.PGP) {
-            array = new RequestedColor[] {RequestedColor.PURPLE, RequestedColor.GREEN, RequestedColor.PURPLE};
-        } else {
-            array = new RequestedColor[] {RequestedColor.PURPLE, RequestedColor.PURPLE, RequestedColor.GREEN};
-        }
-        orderCount = 0;
-    }
-    //Can get rid of
-    public void increment() {
-        if (orderCount == 2) {
-            orderCount = 0;
-        } else {
-            orderCount++;
-        }
-
-    }
-
-    //Can get rid of
-    public RequestedColor getColor() {
-        return array[orderCount];
-    }
-}
 @Autonomous(name = "Auto", group = "Competition")
 public class CompetitionAuto extends BaseCompetitonMode {
 
