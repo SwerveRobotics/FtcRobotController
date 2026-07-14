@@ -48,9 +48,14 @@ public class CompetitionTeleopNew extends BaseOpMode {
         double amountToTurn = 0  ;
 
         // Wait for Start to be pressed on the Driver Hub!
+
         limelight.start();
         limelight.pipelineSwitch(3);
+        boolean switched = limelight.pipelineSwitch(3);
+        telemetry.addData("Pipeline Switch Success", switched);
+        sleep(1000);
         waitForStart();
+
 
         while (opModeIsActive()) {
             telemetry.addLine("Running TeleOp!");
@@ -78,8 +83,8 @@ public class CompetitionTeleopNew extends BaseOpMode {
             // Set the drive motor powers according to the gamepad input:
             drive.setDrivePowers(new PoseVelocity2d(
                     new Vector2d(
-                        halfLinearHalfCubic(-gamepad1.left_stick_y * doSLOWMODE()),
-                        halfLinearHalfCubic(-gamepad1.left_stick_x * doSLOWMODE())
+                            halfLinearHalfCubic(-gamepad1.left_stick_y * doSLOWMODE()),
+                            halfLinearHalfCubic(-gamepad1.left_stick_x * doSLOWMODE())
                     ),
                     amountToTurn * doSLOWMODE()
             ));
@@ -145,9 +150,10 @@ class VisionAutoAim {
     Telemetry telemetry = null;
 
     // PID TURNING CONSTANTS
-    public static double KP = 1.5;  // makes it faster the further off center it is
+    //todo: TEST THESE VALUES AND KEEP TUNING THEM
+    public static double KP = 1;  // makes it faster the further off center it is
     public static double KI = 0;    // helps correct errors that stay over time
-    public static double KD = 0.1;  // smooths out the turning motion to prevent overshooting
+    public static double KD = 0;  // smooths out the turning motion to prevent overshooting
 
     Limelight3A limelight;
     CompetitionAuto.Alliance alliance;
@@ -167,6 +173,7 @@ class VisionAutoAim {
         LLResult result = limelight.getLatestResult();
         //limelight.get
 
+
         telemetry.addData("Status", limelight.getStatus().toString());
 
         //if no data dont turn
@@ -178,8 +185,14 @@ class VisionAutoAim {
         // Get all detected April Tags
         List<LLResultTypes.FiducialResult> detections = result.getFiducialResults();
 
+        telemetry.addData("Detections before filter", detections.size());
+        for (LLResultTypes.FiducialResult d : detections) {
+            telemetry.addData("Tag ID", d.getFiducialId());
+        }
+
+
         // REMOVE TAGS THAT AREN'T THE GOAL (IDs 21, 22, 23 are the obelisk goal tags)
-        detections.removeIf(d -> d.getFiducialId() != 21 && d.getFiducialId() != 22 && d.getFiducialId() != 23);
+        detections.removeIf(d -> d.getFiducialId() != 20 && d.getFiducialId() != 24);
 
         if (detections.isEmpty()) {
             telemetry.addData("Problem in second if", 0);
