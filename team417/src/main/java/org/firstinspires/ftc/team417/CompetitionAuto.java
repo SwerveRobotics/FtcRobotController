@@ -150,27 +150,48 @@ class BaseCompetitonMode extends BaseOpMode {
             case NEAR:
                 trajectoryAction = drive.actionBuilder(beginPose, poseMap);
                 trajectoryAction = trajectoryAction.setTangent(Math.toRadians(-51))
-                        .stopAndAdd(new SpinUpAction(FLYWHEEL_NEAR_SPEED))
-                        .splineToSplineHeading(new Pose2d(-12, 12,Math.toRadians(135)), Math.toRadians(-51))
-                        .stopAndAdd(new LaunchAction())
-                        .stopAndAdd(new WaitAction(FEEDER_TIME))
+                        .stopAndAdd(new SpinUpAction(FLYWHEEL_NEAR_SPEED-25))
+                        .afterTime( 2,new LaunchAction())
+                        .splineToConstantHeading(new Vector2d(-12, 12), Math.toRadians(-45))
+
+                        .stopAndAdd(new WaitAction(FEEDER_TIME+.5))
                         .setTangent(Math.toRadians(90))
                         .afterDisp(0,new IntakeAction(6))
                         .splineToSplineHeading(new Pose2d(12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake closest from goal
                         .setTangent(Math.toRadians(90))
                         .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(90))
                         .setTangent(Math.toRadians(-90))
-                        .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(-90)) //go to launch position
-                        .stopAndAdd(new LaunchAction())
+                        .splineToConstantHeading(new Vector2d(0,50), Math.toRadians(90))
+                        .setTangent(Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(0,54), Math.toRadians(90))
+                        .setTangent(Math.toRadians(-90))
+                        .splineToConstantHeading(new Vector2d(0,12),Math.toRadians(-90))
+                        .setTangent(Math.toRadians(180))
+                        .afterTime(2.5,new LaunchAction())
+                        .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(180)) //go to launch position
+
                         .stopAndAdd(new WaitAction(FEEDER_TIME));
+                if (intakeCycles > 1) {
+                    trajectoryAction = trajectoryAction.setTangent(Math.toRadians(0))
+                            .splineToSplineHeading(new Pose2d(0,50, Math.toRadians(90)),Math.toRadians(90))
+                            .setTangent(Math.toRadians(-90))
+                            .splineToConstantHeading(new Vector2d(0,24),Math.toRadians(180))
+                            .setTangent(Math.toRadians(180))
+                            .splineToConstantHeading(new Vector2d(-12,32), Math.toRadians(90))
+                            .setTangent(Math.toRadians(90))
+                            .splineToConstantHeading(new Vector2d(-12, 50),Math.toRadians(90))
+                            .afterTime(2,new LaunchAction())
+                            .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(-90));
+                }
                 for (int i = 0; i < intakeCycles; i++) {
                     trajectoryAction = trajectoryAction.setTangent(Math.toRadians(45))
                             .afterDisp(0, new IntakeAction(8))
-                            .splineToSplineHeading(new Pose2d(0, 57, Math.toRadians(90)), Math.toRadians(90)) //go to intake middle from goal
-                            .setTangent(Math.toRadians(0))
-                            .splineToSplineHeading(new Pose2d(20,59,Math.toRadians(120)),Math.toRadians(120))
+                            .splineToSplineHeading(new Pose2d(12, 54, Math.toRadians(130)), Math.toRadians(90)) //go to intake middle from goal
+                            .setTangent(Math.toRadians(-90))
+                            .splineToConstantHeading(new Vector2d(20,56),Math.toRadians(60))
                             .setTangent(Math.toRadians(-123))
-                            .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(180)); //go to launch position
+                            .afterTime(2,new LaunchAction())
+                            .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(180));
 
                 }
                 trajectoryAction = trajectoryAction.stopAndAdd(new WaitAction(FEEDER_TIME))
