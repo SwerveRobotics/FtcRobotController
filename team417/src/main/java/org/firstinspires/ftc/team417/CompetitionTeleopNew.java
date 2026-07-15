@@ -10,6 +10,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
@@ -24,7 +25,7 @@ import java.util.Comparator;
  * This class exposes the competition version of TeleOp. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
-@TeleOp(name="TeleOp", group="Competition")
+@TeleOp(name="CompetitionTeleopNew", group="Competition")
 @Config
 public class CompetitionTeleopNew extends BaseOpMode {
     // TODO: update deadzone  and use in intake if statement.
@@ -55,6 +56,10 @@ public class CompetitionTeleopNew extends BaseOpMode {
 
         while (opModeIsActive()) {
             telemetry.addLine("THe Kdays version of TeleOp is running!!!!");
+
+            telemetry.addData("Upper Flywheel", upperFlywheelMot.getVelocity());
+            telemetry.addData("LOWER Flywheel", lowerFlywheelMot.getVelocity());
+
             // AUTO-AIM CONTROLS
             // if right bumper was pressed create auto aim object
             if (gamepad1.rightBumperWasPressed()) {
@@ -155,7 +160,10 @@ class VisionAutoAim {
     public static double KD = 0.0;  // smooths out the turning motion to prevent overshooting
     public static double KP = 0.05;  // makes it faster the further off center it is
 
-    public static double ALIGNMENT_OFFSET = -5;  // ADD HERE
+    public static double ALIGNMENT_OFFSET = 3;  // ADD HERE
+    public static double ALIGNMENT_OFFSET_NEAR = 0; // offset when near
+    double distance = 0;
+    public static double distance_aprilTag = 0;
 
     Limelight3A limelight;
     CompetitionAuto.Alliance alliance;
@@ -217,23 +225,37 @@ class VisionAutoAim {
 
         // Only reaches here if target is NOT null
         telemetry.addData("Tag Detected", target.getFiducialId());
+        // Get target pose relative to camera
+        Pose3D targetPose = target.getTargetPoseRobotSpace();
+
+        if (targetPose != null) {
+            double x = targetPose.getPosition().x;
+            double y = targetPose.getPosition().y;
+            double z = targetPose.getPosition().z;
+
+            // Distance = straight line from camera to tag
+            distance = Math.sqrt(x*x + y*y + z*z);
+
+            telemetry.addData("Distance to Tag", String.format("%.2f inches", distance));
+        }
+        double setpointOffset;
+        if (distance > distance_aprilTag) {
+            setpointOffset = ALIGNMENT_OFFSET;
+            telemetry.addData("Distance Mode", "FAR");
+        } else {
+            setpointOffset = ALIGNMENT_OFFSET_NEAR;
+            telemetry.addData("Distance Mode", "NEAR");
+        }
 
 
-        // horizontal offset
         // (negative = tag is to the left, positive = tag is to the right)
         double tx = target.getTargetXDegrees();
 
         // (goal is to get tx to 0, which means centered)
-        double pidOutput = pid.calculate(tx, ALIGNMENT_OFFSET);
+        double pidOutput = pid.calculate(tx, setpointOffset);
 
 
-        // SEND DEBUG INFO TO TELEMETRY
-        telemetry.addData("tx", tx);
-
-
-        // Make sure the output stays between -1 and 1, then send it back
         return pidOutput;
-        //Math.max(-1, Math.min(1, pidOutput));
     }
 }
 class PIDControllerNEW {
