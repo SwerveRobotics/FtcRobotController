@@ -2,6 +2,7 @@ package org.firstinspires.ftc.team417;
 
 
 
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
@@ -12,7 +13,6 @@ import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.team417.roadrunner.Drawing;
 import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
 
-/** IMPORTS FOR AUTO-AIM**/
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -25,9 +25,10 @@ import java.util.Comparator;
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
 @TeleOp(name="TeleOp", group="Competition")
+@Config
 public class CompetitionTeleopNew extends BaseOpMode {
     // TODO: update deadzone  and use in intake if statement.
-    public static double JOYSTICK_DEADZONE = 0.1;
+    //public static double JOYSTICK_DEADZONE = 0.1;
     @Override
     public void runOpMode() {
         initializeHardware();
@@ -48,14 +49,9 @@ public class CompetitionTeleopNew extends BaseOpMode {
         double amountToTurn = 0  ;
 
         // Wait for Start to be pressed on the Driver Hub!
-
         limelight.start();
         limelight.pipelineSwitch(3);
-        boolean switched = limelight.pipelineSwitch(3);
-        telemetry.addData("Pipeline Switch Success", switched);
-        sleep(1000);
         waitForStart();
-
 
         while (opModeIsActive()) {
             telemetry.addLine("Running TeleOp!");
@@ -149,15 +145,15 @@ public class CompetitionTeleopNew extends BaseOpMode {
     }
 
 }
-
+@Config
 class VisionAutoAim {
     Telemetry telemetry = null;
 
     // PID TURNING CONSTANTS
-    //todo: TEST THESE VALUES AND KEEP TUNING THEM
-    public static double KP = 1;  // makes it faster the further off center it is
-    public static double KI = 0;    // helps correct errors that stay over time
-    public static double KD = 0;  // smooths out the turning motion to prevent overshooting
+    //Todo TUNE THESE VALUES
+    public static double KP = 0;  // makes it faster the further off center it is
+    public static double KI = 0.5;    // helps correct errors that stay over time
+    public static double KD = 0.5;  // smooths out the turning motion to prevent overshooting
 
     Limelight3A limelight;
     CompetitionAuto.Alliance alliance;
@@ -167,7 +163,7 @@ class VisionAutoAim {
         this.telemetry = telemetry;
         this.limelight = limelight;
         this.alliance = alliance;
-        pid = new PIDControllerNEW(KP, KI, KD);
+        pid = new PIDControllerNEW();
     }
     // MAIN AUTO-AIM METHOD
     // This method looks at the camera and returns how much the robot should turn
@@ -176,7 +172,6 @@ class VisionAutoAim {
         // get updated limelight data
         LLResult result = limelight.getLatestResult();
         //limelight.get
-
 
         telemetry.addData("Status", limelight.getStatus().toString());
 
@@ -189,14 +184,8 @@ class VisionAutoAim {
         // Get all detected April Tags
         List<LLResultTypes.FiducialResult> detections = result.getFiducialResults();
 
-        telemetry.addData("Detections before filter", detections.size());
-        for (LLResultTypes.FiducialResult d : detections) {
-            telemetry.addData("Tag ID", d.getFiducialId());
-        }
-
-
         // REMOVE TAGS THAT AREN'T THE GOAL (IDs 21, 22, 23 are the obelisk goal tags)
-        detections.removeIf(d -> d.getFiducialId() != 20 && d.getFiducialId() != 24);
+        detections.removeIf(d -> d.getFiducialId() != 21 && d.getFiducialId() != 22 && d.getFiducialId() != 23);
 
         if (detections.isEmpty()) {
             telemetry.addData("Problem in second if", 0);
@@ -218,7 +207,6 @@ class VisionAutoAim {
                     .max(Comparator.comparingDouble(LLResultTypes.FiducialResult::getTargetXDegrees))
                     .orElse(null);
         }
-        //if (target == null) return 0;
 
         if (target == null) {
             telemetry.addData("Debug", "No valid target found");
@@ -246,9 +234,9 @@ class VisionAutoAim {
 }
 
 class PIDControllerNEW {
-    private final double kP;
-    private final double kI;
-    private final double kD;
+//    private final double kP;
+//    private final double kI;
+//    private final double kD;
     private double setpoint;
     private double previousError = 0;
     private double integral = 0;
@@ -257,11 +245,11 @@ class PIDControllerNEW {
     private long lastTimestamp = System.nanoTime();
 
 
-    public PIDControllerNEW(double kP, double kI, double kD) {
-        this.kP = kP;
-        this.kI = kI;
-        this.kD = kD;
-    }
+    public PIDControllerNEW() {
+//        this.kP = kP;
+//        this.kI = kI;
+//        this.kD = kD;
+        }
 
     //Calculate how much to turn (simplified version that assumes we want to hit 0)
     public double calculate(double currentValue) {
@@ -287,7 +275,7 @@ class PIDControllerNEW {
 
         // Combine the three components to calculate the turn power
         // P makes it respond quickly, I makes it more accurate, D smooths it out
-        double output = (kP * error) + (kI * integral) + (kD * derivative);
+        double output = (VisionAutoAim.KP * error) + (VisionAutoAim.KI * integral) + (VisionAutoAim.KD * derivative);
 
         // keep it between limits
         output = Math.max(outputMin, Math.min(outputMax, output));
@@ -298,7 +286,6 @@ class PIDControllerNEW {
         return output;
     }
 }
-
 
 
 
