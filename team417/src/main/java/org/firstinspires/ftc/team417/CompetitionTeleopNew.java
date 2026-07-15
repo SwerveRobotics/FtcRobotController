@@ -54,7 +54,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            telemetry.addLine("Running TeleOp!");
+            telemetry.addLine("THe Kdays version of TeleOp is running!!!!");
             // AUTO-AIM CONTROLS
             // if right bumper was pressed create auto aim object
             if (gamepad1.rightBumperWasPressed()) {
@@ -151,9 +151,11 @@ class VisionAutoAim {
 
     // PID TURNING CONSTANTS
     //Todo TUNE THESE VALUES
-    public static double KP = 0;  // makes it faster the further off center it is
-    public static double KI = 0.5;    // helps correct errors that stay over time
-    public static double KD = 0.5;  // smooths out the turning motion to prevent overshooting
+    public static double KI = 0;    // helps correct errors that stay over time
+    public static double KD = 0.0;  // smooths out the turning motion to prevent overshooting
+    public static double KP = 0.05;  // makes it faster the further off center it is
+
+    public static double ALIGNMENT_OFFSET = -5;  // ADD HERE
 
     Limelight3A limelight;
     CompetitionAuto.Alliance alliance;
@@ -173,7 +175,7 @@ class VisionAutoAim {
         LLResult result = limelight.getLatestResult();
         //limelight.get
 
-        telemetry.addData("Status", limelight.getStatus().toString());
+        //telemetry.addData("Status", limelight.getStatus().toString());
 
         //if no data dont turn
         if (result == null || !result.isValid()) {
@@ -185,7 +187,7 @@ class VisionAutoAim {
         List<LLResultTypes.FiducialResult> detections = result.getFiducialResults();
 
         // REMOVE TAGS THAT AREN'T THE GOAL (IDs 21, 22, 23 are the obelisk goal tags)
-        detections.removeIf(d -> d.getFiducialId() != 21 && d.getFiducialId() != 22 && d.getFiducialId() != 23);
+        detections.removeIf(d -> d.getFiducialId() != 20 && d.getFiducialId() != 24);
 
         if (detections.isEmpty()) {
             telemetry.addData("Problem in second if", 0);
@@ -222,17 +224,18 @@ class VisionAutoAim {
         double tx = target.getTargetXDegrees();
 
         // (goal is to get tx to 0, which means centered)
-        double pidOutput = pid.calculate(tx, 0);
+        double pidOutput = pid.calculate(tx, ALIGNMENT_OFFSET);
+
 
         // SEND DEBUG INFO TO TELEMETRY
         telemetry.addData("tx", tx);
 
 
         // Make sure the output stays between -1 and 1, then send it back
-        return Math.max(-1, Math.min(1, pidOutput));
+        return pidOutput;
+        //Math.max(-1, Math.min(1, pidOutput));
     }
 }
-
 class PIDControllerNEW {
 //    private final double kP;
 //    private final double kI;
@@ -270,8 +273,8 @@ class PIDControllerNEW {
         // (helps eliminate small persistent errors)
         integral += error * dt;
 
-        // jow quickly error is changing
-        double derivative = (error - previousError) / dt;
+        // how quickly error is changing
+        double derivative = (error - previousError);
 
         // Combine the three components to calculate the turn power
         // P makes it respond quickly, I makes it more accurate, D smooths it out
