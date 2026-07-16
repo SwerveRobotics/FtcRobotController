@@ -151,48 +151,52 @@ class BaseCompetitonMode extends BaseOpMode {
                 trajectoryAction = drive.actionBuilder(beginPose, poseMap);
                 trajectoryAction = trajectoryAction.setTangent(Math.toRadians(-51))
                         .stopAndAdd(new SpinUpAction(FLYWHEEL_NEAR_SPEED-25))
-                        .afterTime( 2,new LaunchAction())
+                        .afterTime( 1.75,new LaunchAction())
                         .splineToConstantHeading(new Vector2d(-12, 12), Math.toRadians(-45))
 
                         .stopAndAdd(new WaitAction(FEEDER_TIME+.5))
                         .setTangent(Math.toRadians(90))
-                        .afterDisp(0,new IntakeAction(6))
-                        .splineToSplineHeading(new Pose2d(12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake closest from goal
+                        .afterDisp(0,new IntakeAction(8))
+                        .splineToSplineHeading(new Pose2d(-12, 32, Math.toRadians(90)), Math.toRadians(90)) //go to intake closest from goal
                         .setTangent(Math.toRadians(90))
-                        .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(-12, 48), Math.toRadians(90))
                         .setTangent(Math.toRadians(-90))
-                        .splineToConstantHeading(new Vector2d(0,50), Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(-4,48), Math.toRadians(90))
                         .setTangent(Math.toRadians(90))
-                        .splineToConstantHeading(new Vector2d(0,54), Math.toRadians(90))
+                        .splineToConstantHeading(new Vector2d(-4,54), Math.toRadians(90))
                         .setTangent(Math.toRadians(-90))
-                        .splineToConstantHeading(new Vector2d(0,12),Math.toRadians(-90))
-                        .setTangent(Math.toRadians(180))
-                        .afterTime(2.5,new LaunchAction())
+                        .afterTime(2,new LaunchAction())
                         .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(180)) //go to launch position
 
-                        .stopAndAdd(new WaitAction(FEEDER_TIME));
+                        .stopAndAdd(new WaitAction(1));
                 if (intakeCycles > 1) {
-                    trajectoryAction = trajectoryAction.setTangent(Math.toRadians(0))
-                            .splineToSplineHeading(new Pose2d(0,50, Math.toRadians(90)),Math.toRadians(90))
-                            .setTangent(Math.toRadians(-90))
-                            .splineToConstantHeading(new Vector2d(0,24),Math.toRadians(180))
-                            .setTangent(Math.toRadians(180))
-                            .splineToConstantHeading(new Vector2d(-12,32), Math.toRadians(90))
+                    trajectoryAction = trajectoryAction.setTangent(Math.toRadians(90))
+//                            .splineToSplineHeading(new Pose2d(0,50, Math.toRadians(90)),Math.toRadians(90))
+//                            .setTangent(Math.toRadians(-90))
+//                            .splineToConstantHeading(new Vector2d(0,24),Math.toRadians(180))
+//                            .setTangent(Math.toRadians(180))
+                            .afterDisp(0,new IntakeAction(7))
+                            .splineToSplineHeading(new Pose2d(12, 24,Math.toRadians(90)), Math.toRadians(90))
                             .setTangent(Math.toRadians(90))
-                            .splineToConstantHeading(new Vector2d(-12, 50),Math.toRadians(90))
-                            .afterTime(2,new LaunchAction())
-                            .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(-90));
-                }
-                for (int i = 0; i < intakeCycles; i++) {
-                    trajectoryAction = trajectoryAction.setTangent(Math.toRadians(45))
-                            .afterDisp(0, new IntakeAction(8))
-                            .splineToSplineHeading(new Pose2d(12, 54, Math.toRadians(130)), Math.toRadians(90)) //go to intake middle from goal
-                            .setTangent(Math.toRadians(-90))
-                            .splineToConstantHeading(new Vector2d(20,56),Math.toRadians(60))
-                            .setTangent(Math.toRadians(-123))
-                            .afterTime(2,new LaunchAction())
-                            .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(180));
+                            .splineToConstantHeading(new Vector2d(12, 50), Math.toRadians(90))
+                            .afterTime(2, new LaunchAction())
 
+                            .setTangent(Math.toRadians(-90))
+                            .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(-90))
+                            .stopAndAdd(new WaitAction(FEEDER_TIME));
+
+                    for (int i = 2; i < intakeCycles; i++) {
+                        trajectoryAction = trajectoryAction.setTangent(Math.toRadians(45))
+                                .afterDisp(0, new IntakeAction(8))
+                                .splineToSplineHeading(new Pose2d(10, 56, Math.toRadians(120)), Math.toRadians(90)) //go to intake middle from goal
+                                .setTangent(Math.toRadians(-90))
+                                .splineToSplineHeading(new Pose2d(18, 56,Math.toRadians(145)), Math.toRadians(60))
+                                .setTangent(Math.toRadians(-123))
+                                .afterTime(2, new LaunchAction())
+                                .splineToSplineHeading(new Pose2d(-12, 12, Math.toRadians(135)), Math.toRadians(180))
+                                .stopAndAdd(new WaitAction(FEEDER_TIME));
+
+                    }
                 }
                 trajectoryAction = trajectoryAction.stopAndAdd(new WaitAction(FEEDER_TIME))
                         .setTangent(Math.toRadians(45))

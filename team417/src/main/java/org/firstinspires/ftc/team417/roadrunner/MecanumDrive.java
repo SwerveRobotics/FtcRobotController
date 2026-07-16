@@ -79,7 +79,7 @@ import java.util.List;
 public final class MecanumDrive {
     public static class Params {
         Params() {
-            maxWheelVel = 50;
+            maxWheelVel = 70;
             minProfileAccel = -30;
             maxProfileAccel = 50;
 
@@ -158,7 +158,7 @@ public final class MecanumDrive {
                 lateralInPerTick = 0.714;
                 trackWidthTicks = 15.05;
 
-                kS = 0.895;
+                kS = 1.023;
                 kV = 0.185;
                 kA = 0.0180;
 
