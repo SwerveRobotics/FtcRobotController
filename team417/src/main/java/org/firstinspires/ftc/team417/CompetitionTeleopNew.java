@@ -2,6 +2,9 @@ package org.firstinspires.ftc.team417;
 
 
 
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad2;
+import static org.firstinspires.ftc.team417.BaseOpMode.FLYWHEEL_NEAR_SPEED;
+
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
@@ -19,8 +22,13 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import java.util.List;
 import java.util.Comparator;
-
-
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 /**
  * This class exposes the competition version of TeleOp. As a general rule, add code to the
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
@@ -28,10 +36,12 @@ import java.util.Comparator;
 @TeleOp(name="CompetitionTeleopNew", group="Competition")
 @Config
 public class CompetitionTeleopNew extends BaseOpMode {
+    public boolean farLaunchMode = false;
     // TODO: update deadzone  and use in intake if statement.
     //public static double JOYSTICK_DEADZONE = 0.1;
     @Override
     public void runOpMode() {
+
         initializeHardware();
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
@@ -55,7 +65,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
         waitForStart();
 
         while (opModeIsActive()) {
-            telemetry.addLine("THe Kdays version of TeleOp is running!!!!");
+            telemetry.addLine("The updated version of TeleOp is running!!!!");
 
             telemetry.addData("Upper Flywheel", upperFlywheelMot.getVelocity());
             telemetry.addData("LOWER Flywheel", lowerFlywheelMot.getVelocity());
@@ -63,7 +73,7 @@ public class CompetitionTeleopNew extends BaseOpMode {
             // AUTO-AIM CONTROLS
             // if right bumper was pressed create auto aim object
             if (gamepad1.rightBumperWasPressed()) {
-                visionAutoAim = new VisionAutoAim(telemetry, limelight, alliance);
+                visionAutoAim = new VisionAutoAim(telemetry, limelight, alliance, farLaunchMode);
             }
 
             //if right bumper is held use auto aim
@@ -117,11 +127,13 @@ public class CompetitionTeleopNew extends BaseOpMode {
             if (gamepad2.dpadUpWasPressed()) {
                 upperFlywheelMot.setVelocity(FLYWHEEL_FAR_SPEED - FLYWHEEL_BACKSPIN);
                 lowerFlywheelMot.setVelocity(FLYWHEEL_FAR_SPEED + FLYWHEEL_BACKSPIN);
-            } else if (gamepad2.dpadDownWasPressed()) {
+                farLaunchMode= true;
+            } else if (gamepad2.dpadUpWasReleased() || gamepad2.dpad_down) {
                 upperFlywheelMot.setVelocity(FLYWHEEL_NEAR_SPEED - FLYWHEEL_BACKSPIN);
                 lowerFlywheelMot.setVelocity(FLYWHEEL_NEAR_SPEED + FLYWHEEL_BACKSPIN);
-            } else if (gamepad2.dpadRightWasPressed()) {
-                // turns off the flywheels
+                farLaunchMode= false;
+
+            } else if (gamepad2.dpadRightWasPressed()) {  // Keep this as WasPressed
                 upperFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
                 lowerFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
             }
@@ -153,14 +165,13 @@ public class CompetitionTeleopNew extends BaseOpMode {
 @Config
 class VisionAutoAim {
     Telemetry telemetry = null;
-
     // PID TURNING CONSTANTS
     //Todo TUNE THESE VALUES
     public static double KI = 0;    // helps correct errors that stay over time
     public static double KD = 0.0;  // smooths out the turning motion to prevent overshooting
     public static double KP = 0.05;  // makes it faster the further off center it is
 
-    public static double ALIGNMENT_OFFSET = 3;  // ADD HERE
+    public static double ALIGNMENT_OFFSET_FAR = 3;  // ADD HERE
     public static double ALIGNMENT_OFFSET_NEAR = 0; // offset when near
     double distance = 0;
     public static double distance_aprilTag = 0;
@@ -169,12 +180,16 @@ class VisionAutoAim {
     CompetitionAuto.Alliance alliance;
     PIDControllerNEW pid;
     // Set up the auto-aim system with the limelight camera and alliance color
-    VisionAutoAim(Telemetry telemetry, Limelight3A limelight, CompetitionAuto.Alliance alliance) {
+    boolean outer;
+
+    VisionAutoAim(Telemetry telemetry, Limelight3A limelight, CompetitionAuto.Alliance alliance, boolean outer) {
         this.telemetry = telemetry;
         this.limelight = limelight;
         this.alliance = alliance;
+        this.outer = outer;
         pid = new PIDControllerNEW();
     }
+
     // MAIN AUTO-AIM METHOD
     // This method looks at the camera and returns how much the robot should turn
 
@@ -182,12 +197,11 @@ class VisionAutoAim {
         // get updated limelight data
         LLResult result = limelight.getLatestResult();
         //limelight.get
-
         //telemetry.addData("Status", limelight.getStatus().toString());
 
         //if no data dont turn
         if (result == null || !result.isValid()) {
-            telemetry.addData("Problem in first if", result);
+            //telemetry.addData("Problem in first if", result);
             return 0;
         }
 
@@ -198,7 +212,7 @@ class VisionAutoAim {
         detections.removeIf(d -> d.getFiducialId() != 20 && d.getFiducialId() != 24);
 
         if (detections.isEmpty()) {
-            telemetry.addData("Problem in second if", 0);
+            //telemetry.addData("Problem in second if", 0);
             return 0;
         }
 
@@ -206,6 +220,7 @@ class VisionAutoAim {
         LLResultTypes.FiducialResult target = null;
 
         telemetry.update();
+
         if (alliance == CompetitionAuto.Alliance.RED) {
             // RED
             target = detections.stream()
@@ -229,37 +244,47 @@ class VisionAutoAim {
         Pose3D targetPose = target.getTargetPoseRobotSpace();
 
         if (targetPose != null) {
-            double x = targetPose.getPosition().x;
-            double y = targetPose.getPosition().y;
-            double z = targetPose.getPosition().z;
+//            double x = targetPose.getPosition().x;
+//            double y = targetPose.getPosition().y;
+//            double z = targetPose.getPosition().z;
+//
+//            // Distance = straight line from camera to tag
+//            distance = Math.sqrt(x*x + y*y + z*z);
+//
+//            telemetry.addData("Distance to Tag", String.format("%.2f inches", distance_aprilTag));
+//        }
+//        double setpointOffset;
+//        if (distance > distance_aprilTag) {
+//            setpointOffset = ALIGNMENT_OFFSET;
+//            telemetry.addData("Distance Mode:", "FAR");
+//        } else {
+//            setpointOffset = ALIGNMENT_OFFSET_NEAR;
+//            telemetry.addData("Distance Mode:", "NEAR");
+//        }
 
-            // Distance = straight line from camera to tag
-            distance = Math.sqrt(x*x + y*y + z*z);
+            double setpointOffset;
 
-            telemetry.addData("Distance to Tag", String.format("%.2f inches", distance));
+            if (outer) {
+                setpointOffset = ALIGNMENT_OFFSET_FAR;
+                telemetry.addData("Launch Mode", "FAR");
+            } else {
+                setpointOffset = ALIGNMENT_OFFSET_NEAR;
+                telemetry.addData("Launch Mode", "NEAR");
+            }
+
+            // (negative = tag is to the left, positive = tag is to the right)
+            double tx = target.getTargetXDegrees();
+
+            // (goal is to get tx to 0, which means centered)
+            double pidOutput = pid.calculate(tx, setpointOffset);
+
+
+            return pidOutput;
         }
-        double setpointOffset;
-        if (distance > distance_aprilTag) {
-            setpointOffset = ALIGNMENT_OFFSET;
-            telemetry.addData("Distance Mode", "FAR");
-        } else {
-            setpointOffset = ALIGNMENT_OFFSET_NEAR;
-            telemetry.addData("Distance Mode", "NEAR");
-        }
-
-
-        // (negative = tag is to the left, positive = tag is to the right)
-        double tx = target.getTargetXDegrees();
-
-        // (goal is to get tx to 0, which means centered)
-        double pidOutput = pid.calculate(tx, setpointOffset);
-
-
-        return pidOutput;
+        return 0;
     }
-}
 class PIDControllerNEW {
-//    private final double kP;
+    //    private final double kP;
 //    private final double kI;
 //    private final double kD;
     private double setpoint;
@@ -274,7 +299,7 @@ class PIDControllerNEW {
 //        this.kP = kP;
 //        this.kI = kI;
 //        this.kD = kD;
-        }
+    }
 
     //Calculate how much to turn (simplified version that assumes we want to hit 0)
     public double calculate(double currentValue) {
@@ -310,7 +335,7 @@ class PIDControllerNEW {
 
         return output;
     }
-}
+}}
 
 
 
