@@ -13,9 +13,7 @@ public class WilyHardwareDevice implements HardwareDevice {
     }
 
     @Override
-    public String getDeviceName() {
-        return "";
-    }
+    public String getDeviceName() { return ""; }
 
     @Override
     public String getConnectionInfo() {

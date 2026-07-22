@@ -1,17 +1,16 @@
 package com.wilyworks.simulator.framework;
 
+import static org.firstinspires.ftc.robotcore.external.Telemetry.DisplayFormat;
 import static java.awt.Font.MONOSPACED;
 import static java.awt.font.TextAttribute.POSTURE_REGULAR;
 import static java.awt.font.TextAttribute.WEIGHT_REGULAR;
 
-import org.firstinspires.ftc.robotcore.external.Func;
-import org.firstinspires.ftc.robotcore.external.Telemetry;
-
-import static org.firstinspires.ftc.robotcore.external.Telemetry.DisplayFormat;
-
 import androidx.annotation.Nullable;
 
 import com.qualcomm.robotcore.robocol.TelemetryMessage;
+
+import org.firstinspires.ftc.robotcore.external.Func;
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 
 import java.awt.Canvas;
 import java.awt.Color;
@@ -517,12 +516,66 @@ class WilyLine implements Telemetry.Line {
     }
 }
 
+class WilyLog implements Telemetry.Log {
+    LinkedList<String> lines = new LinkedList<>();
+    DisplayOrder displayOrder = DisplayOrder.OLDEST_FIRST;
+    int capacity = 9;
+
+    @Override
+    public int getCapacity() {
+        return capacity;
+    }
+
+    @Override
+    public void setCapacity(int capacity) {
+        this.capacity = capacity;
+    }
+
+    @Override
+    public DisplayOrder getDisplayOrder() {
+        return displayOrder;
+    }
+
+    @Override
+    public void setDisplayOrder(DisplayOrder displayOrder) {
+        this.displayOrder = displayOrder;
+    }
+
+    @Override
+    public void add(String entry) {
+        lines.add(entry);
+        if (lines.size() > capacity)
+            lines.removeFirst();
+    }
+
+    @Override
+    public void add(String format, Object... args) {
+        add(String.format(format, args));
+    }
+
+    @Override
+    public void clear() {
+        lines.clear();
+    }
+
+    // This is a private function called by Telemetry.update() to add all of the lines
+    // of the log to the telemetry:
+    public void get(List<String> telemetry) {
+        if (displayOrder == DisplayOrder.OLDEST_FIRST) {
+            telemetry.addAll(lines);
+        } else {
+            Iterator<String> iterator = lines.descendingIterator();
+            while (iterator.hasNext()) {
+                telemetry.add(iterator.next());
+            }
+        }
+    }
+}
+
 /**
  * This class implements a lightweight emulation of FTC Telemetry that can run on the PC.
  */
 public class WilyTelemetry implements Telemetry {
-    final int MAX_LINES = 36; // It's 18 with a regular sized font
-
     // Global state:
     public static WilyTelemetry instance;
 
@@ -532,6 +585,7 @@ public class WilyTelemetry implements Telemetry {
     ArrayList<String> lineList = new ArrayList<>();
     DisplayFormat displayFormat = DisplayFormat.CLASSIC; // HTML vs. monospace modes
     Layout layout = new Layout();
+    WilyLog log = new WilyLog();
 
     // Wily Works constructor for a Telemetry object:
     public WilyTelemetry(java.awt.Image icon) {
@@ -544,15 +598,13 @@ public class WilyTelemetry implements Telemetry {
     }
 
     public Line addLine(String string) {
-        if (lineList.size() <= MAX_LINES) {
-            int newLineIndex;
-            while ((newLineIndex = string.indexOf("\n")) != -1) {
-                String line = string.substring(0, newLineIndex);
-                lineList.add(line);
-                string = string.substring(newLineIndex + 1);
-            }
-            lineList.add(string);
+        int newLineIndex;
+        while ((newLineIndex = string.indexOf("\n")) != -1) {
+            String line = string.substring(0, newLineIndex);
+            lineList.add(line);
+            string = string.substring(newLineIndex + 1);
         }
+        lineList.add(string);
         return new WilyLine(this);
     }
 
@@ -600,11 +652,12 @@ public class WilyTelemetry implements Telemetry {
 
     @Override
     public Log log() {
-        return null;
+        return log;
     }
 
     public Item addData(String caption, Object value) {
-        addLine(String.format("%s : %s", caption, value.toString()));
+        String string = (value == null) ? "null" : value.toString();
+        addLine(String.format("%s : %s", caption, string));
         return null; // ###
     }
 
@@ -651,6 +704,7 @@ public class WilyTelemetry implements Telemetry {
     public boolean update() {
         Graphics2D g = (Graphics2D) canvas.getBufferStrategy().getDrawGraphics();
         g.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        log.get(lineList); // Append the log to the line list
         layout.parseAndRender(g, displayFormat, lineList);
         g.dispose();
 

@@ -1,0 +1,322 @@
+package org.firstinspires.ftc.team417;
+
+
+
+import static org.firstinspires.ftc.robotcore.external.BlocksOpModeCompanion.gamepad2;
+import static org.firstinspires.ftc.team417.BaseOpMode.FLYWHEEL_NEAR_SPEED;
+
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
+import com.acmerobotics.roadrunner.Pose2d;
+import com.acmerobotics.roadrunner.PoseVelocity2d;
+import com.acmerobotics.roadrunner.Vector2d;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+
+import org.firstinspires.ftc.robotcore.external.Telemetry;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.team417.roadrunner.Drawing;
+import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
+
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import java.util.List;
+/**
+ * This class exposes the competition version of TeleOp. As a general rule, add code to the
+ * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
+ */
+@TeleOp(name="CompetitionTeleopNew", group="Competition")
+@Config
+public class CompetitionTeleopNew extends BaseOpMode {
+    public boolean farLaunchMode = false;
+    // TODO: update deadzone  and use in intake if statement.
+    //public static double JOYSTICK_DEADZONE = 0.1;
+    @Override
+    public void runOpMode() {
+
+        initializeHardware();
+        Pose2d beginPose = new Pose2d(0, 0, 0);
+        MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
+        // AUTO-AIM Variables
+
+        // GET THE LIMELIGHT HARDWARE
+        Limelight3A limelight = hardwareMap.get(Limelight3A.class, "limelight");
+
+        // CREATE AUTO-AIM OBJECT (null (empty) until button pressed)
+        VisionAutoAim visionAutoAim = null;
+
+        // SET ALLIANCE COLOR (change to red if red alliance)
+        CompetitionAuto.Alliance alliance = CompetitionAuto.Alliance.BLUE;
+
+        // VARIABLE TO STORE HOW MUCH TO TURN
+        double amountToTurn = 0  ;
+
+        // Wait for Start to be pressed on the Driver Hub!
+        limelight.start();
+        limelight.pipelineSwitch(3);
+        waitForStart();
+
+        while (opModeIsActive()) {
+            telemetry.addLine("The updated version of TeleOp is running!!!!");
+
+            telemetry.addData("Upper Flywheel", upperFlywheelMot.getVelocity());
+            telemetry.addData("LOWER Flywheel", lowerFlywheelMot.getVelocity());
+
+            // AUTO-AIM CONTROLS
+            // if right bumper was pressed create auto aim object
+            if (gamepad1.rightBumperWasPressed()) {
+                visionAutoAim = new VisionAutoAim(telemetry, limelight, alliance, farLaunchMode);
+            }
+
+            //if right bumper is held use auto aim
+            if (gamepad1.right_bumper && visionAutoAim != null) {
+                // GET TURN POWER FROM LIMELIGHT
+                amountToTurn = visionAutoAim.get();
+                telemetry.addData("AutoAim", "ON");
+                telemetry.addData("amountToTurn", amountToTurn);
+
+            } else {
+                // ELSE USE MANUAL JOYSTICK CONTROL
+                amountToTurn = -gamepad1.right_stick_x;
+                telemetry.addData("AutoAim", "OFF");
+            }
+
+
+
+
+            // Set the drive motor powers according to the gamepad input:
+            drive.setDrivePowers(new PoseVelocity2d(
+                    new Vector2d(
+                            halfLinearHalfCubic(-gamepad1.left_stick_y * doSLOWMODE()),
+                            halfLinearHalfCubic(-gamepad1.left_stick_x * doSLOWMODE())
+                    ),
+                    amountToTurn * doSLOWMODE()
+            ));
+
+
+            // Update the current pose:
+            drive.updatePoseEstimate();
+            // 'packet' is the object used to send data to FTC Dashboard:
+            TelemetryPacket packet = MecanumDrive.getTelemetryPacket();
+
+            // Do the work now for all active Road Runner actions, if any:
+            drive.doActionsWork(packet);
+
+            // Draw the robot and field:
+            packet.fieldOverlay().setStroke("#3F51B5");
+            Drawing.drawRobot(packet.fieldOverlay(), drive.pose);
+            MecanumDrive.sendTelemetryPacket(packet);
+
+            // intake controls
+            if (gamepad2.left_stick_y > 0.05) {
+                intakeMot.setPower(1);
+            } else if (gamepad2.left_stick_y < -0.05){
+                intakeMot.setPower(-1);
+            } else {
+                intakeMot.setPower(0);
+            }
+            //launch controls
+            if (gamepad2.dpad_up) {
+                upperFlywheelMot.setVelocity(FLYWHEEL_FAR_SPEED - FLYWHEEL_BACKSPIN);
+                lowerFlywheelMot.setVelocity(FLYWHEEL_FAR_SPEED + FLYWHEEL_BACKSPIN);
+                farLaunchMode= true;
+            } else if (gamepad2.dpad_down) {
+                upperFlywheelMot.setVelocity(FLYWHEEL_NEAR_SPEED - FLYWHEEL_BACKSPIN);
+                lowerFlywheelMot.setVelocity(FLYWHEEL_NEAR_SPEED + FLYWHEEL_BACKSPIN);
+                farLaunchMode= false;
+
+            } else if (gamepad2.dpadRightWasPressed()) {  // Keep this as WasPressed
+                upperFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
+                lowerFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
+            }
+
+            // Fire shot
+            if (gamepad2.y) {
+                transferWheelMot.setPower(1);
+                intakeMot.setPower(1);
+            } else {
+                transferWheelMot.setPower(0);
+            }
+
+            telemetry.update();
+
+        }
+    }
+    public double doSLOWMODE() {
+        if (gamepad1.right_trigger != 0) {
+            return ((-gamepad1.right_trigger + 1)/2) + 0.5;
+        } else {
+            return 1;
+        }
+    }
+    public static double halfLinearHalfCubic(double input) {
+        return (Math.pow(input, 3) + input) / 2;
+    }
+
+}
+@Config
+class VisionAutoAim {
+    Telemetry telemetry = null;
+    // PID TURNING CONSTANTS
+    //Todo TUNE THESE VALUES
+    public static double KI = 0;    // helps correct errors that stay over time
+    public static double KD = 0.0;  // smooths out the turning motion to prevent overshooting
+    public static double KP = 0.05;  // makes it faster the further off center it is
+
+    public static double ALIGNMENT_OFFSET_FAR = 3;  // ADD HERE
+    public static double ALIGNMENT_OFFSET_NEAR = 0; // offset when near
+
+    Limelight3A limelight;
+    CompetitionAuto.Alliance alliance;
+    PIDControllerNEW pid;
+    // Set up the auto-aim system with the limelight camera and alliance color
+    boolean outer;
+
+    VisionAutoAim(Telemetry telemetry, Limelight3A limelight, CompetitionAuto.Alliance alliance, boolean outer) {
+        this.telemetry = telemetry;
+        this.limelight = limelight;
+        this.alliance = alliance;
+        this.outer = outer;
+        pid = new PIDControllerNEW();
+    }
+
+    // This method looks at the camera and returns how much the robot should turn
+    public double get() {
+        // get updated limelight data
+        LLResult result = limelight.getLatestResult();
+        //telemetry.addData("Status", limelight.getStatus().toString());
+
+        //if no data dont turn
+        if (result == null || !result.isValid()) {
+            //telemetry.addData("Problem in first if", result);
+            return 0;
+        }
+
+        // Get all detected April Tags
+        List<LLResultTypes.FiducialResult> detections = result.getFiducialResults();
+
+        // REMOVE TAGS THAT AREN'T THE GOAL (IDs 21, 22, 23 are the obelisk goal tags)
+        detections.removeIf(d -> d.getFiducialId() != 20 && d.getFiducialId() != 24);
+
+        if (detections.isEmpty()) {
+            telemetry.addData("Problem in second if, nothing detected", 0);
+            return 0;
+        }
+
+
+        // Get first detected target
+        LLResultTypes.FiducialResult target = detections.get(0);
+
+        telemetry.update();
+
+        if (target.getFiducialId() == 24) {
+            ALIGNMENT_OFFSET_FAR = -3;
+        } else  {
+            ALIGNMENT_OFFSET_FAR = 3;
+        }
+//
+//        if (alliance == CompetitionAuto.Alliance.RED) {
+//            // RED
+//            target = detections.stream()
+//                    .min(Comparator.comparingDouble(LLResultTypes.FiducialResult::getTargetXDegrees))
+//                    .orElse(null);
+//            ALIGNMENT_OFFSET_FAR=-3;
+//        } else {
+//            // BLUE
+//            target = detections.stream()
+//                    .max(Comparator.comparingDouble(LLResultTypes.FiducialResult::getTargetXDegrees))
+//                    .orElse(null);
+//            ALIGNMENT_OFFSET_FAR=3;
+//        }
+
+        if (target == null) {
+            telemetry.addData("Debug", "No valid target found");
+            return 0;
+        }
+
+        // Only reaches here if target is NOT null
+        telemetry.addData("Tag Detected", target.getFiducialId());
+        // Get target pose relative to camera
+        Pose3D targetPose = target.getTargetPoseRobotSpace();
+        telemetry.addData("TargetPose is null rn here ", targetPose == null);
+
+        if (targetPose != null) {
+            double setpointOffset;
+
+            if (outer) {
+                setpointOffset = ALIGNMENT_OFFSET_FAR;
+                telemetry.addData("Launch Mode", "FAR");
+            } else {
+                setpointOffset = ALIGNMENT_OFFSET_NEAR;
+                telemetry.addData("Launch Mode", "NEAR");
+            }
+
+            // (negative = tag is to the left, positive = tag is to the right)
+            double tx = target.getTargetXDegrees();
+
+            // (goal is to get tx to 0, which means centered)
+            double pidOutput = pid.calculate(tx, setpointOffset);
+
+
+            return pidOutput;
+        }
+        return 0;
+    }
+    class PIDControllerNEW {
+
+        private double setpoint;
+        private double previousError = 0;
+        private double integral = 0;
+        private double outputMin = Double.NEGATIVE_INFINITY;
+        private double outputMax = Double.POSITIVE_INFINITY;
+        private long lastTimestamp = System.nanoTime();
+
+
+        public PIDControllerNEW() {
+        }
+
+        //Calculate how much to turn (simplified version that assumes we want to hit 0)
+        public double calculate(double currentValue) {
+            return calculate(currentValue, 0);
+        }
+
+        // Calculate how much to turn given a target and current value
+        public double calculate(double currentValue, double setpoint) {
+            // time passed since last calculation
+            long now = System.nanoTime();
+            double dt = (now - lastTimestamp) / 1e9;
+            lastTimestamp = now;
+
+            // Calculate error (how different from target)
+            double error = setpoint - currentValue;
+
+            // Keep track of how long the error has been present
+            // (helps eliminate small persistent errors)
+            integral += error * dt;
+
+            // how quickly error is changing
+            double derivative = (error - previousError);
+
+            // Combine the three components to calculate the turn power
+            // P makes it respond quickly, I makes it more accurate, D smooths it out
+            double output = (VisionAutoAim.KP * error) + (VisionAutoAim.KI * integral) + (VisionAutoAim.KD * derivative);
+
+            // keep it between limits
+            output = Math.max(outputMin, Math.min(outputMax, output));
+
+            //keep track of error
+            previousError = error;
+
+            return output;
+        }
+    }}
+
+
+
+
+
+
+
+
+
+

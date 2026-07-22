@@ -223,4 +223,14 @@ public enum AngleUnit
     {
         return (float)normalizeRadians((double)radians);
     }
+
+    public UnnormalizedAngleUnit getUnnormalized()
+    {
+        switch (this)
+        {
+            default:
+            case RADIANS:   return UnnormalizedAngleUnit.RADIANS;
+            case DEGREES:   return UnnormalizedAngleUnit.DEGREES;
+        }
+    }
 }

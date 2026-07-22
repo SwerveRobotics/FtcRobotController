@@ -11,6 +11,10 @@ import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
  * Wily Works DcMotorEx implementation.
  */
 public class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
+    RunMode mode;
+    double velocity;
+    double power;
+    Direction direction;
 
     @Override
     public DcMotorController getController() {
@@ -40,6 +44,7 @@ public class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
     @Override
     public void setTargetPosition(int position) {
 
+
     }
 
     @Override
@@ -59,12 +64,12 @@ public class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
 
     @Override
     public void setMode(RunMode mode) {
-
+        this.mode = mode;
     }
 
     @Override
     public RunMode getMode() {
-        return null;
+        return mode;
     }
 
     @Override
@@ -84,7 +89,7 @@ public class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
 
     @Override
     public void setVelocity(double angularRate) {
-
+        velocity = angularRate;
     }
 
     @Override
@@ -94,7 +99,7 @@ public class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
 
     @Override
     public double getVelocity() {
-        return 0;
+        return velocity;
     }
 
     @Override
@@ -143,18 +148,20 @@ public class WilyDcMotorEx extends WilyHardwareDevice implements DcMotorEx {
     }
 
     @Override
-    public void setDirection(Direction direction) { }
-
-    @Override
-    public Direction getDirection() {
-        return null;
+    public void setDirection(Direction direction) {
+        this.direction = direction;
     }
 
     @Override
-    public void setPower(double power) { }
+    public Direction getDirection() {
+        return direction;
+    }
+
+    @Override
+    public void setPower(double power) { this.power = power; }
 
     @Override
     public double getPower() {
-        return 0;
+        return power;
     }
 }

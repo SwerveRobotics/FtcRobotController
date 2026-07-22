@@ -4,6 +4,6 @@ import com.qualcomm.robotcore.eventloop.opmode.OpModeManagerImpl;
 
 public class FtcEventLoop {
     public OpModeManagerImpl getOpModeManager() {
-        return null;
+        return new OpModeManagerImpl();
     }
 }

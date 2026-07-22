@@ -6,9 +6,6 @@ import static java.lang.Thread.currentThread;
 import android.annotation.SuppressLint;
 
 import com.acmerobotics.dashboard.FtcDashboard;
-import com.acmerobotics.roadrunner.Pose2d;
-import com.qualcomm.robotcore.hardware.HardwareMap;
-import com.qualcomm.robotcore.hardware.LED;
 import com.wilyworks.common.WilyWorks;
 import com.wilyworks.simulator.WilyCore;
 import com.wilyworks.simulator.helpers.Point;
@@ -19,19 +16,14 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.Image;
-import java.awt.Polygon;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
-import java.awt.Shape;
 import java.awt.Transparency;
 import java.awt.geom.AffineTransform;
-import java.awt.geom.Ellipse2D;
 import java.awt.geom.GeneralPath;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 
 import javax.imageio.ImageIO;
 
@@ -64,7 +56,7 @@ public class Field {
         InputStream compassStream = classLoader.getResourceAsStream(
                 "background/misc/compass-rose-white-text.png");
         InputStream fieldStream = classLoader.getResourceAsStream(
-                "background/season-2024-intothedeep/field-2024-juice-dark.png");
+                "background/season-2025-decode/field-2025-juice-dark.png");
 
         try {
             if (compassStream != null) {
@@ -133,38 +125,9 @@ public class Field {
                 round(ROBOT_IMAGE_HEIGHT * DIRECTION_LINE_HEIGHT));
     }
 
-    // Render the outline of the robot's true position:
-    void renderRobot(Graphics2D g) {
-        Pose2d pose = simulation.getPose(0, true);
-        AffineTransform oldTransform = g.getTransform();
-        g.translate(pose.position.x, pose.position.y);
-        g.rotate(pose.heading.log());
-        g.setColor(Color.RED);
-        setAlpha(g, 0.5);
-
-        g.draw(new Rectangle2D.Double(
-                -WilyCore.config.robotWidth / 2.0, -WilyCore.config.robotLength / 2.0,
-                WilyCore.config.robotWidth, WilyCore.config.robotLength));
-
-        // Restore the graphics state:
-        setAlpha(g, 1.0);
-        g.setTransform(oldTransform);
-
-//        Pose2d simulationPose = simulation.getPose(0, true);
-//        AffineTransform imageTransform = new AffineTransform();
-//        imageTransform.translate(simulationPose.position.x, simulationPose.position.y);
-//        imageTransform.scale(1.0 / ROBOT_IMAGE_WIDTH,1.0 / ROBOT_IMAGE_HEIGHT);
-//        imageTransform.rotate(simulationPose.heading.log() + Math.toRadians(90));
-//        imageTransform.scale(WilyCore.config.robotWidth, WilyCore.config.robotLength);
-//        imageTransform.translate(-ROBOT_IMAGE_HEIGHT / 2.0, -ROBOT_IMAGE_HEIGHT / 2.0);
-//        setAlpha(g, 0.5);
-//        g.drawImage(robotImage, imageTransform, null);
-//        setAlpha(g, 1.0);
-    }
-
     // Set the transform to use inches and have the origin at the center of field. This
     // returns the current transform to restore via Graphics2D.setTransform() once done:
-    public static AffineTransform setFieldTransform(Graphics2D g) {
+    public static AffineTransform setFieldViewportAndClip(Graphics2D g) {
         // Prime the viewport/transform and the clipping for field and overlay rendering:
         AffineTransform oldTransform = g.getTransform();
         g.setClip(FIELD_VIEW.x, FIELD_VIEW.y, FIELD_VIEW.width, FIELD_VIEW.height);
@@ -187,55 +150,6 @@ public class Field {
         return oldTransform;
     }
 
-    // Render the LED for REV Digital LEDs:
-    void renderLeds(Graphics2D g) {
-        HardwareMap hardwareMap = WilyCore.hardwareMap;
-        if (hardwareMap == null)
-            return; // Might not have been created yet
-
-        final int[] colors = { 0, 0xff0000, 0x00ff00, 0xffbf00 }; // black, red, green, amber
-        final double radius = 2.0; // Circle radius, in inches
-        Pose2d pose = simulation.getPose(0, true);
-
-        ArrayList<WilyLED> ledArray = new ArrayList<>();
-        for (LED led: hardwareMap.led) {
-            ledArray.add((WilyLED) led);
-        }
-        for (int i = 0; i < ledArray.size(); i++) {
-            WilyLED led = ledArray.get(i);
-            int colorIndex = 0;
-            colorIndex |= (led.isRed && led.enable) ? 1 : 0;
-            colorIndex |= (!led.isRed && led.enable) ? 2 : 0;
-
-            // The LED actually needs two digital channels to describe all 4 possible colors.
-            // Assume that consecutively registered channels make a pair:
-            if (i + 1 < ledArray.size()) {
-                WilyLED nextLed = ledArray.get(i + 1);
-                if ((nextLed.x == led.x) &&
-                    (nextLed.y == led.y) &&
-                    (nextLed.isRed == !led.isRed)) {
-
-                    colorIndex |= (nextLed.isRed && nextLed.enable) ? 1 : 0;
-                    colorIndex |= (!nextLed.isRed && nextLed.enable) ? 2 : 0;
-                    i++;
-                }
-            }
-
-            // Draw the circle at the location of the sensor on the robot, accounting for its
-            // current heading:
-            Point point = new Point(led.x, led.y)
-                    .rotate(pose.heading.log())
-                    .add(new Point(pose.position));
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-            g.setColor(new Color(0xffffff));
-            g.fill(new Ellipse2D.Double(point.x - radius - 0.5, point.y - radius - 0.5,2 * radius + 1, 2 * radius + 1));
-            g.setColor(new Color(colors[colorIndex]));
-            g.fill(new Ellipse2D.Double(point.x - radius, point.y - radius,2 * radius, 2 * radius));
-            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-        }
-    }
-
     // Render the field, the robot, and the field overlay:
     @SuppressLint("DefaultLocale")
     public void render(Graphics2D g, String caption) {
@@ -246,13 +160,15 @@ public class Field {
         // Lay down the background image without needing a transform:
         g.drawImage(backgroundImage, FIELD_VIEW.x + FIELD_INSET, FIELD_VIEW.y + FIELD_INSET, null);
 
-        defaultTransform = g.getTransform();
-        AffineTransform oldTransform = setFieldTransform(g);
-        if (FtcDashboard.fieldOverlay != null)
+        defaultTransform = setFieldViewportAndClip(g);
+        if (FtcDashboard.fieldOverlay != null) // Can't remember why this could be null
             FtcDashboard.fieldOverlay.render(g);
-        renderRobot(g);
-        renderLeds(g);
-        g.setTransform(oldTransform);
+
+        // Render the robot via the appropriate MechSim:
+        if (WilyCore.mechSim != null)
+            WilyCore.mechSim.update(g, simulation.getPose(0, true));
+
+        g.setTransform(defaultTransform);
     }
 
     // Set the global alpha in the range [0.0, 1.0]:
@@ -282,7 +198,7 @@ public class Field {
     public void renderStartScreenOverlay(Graphics2D g) {
         g.drawImage(compassImage, 20, 20, null);
 
-        AffineTransform oldTransform = setFieldTransform(g);
+        AffineTransform oldTransform = setFieldViewportAndClip(g);
         for (WilyWorks.Config.Camera camera: WilyCore.config.cameras) {
             g.setColor(new Color(0xffffff));
             renderFieldOfView(g, new Point(camera.x, camera.y), camera.orientation, camera.fieldOfView);
