@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.team417;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.PoseVelocity2d;
@@ -14,6 +15,7 @@ import org.firstinspires.ftc.team417.roadrunner.MecanumDrive;
  * BaseOpMode class rather than here so that it can be shared between both TeleOp and Autonomous.
  */
 @TeleOp(name="TeleOp", group="Competition")
+@Config
 public class CompetitionTeleOp extends BaseOpMode {
 
     @Override
@@ -36,6 +38,9 @@ public class CompetitionTeleOp extends BaseOpMode {
                     ),
                     -gamepad1.right_stick_x
             ));
+            if (gamepad2.left_stick_y > 0.05){
+                intakeMot.setPower(1);
+            }
 
             // Update the current pose:
             drive.updatePoseEstimate();
