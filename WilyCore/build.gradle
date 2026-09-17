@@ -25,7 +25,6 @@ sourceSets {
 }
 
 repositories {
-    jcenter()
     maven { url = 'https://maven.brott.dev/' }
 }
 
