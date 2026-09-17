@@ -7,5 +7,5 @@ pluginManagement {
 }
 
 include ':FtcRobotController'
-/* include ':Team417' */
+include ':Team417'
 include ':Team6220'
