@@ -1,5 +1,13 @@
 package org.firstinspires.ftc.team6220;
 
+import com.pedropathing.tuning.autotune.Procedure;
+import com.pedropathing.tuning.autotune.Tuner;
+
+import org.firstinspires.ftc.team6220.procedures.MecanumTuner;
+
 public class Tuning {
-    // Tuners go here
+    @Tuner
+    public static Procedure mecanumTuner() {
+        return new MecanumTuner();
+    }
 }
