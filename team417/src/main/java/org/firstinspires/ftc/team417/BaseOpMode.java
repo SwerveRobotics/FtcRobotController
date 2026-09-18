@@ -23,7 +23,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     // TODO: tune constants in ftc dashboard
     public static double FLYWHEEL_NEAR_SPEED = 650;
-    public static double FLYWHEEL_FAR_SPEED = 850;
+    public static double FLYWHEEL_FAR_SPEED = 855;
     public static double FLYWHEEL_BACKSPIN = 150;
     public static double WHEEL_STOP_SPEED = 0;
     public static double TRANSFER_WHEEL_START_SPEED = 312;
