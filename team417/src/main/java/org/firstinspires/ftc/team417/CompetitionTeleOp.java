@@ -20,6 +20,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 
     @Override
     public void runOpMode() {
+        initializeHardware();
         Pose2d beginPose = new Pose2d(0, 0, 0);
         MecanumDrive drive = new MecanumDrive(hardwareMap, telemetry, gamepad1, beginPose);
 
@@ -38,8 +39,12 @@ public class CompetitionTeleOp extends BaseOpMode {
                     ),
                     -gamepad1.right_stick_x
             ));
-            if (gamepad2.left_stick_y > 0.05){
+            if (gamepad2.left_stick_y > 0.05) {
                 intakeMot.setPower(1);
+            } else if (gamepad2.left_stick_y < -0.05){
+                intakeMot.setPower(-1);
+            } else {
+                intakeMot.setPower(0);
             }
 
             // Update the current pose:
@@ -58,3 +63,16 @@ public class CompetitionTeleOp extends BaseOpMode {
         }
     }
 }
+
+/*
+public double doSLOWMODE() {
+    if (gamepad1.right_trigger != 0) {
+        return ((-gamepad1.right_trigger + 1)/2) + 0.5;
+    } else {
+        return 1;
+    }
+}
+public static double halfLinearHalfCubic(double input) {
+    return (Math.pow(input, 3) + input) / 2;
+}
+*/
