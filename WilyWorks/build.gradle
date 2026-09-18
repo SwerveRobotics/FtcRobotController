@@ -8,7 +8,6 @@ java {
 }
 
 repositories {
-    jcenter()
     maven { url = 'https://maven.brott.dev/' }
     // maven { url = 'https://www.jitpack.io' }
 }
