@@ -1,18 +1,19 @@
 repositories {
     mavenCentral()
     google() // Needed for androidx
-    maven { url = 'https://maven.brott.dev/' }
+    maven { url 'https://repo.dairy.foundation/releases/'}
 }
 
 dependencies {
-    implementation 'org.firstinspires.ftc:Inspection:11.1.0'
-    implementation 'org.firstinspires.ftc:Blocks:11.1.0'
-    implementation 'org.firstinspires.ftc:RobotCore:11.1.0'
-    implementation 'org.firstinspires.ftc:RobotServer:11.1.0'
-    implementation 'org.firstinspires.ftc:OnBotJava:11.1.0'
-    implementation 'org.firstinspires.ftc:Hardware:11.1.0'
-    implementation 'org.firstinspires.ftc:FtcCommon:11.1.0'
-    implementation 'org.firstinspires.ftc:Vision:11.1.0'
+    implementation 'org.firstinspires.ftc:Inspection:12.0.0'
+    implementation 'org.firstinspires.ftc:Blocks:12.0.0'
+    implementation 'org.firstinspires.ftc:RobotCore:12.0.0'
+    implementation 'org.firstinspires.ftc:RobotServer:12.0.0'
+    implementation 'org.firstinspires.ftc:OnBotJava:12.0.0'
+    implementation 'org.firstinspires.ftc:Hardware:12.0.0'
+    implementation 'org.firstinspires.ftc:FtcCommon:12.0.0'
+    implementation 'org.firstinspires.ftc:Vision:12.0.0'
     implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'com.acmerobotics.dashboard:dashboard:0.4.5'
+    implementation 'com.pedropathing:revhub:3.0.0'
+    implementation 'com.pedropathing:tuning:1.0.0'
 }
