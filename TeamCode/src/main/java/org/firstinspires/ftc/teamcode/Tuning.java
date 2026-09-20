@@ -3,7 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.pedropathing.tuning.autotune.Procedure;
 import com.pedropathing.tuning.autotune.Tuner;
 
-import org.firstinspires.ftc.team6220.procedures.MecanumTuner;
+import org.firstinspires.ftc.teamcode.procedures.MecanumTuner;
 
 public class Tuning {
     @Tuner
