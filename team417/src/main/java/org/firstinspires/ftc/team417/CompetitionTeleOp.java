@@ -81,20 +81,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         // Wait for Start to be pressed on the Driver Hub!
         waitForStart();
-
-
-
-
-
-    public double doSLOWMODE() {
-        if (gamepad1.right_trigger != 0) {
-            return -gamepad1.right_trigger + 1.1;
-        } else {
-            return 1;
-        }
     }
-
-
 }
 
 class AmazingAutoAim {

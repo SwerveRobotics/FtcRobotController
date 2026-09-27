@@ -112,7 +112,7 @@ public final class MecanumDrive {
                 otos.linearScalar = 0;
                 otos.angularScalar = 0;
 
-                pinpoint.ticksPerMm = 71.665;
+                pinpoint.ticksPerMm = 19.788;
                 pinpoint.xReversed = true;
                 pinpoint.yReversed = false;
                 pinpoint.xOffset = -199.4;
@@ -156,10 +156,10 @@ public final class MecanumDrive {
 
                 inPerTick = 1.0;
                 lateralInPerTick = 0.714;
-                trackWidthTicks = 15.05;
+                trackWidthTicks = 13.96;
 
-                kS = 1.023;
-                kV = 0.185;
+                kS = 0.856;
+                kV = 0.130;
                 kA = 0.0180;
 
                 axialGain      = 4.0;
@@ -178,8 +178,8 @@ public final class MecanumDrive {
                 pinpoint.ticksPerMm = 19.692;
                 pinpoint.xReversed = false;
                 pinpoint.yReversed = false;
-                pinpoint.xOffset = -80.6;
-                pinpoint.yOffset = -50.9;
+                pinpoint.xOffset = -78.5;
+                pinpoint.yOffset = -85.7;
             }
         }
 
