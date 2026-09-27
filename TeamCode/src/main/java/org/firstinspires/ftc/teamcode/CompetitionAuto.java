@@ -6,6 +6,12 @@ import com.pedropathing.math.Pose;
 import org.firstinspires.ftc.teamcode.pedro.Constants;
 
 import com.pedropathing.paths.Path;
+import com.pedropathing.ivy.Command;
+import com.pedropathing.ivy.Scheduler;
+import static com.pedropathing.ivy.Scheduler.schedule;
+import static com.pedropathing.ivy.commands.Commands.*;
+import static com.pedropathing.ivy.groups.Groups.sequential;
+import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 
 import static com.pedropathing.api.Paths.*;
 
@@ -22,6 +28,13 @@ public class CompetitionAuto extends BaseOpMode{
     private final Pose point2 = poseFactory.of(83, 20, 90);
     private final Pose point2Control1 = poseFactory.of(102, 5, 0);
 
+
+    public Command autoRoutine() {
+        return sequential(
+                follow(follower, path1Move1()),
+                follow(follower, path1Move2())
+        );
+    }
 
     @Override
     public void runOpMode() throws InterruptedException {
