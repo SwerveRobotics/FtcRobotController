@@ -15,7 +15,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         //where everything gets initialized
         follower = Constants.create(hardwareMap);
         waitForStart();
-
+        initializeHardware();
 
 
         while (opModeIsActive()) {
@@ -24,23 +24,27 @@ public class CompetitionTeleOp extends BaseOpMode {
             double lateral = gamepad1.left_stick_x;
             double turn = gamepad1.right_stick_x;
 
+            //when left stick is pushed up set velocity
+            intakeMotor.setVelocity(gamepad2.left_stick_y);
+            //when the button y is pressed then set velocity
+            if(gamepad2.yWasPressed()){
+                lanuchMotor.setVelocity(LAUNCHER_SPEED);
+            }
+
+
             //"The driver wants to move this way."
             //Pedro then figures out what the drivetrain motors need to do.
             follower.manual(forward, lateral, turn);
             //update pedro!
             follower.update();
 
-            //add intake controls here
-            //add follower update at the end
-
             //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX
+            telemetry.addData("X", follower.pose().x());
+            telemetry.addData("Y", follower.pose().y());
+            telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
 
         }
 
-
-
-
-        //slowmodeeeee
 
     }
 
