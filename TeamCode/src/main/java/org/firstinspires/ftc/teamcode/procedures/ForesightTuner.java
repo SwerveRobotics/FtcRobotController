@@ -1050,6 +1050,7 @@ class ForwardTranslational extends TuningOpMode<List<Double>> {
         localizer.setPose(Pose.zero());
         localizer.update();
 
+
         times.clear();
         velocities.clear();
         done = false;
@@ -1071,6 +1072,13 @@ class ForwardTranslational extends TuningOpMode<List<Double>> {
             lastTime = now;
 
             localizer.update();
+            telemetry.addData("Time", timer.seconds());
+            telemetry.addData("X", localizer.pose().x());
+            telemetry.addData("Y", localizer.pose().y());
+            telemetry.addData("Velocity X", localizer.twist().toVector2D().x());
+            telemetry.addData("Done?", done);
+            telemetry.update();
+
 
             if (!done) {
                 times.add(timer.seconds());
