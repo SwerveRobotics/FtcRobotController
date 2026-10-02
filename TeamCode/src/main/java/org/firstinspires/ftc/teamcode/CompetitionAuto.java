@@ -71,10 +71,12 @@ public class CompetitionAuto extends BaseOpMode{
     public Path path1() {
         return Paths.line(start, path1).constant(path1);
     }
-
+    public int zero() {
+        return 0;
+    }
     public Path path2() {
         return Paths.line(path1, point2).reverseTangent();
-    }
+    } //6767676767
     public Command intakeBallForMillis(long millis) {
         Command intakeBall = Command.build()
                 .setStart(() -> {
