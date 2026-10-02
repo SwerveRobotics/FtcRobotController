@@ -17,7 +17,7 @@ import static com.pedropathing.ivy.groups.Groups.sequential;
 import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 @Autonomous(name = "417 Auto")
@@ -29,6 +29,7 @@ public class CompetitionAuto extends BaseOpMode{
     private final Pose start = poseFactory.of(32.0169, 3.8886, 90);
     private final Pose path1 = poseFactory.of(31.6743, 28.8051, 0);
     private final Pose point2 = poseFactory.of(104, 38, -172.7547);
+    private final ElapsedTime timer = new ElapsedTime();
 
     //what happens when you press the start button on the driver hub
 
@@ -73,5 +74,22 @@ public class CompetitionAuto extends BaseOpMode{
 
     public Path path2() {
         return Paths.line(path1, point2).reverseTangent();
+    }
+    public Command intakeBallForMillis(long millis) {
+        Command intakeBall = Command.build()
+                .setStart(() -> {
+                    //something goes here
+                    timer.reset();
+                    intakeMotor.setPower(1);
+                })
+                .setDone(() ->
+                        timer.milliseconds() > millis)
+                //check if ball went in
+                .setEnd(endCondition -> {
+                    intakeMotor.setPower(0);
+                    // executed on end
+                })
+                .requiring(intakeMotor);
+        return  intakeBall;
     }
 }
