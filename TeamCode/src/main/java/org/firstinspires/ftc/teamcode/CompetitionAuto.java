@@ -68,10 +68,12 @@ public class CompetitionAuto extends BaseOpMode{
     public Command autoRoutine() {
         return sequential(
                 follow(follower, path1()),
+                shootBalls(4),
                 follow(follower, path2()),
-                follow(follower, path3()),
+                follow(follower, path3()).raceWith(intakeBallForMillis(1000)),
                 follow(follower, path4()),
                 follow(follower, path5()),
+                shootBalls(4),
                 follow(follower, path6())
         );
     }
@@ -120,17 +122,17 @@ public class CompetitionAuto extends BaseOpMode{
         return  intakeBall;
     }
     public Command shootBalls(int numBalls) { // WORK IN PROGRESS
-        Command shootBalls = Command.build()
+        Command shoot = Command.build()
                 .setStart(() -> {launchMotor.setPower(LAUNCHER_SPEED);
-                //RELEASE GATE
+                gate.setPosition(GATE_OPEN);
                     })
                 .setDone(() -> timer.milliseconds() > LAUNCH_TIME * numBalls)
                 .setEnd(endCondition ->
                     { launchMotor.setPower(0.0);
-                        // PUT GATE UP AGAIN
+                        gate.setPosition(GATE_CLOSE);
                 })
                 .requiring(launchMotor);
 
-        return shootBalls;
+        return shoot;
     }
 }
