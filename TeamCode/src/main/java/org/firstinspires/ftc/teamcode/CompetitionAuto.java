@@ -1,7 +1,10 @@
 package org.firstinspires.ftc.teamcode;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+
 import static com.pedropathing.api.Paths.*;
 import com.pedropathing.api.Paths;
+
 import com.pedropathing.api.PoseFactory;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
@@ -91,21 +94,7 @@ public class CompetitionAuto extends BaseOpMode{
                 .requiring(intakeMotor);
         return  intakeBall;
     }
-    public Command intakeBallForMillis(long millis) {
-        Command intakeBall = Command.build()
-                .setStart(() -> {
-                    //something goes here
-                    timer.reset();
-                    intakeMotor.setPower(1);
-                })
-                .setDone(() ->
-                        timer.milliseconds() > millis)
-                //check if ball went in
-                .setEnd(endCondition -> {
-                    intakeMotor.setPower(0);
-                    // executed on end
-                })
-                .requiring(intakeMotor);
-        return  intakeBall;
+    public Command shootBalls(int numBalls) {
+
     }
 }
