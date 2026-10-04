@@ -61,7 +61,10 @@ public class CompetitionAuto extends BaseOpMode{
         return Paths.line(point5, point6).tangent();
     }
     private final ElapsedTime timer = new ElapsedTime();
-
+    public enum Alliance {
+            RED,
+            BLUE,
+    }
     //what happens when you press the start button on the driver hub
 
     //telling the paths to go in order
@@ -77,9 +80,18 @@ public class CompetitionAuto extends BaseOpMode{
                 follow(follower, path6())
         );
     }
+
     @Override
     public void runOpMode() throws InterruptedException {
         //Making follower to tell the robot
+        TextMenu menu = new TextMenu();
+        MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
+        menu.add(new MenuHeader("Auto Setup"))
+                .add() //empty line
+                .add("Pick alliance:")
+                .add("alliancePicker", Alliance.class)
+                .add();
+        //pick up here
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
         follower.setPose(start);
