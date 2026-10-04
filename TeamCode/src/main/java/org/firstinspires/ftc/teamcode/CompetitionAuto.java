@@ -27,9 +27,39 @@ public class CompetitionAuto extends BaseOpMode{
     private Follower follower;
     //the values of the paths
     private final PoseFactory poseFactory = PoseFactory.degrees();
-    private final Pose start = poseFactory.of(32.0169, 3.8886, 90);
-    private final Pose path1 = poseFactory.of(31.6743, 28.8051, 0);
-    private final Pose point2 = poseFactory.of(104, 38, -172.7547);
+    private final Pose start = poseFactory.of(85.1, 131.6, 90);
+    private final Pose path1 = poseFactory.of(86.2461, 125.7, -90);
+    private final Pose point2Start = poseFactory.of(86.2461, 125.7, 0);
+    private final Pose point2 = poseFactory.of(106.9552, 131, 0);
+    private final Pose point3 = poseFactory.of(129.6295, 131, 0);
+    private final Pose point4 = poseFactory.of(105.3705, 33.0811, -103.9147);
+    private final Pose point5Start = poseFactory.of(105.3705, 33.0811, -136);
+    private final Pose point5 = poseFactory.of(85.1562, 16.4153, 90);
+    private final Pose point6 = poseFactory.of(125.0884, 34.0981, 23.8848);
+    //create paths
+    public Path path1() {
+        return Paths.line(start, path1).constant(path1);
+    }
+
+    public Path path2() {
+        return Paths.line(point2Start, point2).linear(point2Start, point2);
+    }
+
+    public Path path3() {
+        return Paths.line(point2, point3).constant(point3);
+    }
+
+    public Path path4() {
+        return Paths.line(point3, point4).tangent();
+    }
+
+    public Path path5() {
+        return Paths.line(point5Start, point5).linear(point5Start, point5);
+    }
+
+    public Path path6() {
+        return Paths.line(point5, point6).tangent();
+    }
     private final ElapsedTime timer = new ElapsedTime();
 
     //what happens when you press the start button on the driver hub
@@ -38,7 +68,11 @@ public class CompetitionAuto extends BaseOpMode{
     public Command autoRoutine() {
         return sequential(
                 follow(follower, path1()),
-                follow(follower, path2())
+                follow(follower, path2()),
+                follow(follower, path3()),
+                follow(follower, path4()),
+                follow(follower, path5()),
+                follow(follower, path6())
         );
     }
     @Override
@@ -68,16 +102,6 @@ public class CompetitionAuto extends BaseOpMode{
             telemetry.update();
         }
     }
-    //Telling the robot that these paths are where to go
-    public Path path1() {
-        return Paths.line(start, path1).constant(path1);
-    }
-    public int zero() {
-        return 0;
-    }
-    public Path path2() {
-        return Paths.line(path1, point2).reverseTangent();
-    } //6767676767
     public Command intakeBallForMillis(long millis) {
         Command intakeBall = Command.build()
                 .setStart(() -> {
