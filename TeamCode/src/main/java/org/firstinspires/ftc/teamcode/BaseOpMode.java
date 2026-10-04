@@ -8,7 +8,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 abstract public class BaseOpMode extends LinearOpMode {
 
     //motors;
-    protected DcMotorEx lanuchMotor;
+    protected DcMotorEx launchMotor;
     protected DcMotorEx intakeMotor;
 
 
@@ -22,17 +22,17 @@ abstract public class BaseOpMode extends LinearOpMode {
     public void initializeHardware() {
         //initialize motors
         intakeMotor = hardwareMap.get(DcMotorEx.class, "motIntake");
-        lanuchMotor = hardwareMap.get(DcMotorEx.class, "motLaunch");
+        launchMotor = hardwareMap.get(DcMotorEx.class, "motLaunch");
 
         //what happens when stopping
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        lanuchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         //set velocity
-        lanuchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         //set direction
         intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
-        lanuchMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        launchMotor.setDirection(DcMotorSimple.Direction.REVERSE);
     }
 }

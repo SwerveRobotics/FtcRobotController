@@ -94,4 +94,7 @@ public class CompetitionAuto extends BaseOpMode{
                 .requiring(intakeMotor);
         return  intakeBall;
     }
+    public Command shootBalls(int numBalls) {
+
+    }
 }

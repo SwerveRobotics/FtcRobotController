@@ -3,9 +3,6 @@ package org.firstinspires.ftc.teamcode;
 import com.pedropathing.follower.Follower;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import org.firstinspires.ftc.teamcode.BaseOpMode;
-import org.firstinspires.ftc.teamcode.Constants;
-
 @TeleOp(name="417 Teleop")
 public class CompetitionTeleOp extends BaseOpMode {
     //variables
@@ -39,8 +36,8 @@ public class CompetitionTeleOp extends BaseOpMode {
             }
             //when the button y is pressed then set velocity for launcher
             if(gamepad2.yWasPressed()){
-                lanuchMotor.setVelocity(LAUNCHER_SPEED);
-            }
+                launchMotor.setVelocity(LAUNCHER_SPEED);
+            } //we gotta make it back to zero
 
             //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX
             telemetry.addData("X", follower.pose().x());
