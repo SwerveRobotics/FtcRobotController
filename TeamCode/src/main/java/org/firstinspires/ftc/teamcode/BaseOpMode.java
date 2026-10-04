@@ -4,12 +4,15 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 
 abstract public class BaseOpMode extends LinearOpMode {
 
     //motors;
     protected DcMotorEx launchMotor;
     protected DcMotorEx intakeMotor;
+
+    protected Servo gate;
 
 
     //constants
@@ -24,6 +27,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         //initialize motors
         intakeMotor = hardwareMap.get(DcMotorEx.class, "motIntake");
         launchMotor = hardwareMap.get(DcMotorEx.class, "motLaunch");
+        gate = hardwareMap.get(Servo.class, "alliGATEr");
 
         //what happens when stopping
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
