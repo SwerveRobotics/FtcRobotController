@@ -13,6 +13,7 @@ import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.Scheduler;
 import static com.pedropathing.ivy.Scheduler.schedule;
 import static com.pedropathing.ivy.commands.Commands.*;
+import static com.pedropathing.ivy.groups.Groups.repeat;
 import static com.pedropathing.ivy.groups.Groups.sequential;
 import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
@@ -94,7 +95,18 @@ public class CompetitionAuto extends BaseOpMode{
                 .requiring(intakeMotor);
         return  intakeBall;
     }
-    public Command shootBalls(int numBalls) {
+    public Command shootBalls(int numBalls) { // WORK IN PROGRESS
+        Command shootBalls = Command.build()
+                .setStart(() -> {launchMotor.setPower(LAUNCHER_SPEED);
+                //RELEASE GATE
+                    })
+                .setDone(() -> timer.milliseconds() > LAUNCH_TIME * numBalls)
+                .setEnd(endCondition ->
+                    { launchMotor.setPower(0.0);
+                        // PUT GATE UP AGAIN
+                })
+                .requiring(launchMotor);
 
+        return shootBalls;
     }
 }
