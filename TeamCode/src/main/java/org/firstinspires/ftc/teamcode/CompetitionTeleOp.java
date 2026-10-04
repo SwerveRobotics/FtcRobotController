@@ -39,7 +39,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 gate.setPosition(GATE_OPEN);
                 launchMotor.setVelocity(LAUNCHER_SPEED);
             }
-            //when y is is let go of then turn
+            //when y is is let go of then turn.
             else if(gamepad2.yWasReleased()){
                 launchMotor.setVelocity(0);
                 gate.setPosition(GATE_CLOSE);
