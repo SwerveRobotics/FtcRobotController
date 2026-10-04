@@ -36,11 +36,13 @@ public class CompetitionTeleOp extends BaseOpMode {
             }
             //when the button y is pressed then set velocity for launcher
             if(gamepad2.yWasPressed()){
+                gate.setPosition(GATE_OPEN);
                 launchMotor.setVelocity(LAUNCHER_SPEED);
             }
             //when y is is let go of then turn
             else if(gamepad2.yWasReleased()){
                 launchMotor.setVelocity(0);
+                gate.setPosition(GATE_CLOSE);
             }
 
             //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX

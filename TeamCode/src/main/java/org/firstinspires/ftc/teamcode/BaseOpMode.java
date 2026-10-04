@@ -11,8 +11,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     //motors;
     protected DcMotorEx launchMotor;
     protected DcMotorEx intakeMotor;
-
     protected Servo gate;
+
 
 
     //constants
