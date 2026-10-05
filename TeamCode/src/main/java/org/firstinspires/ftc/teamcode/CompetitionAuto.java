@@ -9,8 +9,11 @@ import com.pedropathing.paths.Path;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.Scheduler;
 import static com.pedropathing.ivy.Scheduler.schedule;
+import static com.pedropathing.ivy.commands.Commands.instant;
+import static com.pedropathing.ivy.commands.Commands.waitMs;
 import static com.pedropathing.ivy.groups.Groups.sequential;
 import static com.pedropathing.ivy.pedro.PedroCommands.follow;
+
 
 import static com.pedropathing.api.Paths.*;
 
@@ -21,25 +24,52 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 public class CompetitionAuto extends BaseOpMode{
     private Follower follower;
     private final PoseFactory poseFactory = PoseFactory.degrees();
-    private final Pose path1Move1Start = poseFactory.of(84, 134, 270);
-    private final Pose path1Move2Start = poseFactory.of(134, 134, 0);
-    private final Pose path1Move2End = poseFactory.of(83, 20, 90);
-    private final Pose path1Move2Control = poseFactory.of(102, 5, 0);
+//    private final Pose path1Move1Start = poseFactory.of(84, 134, 270);
+//    private final Pose path1Move2Start = poseFactory.of(134, 134, 0);
+//    private final Pose path1Move2End = poseFactory.of(83, 20, 90);
+//    private final Pose path1Move2Control = poseFactory.of(102, 5, 0);
 
+    private final Pose leaveAndParkStart = poseFactory.of(132.832, 59.8271, 90);
+    private final Pose leaveAndParkStart_2 = poseFactory.of(132.832, 59.8271, 180);
+    private final Pose leaveAndPark = poseFactory.of(127, 32, 180);
+    private final Pose leaveAndParkControl1 = poseFactory.of(96, 50, 180);
 
+    //For launch and park path
+    //private final Pose start = poseFactory.of(84, 134, 90);
+    private final Pose launchAndParkStart_2 = poseFactory.of(84, 134, 270);
+    private final Pose launchAndPark = poseFactory.of(127, 32, 180);
+    private final Pose launchAndParkControl1 = poseFactory.of(125, 132, 0);
+
+    private final Pose hDLaunchandParkStart = poseFactory.of(80, 9, 90);
+    private final Pose hDLaunchandPark = poseFactory.of(127, 32, 180);
+    private final Pose hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
+
+    public Command startIntake = instant(() -> intakeMot.setPower(1.0) );
+    public Command stopIntake = instant(() -> intakeMot.setPower(0.0) );
     public Command autoRoutine() {
         return sequential(
-                follow(follower, path1Move1()),
-                follow(follower, path1Move2())
+                //follow(follower, leaveAndPark())
+                //follow(follower, launchAndPark())
+                follow(follower, hDLaunchandPark()),
+                startIntake,
+                waitMs(2000),
+                stopIntake
         );
     }
 
+
     @Override
     public void runOpMode() throws InterruptedException {
+       ///Scheduler.reset();
+//        follower = Constants.create(hardwareMap);
+//        follower.setPose(leaveAndParkStart_2);
+//        follower.update();
+
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
-        follower.setPose(path1Move1Start);
+        follower.setPose(hDLaunchandParkStart);
         follower.update();
+
 
         waitForStart();
         schedule(autoRoutine());
@@ -61,12 +91,15 @@ public class CompetitionAuto extends BaseOpMode{
         }
     }
 
-    public Path path1Move1() {
-        return line(path1Move1Start, path1Move2Start).linear(path1Move1Start, path1Move2Start);
+    public Path leaveAndPark() {
+        return curve(leaveAndParkStart_2, leaveAndParkControl1, leaveAndPark).linear(leaveAndParkStart_2, leaveAndPark);
     }
 
-    public Path path1Move2() {
-        return curve(path1Move2Start, path1Move2Control, path1Move2End).linear(path1Move2Start, path1Move2End);
+    public Path launchAndPark() {
+        return curve(launchAndParkStart_2, launchAndParkControl1, launchAndPark).linear(launchAndParkStart_2, launchAndPark);
+    }
+    public Path hDLaunchandPark() {
+        return curve(hDLaunchandParkStart, hDLaunchandParkControl1, hDLaunchandPark).linear(hDLaunchandParkStart, hDLaunchandPark);
     }
 
 }
