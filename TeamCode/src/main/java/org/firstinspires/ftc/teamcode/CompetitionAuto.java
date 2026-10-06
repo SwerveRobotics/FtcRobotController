@@ -48,12 +48,13 @@ public class CompetitionAuto extends BaseOpMode{
     public Command stopIntake = instant(() -> intakeMot.setPower(0.0) );
     public Command autoRoutine() {
         return sequential(
-                //follow(follower, leaveAndPark())
-                //follow(follower, launchAndPark())
-                follow(follower, hDLaunchandPark()),
-                startIntake,
-                waitMs(2000),
-                stopIntake
+            //follow(follower, leaveAndPark())
+            //follow(follower, launchAndPark())
+            follow(follower, hDLaunchandPark()),
+            runIntakeForMS(2000)
+    //                startIntake,
+    //                waitMs(2000),
+    //                stopIntake
         );
     }
 
@@ -101,6 +102,41 @@ public class CompetitionAuto extends BaseOpMode{
     public Path hDLaunchandPark() {
         return curve(hDLaunchandParkStart, hDLaunchandParkControl1, hDLaunchandPark).linear(hDLaunchandParkStart, hDLaunchandPark);
     }
+
+    // Mechanism movement commands (intake and launching)
+    public Command runIntakeForMS(long milliseconds) {
+        return sequential(
+                // Turn on intake
+                instant(() -> intakeMot.setPower(1.0)),
+
+                // Run intake for the time in seconds
+                waitMs(milliseconds),
+
+                // Turn intake off
+                instant(() -> intakeMot.setPower(0.0))
+        );
+    }
+
+    public Command launchFourBalls() {
+        return sequential(
+                // Turn on transfer wheel
+                instant(() -> transferWheelMot.setVelocity(TRANSFER_SPEED)),
+
+                // Wait for balls to get to launcher
+                waitMs(0), //TODO: need to decide a constant value
+
+                // Turn on launcher flywheels
+                instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
+                instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
+
+                // Wait for four balls to launch
+                waitMs(0), //TODO: need a constant for this too to tune later
+
+                // Turn launcher off
+                instant(() -> intakeMot.setPower(0.0))
+        );
+    }
+
 
 }
 /*
