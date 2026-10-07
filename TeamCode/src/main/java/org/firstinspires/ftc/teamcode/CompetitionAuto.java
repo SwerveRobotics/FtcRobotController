@@ -95,7 +95,20 @@ public class CompetitionAuto extends BaseOpMode{
                 .add("Pick alliance:")
                 .add("alliancePicker", Alliance.class)
                 .add();
-        //pick up here
+        while (!menu.isCompleted()) {
+            // get x, y (stick) and select (A) input from controller
+            // this is x, y (wasd) and select (enter) on the keyboard
+            menuInput.update(gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.a);
+            menu.updateWithInput(menuInput);
+            // display the updated menu
+            for (String line : menu.toListOfStrings()) {
+                telemetry.addLine(line); // but with appropriate printing method
+            }
+            telemetry.update();
+        }
+
+        // the first parameter is the type to return as
+        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliance-picker-1");
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
         follower.setPose(start);
