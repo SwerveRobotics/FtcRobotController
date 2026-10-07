@@ -12,12 +12,12 @@ public class CompetitionTeleOp extends BaseOpMode {
     public void runOpMode() throws InterruptedException {
         //where everything gets initialized
         follower = Constants.create(hardwareMap);
-        waitForStart();
         initializeHardware();
+        waitForStart();
 
 
         while (opModeIsActive()) {
-            //read controler inputs
+            //read controller inputs
             double forward = -gamepad1.left_stick_y;
             double lateral = -gamepad1.left_stick_x;
             double turn = -gamepad1.right_stick_x;
@@ -39,7 +39,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 gate.setPosition(GATE_OPEN);
                 launchMotor.setVelocity(LAUNCHER_SPEED);
             }
-            //when y is is let go of then turn.
+            //when y is let go of then turn.
             else if(gamepad2.yWasReleased()){
                 launchMotor.setVelocity(0);
                 gate.setPosition(GATE_CLOSE);

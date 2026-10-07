@@ -20,6 +20,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.menu.MenuHeader;
+import org.firstinspires.ftc.teamcode.menu.MenuInput;
+import org.firstinspires.ftc.teamcode.menu.TextMenu;
+
 
 @Autonomous(name = "417 Auto")
 public class CompetitionAuto extends BaseOpMode{
@@ -97,6 +101,7 @@ public class CompetitionAuto extends BaseOpMode{
         follower.setPose(start);
         follower.update();
 
+        initializeHardware();
         waitForStart();
         schedule(autoRoutine());
 
