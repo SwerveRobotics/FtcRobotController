@@ -28,9 +28,9 @@ public class CompetitionTeleOp extends BaseOpMode {
             //when left stick is pushed up set velocity
             //intakeMotor.setVelocity(gamepad2.left_stick_y);
             if (gamepad2.left_stick_y > 0.05) {
-                intakeMotor.setPower(1);
+                intakeMotor.setPower(INTAKE_SPEED);
             } else if (gamepad2.left_stick_y < -0.05){
-                intakeMotor.setPower(-1);
+                intakeMotor.setPower(-INTAKE_SPEED);
             } else {
                 intakeMotor.setPower(0);
             }
@@ -49,7 +49,11 @@ public class CompetitionTeleOp extends BaseOpMode {
             telemetry.addData("X", follower.pose().x());
             telemetry.addData("Y", follower.pose().y());
             telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
+            telemetry.addData("Gate Position", gate.getPosition());
+            telemetry.addData("Intake speed", INTAKE_SPEED);
+            telemetry.addData("Launcher Speed", launchMotor.getVelocity());
             telemetry.update();
+
         }
 
 
