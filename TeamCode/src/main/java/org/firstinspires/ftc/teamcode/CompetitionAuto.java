@@ -108,7 +108,7 @@ public class CompetitionAuto extends BaseOpMode{
         }
 
         // the first parameter is the type to return as
-        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliance-picker-1");
+        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
         follower.setPose(start);
