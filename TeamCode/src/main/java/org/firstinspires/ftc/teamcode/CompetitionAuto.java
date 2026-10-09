@@ -23,44 +23,70 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 public class CompetitionAuto extends BaseOpMode{
     private Follower follower;
-    private final PoseFactory poseFactory = PoseFactory.degrees();
-//    private final Pose path1Move1Start = poseFactory.of(84, 134, 270);
-//    private final Pose path1Move2Start = poseFactory.of(134, 134, 0);
-//    private final Pose path1Move2End = poseFactory.of(83, 20, 90);
-//    private final Pose path1Move2Control = poseFactory.of(102, 5, 0);
-
-    private final Pose leaveAndParkStart = poseFactory.of(132.832, 59.8271, 90);
-    private final Pose leaveAndParkStart_2 = poseFactory.of(132.832, 59.8271, 180);
-    private final Pose leaveAndPark = poseFactory.of(127, 32, 180);
-    private final Pose leaveAndParkControl1 = poseFactory.of(96, 50, 180);
+    private PoseFactory poseFactory = PoseFactory.degrees();
+    private Pose leaveAndParkStart = poseFactory.of(132.832, 59.8271, 90);
+    private Pose leaveAndParkStart_2 = poseFactory.of(132.832, 59.8271, 180);
+    private Pose leaveAndPark = poseFactory.of(127, 32, 180);
+    private Pose leaveAndParkControl1 = poseFactory.of(96, 50, 180);
 
     //For launch and park path
     //private final Pose start = poseFactory.of(84, 134, 90);
-    private final Pose launchAndParkStart_2 = poseFactory.of(84, 134, 270);
-    private final Pose launchAndPark = poseFactory.of(127, 32, 180);
-    private final Pose launchAndParkControl1 = poseFactory.of(125, 132, 0);
+    private Pose launchAndParkStart_2 = poseFactory.of(84, 134, 270);
+    private Pose launchAndPark = poseFactory.of(127, 32, 180);
+    private Pose launchAndParkControl1 = poseFactory.of(125, 132, 0);
 
-    private final Pose hDLaunchandParkStart = poseFactory.of(80, 9, 90);
-    private final Pose hDLaunchandPark = poseFactory.of(127, 32, 180);
-    private final Pose hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
+    private Pose hDLaunchandParkStart = poseFactory.of(80, 9, 90);
+    private Pose hDLaunchandPark = poseFactory.of(127, 32, 180);
+    private Pose hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
 
     public Command startIntake = instant(() -> intakeMot.setPower(1.0) );
     public Command stopIntake = instant(() -> intakeMot.setPower(0.0) );
-    public Command autoRoutine() {
+    public Command aRleaveAndPark() {
         return sequential(
-            //follow(follower, leaveAndPark())
-            //follow(follower, launchAndPark())
-            follow(follower, hDLaunchandPark()),
-            runIntakeForMS(2000)
-    //                startIntake,
-    //                waitMs(2000),
-    //                stopIntake
+            follow(follower, leaveAndPark())
+
+        );
+    }
+    public Command aRlaunchAndPark() {
+        return sequential(
+                launchFourBalls(),
+                follow(follower, launchAndPark())
+
+        );
+    }
+    public Command aRHDlaunchAndPark() {
+        return sequential(
+                waitMs(PARTNER_LAUNCH_TIME),
+                launchFourBalls(),
+                follow(follower, hDLaunchandPark())
+
         );
     }
 
 
     @Override
     public void runOpMode() throws InterruptedException {
+        // this needs to be passed in via text menu so we can alternate between blue and red
+        boolean redAlliance = true;
+        if(redAlliance) {
+            poseFactory = PoseFactory.degrees().mirrorX(70.75).mirrorY(70.75);
+            leaveAndParkStart = poseFactory.of(132.832, 59.8271, 90);
+            leaveAndParkStart_2 = poseFactory.of(132.832, 59.8271, 180);
+            leaveAndPark = poseFactory.of(127, 32, 180);
+            leaveAndParkControl1 = poseFactory.of(96, 50, 180);
+
+            //For launch and park path
+            //private final Pose start = poseFactory.of(84, 134, 90);
+            launchAndParkStart_2 = poseFactory.of(84, 134, 270);
+            launchAndPark = poseFactory.of(127, 32, 180);
+            launchAndParkControl1 = poseFactory.of(125, 132, 0);
+
+            hDLaunchandParkStart = poseFactory.of(80, 9, 90);
+            hDLaunchandPark = poseFactory.of(127, 32, 180);
+            hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
+        } else {
+            poseFactory = PoseFactory.degrees();
+        }
        ///Scheduler.reset();
 //        follower = Constants.create(hardwareMap);
 //        follower.setPose(leaveAndParkStart_2);
@@ -68,12 +94,12 @@ public class CompetitionAuto extends BaseOpMode{
 
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
-        follower.setPose(hDLaunchandParkStart);
+        follower.setPose(launchAndParkStart_2);
         follower.update();
 
 
         waitForStart();
-        schedule(autoRoutine());
+        schedule(aRlaunchAndPark());
 
         while (opModeIsActive()) {
             follower.update();
@@ -123,17 +149,19 @@ public class CompetitionAuto extends BaseOpMode{
                 instant(() -> transferWheelMot.setVelocity(TRANSFER_SPEED)),
 
                 // Wait for balls to get to launcher
-                waitMs(0), //TODO: need to decide a constant value
+                waitMs(BALLS_TO_LAUNCH_TIME), //TODO: need to decide a constant value
 
                 // Turn on launcher flywheels
                 instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
                 instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
 
-                // Wait for four balls to launch
-                waitMs(0), //TODO: need a constant for this too to tune later
+                // Wait for four balls to launch7
+                waitMs(FOUR_BALLS_TIME), //TODO: need a constant for this too to tune later
 
                 // Turn launcher off
-                instant(() -> intakeMot.setPower(0.0))
+                instant(() -> transferWheelMot.setPower(0.0)),
+                instant(() -> lowerFlywheelMot.setPower(0.0)),
+                instant(() -> upperFlywheelMot.setPower(0.0))
         );
     }
 
