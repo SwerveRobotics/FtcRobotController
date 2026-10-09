@@ -30,16 +30,16 @@ public class CompetitionAuto extends BaseOpMode{
     //when you select the class
     private Follower follower;
     //the values of the paths
-    private final PoseFactory poseFactory = PoseFactory.degrees();
-    private final Pose start = poseFactory.of(85.1, 131.6, 90);
-    private final Pose path1 = poseFactory.of(86.2461, 125.7, -90);
-    private final Pose point2Start = poseFactory.of(86.2461, 125.7, 0);
-    private final Pose point2 = poseFactory.of(106.9552, 131, 0);
-    private final Pose point3 = poseFactory.of(129.6295, 131, 0);
-    private final Pose point4 = poseFactory.of(105.3705, 33.0811, -103.9147);
-    private final Pose point5Start = poseFactory.of(105.3705, 33.0811, -136);
-    private final Pose point5 = poseFactory.of(85.1562, 16.4153, 90);
-    private final Pose point6 = poseFactory.of(125.0884, 34.0981, 23.8848);
+    private PoseFactory poseFactory = PoseFactory.degrees();
+    private Pose start; // = poseFactory.of(85.1, 131.6, 90);
+    private Pose path1; // = poseFactory.of(86.2461, 125.7, -90);
+    private Pose point2Start; // = poseFactory.of(86.2461, 125.7, 0);
+    private Pose point2; // = poseFactory.of(106.9552, 131, 0);
+    private Pose point3; // = poseFactory.of(129.6295, 131, 0);
+    private Pose point4; // = poseFactory.of(105.3705, 33.0811, -103.9147);
+    private Pose point5Start; // = poseFactory.of(105.3705, 33.0811, -136);
+    private Pose point5; // = poseFactory.of(85.1562, 16.4153, 90);
+    private Pose point6; // = poseFactory.of(125.0884, 34.0981, 23.8848);
     //create paths
     public Path path1() {
         return Paths.line(start, path1).constant(path1);
@@ -107,8 +107,24 @@ public class CompetitionAuto extends BaseOpMode{
             telemetry.update();
         }
 
+
         // the first parameter is the type to return as
         Alliance chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
+        // set up the poseFactory and poses
+        if (chosenAlliance.equals(Alliance.RED)) {
+            poseFactory = poseFactory.mirrorY(70.75);
+            poseFactory = poseFactory.mirrorX(70.75);
+        }
+        start = poseFactory.of(85.1, 131.6, 90);
+        path1 = poseFactory.of(86.2461, 125.7, -90);
+        point2Start = poseFactory.of(86.2461, 125.7, 0);
+        point2 = poseFactory.of(106.9552, 131, 0);
+        point3 = poseFactory.of(129.6295, 131, 0);
+        point4 = poseFactory.of(105.3705, 33.0811, -103.9147);
+        point5Start = poseFactory.of(105.3705, 33.0811, -136);
+        point5 = poseFactory.of(85.1562, 16.4153, 90);
+        point6 = poseFactory.of(125.0884, 34.0981, 23.8848);
+
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
         follower.setPose(start);
