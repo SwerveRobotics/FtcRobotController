@@ -1,0 +1,2 @@
+Derived from java-text-menu by valsei (https://github.com/valsei/java-text-menu)
+Permission granted by the author.
