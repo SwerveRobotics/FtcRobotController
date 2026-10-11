@@ -20,8 +20,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.teamcode.menu.MenuFinishedButton;
 import org.firstinspires.ftc.teamcode.menu.MenuHeader;
 import org.firstinspires.ftc.teamcode.menu.MenuInput;
+import org.firstinspires.ftc.teamcode.menu.MenuSlider;
 import org.firstinspires.ftc.teamcode.menu.TextMenu;
 
 
@@ -39,11 +41,17 @@ public class CompetitionAuto extends BaseOpMode{
             RED,
             BLUE,
     }
+    public enum AutoPath { //different options for auto routine
+        GARDEN_PATH,
+        FLOWER_PATH
+    }
+    public double waitTimeMs; //how long we wait at the start
     //what happens when you press the start button on the driver hub
 
-    //create paths, telling the paths to go in order
+    //create paths for GARDEN_PATH, telling the paths to go in order, intaking and shooting
     public Command autoRoutineGarden() {
         return sequential(
+                waitMs(waitTimeMs),
                 follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[1])),
                 shootBalls(4),
                 follow(follower, Paths.line(poses1[2], poses1[3]).linear(poses1[2], poses1[3])),
@@ -64,7 +72,14 @@ public class CompetitionAuto extends BaseOpMode{
                 .add() //empty line
                 .add("Pick alliance:")
                 .add("alliancePicker", Alliance.class)
-                .add();
+                .add()
+                .add("Pick a path:")
+                .add("pathPicker", AutoPath.class) // enum selector shortcut
+                .add()
+                .add("Wait time:")
+                .add("waitSlider", new MenuSlider(0.0, 30.0))
+                .add()
+                .add("finishButton", new MenuFinishedButton());
         while (!menu.isCompleted()) {
             // get x, y (stick) and select (A) input from controller
             // this is x, y (wasd) and select (enter) on the keyboard
@@ -78,8 +93,10 @@ public class CompetitionAuto extends BaseOpMode{
         }
 
 
-        // the first parameter is the type to return as
+        // get data from menu
         Alliance chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
+        AutoPath chosenPath = menu.getResult(AutoPath.class, "pathPicker");
+        waitTimeMs = menu.getResult(Double.class, "waitSlider") * 1000.0;
         // set up the poseFactory and poses
         if (chosenAlliance.equals(Alliance.RED)) {
             poseFactory = poseFactory.mirrorY(70.75);
@@ -94,7 +111,17 @@ public class CompetitionAuto extends BaseOpMode{
 
         initializeHardware();
         waitForStart();
-        schedule(autoRoutineGarden());
+        switch(chosenPath) {
+            case GARDEN_PATH:
+                schedule(autoRoutineGarden());
+                break;
+            case FLOWER_PATH:
+                telemetry.addData("We don't have a flower path yet", 67);
+                break;
+            default:
+                schedule(autoRoutineGarden());
+                telemetry.addData("How did you do this? You have to choose a path!", 67);
+        }
 
         while (opModeIsActive()) {
             follower.update();
