@@ -19,6 +19,10 @@ import static com.pedropathing.api.Paths.*;
 
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
+import org.firstinspires.ftc.teamcode.menu.MenuHeader;
+import org.firstinspires.ftc.teamcode.menu.MenuInput;
+import org.firstinspires.ftc.teamcode.menu.TextMenu;
+
 @Autonomous(name = "AutoPath", group = "Autonomous")
 
 public class CompetitionAuto extends BaseOpMode{
@@ -38,6 +42,19 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose hDLaunchandParkStart = poseFactory.of(80, 9, 90);
     private Pose hDLaunchandPark = poseFactory.of(127, 32, 180);
     private Pose hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
+
+
+    public enum Alliance {
+        RED,
+        BLUE,
+    }
+
+    public enum AutoPath {
+        HIVE_UP_PARK,
+        HIVE_UP_SCORE,
+        HIVE_DOWN_PARK,
+
+    }
 
 //    public Command startIntake = instant(() -> intakeMot.setPower(1.0) );
 //    public Command stopIntake = instant(() -> intakeMot.setPower(0.0) );
@@ -66,6 +83,29 @@ public class CompetitionAuto extends BaseOpMode{
 
     @Override
     public void runOpMode() throws InterruptedException {
+
+        //Making follower to tell the robot
+        TextMenu menu = new TextMenu();
+        MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
+        menu.add(new MenuHeader("Auto Setup"))
+                .add() //empty line
+                .add("Pick alliance:")
+                .add("alliancePicker", Alliance.class)
+                .add()
+                .add("pathPicker", AutoPath.class); // enum selector shortcut
+
+        while (!menu.isCompleted()) {
+            // get x, y (stick) and select (A) input from controller
+            // this is x, y (wasd) and select (enter) on the keyboard
+            menuInput.update(gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.a);
+            menu.updateWithInput(menuInput);
+            // display the updated menu
+            for (String line : menu.toListOfStrings()) {
+                telemetry.addLine(line); // but with appropriate printing method
+            }
+            telemetry.update();
+        }
+
         // this needs to be passed in via text menu so we can alternate between blue and red
         boolean redAlliance = true;
         if(redAlliance) {
