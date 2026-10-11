@@ -38,11 +38,13 @@ public class CompetitionTeleOp extends BaseOpMode {
             if(gamepad2.yWasPressed()){
                 gate.setPosition(GATE_OPEN);
                 launchMotor.setVelocity(LAUNCHER_SPEED);
+                intakeMotor.setVelocity(INTAKE_SPEED);
             }
             //when y is let go of then turn.
             else if(gamepad2.yWasReleased()){
                 launchMotor.setVelocity(0);
                 gate.setPosition(GATE_CLOSE);
+                intakeMotor.setVelocity(0.0);
             }
             if(gamepad2.dpad_down) {
                 flowerRamp.setPosition(RAMP_DOWN);

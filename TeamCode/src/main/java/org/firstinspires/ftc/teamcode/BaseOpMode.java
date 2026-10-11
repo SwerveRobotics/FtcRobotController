@@ -31,6 +31,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         intakeMotor = hardwareMap.get(DcMotorEx.class, "motIntake");
         launchMotor = hardwareMap.get(DcMotorEx.class, "motLaunch");
         gate = hardwareMap.get(Servo.class, "alliGATEr");
+        flowerRamp = hardwareMap.get(Servo.class, "flowerRamp");
 
         //what happens when stopping
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);

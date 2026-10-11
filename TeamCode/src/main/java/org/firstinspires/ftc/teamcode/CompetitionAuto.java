@@ -176,7 +176,6 @@ public class CompetitionAuto extends BaseOpMode{
                 })
                 .setDone(() ->
                         timer.milliseconds() > millis)
-                //check if ball went in
                 .setEnd(endCondition -> {
                     intakeMotor.setPower(0);
                     // executed on end
@@ -187,13 +186,15 @@ public class CompetitionAuto extends BaseOpMode{
         return Command.build()
                 .setStart(() -> {launchMotor.setPower(LAUNCHER_SPEED);
                 gate.setPosition(GATE_OPEN);
+                intakeMotor.setVelocity(INTAKE_SPEED);
                     })
                 .setDone(() -> timer.milliseconds() > LAUNCH_TIME * numBalls)
                 .setEnd(endCondition ->
                     { launchMotor.setPower(0.0);
                         gate.setPosition(GATE_CLOSE);
+                        intakeMotor.setVelocity(0.0);
                 })
-                .requiring(launchMotor, gate);
+                .requiring(launchMotor, gate, intakeMotor);
     }
     public void initializeFlowerPath(Pose[] flowerPoses, PoseFactory poseFactory) {
         flowerPoses[0] = poseFactory.of(79.1085, 8.6331, 90);
