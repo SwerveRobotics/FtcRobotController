@@ -37,29 +37,7 @@ public class CompetitionAuto extends BaseOpMode{
     private PoseFactory poseFactory = PoseFactory.degrees();
     private Pose[] poses1 = new Pose[9]; //this holds the poses for the garden path
     private Pose[] poses2 = new Pose[7]; //this holds the poses for the flower path
-    public Path path1() {
-        return Paths.line(poses2[0], poses2[1]).constant(poses2[1]);
-    }
 
-    public Path path2() {
-        return Paths.line(poses2[1], poses2[2]).constant(poses2[2]);
-    }
-
-    public Path path3() {
-        return Paths.line(poses2[2], poses2[3]).constant(poses2[3]);
-    }
-
-    public Path path4() {
-        return Paths.line(poses2[3], poses2[4]).constant(poses2[4]);
-    }
-
-    public Path path5() {
-        return Paths.line(poses2[4], poses2[5]).constant(poses2[5]);
-    }
-
-    public Path path6() {
-        return Paths.line(poses2[5], poses2[6]).constant(poses2[6]);
-    }
 
 
     private final ElapsedTime timer = new ElapsedTime();
@@ -86,6 +64,20 @@ public class CompetitionAuto extends BaseOpMode{
                 follow(follower, Paths.line(poses1[6], poses1[7]).linear(poses1[6], poses1[7])),
                 shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[7], poses1[8]).tangent())
+        );
+    }
+    public Command autoRoutineFlower() {
+        return sequential(
+                waitMs(waitTimeMs),
+                follow(follower,Paths.line(poses2[0], poses2[1]).constant(poses2[1])),
+                shootBalls(4).raceWith(hold(follower)),
+                follow(follower,Paths.line(poses2[1], poses2[2]).constant(poses2[2])),
+                follow(follower, Paths.line(poses2[2], poses2[3]).constant(poses2[3])),
+                intakeBallForMillis(3000).raceWith(hold(follower)),
+                follow(follower, Paths.line(poses2[3], poses2[4]).constant(poses2[4])),
+                follow(follower, Paths.line(poses2[4], poses2[5]).constant(poses2[5])),
+                shootBalls(4).raceWith(hold(follower)),
+                follow(follower, Paths.line(poses2[5], poses2[6]).constant(poses2[6]))
         );
     }
 
@@ -141,7 +133,7 @@ public class CompetitionAuto extends BaseOpMode{
                 break;
             case FLOWER_PATH:
                 initializeFlowerPath(poses2, poseFactory);
-                //schedule(autoRoutineFlower());
+                schedule(autoRoutineFlower());
                 break;
             default:
                 schedule(autoRoutineGarden());
