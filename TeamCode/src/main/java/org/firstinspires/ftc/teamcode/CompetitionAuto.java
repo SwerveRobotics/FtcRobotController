@@ -170,6 +170,21 @@ public class CompetitionAuto extends BaseOpMode{
 
         return shoot;
     }
+    public Command flowerIntake(long millis) {
+        Command flower = Command.build()
+                .setStart(() -> {
+                    timer.reset();
+                    flowerRamp.setPosition(RAMP_DOWN);
+                })
+                .setDone(() ->
+                        timer.milliseconds() > millis)
+                .setEnd(endCondidtion -> {
+                    flowerRamp.setPosition(RAMP_UP);
+                })
+                .requiring(flowerRamp);
+        return flower;
+    }
+
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) {
         gardenPoses[0] = poseFactory.of(85.1, 131.6, 90);
         gardenPoses[1] = poseFactory.of(86.2461, 125.7, -90);
