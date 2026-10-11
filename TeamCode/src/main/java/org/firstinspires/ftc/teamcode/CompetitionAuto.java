@@ -32,7 +32,7 @@ public class CompetitionAuto extends BaseOpMode{
     //when you select the class
     private Follower follower;
     //the values of the paths
-    private PoseFactory poseFactory = PoseFactory.degrees();
+    private PoseFactory poseFactory = PoseFactory.degrees(); //67
     private Pose[] poses1 = new Pose[9]; //this holds the poses for the garden path
     //create paths
     private final Pose start = poseFactory.of(79.1085, 8.6331, 90);
