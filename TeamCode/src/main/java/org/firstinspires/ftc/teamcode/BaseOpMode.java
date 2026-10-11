@@ -12,6 +12,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected DcMotorEx launchMotor;
     protected DcMotorEx intakeMotor;
     protected Servo gate;
+    protected Servo flowerRamp;
 
 
 
@@ -21,6 +22,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double INTAKE_SPEED = 1.0;
     public static final double GATE_OPEN = 1.0;
     public static final double GATE_CLOSE = 0.0;
+    public static final double RAMP_UP = 0.0;
+    public static final double RAMP_DOWN = 0.0;
 
 
     public void initializeHardware() {

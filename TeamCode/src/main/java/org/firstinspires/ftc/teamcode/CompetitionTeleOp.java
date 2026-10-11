@@ -44,6 +44,12 @@ public class CompetitionTeleOp extends BaseOpMode {
                 launchMotor.setVelocity(0);
                 gate.setPosition(GATE_CLOSE);
             }
+            if(gamepad2.dpad_down) {
+                flowerRamp.setPosition(RAMP_DOWN);
+            }
+            if (gamepad2.dpad_up) {
+                flowerRamp.setPosition(RAMP_UP);
+            }
 
             //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX
             telemetry.addData("X", follower.pose().x());
