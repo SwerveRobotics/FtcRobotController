@@ -31,39 +31,9 @@ public class CompetitionAuto extends BaseOpMode{
     private Follower follower;
     //the values of the paths
     private PoseFactory poseFactory = PoseFactory.degrees();
-    private Pose start; // = poseFactory.of(85.1, 131.6, 90);
-    private Pose path1; // = poseFactory.of(86.2461, 125.7, -90);
-    private Pose point2Start; // = poseFactory.of(86.2461, 125.7, 0);
-    private Pose point2; // = poseFactory.of(106.9552, 131, 0);
-    private Pose point3; // = poseFactory.of(129.6295, 131, 0);
-    private Pose point4; // = poseFactory.of(105.3705, 33.0811, -103.9147);
-    private Pose point5Start; // = poseFactory.of(105.3705, 33.0811, -136);
-    private Pose point5; // = poseFactory.of(85.1562, 16.4153, 90);
-    private Pose point6; // = poseFactory.of(125.0884, 34.0981, 23.8848);
+    private Pose[] poses1 = new Pose[9]; //this holds the poses for the garden path
     //create paths
-    public Path path1() {
-        return Paths.line(start, path1).constant(path1);
-    }
 
-    public Path path2() {
-        return Paths.line(point2Start, point2).linear(point2Start, point2);
-    }
-
-    public Path path3() {
-        return Paths.line(point2, point3).constant(point3);
-    }
-
-    public Path path4() {
-        return Paths.line(point3, point4).tangent();
-    }
-
-    public Path path5() {
-        return Paths.line(point5Start, point5).linear(point5Start, point5);
-    }
-
-    public Path path6() {
-        return Paths.line(point5, point6).tangent();
-    }
     private final ElapsedTime timer = new ElapsedTime();
     public enum Alliance {
             RED,
@@ -71,17 +41,17 @@ public class CompetitionAuto extends BaseOpMode{
     }
     //what happens when you press the start button on the driver hub
 
-    //telling the paths to go in order
-    public Command autoRoutine() {
+    //create paths, telling the paths to go in order
+    public Command autoRoutineGarden() {
         return sequential(
-                follow(follower, path1()),
+                follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[1])),
                 shootBalls(4),
-                follow(follower, path2()),
-                follow(follower, path3()).raceWith(intakeBallForMillis(1000)),
-                follow(follower, path4()),
-                follow(follower, path5()),
+                follow(follower, Paths.line(poses1[2], poses1[3]).linear(poses1[2], poses1[3])),
+                follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[4])).raceWith(intakeBallForMillis(3000)),
+                follow(follower, Paths.line(poses1[4], poses1[5]).tangent()),
+                follow(follower, Paths.line(poses1[6], poses1[7]).linear(poses1[6], poses1[7])),
                 shootBalls(4),
-                follow(follower, path6())
+                follow(follower, Paths.line(poses1[7], poses1[8]).tangent())
         );
     }
 
@@ -115,24 +85,16 @@ public class CompetitionAuto extends BaseOpMode{
             poseFactory = poseFactory.mirrorY(70.75);
             poseFactory = poseFactory.mirrorX(70.75);
         }
-        start = poseFactory.of(85.1, 131.6, 90);
-        path1 = poseFactory.of(86.2461, 125.7, -90);
-        point2Start = poseFactory.of(86.2461, 125.7, 0);
-        point2 = poseFactory.of(106.9552, 131, 0);
-        point3 = poseFactory.of(129.6295, 131, 0);
-        point4 = poseFactory.of(105.3705, 33.0811, -103.9147);
-        point5Start = poseFactory.of(105.3705, 33.0811, -136);
-        point5 = poseFactory.of(85.1562, 16.4153, 90);
-        point6 = poseFactory.of(125.0884, 34.0981, 23.8848);
+        initializeGardenPath(poses1, poseFactory);
 
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
-        follower.setPose(start);
+        follower.setPose(poses1[0]); //this changes based on path
         follower.update();
 
         initializeHardware();
         waitForStart();
-        schedule(autoRoutine());
+        schedule(autoRoutineGarden());
 
         while (opModeIsActive()) {
             follower.update();
@@ -180,5 +142,16 @@ public class CompetitionAuto extends BaseOpMode{
                 .requiring(launchMotor);
 
         return shoot;
+    }
+    public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) {
+        gardenPoses[0] = poseFactory.of(85.1, 131.6, 90);
+        gardenPoses[1] = poseFactory.of(86.2461, 125.7, -90);
+        gardenPoses[2] = poseFactory.of(86.2461, 125.7, 0);
+        gardenPoses[3] = poseFactory.of(106.9552, 131, 0);
+        gardenPoses[4] = poseFactory.of(129.6295, 131, 0);
+        gardenPoses[5] = poseFactory.of(105.3705, 33.0811, -103.9147);
+        gardenPoses[6] = poseFactory.of(105.3705, 33.0811, -136);
+        gardenPoses[7] = poseFactory.of(85.1562, 16.4153, 90);
+        gardenPoses[8] = poseFactory.of(125.0884, 34.0981, 23.8848);
     }
 }
