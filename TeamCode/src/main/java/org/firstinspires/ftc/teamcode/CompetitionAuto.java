@@ -34,7 +34,31 @@ public class CompetitionAuto extends BaseOpMode{
     //the values of the paths
     private PoseFactory poseFactory = PoseFactory.degrees();
     private Pose[] poses1 = new Pose[9]; //this holds the poses for the garden path
-    //create paths
+    private Pose[] poses2 = new Pose[7]; //this holds the poses for the flower path
+    public Path path1() {
+        return Paths.line(poses2[0], poses2[1]).constant(poses2[1]);
+    }
+
+    public Path path2() {
+        return Paths.line(poses2[1], poses2[2]).constant(poses2[2]);
+    }
+
+    public Path path3() {
+        return Paths.line(poses2[2], poses2[3]).constant(poses2[3]);
+    }
+
+    public Path path4() {
+        return Paths.line(poses2[3], poses2[4]).constant(poses2[4]);
+    }
+
+    public Path path5() {
+        return Paths.line(poses2[4], poses2[5]).constant(poses2[5]);
+    }
+
+    public Path path6() {
+        return Paths.line(poses2[5], poses2[6]).constant(poses2[6]);
+    }
+
 
     private final ElapsedTime timer = new ElapsedTime();
     public enum Alliance {
@@ -102,26 +126,28 @@ public class CompetitionAuto extends BaseOpMode{
             poseFactory = poseFactory.mirrorY(70.75);
             poseFactory = poseFactory.mirrorX(70.75);
         }
-        initializeGardenPath(poses1, poseFactory);
+
 
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
         follower.setPose(poses1[0]); //this changes based on path
         follower.update();
-
-        initializeHardware();
-        waitForStart();
         switch(chosenPath) {
             case GARDEN_PATH:
+                initializeGardenPath(poses1, poseFactory);
                 schedule(autoRoutineGarden());
                 break;
             case FLOWER_PATH:
-                telemetry.addData("We don't have a flower path yet", 67);
+                initializeFlowerPath(poses2, poseFactory);
+                //schedule(autoRoutineFlower());
                 break;
             default:
                 schedule(autoRoutineGarden());
                 telemetry.addData("How did you do this? You have to choose a path!", 67);
         }
+        initializeHardware();
+        waitForStart();
+
 
         while (opModeIsActive()) {
             follower.update();
@@ -169,6 +195,15 @@ public class CompetitionAuto extends BaseOpMode{
                 .requiring(launchMotor);
 
         return shoot;
+    }
+    public void initializeFlowerPath(Pose[] flowerPoses, PoseFactory poseFactory) {
+        flowerPoses[0] = poseFactory.of(79.1085, 8.6331, 90);
+        flowerPoses[1] = poseFactory.of(84.7, 23.3459, 90);
+        flowerPoses[2] = poseFactory.of(94.4916, 17.3314, -90);
+        flowerPoses[3] = poseFactory.of(94.0503, 9.5, -90);
+        flowerPoses[4] = poseFactory.of(94.4916, 17.3314, -90);
+        flowerPoses[5] = poseFactory.of(84.7, 23.3459, 90);
+        flowerPoses[6] = poseFactory.of(129.3126, 24.6121, 90);
     }
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) {
         gardenPoses[0] = poseFactory.of(85.1, 131.6, 90);
