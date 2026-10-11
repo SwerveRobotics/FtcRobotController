@@ -16,6 +16,8 @@ import static com.pedropathing.ivy.commands.Commands.*;
 import static com.pedropathing.ivy.groups.Groups.repeat;
 import static com.pedropathing.ivy.groups.Groups.sequential;
 import static com.pedropathing.ivy.pedro.PedroCommands.follow;
+import static com.pedropathing.ivy.pedro.PedroCommands.hold;
+
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -77,12 +79,12 @@ public class CompetitionAuto extends BaseOpMode{
         return sequential(
                 waitMs(waitTimeMs),
                 follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[1])),
-                shootBalls(4),
+                shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[2], poses1[3]).linear(poses1[2], poses1[3])),
                 follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[4])).raceWith(intakeBallForMillis(3000)),
                 follow(follower, Paths.line(poses1[4], poses1[5]).tangent()),
                 follow(follower, Paths.line(poses1[6], poses1[7]).linear(poses1[6], poses1[7])),
-                shootBalls(4),
+                shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[7], poses1[8]).tangent())
         );
     }
@@ -166,7 +168,7 @@ public class CompetitionAuto extends BaseOpMode{
         }
     }
     public Command intakeBallForMillis(long millis) {
-        Command intakeBall = Command.build()
+        return Command.build()
                 .setStart(() -> {
                     //something goes here
                     timer.reset();
@@ -180,10 +182,9 @@ public class CompetitionAuto extends BaseOpMode{
                     // executed on end
                 })
                 .requiring(intakeMotor);
-        return  intakeBall;
     }
     public Command shootBalls(int numBalls) { // WORK IN PROGRESS
-        Command shoot = Command.build()
+        return Command.build()
                 .setStart(() -> {launchMotor.setPower(LAUNCHER_SPEED);
                 gate.setPosition(GATE_OPEN);
                     })
@@ -192,9 +193,7 @@ public class CompetitionAuto extends BaseOpMode{
                     { launchMotor.setPower(0.0);
                         gate.setPosition(GATE_CLOSE);
                 })
-                .requiring(launchMotor);
-
-        return shoot;
+                .requiring(launchMotor, gate);
     }
     public void initializeFlowerPath(Pose[] flowerPoses, PoseFactory poseFactory) {
         flowerPoses[0] = poseFactory.of(79.1085, 8.6331, 90);
