@@ -39,8 +39,8 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose hDLaunchandPark = poseFactory.of(127, 32, 180);
     private Pose hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
 
-    public Command startIntake = instant(() -> intakeMot.setPower(1.0) );
-    public Command stopIntake = instant(() -> intakeMot.setPower(0.0) );
+//    public Command startIntake = instant(() -> intakeMot.setPower(1.0) );
+//    public Command stopIntake = instant(() -> intakeMot.setPower(0.0) );
     public Command aRleaveAndPark() {
         return sequential(
             follow(follower, leaveAndPark())
@@ -49,7 +49,7 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command aRlaunchAndPark() {
         return sequential(
-                launchFourBalls(),
+                //launchFourBalls(),
                 follow(follower, launchAndPark())
 
         );
@@ -57,7 +57,7 @@ public class CompetitionAuto extends BaseOpMode{
     public Command aRHDlaunchAndPark() {
         return sequential(
                 waitMs(PARTNER_LAUNCH_TIME),
-                launchFourBalls(),
+                //launchFourBalls(),
                 follow(follower, hDLaunchandPark())
 
         );
@@ -143,27 +143,27 @@ public class CompetitionAuto extends BaseOpMode{
         );
     }
 
-    public Command launchFourBalls() {
-        return sequential(
-                // Turn on transfer wheel
-                instant(() -> transferWheelMot.setVelocity(TRANSFER_SPEED)),
-
-                // Wait for balls to get to launcher
-                waitMs(BALLS_TO_LAUNCH_TIME), //TODO: need to decide a constant value
-
-                // Turn on launcher flywheels
-                instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
-                instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
-
-                // Wait for four balls to launch7
-                waitMs(FOUR_BALLS_TIME), //TODO: need a constant for this too to tune later
-
-                // Turn launcher off
-                instant(() -> transferWheelMot.setPower(0.0)),
-                instant(() -> lowerFlywheelMot.setPower(0.0)),
-                instant(() -> upperFlywheelMot.setPower(0.0))
-        );
-    }
+//    ///public Command launchFourBalls() {
+//        return sequential(
+//                // Turn on transfer wheel
+//                instant(() -> transferWheelMot.setVelocity(TRANSFER_SPEED)),
+//
+//                // Wait for balls to get to launcher
+//                waitMs(BALLS_TO_LAUNCH_TIME), //TODO: need to decide a constant value
+//
+//                // Turn on launcher flywheels
+//                instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
+//                instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
+//
+//                // Wait for four balls to launch7
+//                waitMs(FOUR_BALLS_TIME), //TODO: need a constant for this too to tune later
+//
+//                // Turn launcher off
+//                instant(() -> transferWheelMot.setPower(0.0)),
+//                instant(() -> lowerFlywheelMot.setPower(0.0)),
+//                instant(() -> upperFlywheelMot.setPower(0.0))
+//        );
+//      }
 
 
 }
