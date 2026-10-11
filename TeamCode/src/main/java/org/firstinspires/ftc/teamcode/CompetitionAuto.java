@@ -164,15 +164,32 @@ public class CompetitionAuto extends BaseOpMode{
                 .setStart(() -> {
                     //something goes here
                     timer.reset();
-                    intakeMotor.setPower(1);
+                    intakeMotor.setPower(1.0);
+                    intakeMotor.setVelocity(INTAKE_SPEED);
                 })
                 .setDone(() ->
                         timer.milliseconds() > millis)
                 .setEnd(endCondition -> {
-                    intakeMotor.setPower(0);
+                    intakeMotor.setVelocity(0.0);
+                    intakeMotor.setPower(0.0);
                     // executed on end
                 })
                 .requiring(intakeMotor);
+    }
+    public Command flowerIntake(long millis) { //WIP, best to change into rampUp and rampDown functions
+        Command flower = Command.build()
+                .setStart(() -> {
+                    timer.reset();
+                    flowerRamp.setPosition(RAMP_DOWN);
+
+                })
+                .setDone(() ->
+                        timer.milliseconds() > millis)
+                .setEnd(endCondition -> {
+                    flowerRamp.setPosition(RAMP_UP);
+                })
+                .requiring(flowerRamp);
+        return flower;
     }
     public Command shootBalls(int numBalls) { // WORK IN PROGRESS
         return Command.build()
@@ -197,20 +214,7 @@ public class CompetitionAuto extends BaseOpMode{
         flowerPoses[5] = poseFactory.of(84.7, 23.3459, 90);
         flowerPoses[6] = poseFactory.of(129.3126, 24.6121, 90);
     }
-    public Command flowerIntake(long millis) {
-        Command flower = Command.build()
-                .setStart(() -> {
-                    timer.reset();
-                    flowerRamp.setPosition(RAMP_DOWN);
-                })
-                .setDone(() ->
-                        timer.milliseconds() > millis)
-                .setEnd(endCondidtion -> {
-                    flowerRamp.setPosition(RAMP_UP);
-                })
-                .requiring(flowerRamp);
-        return flower;
-    }
+
 
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) {
         gardenPoses[0] = poseFactory.of(85.1, 131.6, 90);

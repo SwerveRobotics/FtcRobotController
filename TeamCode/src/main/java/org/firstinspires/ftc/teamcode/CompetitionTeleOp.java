@@ -28,11 +28,11 @@ public class CompetitionTeleOp extends BaseOpMode {
             //when left stick is pushed up set velocity
             //intakeMotor.setVelocity(gamepad2.left_stick_y);
             if (gamepad2.left_stick_y > 0.05) {
-                intakeMotor.setPower(INTAKE_SPEED);
+                intakeMotor.setVelocity(INTAKE_SPEED);
             } else if (gamepad2.left_stick_y < -0.05){
-                intakeMotor.setPower(-INTAKE_SPEED);
+                intakeMotor.setVelocity(-INTAKE_SPEED);
             } else {
-                intakeMotor.setPower(0);
+                intakeMotor.setVelocity(0);
             }
             //when the button y is pressed then set velocity for launcher
             if(gamepad2.yWasPressed()){
