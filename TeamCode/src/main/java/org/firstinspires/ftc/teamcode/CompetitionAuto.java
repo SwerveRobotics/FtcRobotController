@@ -35,7 +35,37 @@ public class CompetitionAuto extends BaseOpMode{
     private PoseFactory poseFactory = PoseFactory.degrees();
     private Pose[] poses1 = new Pose[9]; //this holds the poses for the garden path
     //create paths
+    private final Pose start = poseFactory.of(79.1085, 8.6331, 90);
+    private final Pose path1 = poseFactory.of(84.7, 23.3459, 90);
+    private final Pose point2 = poseFactory.of(94.4916, 17.3314, -90);
+    private final Pose point3 = poseFactory.of(94.0503, 9.5, -90);
+    private final Pose point4 = poseFactory.of(94.4916, 17.3314, -90);
+    private final Pose point5 = poseFactory.of(84.7, 23.3459, 90);
+    private final Pose point6 = poseFactory.of(129.3126, 24.6121, 90);
 
+    public Path path1() {
+        return Paths.line(start, path1).constant(path1);
+    }
+
+    public Path path2() {
+        return Paths.line(path1, point2).constant(point2);
+    }
+
+    public Path path3() {
+        return Paths.line(point2, point3).constant(point3);
+    }
+
+    public Path path4() {
+        return Paths.line(point3, point4).constant(point4);
+    }
+
+    public Path path5() {
+        return Paths.line(point4, point5).constant(point5);
+    }
+
+    public Path path6() {
+        return Paths.line(point5, point6).constant(point6);
+    }
     private final ElapsedTime timer = new ElapsedTime();
     public enum Alliance {
             RED,
