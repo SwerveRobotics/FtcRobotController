@@ -42,7 +42,9 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose hDLaunchandParkStart = poseFactory.of(80, 9, 90);
     private Pose hDLaunchandPark = poseFactory.of(127, 32, 180);
     private Pose hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
-
+    boolean redAlliance;
+    private Command decide;
+    private Pose startPos;
 
     public enum Alliance {
         RED,
@@ -66,7 +68,7 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command aRlaunchAndPark() {
         return sequential(
-                //launchFourBalls(),
+                launchFourBalls(),
                 follow(follower, launchAndPark())
 
         );
@@ -74,7 +76,7 @@ public class CompetitionAuto extends BaseOpMode{
     public Command aRHDlaunchAndPark() {
         return sequential(
                 waitMs(PARTNER_LAUNCH_TIME),
-                //launchFourBalls(),
+                launchFourBalls(),
                 follow(follower, hDLaunchandPark())
 
         );
@@ -106,11 +108,43 @@ public class CompetitionAuto extends BaseOpMode{
             telemetry.update();
         }
 
+        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliance-picker-1");
+        AutoPath chosenMovement = menu.getResult(AutoPath.class, "movement-picker-1");
+        double waitTime = menu.getResult(Double.class, "wait-slider-1");
+        switch(chosenAlliance) {
+            case RED:
+                redAlliance = true;
+                break;
+            case BLUE:
+                redAlliance = false;
+                break;
+            default:
+                redAlliance = false;
+                break;
+        }
+
+        switch(chosenMovement) {
+            case HIVE_UP_PARK:
+                decide = aRleaveAndPark();
+                startPos = leaveAndParkStart_2;
+                break;
+            case HIVE_DOWN_PARK:
+                decide = aRHDlaunchAndPark();
+                startPos = hDLaunchandParkStart;
+                break;
+            case HIVE_UP_SCORE:
+                decide = aRlaunchAndPark();
+                startPos = launchAndParkStart_2;
+                break;
+            default:
+                decide = aRleaveAndPark();
+                break;
+        }
+
         // this needs to be passed in via text menu so we can alternate between blue and red
-        boolean redAlliance = true;
+
         if(redAlliance) {
             poseFactory = PoseFactory.degrees().mirrorX(70.75).mirrorY(70.75);
-            leaveAndParkStart = poseFactory.of(132.832, 59.8271, 90);
             leaveAndParkStart_2 = poseFactory.of(132.832, 59.8271, 180);
             leaveAndPark = poseFactory.of(127, 32, 180);
             leaveAndParkControl1 = poseFactory.of(96, 50, 180);
@@ -134,12 +168,12 @@ public class CompetitionAuto extends BaseOpMode{
 
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
-        follower.setPose(launchAndParkStart_2);
+        follower.setPose(startPos);
         follower.update();
 
 
         waitForStart();
-        schedule(aRlaunchAndPark());
+        schedule(decide);
 
         while (opModeIsActive()) {
             follower.update();
@@ -156,7 +190,9 @@ public class CompetitionAuto extends BaseOpMode{
 
             telemetry.update();
         }
+
     }
+
 
     public Path leaveAndPark() {
         return curve(leaveAndParkStart_2, leaveAndParkControl1, leaveAndPark).linear(leaveAndParkStart_2, leaveAndPark);
@@ -183,27 +219,27 @@ public class CompetitionAuto extends BaseOpMode{
         );
     }
 
-//    ///public Command launchFourBalls() {
-//        return sequential(
-//                // Turn on transfer wheel
-//                instant(() -> transferWheelMot.setVelocity(TRANSFER_SPEED)),
-//
-//                // Wait for balls to get to launcher
-//                waitMs(BALLS_TO_LAUNCH_TIME), //TODO: need to decide a constant value
-//
-//                // Turn on launcher flywheels
-//                instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
-//                instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
-//
-//                // Wait for four balls to launch7
-//                waitMs(FOUR_BALLS_TIME), //TODO: need a constant for this too to tune later
-//
-//                // Turn launcher off
-//                instant(() -> transferWheelMot.setPower(0.0)),
-//                instant(() -> lowerFlywheelMot.setPower(0.0)),
-//                instant(() -> upperFlywheelMot.setPower(0.0))
-//        );
-//      }
+    public Command launchFourBalls() {
+        return sequential(
+                // Turn on transfer wheel
+                instant(() -> transferWheelMot.setVelocity(TRANSFER_SPEED)),
+
+                // Wait for balls to get to launcher
+                waitMs(BALLS_TO_LAUNCH_TIME), //TODO: need to decide a constant value
+
+                // Turn on launcher flywheels
+                instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
+                instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
+
+                // Wait for four balls to launch7
+                waitMs(FOUR_BALLS_TIME), //TODO: need a constant for this too to tune later
+
+                // Turn launcher off
+                instant(() -> transferWheelMot.setPower(0.0)),
+                instant(() -> lowerFlywheelMot.setPower(0.0)),
+                instant(() -> upperFlywheelMot.setPower(0.0))
+        );
+      }
 
 
 }
