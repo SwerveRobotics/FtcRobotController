@@ -1,8 +1,9 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.follower.Follower;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-
+@Config
 @TeleOp(name="417 Teleop")
 public class CompetitionTeleOp extends BaseOpMode {
     //variables
@@ -27,12 +28,13 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             //when left stick is pushed up set velocity
             //intakeMotor.setVelocity(gamepad2.left_stick_y);
+            //TODO: Test the intake if its going at the right speed
             if (gamepad2.left_stick_y > 0.05) {
-                intakeMotor.setVelocity(INTAKE_SPEED);
+                intakeMotor.setPower(INTAKE_SPEED);
             } else if (gamepad2.left_stick_y < -0.05){
-                intakeMotor.setVelocity(-INTAKE_SPEED);
+                intakeMotor.setPower(-INTAKE_SPEED);
             } else {
-                intakeMotor.setVelocity(0);
+                intakeMotor.setPower(0);
             }
             //when the button y is pressed then set velocity for launcher
             if(gamepad2.yWasPressed()){
@@ -55,6 +57,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX
             telemetry.addData("X", follower.pose().x());
+            telemetry.addData("Left stick Y:", gamepad2.left_stick_y);
             telemetry.addData("Y", follower.pose().y());
             telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
             telemetry.addData("Gate Position", gate.getPosition());
