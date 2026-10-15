@@ -130,7 +130,7 @@ class ForwardVelocity extends TuningOpMode<Double> {
     public static double RECORD_NUMBER = 10;
 
     public ForwardVelocity(Function<HardwareMap, Localizer> localizerFunction, Function<HardwareMap, Drivetrain> drivetrainFunction, double distance) {
-        super("Max Forward Velocity", "A tuner for finding the maximum achievable forward velocity. This will drive forward for " + distance + " inches and then likely drift past that position.", false);
+        super("Max Forward Velocity", "A tuner for finding the maximum achievable forward velocity. This will drive forward for " + distance + " inches and then likely drift past that position.", true);
         this.localizerFunction = localizerFunction;
         this.drivetrainFunction = drivetrainFunction;
         this.distance = distance;
@@ -159,7 +159,7 @@ class ForwardVelocity extends TuningOpMode<Double> {
 
         while (!end) {
             localizer.update();
-            if (Math.abs(localizer.pose().x()) > distance) {
+            if (Math.abs(localizer.pose().x()) > distance || Math.abs(localizer.pose().y()) > distance) {
                 end = true;
                 drivetrain.stop();
             } else {
@@ -217,7 +217,7 @@ class StrafeVelocity extends TuningOpMode<Double> {
 
         while (!end) {
             localizer.update();
-            if (Math.abs(localizer.pose().y()) > distance) {
+            if (Math.abs(localizer.pose().y()) > distance ) {
                 end = true;
                 drivetrain.stop();
             } else {
