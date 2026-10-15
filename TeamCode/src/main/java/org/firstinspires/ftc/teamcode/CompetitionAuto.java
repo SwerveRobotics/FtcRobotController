@@ -44,7 +44,7 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
     boolean redAlliance;
     private Command decide;
-    private Pose startPos;
+    private Pose startPos = leaveAndParkStart_2 ;
 
     public enum Alliance {
         RED,
@@ -108,9 +108,9 @@ public class CompetitionAuto extends BaseOpMode{
             telemetry.update();
         }
 
-        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliance-picker-1");
-        AutoPath chosenMovement = menu.getResult(AutoPath.class, "movement-picker-1");
-        double waitTime = menu.getResult(Double.class, "wait-slider-1");
+        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
+        AutoPath chosenMovement = menu.getResult(AutoPath.class, "pathPicker");
+        //double waitTime = menu.getResult(Double.class, "wait-slider-1");
         switch(chosenAlliance) {
             case RED:
                 redAlliance = true;
@@ -122,24 +122,8 @@ public class CompetitionAuto extends BaseOpMode{
                 redAlliance = false;
                 break;
         }
+        //decide = aRleaveAndPark();
 
-        switch(chosenMovement) {
-            case HIVE_UP_PARK:
-                decide = aRleaveAndPark();
-                startPos = leaveAndParkStart_2;
-                break;
-            case HIVE_DOWN_PARK:
-                decide = aRHDlaunchAndPark();
-                startPos = hDLaunchandParkStart;
-                break;
-            case HIVE_UP_SCORE:
-                decide = aRlaunchAndPark();
-                startPos = launchAndParkStart_2;
-                break;
-            default:
-                decide = aRleaveAndPark();
-                break;
-        }
 
         // this needs to be passed in via text menu so we can alternate between blue and red
 
@@ -170,6 +154,24 @@ public class CompetitionAuto extends BaseOpMode{
         follower = Constants.create(hardwareMap);
         follower.setPose(startPos);
         follower.update();
+        switch(chosenMovement) {
+            case HIVE_UP_PARK:
+                startPos = leaveAndParkStart_2;
+                decide = aRleaveAndPark();
+                break;
+            case HIVE_DOWN_PARK:
+                decide = aRHDlaunchAndPark();
+                startPos = hDLaunchandParkStart;
+                break;
+            case HIVE_UP_SCORE:
+                decide = aRlaunchAndPark();
+                startPos = launchAndParkStart_2;
+                break;
+            default:
+                startPos = leaveAndParkStart_2;
+                decide = aRleaveAndPark();
+                break;
+        }
 
 
         waitForStart();
@@ -235,9 +237,9 @@ public class CompetitionAuto extends BaseOpMode{
                 waitMs(FOUR_BALLS_TIME), //TODO: need a constant for this too to tune later
 
                 // Turn launcher off
-                instant(() -> transferWheelMot.setPower(0.0)),
-                instant(() -> lowerFlywheelMot.setPower(0.0)),
-                instant(() -> upperFlywheelMot.setPower(0.0))
+                instant(() -> transferWheelMot.setPower(0.0))
+                //instant(() -> lowerFlywheelMot.setPower(0.0)),
+                //instant(() -> upperFlywheelMot.setPower(0.0))
         );
       }
 

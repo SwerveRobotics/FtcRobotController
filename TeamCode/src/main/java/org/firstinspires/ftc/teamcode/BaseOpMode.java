@@ -18,8 +18,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double LAUNCHER_TOPSPIN = 150;
     public static double WHEEL_STOP_SPEED = 0;
     public static double TRANSFER_WHEEL_START_SPEED = 312;
-    public static double INTAKE_SPEED_MULTIPLIER = 1000;
-    public static double TRANSFER_SPEED = 100;
+    public static double INTAKE_SPEED_MULTIPLIER = 2000;
+    public static double TRANSFER_SPEED = 1000;
     public static double BALLS_TO_LAUNCH_TIME = 10;
     public static double FOUR_BALLS_TIME = 10;
     public static double PARTNER_LAUNCH_TIME= 10;
@@ -37,8 +37,8 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     public void initializeHardware() {
         // Hardware map initialization
-        upperFlywheelMot = hardwareMap.get(DcMotorEx.class, "motULauncher");
-        lowerFlywheelMot = hardwareMap.get(DcMotorEx.class, "motLLauncher");
+//        upperFlywheelMot = hardwareMap.get(DcMotorEx.class, "motULauncher");
+//        lowerFlywheelMot = hardwareMap.get(DcMotorEx.class, "motLLauncher");
         transferWheelMot = hardwareMap.get(DcMotorEx.class, "feedLaunch");
         intakeMot = hardwareMap.get(DcMotorEx.class, "motIntake");
 
@@ -52,8 +52,8 @@ abstract public class BaseOpMode extends LinearOpMode {
 
 
         // Initializing motor behaviors
-        upperFlywheelMot.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
-        lowerFlywheelMot.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+//        upperFlywheelMot.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
+//        lowerFlywheelMot.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.FLOAT);
         intakeMot.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
         transferWheelMot.setZeroPowerBehavior(DcMotorEx.ZeroPowerBehavior.BRAKE);
 
@@ -64,8 +64,8 @@ abstract public class BaseOpMode extends LinearOpMode {
 
 
 
-        upperFlywheelMot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        lowerFlywheelMot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        upperFlywheelMot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        lowerFlywheelMot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         FLMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         FRMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -74,13 +74,13 @@ abstract public class BaseOpMode extends LinearOpMode {
 
 
         // Set PID coefficients for flywheel
-        upperFlywheelMot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, MOTOR_D_VALUE, 10));
-        lowerFlywheelMot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, MOTOR_D_VALUE, 10));
+//        upperFlywheelMot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, MOTOR_D_VALUE, 10));
+//        lowerFlywheelMot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, MOTOR_D_VALUE, 10));
 
         // Set directions of motors
-        upperFlywheelMot.setDirection(DcMotor.Direction.REVERSE);
-        lowerFlywheelMot.setDirection(DcMotor.Direction.REVERSE);
-      transferWheelMot.setDirection(DcMotor.Direction.REVERSE);
+//        upperFlywheelMot.setDirection(DcMotor.Direction.REVERSE);
+//        lowerFlywheelMot.setDirection(DcMotor.Direction.REVERSE);
+        transferWheelMot.setDirection(DcMotor.Direction.REVERSE);
         intakeMot.setDirection(DcMotor.Direction.FORWARD);
 
         leftIntakeServo.setDirection(CRServo.Direction.REVERSE);

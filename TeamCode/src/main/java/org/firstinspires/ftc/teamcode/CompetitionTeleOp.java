@@ -25,22 +25,22 @@ public class CompetitionTeleOp extends BaseOpMode{
             }
             if (gamepad2.yWasPressed()) {
                 transferWheelMot.setVelocity(TRANSFER_SPEED);
-                lowerFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_TOPSPIN);
-                upperFlywheelMot.setVelocity(LAUNCHER_SPEED);
+//                lowerFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_TOPSPIN);
+//                upperFlywheelMot.setVelocity(LAUNCHER_SPEED);
 
             }
             if(gamepad2.bWasPressed()) {
                 transferWheelMot.setVelocity(0.0);
-                lowerFlywheelMot.setVelocity(0.0);
-                upperFlywheelMot.setVelocity(0.0);
+//                lowerFlywheelMot.setVelocity(0.0);
+//                upperFlywheelMot.setVelocity(0.0);
             }
 
             double slowModeMultiplier = doSLOWMODE();
 
             follower.manual(
                     -gamepad1.left_stick_y * slowModeMultiplier,
-                    gamepad1.left_stick_x * slowModeMultiplier,
-                    gamepad1.right_stick_x * slowModeMultiplier
+                    -gamepad1.left_stick_x * slowModeMultiplier,
+                    -gamepad1.right_stick_x * slowModeMultiplier
             );
 
             follower.update();
