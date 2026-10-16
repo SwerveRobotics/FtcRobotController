@@ -70,12 +70,13 @@ public class CompetitionAuto extends BaseOpMode{
         return sequential(
                 waitMs(waitTimeMs),
                 follow(follower,Paths.line(poses2[0], poses2[1]).constant(poses2[1])),
+                rampDown(),
                 shootBalls(4).raceWith(hold(follower)),
                 follow(follower,Paths.line(poses2[1], poses2[2]).constant(poses2[2])),
                 follow(follower, Paths.line(poses2[2], poses2[3]).constant(poses2[3])),
-                intakeBallForMillis(3000).raceWith(hold(follower)),
+                intakeBallForMillis(5000).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses2[3], poses2[4]).constant(poses2[4])),
-                follow(follower, Paths.line(poses2[4], poses2[5]).constant(poses2[5])),
+                follow(follower, Paths.line(poses2[4], poses2[5]).constant(poses2[5])).with(rampUp()),
                 shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses2[5], poses2[6]).constant(poses2[6]))
         );
@@ -124,21 +125,24 @@ public class CompetitionAuto extends BaseOpMode{
 
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
-        follower.setPose(poses1[0]); //this changes based on path
-        follower.update();
+         //this changes based on path
+
         switch(chosenPath) {
             case GARDEN_PATH:
                 initializeGardenPath(poses1, poseFactory);
+                follower.setPose(poses1[0]);
                 schedule(autoRoutineGarden());
                 break;
             case FLOWER_PATH:
                 initializeFlowerPath(poses2, poseFactory);
+                follower.setPose(poses2[0]);
                 schedule(autoRoutineFlower());
                 break;
             default:
                 schedule(autoRoutineGarden());
                 telemetry.addData("How did you do this? You have to choose a path!", 67);
         }
+        follower.update();
         initializeHardware();
         waitForStart();
 
@@ -176,34 +180,54 @@ public class CompetitionAuto extends BaseOpMode{
                 })
                 .requiring(intakeMotor);
     }
-    public Command flowerIntake(long millis) { //WIP, best to change into rampUp and rampDown functions
-        Command flower = Command.build()
-                .setStart(() -> {
-                    timer.reset();
-                    flowerRamp.setPosition(RAMP_DOWN);
-
-                })
-                .setDone(() ->
-                        timer.milliseconds() > millis)
-                .setEnd(endCondition -> {
-                    flowerRamp.setPosition(RAMP_UP);
-                })
-                .requiring(flowerRamp);
-        return flower;
+    public Command rampUp() {
+        return Command.build().setStart(() -> flowerRamp.setPosition(RAMP_UP));
     }
-    public Command shootBalls(int numBalls) { // WORK IN PROGRESS
-        return Command.build()
-                .setStart(() -> {launchMotor.setPower(LAUNCHER_SPEED);
+    public Command rampDown() {
+        return Command.build().setStart(() -> flowerRamp.setPosition(RAMP_DOWN));
+    }
+//    public Command flowerIntake(long millis) { //obsolete
+//        Command flower = Command.build()
+//                .setStart(() -> {
+//                    timer.reset();
+//                    flowerRamp.setPosition(RAMP_DOWN);
+//
+//                })
+//                .setDone(() ->
+//                        timer.milliseconds() > millis)
+//                .setEnd(endCondition -> {
+//                    flowerRamp.setPosition(RAMP_UP);
+//                })
+//                .requiring(flowerRamp);
+//        return flower;
+//    }
+    public Command shootBalls(int numBalls) {
+        Command revUp = Command.build()
+                .setStart(() -> {launchMotor.setVelocity(LAUNCHER_SPEED);
                 gate.setPosition(GATE_OPEN);
-                intakeMotor.setVelocity(INTAKE_SPEED);
-                    })
-                .setDone(() -> timer.milliseconds() > LAUNCH_TIME * numBalls)
-                .setEnd(endCondition ->
-                    { launchMotor.setPower(0.0);
-                        gate.setPosition(GATE_CLOSE);
-                        intakeMotor.setVelocity(0.0);
                 })
-                .requiring(launchMotor, gate, intakeMotor);
+                .setDone(() -> launchMotor.getVelocity()  > LAUNCHER_SPEED * 0.95)//let it rev up to nearly the full launch speed
+                .requiring(launchMotor, gate);
+        Command actuallyShoot = repeat(
+                Command.build()
+                .setStart(() -> {
+                    telemetry.addData("Waiting for launcher to get up to speed", launchMotor.getVelocity());
+                    waitUntil(()->launchMotor.getVelocity() > LAUNCHER_SPEED * 0.95);
+                })
+                .setExecute(()-> {
+                    intakeMotor.setVelocity(INTAKE_SPEED);
+                    telemetry.addData("Launching with speed ", launchMotor.getVelocity());
+                })
+                .setDone(() -> launchMotor.getVelocity() < LAUNCHER_SPEED * 0.95)
+                        .requiring(launchMotor, intakeMotor)
+                ,numBalls);
+        Command end = Command.build()
+                .setStart(() -> {
+                    launchMotor.setVelocity(0);
+                    gate.setPosition(GATE_CLOSE);
+                })
+                .requiring(launchMotor, gate);
+        return sequential(revUp, actuallyShoot, end);
     }
     public void initializeFlowerPath(Pose[] flowerPoses, PoseFactory poseFactory) {
         flowerPoses[0] = poseFactory.of(79.1085, 8.6331, 90);
