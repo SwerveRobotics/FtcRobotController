@@ -37,7 +37,7 @@ public class CompetitionAuto extends BaseOpMode{
     private PoseFactory poseFactory = PoseFactory.degrees();
     private Pose[] poses1 = new Pose[9]; //this holds the poses for the garden path
     private Pose[] poses2 = new Pose[7]; //this holds the poses for the flower path
-    private Pose autoParkingStartPose = poseFactory.of(133.4426, 8.3187, 90);;
+    private Pose autoParkingStartPose;
 
 
     private final ElapsedTime timer = new ElapsedTime();
@@ -68,10 +68,11 @@ public class CompetitionAuto extends BaseOpMode{
         );
     }
     public Command autoParkingPath() {
-        Pose end = poseFactory.of(133.7613, 25.4831, 90);
+        Pose end = poseFactory.of(127.07736667391369, 30.31731174765303, 90);
         return sequential(
                 waitMs(waitTimeMs),
-                follow(follower,Paths.line(autoParkingStartPose, end).constant(end))
+                follow(follower,
+                        Paths.line(autoParkingStartPose, end).constant(end))
         );
 
     }
@@ -130,7 +131,7 @@ public class CompetitionAuto extends BaseOpMode{
             poseFactory = poseFactory.mirrorY(70.75);
             poseFactory = poseFactory.mirrorX(70.75);
         }
-
+        autoParkingStartPose = poseFactory.of(126.2764, 9.6619, 90);
 
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
@@ -236,8 +237,6 @@ public class CompetitionAuto extends BaseOpMode{
         flowerPoses[5] = poseFactory.of(84.7, 23.3459, 90);
         flowerPoses[6] = poseFactory.of(129.3126, 24.6121, 90);
     }
-
-
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) {
         gardenPoses[0] = poseFactory.of(85.1, 131.6, 90);
         gardenPoses[1] = poseFactory.of(86.2461, 125.7, -90);
