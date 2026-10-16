@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 @Config
 @TeleOp(name="417 Teleop")
@@ -15,6 +16,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         follower = Constants.create(hardwareMap);
         initializeHardware();
         waitForStart();
+        follower.setPose(Pose.zero());
 
 
         while (opModeIsActive()) {
@@ -30,19 +32,18 @@ public class CompetitionTeleOp extends BaseOpMode {
             //intakeMotor.setVelocity(gamepad2.left_stick_y);
             //TODO: Test the intake if its going at the right speed
             if (gamepad2.left_stick_y > 0.05) {
-                intakeMotor.setPower(INTAKE_SPEED);
-            } else if (gamepad2.left_stick_y < -0.05){
-                intakeMotor.setPower(-INTAKE_SPEED);
+                intakeMotor.setVelocity(INTAKE_SPEED);
+            } else if (gamepad2.left_stick_y < -0.05 ||gamepad2.yWasPressed()){
+                intakeMotor.setVelocity(-INTAKE_SPEED);
             } else {
-                intakeMotor.setPower(0);
+                intakeMotor.setVelocity(0);
             }
             //when the button y is pressed then set velocity for launcher
             if(gamepad2.yWasPressed()){
                 gate.setPosition(GATE_OPEN);
                 launchMotor.setVelocity(LAUNCHER_SPEED);
-                intakeMotor.setVelocity(-INTAKE_SPEED);
             }
-            //when y is let go of then turn.
+            //when y is released of then turn off
             else if(gamepad2.yWasReleased()){
                 launchMotor.setVelocity(0);
                 gate.setPosition(GATE_CLOSE);
@@ -61,7 +62,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             telemetry.addData("Y", follower.pose().y());
             telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
             telemetry.addData("Gate Position", gate.getPosition());
-            telemetry.addData("Intake speed", INTAKE_SPEED);
+            telemetry.addData("Intake speed", intakeMotor.getVelocity());
             telemetry.addData("Launcher Speed", launchMotor.getVelocity());
             telemetry.update();
 
