@@ -28,7 +28,7 @@ import org.firstinspires.ftc.teamcode.menu.TextMenu;
 public class CompetitionAuto extends BaseOpMode{
     private Follower follower;
     private PoseFactory poseFactory = PoseFactory.degrees();
-    private Pose leaveAndParkStart = poseFactory.of(132.832, 59.8271, 90);
+//    private Pose leaveAndParkStart = poseFactory.of(132.832, 59.8271, 90);
     private Pose leaveAndParkStart_2 = poseFactory.of(132.832, 59.8271, 180);
     private Pose leaveAndPark = poseFactory.of(127, 32, 180);
     private Pose leaveAndParkControl1 = poseFactory.of(96, 50, 180);
@@ -108,8 +108,19 @@ public class CompetitionAuto extends BaseOpMode{
             telemetry.update();
         }
 
-        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
-        AutoPath chosenMovement = menu.getResult(AutoPath.class, "pathPicker");
+        Alliance chosenAlliance;
+        AutoPath chosenMovement;
+
+        // set default inputs so the DS doesn't get stuck in a loop if start is accidentally pressed before menu completed
+        if (!menu.isCompleted()) {
+            chosenAlliance = Alliance.RED;
+            chosenMovement = AutoPath.HIVE_UP_PARK;
+        // otherwise just take inputs as normal
+        } else {
+            chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
+            chosenMovement = menu.getResult(AutoPath.class, "pathPicker");
+        }
+
         //double waitTime = menu.getResult(Double.class, "wait-slider-1");
         switch(chosenAlliance) {
             case RED:
@@ -152,8 +163,7 @@ public class CompetitionAuto extends BaseOpMode{
 
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
-        follower.setPose(startPos);
-        follower.update();
+
         switch(chosenMovement) {
             case HIVE_UP_PARK:
                 startPos = leaveAndParkStart_2;
@@ -172,6 +182,9 @@ public class CompetitionAuto extends BaseOpMode{
                 decide = aRleaveAndPark();
                 break;
         }
+
+        follower.setPose(startPos);
+        follower.update();
 
 
         waitForStart();
@@ -212,26 +225,30 @@ public class CompetitionAuto extends BaseOpMode{
         return sequential(
                 // Turn on intake
                 instant(() -> intakeMot.setPower(1.0)),
+                instant(() -> leftIntakeServo.setPower(-1.0)),
+                instant(() -> rightIntakeServo.setPower(-1.0)),
 
                 // Run intake for the time in seconds
                 waitMs(milliseconds),
 
                 // Turn intake off
-                instant(() -> intakeMot.setPower(0.0))
+                instant(() -> intakeMot.setPower(0.0)),
+                instant(() -> leftIntakeServo.setPower(0.0)),
+                instant(() -> rightIntakeServo.setPower(0.0))
         );
     }
 
     public Command launchFourBalls() {
         return sequential(
                 // Turn on transfer wheel
-                instant(() -> transferWheelMot.setVelocity(TRANSFER_SPEED)),
+    instant(() -> transferWheelMot.setVelocity(TRANSFER_SPEED)),
 
                 // Wait for balls to get to launcher
                 waitMs(BALLS_TO_LAUNCH_TIME), //TODO: need to decide a constant value
 
                 // Turn on launcher flywheels
-                instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
-                instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
+//                instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
+//                instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
 
                 // Wait for four balls to launch7
                 waitMs(FOUR_BALLS_TIME), //TODO: need a constant for this too to tune later
