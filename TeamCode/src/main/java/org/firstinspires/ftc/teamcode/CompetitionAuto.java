@@ -37,7 +37,7 @@ public class CompetitionAuto extends BaseOpMode{
     private PoseFactory poseFactory = PoseFactory.degrees();
     private Pose[] poses1 = new Pose[9]; //this holds the poses for the garden path
     private Pose[] poses2 = new Pose[7]; //this holds the poses for the flower path
-
+    private Pose autoParkingStartPose = poseFactory.of(133.4426, 8.3187, 90);;
 
 
     private final ElapsedTime timer = new ElapsedTime();
@@ -47,7 +47,8 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public enum AutoPath { //different options for auto routine
         GARDEN_PATH,
-        FLOWER_PATH
+        FLOWER_PATH,
+        PARKING_PATH
     }
     public double waitTimeMs; //how long we wait at the start
     //what happens when you press the start button on the driver hub
@@ -65,6 +66,14 @@ public class CompetitionAuto extends BaseOpMode{
                 shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[7], poses1[8]).tangent())
         );
+    }
+    public Command autoParkingPath() {
+        Pose end = poseFactory.of(133.7613, 25.4831, 90);
+        return sequential(
+                waitMs(waitTimeMs),
+                follow(follower,Paths.line(autoParkingStartPose, end).constant(end))
+        );
+
     }
     public Command autoRoutineFlower() {
         return sequential(
@@ -138,6 +147,10 @@ public class CompetitionAuto extends BaseOpMode{
                 follower.setPose(poses2[0]);
                 schedule(autoRoutineFlower());
                 break;
+            case PARKING_PATH:
+                follower.setPose(autoParkingStartPose);
+                schedule(autoParkingPath());
+
             default:
                 schedule(autoRoutineGarden());
                 telemetry.addData("How did you do this? You have to choose a path!", 67);
