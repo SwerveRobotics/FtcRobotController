@@ -199,21 +199,6 @@ public class CompetitionAuto extends BaseOpMode{
     public Command rampDown() {
         return Command.build().setStart(() -> flowerRamp.setPosition(RAMP_DOWN));
     }
-//    public Command flowerIntake(long millis) { //obsolete
-//        Command flower = Command.build()
-//                .setStart(() -> {
-//                    timer.reset();
-//                    flowerRamp.setPosition(RAMP_DOWN);
-//
-//                })
-//                .setDone(() ->
-//                        timer.milliseconds() > millis)
-//                .setEnd(endCondition -> {
-//                    flowerRamp.setPosition(RAMP_UP);
-//                })
-//                .requiring(flowerRamp);
-//        return flower;
-//    }
     public Command shootBalls(int numBalls) {
         Command revUp = Command.build()
                 .setStart(() -> {launchMotor.setVelocity(LAUNCHER_SPEED);

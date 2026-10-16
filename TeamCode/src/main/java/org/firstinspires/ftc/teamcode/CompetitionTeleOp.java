@@ -36,21 +36,23 @@ public class CompetitionTeleOp extends BaseOpMode {
             } else {
                 intakeMotor.setPower(0);
             }
-            //when the button y is pressed then set velocity for launcher
-            if(gamepad2.yWasPressed()){
-                gate.setPosition(GATE_OPEN);
+            //launching controls
+            if(gamepad2.right_bumper){
                 launchMotor.setVelocity(LAUNCHER_SPEED);
-//                intakeMotor.setVelocity(INTAKE_SPEED);
             }
-            else if(gamepad2.yWasReleased()) {
-                gate.setPosition(GATE_CLOSE);
-            }
-            //when y is let go of then turn.
-            else if(gamepad2.aWasPressed()){
+            else{
                 launchMotor.setVelocity(0);
-                gate.setPosition(GATE_CLOSE);
-//                intakeMotor.setVelocity(0.0);
             }
+
+            // Hold Y to launch
+            if (gamepad2.y) {
+                gate.setPosition(GATE_OPEN);
+                intakeMotor.setPower(INTAKE_SPEED);
+            } else {
+                gate.setPosition(GATE_CLOSE);
+            }
+
+            //flower intake up and down controls
             if(gamepad2.dpad_down) {
                 flowerRamp.setPosition(RAMP_DOWN);
             }
@@ -60,8 +62,8 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX
             telemetry.addData("X", follower.pose().x());
-            telemetry.addData("Left stick Y:", gamepad2.left_stick_y);
             telemetry.addData("Y", follower.pose().y());
+            telemetry.addData("Left stick Y:", gamepad2.left_stick_y);
             telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
             telemetry.addData("Gate Position", gate.getPosition());
             telemetry.addData("Intake speed", INTAKE_SPEED);
@@ -70,8 +72,6 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         }
 
-
     }
-
 
 }

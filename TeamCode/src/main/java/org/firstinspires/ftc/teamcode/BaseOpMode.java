@@ -24,7 +24,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double GATE_OPEN = .48;
     public static double GATE_CLOSE = 0.26;
     public static double RAMP_UP = 0.39;
-    public static double RAMP_DOWN = 1.0;
+    public static double RAMP_DOWN = .89;
 
 
     public void initializeHardware() {
