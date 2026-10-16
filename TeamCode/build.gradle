@@ -51,5 +51,5 @@ dependencies {
     implementation project(':FtcRobotController')
     implementation("dev.frozenmilk.sinister:Sloth:0.3.2")
     implementation 'com.acmerobotics.dashboard:dashboard:0.6.0'
-    implementation 'com.github.Loonybot:SidekickRC:lib-v0.0.72'
+    implementation 'com.github.Loonybot:SidekickRC:lib-v0.0.73'
 }
