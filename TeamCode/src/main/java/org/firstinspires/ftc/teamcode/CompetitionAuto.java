@@ -68,7 +68,7 @@ public class CompetitionAuto extends BaseOpMode{
         );
     }
     public Command autoParkingPath() {
-        Pose end = poseFactory.of(127.07736667391369, 30.31731174765303, 90);
+        Pose end = poseFactory.of(126.76431357656855, 24.369302898095505, 90);
         return sequential(
                 waitMs(waitTimeMs),
                 follow(follower,
