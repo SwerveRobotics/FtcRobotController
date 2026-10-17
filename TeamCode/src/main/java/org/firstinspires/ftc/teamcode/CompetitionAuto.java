@@ -87,80 +87,80 @@ public class CompetitionAuto extends BaseOpMode{
     public void runOpMode() throws InterruptedException {
 
         //Making follower to tell the robot
-        TextMenu menu = new TextMenu();
-        MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
-        menu.add(new MenuHeader("Auto Setup"))
-                .add() //empty line
-                .add("Pick alliance:")
-                .add("alliancePicker", Alliance.class)
-                .add()
-                .add("pathPicker", AutoPath.class); // enum selector shortcut
-
-        while (!menu.isCompleted()) {
-            // get x, y (stick) and select (A) input from controller
-            // this is x, y (wasd) and select (enter) on the keyboard
-            menuInput.update(gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.a);
-            menu.updateWithInput(menuInput);
-            // display the updated menu
-            for (String line : menu.toListOfStrings()) {
-                telemetry.addLine(line); // but with appropriate printing method
-            }
-            telemetry.update();
-        }
-
-        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliance-picker-1");
-        AutoPath chosenMovement = menu.getResult(AutoPath.class, "movement-picker-1");
-        double waitTime = menu.getResult(Double.class, "wait-slider-1");
-        switch(chosenAlliance) {
-            case RED:
-                redAlliance = true;
-                break;
-            case BLUE:
-                redAlliance = false;
-                break;
-            default:
-                redAlliance = false;
-                break;
-        }
-
-        switch(chosenMovement) {
-            case HIVE_UP_PARK:
-                decide = aRleaveAndPark();
-                startPos = leaveAndParkStart_2;
-                break;
-            case HIVE_DOWN_PARK:
-                decide = aRHDlaunchAndPark();
-                startPos = hDLaunchandParkStart;
-                break;
-            case HIVE_UP_SCORE:
-                decide = aRlaunchAndPark();
-                startPos = launchAndParkStart_2;
-                break;
-            default:
-                decide = aRleaveAndPark();
-                break;
-        }
+        //TextMenu menu = new TextMenu();
+        //MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
+//        menu.add(new MenuHeader("Auto Setup"))
+//                .add() //empty line
+//                .add("Pick alliance:")
+//                .add("alliancePicker", Alliance.class)
+//                .add()
+//                .add("pathPicker", AutoPath.class); // enum selector shortcut
+//
+//        while (!menu.isCompleted()) {
+//            // get x, y (stick) and select (A) input from controller
+//            // this is x, y (wasd) and select (enter) on the keyboard
+//            menuInput.update(gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.a);
+//            menu.updateWithInput(menuInput);
+//            // display the updated menu
+//            for (String line : menu.toListOfStrings()) {
+//                telemetry.addLine(line); // but with appropriate printing method
+//            }
+//            telemetry.update();
+//        }
+//
+//        //Alliance chosenAlliance = menu.getResult(Alliance.class, "alliance-picker-1");
+//        //AutoPath chosenMovement = menu.getResult(AutoPath.class, "movement-picker-1");
+//        double waitTime = menu.getResult(Double.class, "wait-slider-1");
+//        switch(chosenAlliance) {
+//            case RED:
+//                redAlliance = true;
+//                break;
+//            case BLUE:
+//                redAlliance = false;
+//                break;
+//            default:
+//                redAlliance = false;
+//                break;
+//        }
+//
+//        switch(chosenMovement) {
+//            case HIVE_UP_PARK:
+//                decide = aRleaveAndPark();
+//                startPos = leaveAndParkStart_2;
+//                break;
+//            case HIVE_DOWN_PARK:
+//                decide = aRHDlaunchAndPark();
+//                startPos = hDLaunchandParkStart;
+//                break;
+//            case HIVE_UP_SCORE:
+//                decide = aRlaunchAndPark();
+//                startPos = launchAndParkStart_2;
+//                break;
+//            default:
+//                decide = aRleaveAndPark();
+//                break;
+//        }
 
         // this needs to be passed in via text menu so we can alternate between blue and red
 
-        if(redAlliance) {
-            poseFactory = PoseFactory.degrees().mirrorX(70.75).mirrorY(70.75);
-            leaveAndParkStart_2 = poseFactory.of(132.832, 59.8271, 180);
-            leaveAndPark = poseFactory.of(127, 32, 180);
-            leaveAndParkControl1 = poseFactory.of(96, 50, 180);
-
-            //For launch and park path
-            //private final Pose start = poseFactory.of(84, 134, 90);
-            launchAndParkStart_2 = poseFactory.of(84, 134, 270);
-            launchAndPark = poseFactory.of(127, 32, 180);
-            launchAndParkControl1 = poseFactory.of(125, 132, 0);
-
-            hDLaunchandParkStart = poseFactory.of(80, 9, 90);
-            hDLaunchandPark = poseFactory.of(127, 32, 180);
-            hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
-        } else {
-            poseFactory = PoseFactory.degrees();
-        }
+//        if(redAlliance) {
+//            poseFactory = PoseFactory.degrees().mirrorX(70.75).mirrorY(70.75);
+//            leaveAndParkStart_2 = poseFactory.of(132.832, 59.8271, 180);
+//            leaveAndPark = poseFactory.of(127, 32, 180);
+//            leaveAndParkControl1 = poseFactory.of(96, 50, 180);
+//
+//            //For launch and park path
+//            //private final Pose start = poseFactory.of(84, 134, 90);
+//            launchAndParkStart_2 = poseFactory.of(84, 134, 270);
+//            launchAndPark = poseFactory.of(127, 32, 180);
+//            launchAndParkControl1 = poseFactory.of(125, 132, 0);
+//
+//            hDLaunchandParkStart = poseFactory.of(80, 9, 90);
+//            hDLaunchandPark = poseFactory.of(127, 32, 180);
+//            hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
+//        } else {
+//            poseFactory = PoseFactory.degrees();
+//        }
        ///Scheduler.reset();
 //        follower = Constants.create(hardwareMap);
 //        follower.setPose(leaveAndParkStart_2);
@@ -168,12 +168,12 @@ public class CompetitionAuto extends BaseOpMode{
 
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
-        follower.setPose(startPos);
+        follower.setPose(leaveAndParkStart_2);
         follower.update();
 
 
         waitForStart();
-        schedule(decide);
+        schedule(leaveFromWall(1000));
 
         while (opModeIsActive()) {
             follower.update();
@@ -216,6 +216,24 @@ public class CompetitionAuto extends BaseOpMode{
 
                 // Turn intake off
                 instant(() -> intakeMot.setPower(0.0))
+        );
+    }
+    public Command leaveFromWall(long milliseconds) {
+        return sequential(
+                // Turn on intake
+                instant(() -> FRMotor.setPower(0.4)),
+                instant(() -> BRMotor.setPower(0.4)),
+                instant(() -> FLMotor.setPower(0.4)),
+                instant(() -> FRMotor.setPower(0.4)),
+
+                // Run intake for the time in seconds
+                waitMs(milliseconds),
+
+                // Turn intake off
+                instant(() -> FRMotor.setPower(0.0)),
+                instant(() -> BRMotor.setPower(0.0)),
+                instant(() -> FLMotor.setPower(0.0)),
+                instant(() -> FRMotor.setPower(0.0))
         );
     }
 
