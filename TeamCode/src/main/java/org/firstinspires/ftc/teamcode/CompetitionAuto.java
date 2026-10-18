@@ -57,13 +57,15 @@ public class CompetitionAuto extends BaseOpMode{
     public Command autoRoutineGarden() {
         return sequential(
                 waitMs(waitTimeMs),
-                follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[1])),
-                shootBalls(4).raceWith(hold(follower)),
+                follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[0])),
+                waitMs(4000),
+                //shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[2], poses1[3]).linear(poses1[2], poses1[3])),
-                follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[4])).raceWith(intakeBallForMillis(3000)),
+                follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[4])),//.raceWith(intakeBallForMillis(3000)),
                 follow(follower, Paths.line(poses1[4], poses1[5]).tangent()),
                 follow(follower, Paths.line(poses1[6], poses1[7]).linear(poses1[6], poses1[7])),
-                shootBalls(4).raceWith(hold(follower)),
+                waitMs(4000),
+                //shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[7], poses1[8]).tangent())
         );
     }

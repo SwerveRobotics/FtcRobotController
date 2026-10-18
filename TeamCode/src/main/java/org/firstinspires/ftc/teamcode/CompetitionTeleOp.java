@@ -2,19 +2,20 @@ package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 @Config
 @TeleOp(name="417 Teleop")
 public class CompetitionTeleOp extends BaseOpMode {
     //variables
     private Follower follower;
-
     @Override
     public void runOpMode() throws InterruptedException {
         //where everything gets initialized
         follower = Constants.create(hardwareMap);
         initializeHardware();
         waitForStart();
+        follower.setPose(Pose.zero());
 
 
         while (opModeIsActive()) {
@@ -58,6 +59,9 @@ public class CompetitionTeleOp extends BaseOpMode {
             }
             if (gamepad2.dpad_up) {
                 flowerRamp.setPosition(RAMP_UP);
+            }
+            if(gamepad1.left_bumper) {
+                follower.setPose(new Pose(0,0,0));
             }
 
             //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX
