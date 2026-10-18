@@ -63,7 +63,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX
             telemetry.addData("X", follower.pose().x());
             telemetry.addData("Y", follower.pose().y());
-            telemetry.addData("Left stick Y:", gamepad2.left_stick_y);
+            //telemetry.addData("Left stick Y:", gamepad2.left_stick_y);
             telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
             telemetry.addData("Gate Position", gate.getPosition());
             telemetry.addData("Intake speed", INTAKE_SPEED);

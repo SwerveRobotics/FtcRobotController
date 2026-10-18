@@ -138,10 +138,9 @@ public class CompetitionAuto extends BaseOpMode{
 
         switch(chosenPath) {
             case GARDEN_PATH:
-                //initializeGardenPath(poses1, poseFactory);
-                //follower.setPose(poses1[0]);
-                follower.setPose(autoParkingStartPose);
-
+                initializeGardenPath(poses1, poseFactory);
+                follower.setPose(poses1[0]);
+                //follower.setPose(autoRoutineGarden());
                 schedule(autoRoutineGarden());
                 break;
             case FLOWER_PATH:
