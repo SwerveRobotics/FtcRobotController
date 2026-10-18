@@ -91,7 +91,6 @@ public class CompetitionAuto extends BaseOpMode{
                 follow(follower, Paths.line(poses2[5], poses2[6]).constant(poses2[6]))
         );
     }
-
     @Override
     public void runOpMode() throws InterruptedException {
         //Making follower to tell the robot
@@ -139,8 +138,10 @@ public class CompetitionAuto extends BaseOpMode{
 
         switch(chosenPath) {
             case GARDEN_PATH:
-                initializeGardenPath(poses1, poseFactory);
-                follower.setPose(poses1[0]);
+                //initializeGardenPath(poses1, poseFactory);
+                //follower.setPose(poses1[0]);
+                follower.setPose(autoParkingStartPose);
+
                 schedule(autoRoutineGarden());
                 break;
             case FLOWER_PATH:
@@ -151,6 +152,7 @@ public class CompetitionAuto extends BaseOpMode{
             case PARKING_PATH:
                 follower.setPose(autoParkingStartPose);
                 schedule(autoParkingPath());
+                break;
 
             default:
                 schedule(autoRoutineGarden());

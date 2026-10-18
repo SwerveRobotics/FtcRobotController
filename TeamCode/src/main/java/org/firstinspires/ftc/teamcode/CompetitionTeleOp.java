@@ -40,7 +40,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             if(gamepad2.right_bumper){
                 launchMotor.setVelocity(LAUNCHER_SPEED);
             }
-            else{
+            else if (gamepad2.left_bumper){
                 launchMotor.setVelocity(0);
             }
 
