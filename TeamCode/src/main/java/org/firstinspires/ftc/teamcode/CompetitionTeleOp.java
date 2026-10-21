@@ -20,9 +20,9 @@ public class CompetitionTeleOp extends BaseOpMode {
         flowerRamp.setPosition(RAMP_UP);
         while (opModeIsActive()) {
             //read controller inputs
-            double forward = -gamepad1.left_stick_y;
-            double lateral = -gamepad1.left_stick_x;
-            double turn = -gamepad1.right_stick_x;
+            double forward = -gamepad1.left_stick_y*doSLOWMODE();
+            double lateral = -gamepad1.left_stick_x*doSLOWMODE();
+            double turn = -gamepad1.right_stick_x*doSLOWMODE();
             follower.manual(forward, lateral, turn);
             follower.update();
 
@@ -66,6 +66,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 follower.setPose(new Pose(0,0,0));
             }
 
+
             //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX
             telemetry.addData("X", follower.pose().x());
             telemetry.addData("Y", follower.pose().y());
@@ -78,6 +79,13 @@ public class CompetitionTeleOp extends BaseOpMode {
 
         }
 
-    }
 
+    }
+    public double doSLOWMODE() {
+        if (gamepad1.right_trigger != 0) {
+            return ((-gamepad1.right_trigger + 1)/2) + 0.5;
+        } else {
+            return 1;
+        }
+    }
 }
