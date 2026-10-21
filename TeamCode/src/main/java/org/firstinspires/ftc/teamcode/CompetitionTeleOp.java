@@ -1,12 +1,20 @@
 package org.firstinspires.ftc.teamcode;
 
+import static com.pedropathing.api.Paths.curve;
+
+import com.pedropathing.api.PoseFactory;
 import com.pedropathing.follower.Follower;
+import com.pedropathing.math.Pose;
+
+import com.pedropathing.paths.Path;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
 @TeleOp(name = "CompetitionTeleOp")
 public class CompetitionTeleOp extends BaseOpMode{
     private Follower follower;
+    private PoseFactory poseFactory = PoseFactory.degrees();
+    private Pose resetPoint = poseFactory.of(75, 8, 90);
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -15,6 +23,7 @@ public class CompetitionTeleOp extends BaseOpMode{
         waitForStart();
 
         while (opModeIsActive()) {
+
             intakeMot.setVelocity(gamepad2.left_stick_y * INTAKE_SPEED_MULTIPLIER);
             leftIntakeServo.setPower(gamepad2.left_stick_y);
             rightIntakeServo.setPower(gamepad2.left_stick_y);
@@ -44,6 +53,8 @@ public class CompetitionTeleOp extends BaseOpMode{
             );
 
             follower.update();
+            Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
+
         }
     }
     public double doSLOWMODE() {
@@ -53,6 +64,7 @@ public class CompetitionTeleOp extends BaseOpMode{
             return 1;
         }
     }
+
 }
 
 
