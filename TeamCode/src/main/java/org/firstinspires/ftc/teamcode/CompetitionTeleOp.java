@@ -31,11 +31,11 @@ public class CompetitionTeleOp extends BaseOpMode {
             //intakeMotor.setVelocity(gamepad2.left_stick_y);
             //TODO: Test the intake if its going at the right speed
             if (gamepad2.left_stick_y > 0.05) {
-                intakeMotor.setPower(INTAKE_SPEED);
-            } else if (gamepad2.left_stick_y < -0.05){
-                intakeMotor.setPower(-INTAKE_SPEED);
+                intakeMotor.setVelocity(INTAKE_SPEED);
+            } else if (gamepad2.left_stick_y < -0.05 || gamepad2.y){
+                intakeMotor.setVelocity(-INTAKE_SPEED);
             } else {
-                intakeMotor.setPower(0);
+                intakeMotor.setVelocity(0);
             }
             //launching controls
             if(gamepad2.right_bumper){
@@ -48,7 +48,6 @@ public class CompetitionTeleOp extends BaseOpMode {
             // Hold Y to launch
             if (gamepad2.y) {
                 gate.setPosition(GATE_OPEN);
-                intakeMotor.setPower(INTAKE_SPEED);
             } else {
                 gate.setPosition(GATE_CLOSE);
             }
@@ -61,6 +60,9 @@ public class CompetitionTeleOp extends BaseOpMode {
                 flowerRamp.setPosition(RAMP_UP);
             }
             if(gamepad1.left_bumper) {
+                if(gamepad1.left_bumper) {
+
+                }
                 follower.setPose(new Pose(0,0,0));
             }
 
