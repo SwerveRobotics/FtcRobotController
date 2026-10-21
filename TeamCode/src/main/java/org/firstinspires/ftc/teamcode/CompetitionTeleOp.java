@@ -31,11 +31,11 @@ public class CompetitionTeleOp extends BaseOpMode {
             //intakeMotor.setVelocity(gamepad2.left_stick_y);
             //TODO: Test the intake if its going at the right speed
             if (gamepad2.left_stick_y > 0.05) {
-                intakeMotor.setVelocity(INTAKE_SPEED);
+                intakeMotor.setPower(INTAKE_SPEED);
             } else if (gamepad2.left_stick_y < -0.05 || gamepad2.y){
-                intakeMotor.setVelocity(-INTAKE_SPEED);
+                intakeMotor.setPower(-INTAKE_SPEED);
             } else {
-                intakeMotor.setVelocity(0);
+                intakeMotor.setPower(0);
             }
             //launching controls
             if(gamepad2.right_bumper){
