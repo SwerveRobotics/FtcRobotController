@@ -60,16 +60,12 @@ public class CompetitionTeleOp extends BaseOpMode {
                 flowerRamp.setPosition(RAMP_UP);
             }
             if(gamepad1.left_bumper) {
-                if(gamepad1.left_bumper) {
-
-                }
-                follower.setPose(new Pose(0,0,0));
+                follower.setPose(new Pose(8.5,11.3,0));
             }
 
-            //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX
+            //add telemetry on driver station
             telemetry.addData("X", follower.pose().x());
             telemetry.addData("Y", follower.pose().y());
-            //telemetry.addData("Left stick Y:", gamepad2.left_stick_y);
             telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
             telemetry.addData("Gate Position", gate.getPosition());
             telemetry.addData("Intake speed", INTAKE_SPEED);
