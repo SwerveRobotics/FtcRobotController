@@ -15,9 +15,9 @@ public class CompetitionTeleOp extends BaseOpMode {
         follower = Constants.create(hardwareMap);
         initializeHardware();
         waitForStart();
-        follower.setPose(Pose.zero());
+        follower.setPose(PoseStorage.endPose);
 
-
+        flowerRamp.setPosition(RAMP_UP);
         while (opModeIsActive()) {
             //read controller inputs
             double forward = -gamepad1.left_stick_y;

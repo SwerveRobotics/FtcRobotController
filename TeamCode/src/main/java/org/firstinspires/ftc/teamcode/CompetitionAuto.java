@@ -179,6 +179,7 @@ public class CompetitionAuto extends BaseOpMode{
 
             telemetry.update();
         }
+        PoseStorage.endPose = follower.pose();
     }
     public Command intakeBallForMillis(long millis) {
         return Command.build()
