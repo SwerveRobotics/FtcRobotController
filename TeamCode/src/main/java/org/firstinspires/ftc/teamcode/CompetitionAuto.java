@@ -86,85 +86,86 @@ public class CompetitionAuto extends BaseOpMode{
     @Override
     public void runOpMode() throws InterruptedException {
 
-        //Making follower to tell the robot
-        //TextMenu menu = new TextMenu();
-        //MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
-//        menu.add(new MenuHeader("Auto Setup"))
-//                .add() //empty line
-//                .add("Pick alliance:")
-//                .add("alliancePicker", Alliance.class)
-//                .add()
-//                .add("pathPicker", AutoPath.class); // enum selector shortcut
-//
-//        while (!menu.isCompleted()) {
-//            // get x, y (stick) and select (A) input from controller
-//            // this is x, y (wasd) and select (enter) on the keyboard
-//            menuInput.update(gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.a);
-//            menu.updateWithInput(menuInput);
-//            // display the updated menu
-//            for (String line : menu.toListOfStrings()) {
-//                telemetry.addLine(line); // but with appropriate printing method
-//            }
-//            telemetry.update();
-//        }
-//
-//        //Alliance chosenAlliance = menu.getResult(Alliance.class, "alliance-picker-1");
-//        //AutoPath chosenMovement = menu.getResult(AutoPath.class, "movement-picker-1");
-//        double waitTime = menu.getResult(Double.class, "wait-slider-1");
-//        switch(chosenAlliance) {
-//            case RED:
-//                redAlliance = true;
-//                break;
-//            case BLUE:
-//                redAlliance = false;
-//                break;
-//            default:
-//                redAlliance = false;
-//                break;
-//        }
-//
-//        switch(chosenMovement) {
-//            case HIVE_UP_PARK:
-//                decide = aRleaveAndPark();
-//                startPos = leaveAndParkStart_2;
-//                break;
-//            case HIVE_DOWN_PARK:
-//                decide = aRHDlaunchAndPark();
-//                startPos = hDLaunchandParkStart;
-//                break;
-//            case HIVE_UP_SCORE:
-//                decide = aRlaunchAndPark();
-//                startPos = launchAndParkStart_2;
-//                break;
-//            default:
-//                decide = aRleaveAndPark();
-//                break;
-//        }
+//        Making follower to tell the robot
+        TextMenu menu = new TextMenu();
+        MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
+        menu.add(new MenuHeader("Auto Setup"))
+                .add() //empty line
+                .add("Pick alliance:")
+                .add("alliancePicker", Alliance.class)
+                .add()
+                .add("pathPicker", AutoPath.class); // enum selector shortcut
 
-        // this needs to be passed in via text menu so we can alternate between blue and red
+        while (!menu.isCompleted() && !isStopRequested()) {
+            // get x, y (stick) and select (A) input from controller
+            // this is x, y (wasd) and select (enter) on the keyboard
+            menuInput.update(gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.a);
+            menu.updateWithInput(menuInput);
+            // display the updated menu
+            for (String line : menu.toListOfStrings()) {
+                telemetry.addLine(line); // but with appropriate printing method
+            }
+            telemetry.update();
+        }
 
-//        if(redAlliance) {
-//            poseFactory = PoseFactory.degrees().mirrorX(70.75).mirrorY(70.75);
-//            leaveAndParkStart_2 = poseFactory.of(132.832, 59.8271, 180);
-//            leaveAndPark = poseFactory.of(127, 32, 180);
-//            leaveAndParkControl1 = poseFactory.of(96, 50, 180);
+        // prevents opmode from getting stuck in a loop if we accidentally don't do the text menu
+        if (isStopRequested()) {
+            return;
+        }
 //
-//            //For launch and park path
-//            //private final Pose start = poseFactory.of(84, 134, 90);
-//            launchAndParkStart_2 = poseFactory.of(84, 134, 270);
-//            launchAndPark = poseFactory.of(127, 32, 180);
-//            launchAndParkControl1 = poseFactory.of(125, 132, 0);
-//
-//            hDLaunchandParkStart = poseFactory.of(80, 9, 90);
-//            hDLaunchandPark = poseFactory.of(127, 32, 180);
-//            hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
-//        } else {
-//            poseFactory = PoseFactory.degrees();
-//        }
-       ///Scheduler.reset();
-//        follower = Constants.create(hardwareMap);
-//        follower.setPose(leaveAndParkStart_2);
-//        follower.update();
+        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliance-picker-1");
+        AutoPath chosenMovement = menu.getResult(AutoPath.class, "movement-picker-1");
+        double waitTime = menu.getResult(Double.class, "wait-slider-1");
+        switch(chosenAlliance) {
+            case RED:
+                redAlliance = true;
+                break;
+            case BLUE:
+                redAlliance = false;
+                break;
+            default:
+                redAlliance = false;
+                break;
+        }
+
+        switch(chosenMovement) {
+            case HIVE_UP_PARK:
+                decide = aRleaveAndPark();
+                startPos = leaveAndParkStart_2;
+                break;
+            case HIVE_DOWN_PARK:
+                decide = aRHDlaunchAndPark();
+                startPos = hDLaunchandParkStart;
+                break;
+            case HIVE_UP_SCORE:
+                decide = aRlaunchAndPark();
+                startPos = launchAndParkStart_2;
+                break;
+            default:
+                decide = aRleaveAndPark();
+                break;
+        }
+
+//         this needs to be passed in via text menu so we can alternate between blue and red
+
+        if(redAlliance) {
+            poseFactory = PoseFactory.degrees().mirrorX(70.75).mirrorY(70.75);
+            leaveAndParkStart_2 = poseFactory.of(132.832, 59.8271, 180);
+            leaveAndPark = poseFactory.of(127, 32, 180);
+            leaveAndParkControl1 = poseFactory.of(96, 50, 180);
+
+            //For launch and park path
+            //private final Pose start = poseFactory.of(84, 134, 90);
+            launchAndParkStart_2 = poseFactory.of(84, 134, 270);
+            launchAndPark = poseFactory.of(127, 32, 180);
+            launchAndParkControl1 = poseFactory.of(125, 132, 0);
+
+            hDLaunchandParkStart = poseFactory.of(80, 9, 90);
+            hDLaunchandPark = poseFactory.of(127, 32, 180);
+            hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
+        } else {
+            poseFactory = PoseFactory.degrees();
+        }
 
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
@@ -261,79 +262,3 @@ public class CompetitionAuto extends BaseOpMode{
 
 
 }
-/*
-package org.firstinspires.ftc.teamcode;
-
-import static com.pedropathing.api.Paths.*;
-
-import com.pedropathing.api.PoseFactory;
-import com.pedropathing.follower.Follower;
-import com.pedropathing.math.Pose;
-import com.pedropathing.paths.Path;
-import com.pedropathing.ivy.Command;
-import com.pedropathing.ivy.Scheduler;
-import static com.pedropathing.ivy.Scheduler.schedule;
-import static com.pedropathing.ivy.commands.Commands.*;
-import static com.pedropathing.ivy.groups.Groups.sequential;
-import static com.pedropathing.ivy.pedro.PedroCommands.follow;
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-
-@Autonomous(name = "AutoPath", group = "Autonomous")
-public class AutoPath extends LinearOpMode {
-
-    private Follower follower;
-
-    private final PoseFactory poseFactory = PoseFactory.degrees();
-
-    private final Pose start = poseFactory.of(134, 134, 90);
-    private final Pose move1Start = poseFactory.of(134, 134, 270);
-    private final Pose move1 = poseFactory.of(134, 134, 0);
-    private final Pose point2 = poseFactory.of(83, 20, 90);
-    private final Pose point2Control1 = poseFactory.of(102, 5, 0);
-
-    // Autonomous routine
-    public Command autoRoutine() {
-        return sequential(
-            follow(follower, move1()),
-            follow(follower, path2())
-        );
-    }
-
-    @Override
-    public void runOpMode() {
-        Scheduler.reset();
-        follower = Constants.create(hardwareMap);
-        follower.setPose(start);
-        follower.update();
-
-        waitForStart();
-        schedule(autoRoutine());
-
-        while (opModeIsActive()) {
-            follower.update();
-            Scheduler.execute();
-
-            telemetry.addData("x", follower.pose().x());
-            telemetry.addData("y", follower.pose().y());
-            telemetry.addData("heading", follower.pose().heading());
-
-            if (follower.currentPath() != null) {
-                telemetry.addData("Current path distance remaining", follower.distanceToEndpoint());
-                telemetry.addData("Path number", follower.pathIndex());
-            }
-
-            telemetry.update();
-        }
-    }
-
-    public Path move1() {
-        return line(move1Start, move1).linear(move1Start, move1);
-    }
-
-    public Path path2() {
-        return curve(move1, point2Control1, point2).linear(move1, point2);
-    }
-}
-
- */
