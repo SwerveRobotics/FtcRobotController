@@ -17,7 +17,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     double amountToTurn = 0;
 
     private Follower follower;
-    private Limelight3A limelight;
+    //private Limelight3A limelight;
     //private AutoAim autoAim;
     @Override
     public void runOpMode() throws InterruptedException {
@@ -27,8 +27,8 @@ public class CompetitionTeleOp extends BaseOpMode {
         //Auto Aim
         //variable that contains the value which the robot heading will turn
 
-        limelight.pipelineSwitch(0);
-        limelight.start();
+        //limelight.pipelineSwitch(0);
+        //limelight.start();
         //autoAim = new AutoAim();
         //driver press st art on DS
         waitForStart();
@@ -45,8 +45,10 @@ public class CompetitionTeleOp extends BaseOpMode {
             //when left stick is pushed up set velocity
             if (gamepad2.left_stick_y > 0.05) {
                 intakeMotor.setPower(INTAKE_SPEED);
-            } else if (gamepad2.left_stick_y < -0.05 || gamepad2.y) {
+            } else if (gamepad2.left_stick_y < -0.05 ) {
                 intakeMotor.setPower(-INTAKE_SPEED);
+            }else if (gamepad2.y){
+                intakeMotor.setPower(INTAKE_SPEED*.25);
             } else {
                 intakeMotor.setPower(0);
             }
@@ -60,15 +62,22 @@ public class CompetitionTeleOp extends BaseOpMode {
             // Hold Y to launch
             if (gamepad2.y) {
                 gate.setPosition(GATE_OPEN);
+
             } else {
                 gate.setPosition(GATE_CLOSE);
+                //intakeMotor.setPower(0);
+
             }
             //flower intake up and down controls
             if (gamepad2.dpad_down) {
+                //flowerRamp.getController().pwmEnable();
+
                 flowerRamp.setPosition(RAMP_DOWN);
             }
             if (gamepad2.dpad_up) {
                 flowerRamp.setPosition(RAMP_UP);
+                //flowerRamp.getController().pwmDisable();
+                //flowerRamp.setPosition(RAMP_UP);
             }
             if (gamepad1.left_bumper) {
                 if (gamepad1.left_bumper) {

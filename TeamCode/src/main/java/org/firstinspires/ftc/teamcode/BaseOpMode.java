@@ -16,7 +16,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected DcMotorEx intakeMotor;
     protected Servo gate;
     protected Servo flowerRamp;
-    protected Limelight3A limelight3A;
+    //protected Limelight3A limelight3A;
 
 
 
@@ -25,10 +25,10 @@ abstract public class BaseOpMode extends LinearOpMode {
     //TODO: uh
     public static double LAUNCHER_SPEED = 1250.0;//1500
     public static double INTAKE_SPEED = 1.0;
-    public static double GATE_OPEN = .48;
-    public static double GATE_CLOSE = 0.18;
-    public static double RAMP_UP = 0.39;
-    public static double RAMP_DOWN = .89;
+    public static double GATE_OPEN = .8;
+    public static double GATE_CLOSE = 0.52;
+    public static double RAMP_UP = 0.08;
+    public static double RAMP_DOWN = 0.86;
 
     //autoaim TODO: tune these valuessss
 
@@ -46,7 +46,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         flowerRamp = hardwareMap.get(Servo.class, "flowerRamp");
 
         //limelight camera
-        limelight3A = hardwareMap.get(Limelight3A.class, "limelight");
+        //limelight3A = hardwareMap.get(Limelight3A.class, "limelight");
 
         //set motors to be energized
         intakeMotor.setMotorEnable();
