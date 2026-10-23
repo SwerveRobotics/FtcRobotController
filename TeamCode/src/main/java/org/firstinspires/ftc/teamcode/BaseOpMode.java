@@ -31,6 +31,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double RAMP_DOWN = .89;
 
     //autoaim TODO: tune these valuessss
+
     public static double AIM_KP = 0.02;
     public static double AIM_KI = 0.0;
     public static double AIM_KD = 0.0;

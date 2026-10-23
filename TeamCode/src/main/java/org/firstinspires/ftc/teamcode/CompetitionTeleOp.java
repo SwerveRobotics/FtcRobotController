@@ -30,7 +30,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         limelight.pipelineSwitch(0);
         limelight.start();
         //autoAim = new AutoAim();
-        //driver press start on DS
+        //driver press st art on DS
         waitForStart();
         follower.setPose(PoseStorage.endPose);
         flowerRamp.setPosition(RAMP_UP);
