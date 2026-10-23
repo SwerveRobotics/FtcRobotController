@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 @Config
@@ -35,7 +36,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double AIM_KP = 0.02;
     public static double AIM_KI = 0.0;
     public static double AIM_KD = 0.0;
-    public static double AIM_MAX_TURN = 0.5;
+    public static double AIM_KF = 0.5;
 
 
     public void initializeHardware() {
@@ -51,8 +52,12 @@ abstract public class BaseOpMode extends LinearOpMode {
         //set motors to be energized
         intakeMotor.setMotorEnable();
         launchMotor.setMotorEnable();
+
+        //Run using encoder
         intakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+        launchMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(AIM_KP, AIM_KI, AIM_KD, AIM_KF));
 
         //what happens when stopping
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
