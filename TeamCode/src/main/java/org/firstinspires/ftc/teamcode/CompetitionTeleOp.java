@@ -14,7 +14,12 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 public class CompetitionTeleOp extends BaseOpMode{
     private Follower follower;
     private PoseFactory poseFactory = PoseFactory.degrees();
-    private Pose resetPoint = poseFactory.of(75, 8, 90);
+    private Pose resetPoint = poseFactory.of(80, 8, 90);
+    private Pose autoDriveControl1 = poseFactory.of(0,90,90);
+    private Pose autoDriveControl2 = poseFactory.of(20,30,90);
+
+
+
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -23,6 +28,7 @@ public class CompetitionTeleOp extends BaseOpMode{
         waitForStart();
 
         while (opModeIsActive()) {
+            Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
 
             intakeMot.setVelocity(gamepad2.left_stick_y * INTAKE_SPEED_MULTIPLIER);
             leftIntakeServo.setPower(gamepad2.left_stick_y);
@@ -43,17 +49,34 @@ public class CompetitionTeleOp extends BaseOpMode{
 //                lowerFlywheelMot.setVelocity(0.0);
 //                upperFlywheelMot.setVelocity(0.0);
             }
+            if(gamepad2.leftBumperWasPressed()){
+                Pose dynamicControl1;
+                Pose dynamicControl2;
+                if(currPose.x() > 72){
+                    dynamicControl1 = poseFactory.of(130,90,90);
+                    dynamicControl2 = poseFactory.of(130,30,90);
+                } else {
+                   dynamicControl1 = autoDriveControl1;
+                    dynamicControl2 = autoDriveControl2;
 
-            double slowModeMultiplier = doSLOWMODE();
+                }
+                Path autoDriveTo  = curve(currPose, dynamicControl1,dynamicControl2, resetPoint).linear(currPose, resetPoint);
+                follower.follow(autoDriveTo);
+            }
 
-            follower.manual(
-                    -gamepad1.left_stick_y * slowModeMultiplier,
-                    -gamepad1.left_stick_x * slowModeMultiplier,
-                    -gamepad1.right_stick_x * slowModeMultiplier
-            );
+
+            if(!follower.isBusy()) {
+                double slowModeMultiplier = doSLOWMODE();
+                follower.manual(
+                        -gamepad1.left_stick_y * slowModeMultiplier,
+                        -gamepad1.left_stick_x * slowModeMultiplier,
+                        -gamepad1.right_stick_x * slowModeMultiplier
+                );
+            }
+
 
             follower.update();
-            Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
+
 
         }
     }

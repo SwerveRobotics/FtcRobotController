@@ -68,7 +68,7 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command aRlaunchAndPark() {
         return sequential(
-                launchFourBalls(),
+                //launchFourBalls(),
                 follow(follower, launchAndPark())
 
         );
@@ -76,7 +76,7 @@ public class CompetitionAuto extends BaseOpMode{
     public Command aRHDlaunchAndPark() {
         return sequential(
                 waitMs(PARTNER_LAUNCH_TIME),
-                launchFourBalls(),
+                //launchFourBalls(),
                 follow(follower, hDLaunchandPark())
 
         );
@@ -85,6 +85,10 @@ public class CompetitionAuto extends BaseOpMode{
 
     @Override
     public void runOpMode() throws InterruptedException {
+        follower = Constants.create(hardwareMap);
+        initializeHardware();
+        follower.setPose(leaveAndParkStart_2);
+        follower.update();
 
 //        Making follower to tell the robot
         TextMenu menu = new TextMenu();
@@ -113,9 +117,9 @@ public class CompetitionAuto extends BaseOpMode{
             return;
         }
 //
-        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliance-picker-1");
-        AutoPath chosenMovement = menu.getResult(AutoPath.class, "movement-picker-1");
-        double waitTime = menu.getResult(Double.class, "wait-slider-1");
+        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
+        AutoPath chosenMovement = menu.getResult(AutoPath.class, "pathPicker");
+        //double waitTime = menu.getResult(Double.class, "wait-slider-1");
         switch(chosenAlliance) {
             case RED:
                 redAlliance = true;
@@ -166,15 +170,14 @@ public class CompetitionAuto extends BaseOpMode{
         } else {
             poseFactory = PoseFactory.degrees();
         }
-
+        follower.setPose(startPos);
         Scheduler.reset();
-        follower = Constants.create(hardwareMap);
-        follower.setPose(leaveAndParkStart_2);
-        follower.update();
+
+
 
 
         waitForStart();
-        schedule(leaveFromWall(1000));
+        schedule(decide);
 
         while (opModeIsActive()) {
             follower.update();
