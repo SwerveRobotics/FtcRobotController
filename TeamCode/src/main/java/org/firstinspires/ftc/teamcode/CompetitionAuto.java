@@ -252,6 +252,6 @@ public class CompetitionAuto extends BaseOpMode{
         flowerPoses[3] = poseFactory.of(94.0503, 9.5, -90);
         flowerPoses[4] = poseFactory.of(94.4916, 17.3314, -90);
         flowerPoses[5] = poseFactory.of(84.7, 23.3459, -90);
-        flowerPoses[6] = poseFactory.of(129.3126, 24.6121, -90);
+        flowerPoses[6] = poseFactory.of(129.3126, 24.6121, -90); //always face the back
     }
 }
