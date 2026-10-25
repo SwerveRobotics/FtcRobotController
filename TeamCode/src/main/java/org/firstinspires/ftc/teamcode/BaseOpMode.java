@@ -23,7 +23,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     //constants
     public static double LAUNCH_TIME = 500.0;
     //TODO: uh
-    public static double LAUNCHER_SPEED = 1250.0;//1500
+    public static double LAUNCHER_SPEED = 1700.0;//1250
     public static double INTAKE_SPEED = 1.0;
     public static double GATE_OPEN = .8;
     public static double GATE_CLOSE = 0.52;

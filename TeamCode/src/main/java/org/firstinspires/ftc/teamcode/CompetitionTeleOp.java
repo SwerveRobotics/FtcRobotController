@@ -15,6 +15,8 @@ import java.util.List;
 public class CompetitionTeleOp extends BaseOpMode {
     //variables
     double amountToTurn = 0;
+    private boolean turning = false;
+    private double targetHeading = 0;
 
     private Follower follower;
     //private Limelight3A limelight;
@@ -86,9 +88,20 @@ public class CompetitionTeleOp extends BaseOpMode {
                 follower.setPose(new Pose(0, 0, 0));
             }
 
+
+            // Press A to turn 30 degrees
+            if (gamepad1.a && !turning) {
+                // Set the target to 30 degrees more the heading in follower rn
+
+                targetHeading = follower.pose().heading() + Math.toRadians(30);
+                turning = true;
+            }
+
+
+
 /*
-            //TODO: Auto Aim :)
-            if (gamepad1.right_bumper && autoAim != null) {
+            if (gamepad1.right_bumper && autoA            //TODO: Auto Aim :)
+im != null) {
                 amountToTurn = AutoAim().getOffset();
                 telemetry.addData("AutoAim", "ON");
                 telemetry.addData("amountToTurn", amountToTurn);
@@ -100,6 +113,20 @@ public class CompetitionTeleOp extends BaseOpMode {
  */
 
 
+
+            double headingError = targetHeading - follower.pose().heading();
+
+            if (turning) {
+                // Stop the  turn when the robot is around 2 degrees of the target(hich is 30 degrees)
+                if (Math.abs(headingError) < Math.toRadians(2)) {
+                    turning = false;
+                    turn = 0;
+                } else {
+                    // Calculate turn power based on heading error, limiting it between -0.5 and 0.5
+                    turn = Math.max(-0.5, Math.min(0.5, headingError * 1.5));
+                    //turn = Math.max(-0.5, Math.min(0.5, -headingError * 1.5));
+                }
+            }
 
             follower.manual(forward, lateral, turn);
             follower.update();
