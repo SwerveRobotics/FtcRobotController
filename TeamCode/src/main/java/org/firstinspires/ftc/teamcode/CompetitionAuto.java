@@ -233,23 +233,25 @@ public class CompetitionAuto extends BaseOpMode{
                 waitMs(waitTimeMs),
                 follow(follower,Paths.line(poses2[0], poses2[1]).constant(poses2[1])),
                 rampDown(),
-                shootBalls(4).raceWith(hold(follower)),
+                waitMs(4000),
+                //shootBalls(4).raceWith(hold(follower)),
                 follow(follower,Paths.line(poses2[1], poses2[2]).constant(poses2[2])),
                 follow(follower, Paths.line(poses2[2], poses2[3]).constant(poses2[3])),
                 intakeBallForMillis(5000).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses2[3], poses2[4]).constant(poses2[4])),
                 follow(follower, Paths.line(poses2[4], poses2[5]).constant(poses2[5])).with(rampUp()),
-                shootBalls(4).raceWith(hold(follower)),
+                waitMs(4000),
+                //shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses2[5], poses2[6]).constant(poses2[6]))
         );
     }
     public void initializeFlowerPath(Pose[] flowerPoses, PoseFactory poseFactory) {
-        flowerPoses[0] = poseFactory.of(79.1085, 8.6331, 90);
-        flowerPoses[1] = poseFactory.of(84.7, 23.3459, 90);
+        flowerPoses[0] = poseFactory.of(79.1085, 8.6331, -90);
+        flowerPoses[1] = poseFactory.of(84.7, 23.3459, -90);
         flowerPoses[2] = poseFactory.of(94.4916, 17.3314, -90);
         flowerPoses[3] = poseFactory.of(94.0503, 9.5, -90);
         flowerPoses[4] = poseFactory.of(94.4916, 17.3314, -90);
-        flowerPoses[5] = poseFactory.of(84.7, 23.3459, 90);
-        flowerPoses[6] = poseFactory.of(129.3126, 24.6121, 90);
+        flowerPoses[5] = poseFactory.of(84.7, 23.3459, -90);
+        flowerPoses[6] = poseFactory.of(129.3126, 24.6121, -90); //always face the back
     }
 }
