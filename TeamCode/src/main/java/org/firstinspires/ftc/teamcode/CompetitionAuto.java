@@ -209,15 +209,14 @@ public class CompetitionAuto extends BaseOpMode{
         );
     }
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) {
-        gardenPoses[0] = poseFactory.of(85.1, 131.6, 90);
-        gardenPoses[1] = poseFactory.of(86.2461, 125.7, -90);
-        gardenPoses[2] = poseFactory.of(86.2461, 125.7, 0);
-        gardenPoses[3] = poseFactory.of(106.9552, 131, 0);
-        gardenPoses[4] = poseFactory.of(129.6295, 131, 0);
-        gardenPoses[5] = poseFactory.of(105.3705, 33.0811, -103.9147);
-        gardenPoses[6] = poseFactory.of(105.3705, 33.0811, -136);
-        gardenPoses[7] = poseFactory.of(85.1562, 16.4153, 90);
-        gardenPoses[8] = poseFactory.of(125.0884, 34.0981, 23.8848);
+        private final Pose start = poseFactory.of(85.1, 131.6, 90);
+        private final Pose path1 = poseFactory.of(84.9939, 121.9434, 89.3706);
+        private final Pose point2 = poseFactory.of(119.4773, 107.8341, -22.2525);
+        private final Pose point3 = poseFactory.of(105.3705, 33.0811, -100.6868);
+        private final Pose point4 = poseFactory.of(87.6606, 18.9197, -141.3529);
+        private final Pose point5 = poseFactory.of(87.6958, 19.0763, -90);
+        private final Pose point6 = poseFactory.of(125.0884, 34.0981, 21.8868);
+
     }
     public Command autoParkingPath() {
         Pose end = poseFactory.of(126.76431357656855, 24.369302898095505, 90);
