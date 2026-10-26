@@ -24,19 +24,19 @@ abstract public class BaseOpMode extends LinearOpMode {
     //constants
     public static double LAUNCH_TIME = 500.0;
     //TODO: uh
-    public static double LAUNCHER_SPEED = 1700.0;//1250
+    public static double LAUNCHER_SPEED = 1400;//1250
     public static double INTAKE_SPEED = 1.0;
     public static double GATE_OPEN = .8;
     public static double GATE_CLOSE = 0.52;
-    public static double RAMP_UP = 0.08;
+    public static double RAMP_UP = 0.14;//.14
     public static double RAMP_DOWN = 0.86;
 
     //autoaim TODO: tune these valuessss
 
-    public static double AIM_KP = 0.02;
-    public static double AIM_KI = 0.0;
-    public static double AIM_KD = 0.0;
-    public static double AIM_KF = 0.5;
+    public static double AIM_KP = 0.5;
+    public static double AIM_KI = 10;
+    public static double AIM_KD = 10.0;
+    public static double AIM_KF = 10.0;
 
 
     public void initializeHardware() {
@@ -62,9 +62,6 @@ abstract public class BaseOpMode extends LinearOpMode {
         //what happens when stopping
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         launchMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-
-        //set velocity
-        launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         //set direction
         intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);

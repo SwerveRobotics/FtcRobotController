@@ -50,14 +50,18 @@ public class CompetitionTeleOp extends BaseOpMode {
             } else if (gamepad2.left_stick_y < -0.05 ) {
                 intakeMotor.setPower(-INTAKE_SPEED);
             }else if (gamepad2.y){
-                intakeMotor.setPower(INTAKE_SPEED*.25);
+                //launchMotor.setVelocity(LAUNCHER_SPEED);
+
+                intakeMotor.setPower(INTAKE_SPEED*.5);
             } else {
                 intakeMotor.setPower(0);
             }
             //launching controls
+
             if (gamepad2.right_bumper) {
                 launchMotor.setVelocity(LAUNCHER_SPEED);
-            } else if (gamepad2.left_bumper) {
+                telemetry.addLine("Launcher is being intiated!");
+            }else if (gamepad2.left_bumper) {
                 launchMotor.setVelocity(0);
             }
 
@@ -87,8 +91,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 }
                 follower.setPose(new Pose(0, 0, 0));
             }
-
-
+            /*
             // Press A to turn 30 degrees
             if (gamepad1.a && !turning) {
                 // Set the target to 30 degrees more the heading in follower rn
@@ -97,7 +100,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 turning = true;
             }
 
-
+*/
 
 /*
             if (gamepad1.right_bumper && autoA            //TODO: Auto Aim :)
@@ -137,7 +140,8 @@ im != null) {
             telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
             telemetry.addData("Gate Position", gate.getPosition());
             telemetry.addData("Intake speed", INTAKE_SPEED);
-            telemetry.addData("Launcher Speed", launchMotor.getVelocity());
+            telemetry.addData("Launcher Speed1", launchMotor.getVelocity());
+
             telemetry.update();
 
         }
