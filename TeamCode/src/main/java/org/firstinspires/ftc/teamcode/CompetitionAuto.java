@@ -198,24 +198,24 @@ public class CompetitionAuto extends BaseOpMode{
                 waitMs(waitTimeMs),
                 follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[0])),
                 waitMs(4000),
-                //shootBalls(4).raceWith(hold(follower)),
+                shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[2], poses1[3]).linear(poses1[2], poses1[3])),
                 follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[4])),//.raceWith(intakeBallForMillis(3000)),
                 follow(follower, Paths.line(poses1[4], poses1[5]).tangent()),
                 follow(follower, Paths.line(poses1[6], poses1[7]).linear(poses1[6], poses1[7])),
                 waitMs(4000),
-                //shootBalls(4).raceWith(hold(follower)),
+                shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[7], poses1[8]).tangent())
         );
     }
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) {
-        private final Pose start = poseFactory.of(85.1, 131.6, 90);
-        private final Pose path1 = poseFactory.of(84.9939, 121.9434, 89.3706);
-        private final Pose point2 = poseFactory.of(119.4773, 107.8341, -22.2525);
-        private final Pose point3 = poseFactory.of(105.3705, 33.0811, -100.6868);
-        private final Pose point4 = poseFactory.of(87.6606, 18.9197, -141.3529);
-        private final Pose point5 = poseFactory.of(87.6958, 19.0763, -90);
-        private final Pose point6 = poseFactory.of(125.0884, 34.0981, 21.8868);
+        final Pose start = poseFactory.of(85.1, 131.6, 90);
+        final Pose path1 = poseFactory.of(84.9939, 121.9434, 89.3706);
+        final Pose point2 = poseFactory.of(119.4773, 107.8341, -22.2525);
+        final Pose point3 = poseFactory.of(105.3705, 33.0811, -100.6868);
+        final Pose point4 = poseFactory.of(87.6606, 18.9197, -141.3529);
+        final Pose point5 = poseFactory.of(87.6958, 19.0763, -90);
+        final Pose point6 = poseFactory.of(125.0884, 34.0981, 21.8868);
 
     }
     public Command autoParkingPath() {
