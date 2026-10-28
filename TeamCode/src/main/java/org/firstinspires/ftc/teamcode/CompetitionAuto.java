@@ -41,10 +41,7 @@ public class CompetitionAuto extends BaseOpMode{
 
 
     private final ElapsedTime timer = new ElapsedTime();
-    public enum Alliance {
-            RED,
-            BLUE,
-    }
+
     public enum AutoPath { //different options for auto routine
         GARDEN_PATH,
         FLOWER_PATH,
@@ -87,6 +84,7 @@ public class CompetitionAuto extends BaseOpMode{
 
         // get data from menu
         Alliance chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
+        PoseStorage.chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
         AutoPath chosenPath = menu.getResult(AutoPath.class, "pathPicker");
         waitTimeMs = menu.getResult(Double.class, "waitSlider") * 1000.0;
         // set up the poseFactory and poses

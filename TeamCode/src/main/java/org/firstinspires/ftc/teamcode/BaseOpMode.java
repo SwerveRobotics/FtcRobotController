@@ -11,6 +11,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 @Config
 abstract public class BaseOpMode extends LinearOpMode {
+    public enum Alliance {
+        RED,
+        BLUE,
+    }
 
     //motors;
     protected DcMotorEx launchMotor;
