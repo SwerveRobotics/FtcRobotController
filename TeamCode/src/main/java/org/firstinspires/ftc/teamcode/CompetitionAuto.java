@@ -167,22 +167,25 @@ public class CompetitionAuto extends BaseOpMode{
         return Command.build().setStart(() -> flowerRamp.setPosition(RAMP_DOWN));
     }
     public Command shootBalls(int numBalls) {
+        Command openGate = Command.build()
+                .setStart(() -> gate.setPosition(GATE_OPEN))
+                .requiring(gate);
         Command revUp = Command.build()
-                .setStart(() -> {launchMotor.setVelocity(LAUNCHER_SPEED);
-                gate.setPosition(GATE_OPEN);
-                })
+                .setStart(() -> launchMotor.setVelocity(LAUNCHER_SPEED))
                 .setDone(() -> launchMotor.getVelocity()  > LAUNCHER_SPEED * 0.95)//let it rev up to nearly the full launch speed
-                .requiring(launchMotor, gate);
+                .requiring(launchMotor);
         Command actuallyShoot = Command.build()
-                .setStart(() -> {
-                    telemetry.addData("Waiting for launcher to get up to speed", launchMotor.getVelocity());
-                    waitUntil(()->launchMotor.getVelocity() > LAUNCHER_SPEED * 0.95);
+                .setStart(() -> { timer.reset();
                 })
                 .setExecute(()-> {
                     intakeMotor.setVelocity(INTAKE_SPEED);
                     telemetry.addData("Launching with speed ", launchMotor.getVelocity());
                 })
-                .setDone(() -> launchMotor.getVelocity() < LAUNCHER_SPEED * 0.95)
+                .setDone(() -> launchMotor.getVelocity() < LAUNCHER_SPEED * 0.95 || timer.milliseconds() > LAUNCH_TIME)
+                .setEnd(endCondition -> {
+                    telemetry.addData("Launched with speed ", launchMotor.getVelocity());
+                    intakeMotor.setVelocity(0);
+                })
                         .requiring(launchMotor, intakeMotor);
 
         Command end = Command.build()
@@ -191,7 +194,7 @@ public class CompetitionAuto extends BaseOpMode{
                     gate.setPosition(GATE_CLOSE);
                 })
                 .requiring(launchMotor, gate);
-        return sequential(revUp, repeat(actuallyShoot,numBalls), end);
+        return sequential(openGate, repeat(sequential(revUp, actuallyShoot), numBalls), end);
     }
     public Command autoRoutineGarden() {
         return sequential(
