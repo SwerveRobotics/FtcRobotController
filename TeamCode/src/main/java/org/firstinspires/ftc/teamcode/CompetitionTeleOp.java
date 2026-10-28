@@ -5,11 +5,9 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
-import java.util.Arrays;
-import java.util.List;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+
 @Config
 @TeleOp(name="417 Teleop")
 public class CompetitionTeleOp extends BaseOpMode {
@@ -57,6 +55,8 @@ public class CompetitionTeleOp extends BaseOpMode {
                 intakeMotor.setPower(0);
             }
             //launching controls
+            launchMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
+                    new PIDFCoefficients(KP, KI, KD, KF));
 
             if (gamepad2.right_bumper) {
                 launchMotor.setVelocity(LAUNCHER_SPEED);
