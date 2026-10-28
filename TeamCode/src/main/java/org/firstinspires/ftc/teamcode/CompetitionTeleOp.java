@@ -4,6 +4,7 @@ import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import java.lang.Math;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
@@ -12,6 +13,10 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 @TeleOp(name="417 Teleop")
 public class CompetitionTeleOp extends BaseOpMode {
     //variables
+    Alliance chosenAlliance;
+    double targetX;
+    double targetY;
+    Pose targetPose;
     double amountToTurn = 0;
     private boolean turning = false;
     private double targetHeading = 0;
@@ -33,7 +38,9 @@ public class CompetitionTeleOp extends BaseOpMode {
         //driver press st art on DS
         waitForStart();
         follower.setPose(PoseStorage.endPose);
+        chosenAlliance = PoseStorage.chosenAlliance;
         flowerRamp.setPosition(RAMP_UP);
+        targetPose = Pose.zero();
 
         while (opModeIsActive()) {
             //read controller inputs
@@ -86,10 +93,22 @@ public class CompetitionTeleOp extends BaseOpMode {
                 //flowerRamp.setPosition(RAMP_UP);
             }
             if (gamepad1.left_bumper) {
-                if (gamepad1.left_bumper) {
-
-                }
                 follower.setPose(new Pose(0, 0, 0));
+            }
+
+            if (gamepad1.x) {
+                if (chosenAlliance.equals(Alliance.BLUE)) {
+                    targetX = 84;
+                } else {
+                    targetX = 58;
+                }
+                if (follower.pose().y() > 70) {
+                    targetY = 86.5;
+                }   else {
+                    targetY = 54.5;
+                }
+                targetHeading = Math.atan2(targetY-follower.pose().y(),targetX - follower.pose().x()); //get angle based on target
+                turning = true;
             }
             /*
             // Press A to turn 30 degrees
