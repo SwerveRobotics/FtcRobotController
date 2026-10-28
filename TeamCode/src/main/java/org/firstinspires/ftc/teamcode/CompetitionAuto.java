@@ -68,7 +68,7 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command aRlaunchAndPark() {
         return sequential(
-                //launchFourBalls(),
+                launchFourBalls(),
                 follow(follower, launchAndPark())
 
         );
@@ -76,7 +76,7 @@ public class CompetitionAuto extends BaseOpMode{
     public Command aRHDlaunchAndPark() {
         return sequential(
                 waitMs(PARTNER_LAUNCH_TIME),
-                //launchFourBalls(),
+                launchFourBalls(),
                 follow(follower, hDLaunchandPark())
 
         );
