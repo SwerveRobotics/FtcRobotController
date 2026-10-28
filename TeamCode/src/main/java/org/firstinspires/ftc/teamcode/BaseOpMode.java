@@ -38,6 +38,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double KF = 16.3;
 
 
+
     public void initializeHardware() {
         //initialize motors
         intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");

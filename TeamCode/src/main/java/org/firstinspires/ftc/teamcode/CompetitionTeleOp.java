@@ -65,6 +65,8 @@ public class CompetitionTeleOp extends BaseOpMode {
             launchMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
                     new PIDFCoefficients(KP, KI, KD, KF));
 
+
+
             if (gamepad2.right_bumper) {
                 launchMotor.setVelocity(LAUNCHER_SPEED);
                 telemetry.addLine("Launcher is being intiated!");
