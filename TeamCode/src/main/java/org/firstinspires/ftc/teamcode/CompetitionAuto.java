@@ -200,22 +200,19 @@ public class CompetitionAuto extends BaseOpMode{
                 waitMs(4000),
                 shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[2], poses1[3]).linear(poses1[2], poses1[3])),
-                follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[4])),//.raceWith(intakeBallForMillis(3000)),
+                follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[4])),
                 follow(follower, Paths.line(poses1[4], poses1[5]).tangent()),
-                follow(follower, Paths.line(poses1[6], poses1[7]).linear(poses1[6], poses1[7])),
-                waitMs(4000),
-                shootBalls(4).raceWith(hold(follower)),
-                follow(follower, Paths.line(poses1[7], poses1[8]).tangent())
+                follow(follower, Paths.line(poses1[5], poses1[6]).linear(poses1[5], poses1[6]))
         );
     }
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) {
-        final Pose start = poseFactory.of(85.1, 131.6, 90);
-        final Pose path1 = poseFactory.of(84.9939, 121.9434, 89.3706);
-        final Pose point2 = poseFactory.of(119.4773, 107.8341, -22.2525);
-        final Pose point3 = poseFactory.of(105.3705, 33.0811, -100.6868);
-        final Pose point4 = poseFactory.of(87.6606, 18.9197, -141.3529);
-        final Pose point5 = poseFactory.of(87.6958, 19.0763, -90);
-        final Pose point6 = poseFactory.of(125.0884, 34.0981, 21.8868);
+        gardenPoses[0] = poseFactory.of(85.1, 131.6, 90);
+        gardenPoses[1] = poseFactory.of(84.9939, 121.9434, 89.3706);
+        gardenPoses[2] = poseFactory.of(119.4773, 107.8341, -22.2525);
+        gardenPoses[3] = poseFactory.of(105.3705, 33.0811, -100.6868);
+        gardenPoses[4] = poseFactory.of(87.6606, 18.9197, -141.3529);
+        gardenPoses[5] = poseFactory.of(87.6958, 19.0763, -90);
+        gardenPoses[6] = poseFactory.of(125.0884, 34.0981, 21.8868);
 
     }
     public Command autoParkingPath() {
