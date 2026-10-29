@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @Config
-abstract public class BaseOpMode extends LinearOpMode { //67
+abstract public class BaseOpMode extends LinearOpMode {
     public enum Alliance {
         RED,
         BLUE,
