@@ -166,9 +166,7 @@ public class CompetitionAuto extends BaseOpMode{
         return instant(() -> flowerRamp.setPosition(RAMP_DOWN));
     }
     public Command shootBalls(int numBalls) {
-        Command openGate = Command.build()
-                .setStart(() -> gate.setPosition(GATE_OPEN))
-                .requiring(gate);
+        Command openGate = instant(() -> gate.setPosition(GATE_OPEN));
         Command revUp = Command.build()
                 .setStart(() -> launchMotor.setVelocity(LAUNCHER_SPEED))
                 .setDone(() -> launchMotor.getVelocity()  > LAUNCHER_SPEED * 0.95)//let it rev up to nearly the full launch speed
@@ -187,12 +185,10 @@ public class CompetitionAuto extends BaseOpMode{
                 })
                         .requiring(launchMotor, intakeMotor);
 
-        Command end = Command.build()
-                .setStart(() -> {
+        Command end = instant(() -> {
                     launchMotor.setVelocity(0);
                     gate.setPosition(GATE_CLOSE);
-                })
-                .requiring(launchMotor, gate);
+                });
         return sequential(openGate, repeat(sequential(revUp, actuallyShoot), numBalls), end);
     }
     public Command autoRoutineGarden() {
