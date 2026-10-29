@@ -242,7 +242,6 @@ public class CompetitionAuto extends BaseOpMode{
                 intakeBallForMillis(5000).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses2[3], poses2[4]).constant(poses2[4])),
                 follow(follower, Paths.line(poses2[4], poses2[5]).constant(poses2[5])).with(rampUp()),
-                rampUp(),
                 shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses2[5], poses2[6]).constant(poses2[6]))
         );
