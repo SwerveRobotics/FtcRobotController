@@ -54,6 +54,8 @@ public class CompetitionAuto extends BaseOpMode{
 
     @Override
     public void runOpMode() throws InterruptedException {
+        //initialize hardware
+        initializeHardware();
         //Making follower to tell the robot
         TextMenu menu = new TextMenu();
         MenuInput menuInput = new MenuInput(MenuInput.InputType.CONTROLLER);
@@ -120,7 +122,6 @@ public class CompetitionAuto extends BaseOpMode{
                 telemetry.addData("How did you do this? You have to choose a path!", 67);
         }
         follower.update();
-        initializeHardware();
         waitForStart();
 
 
@@ -159,10 +160,10 @@ public class CompetitionAuto extends BaseOpMode{
                 .requiring(intakeMotor);
     }
     public Command rampUp() {
-        return Command.build().setStart(() -> flowerRamp.setPosition(RAMP_UP));
+        return Command.build().setStart(() -> flowerRamp.setPosition(RAMP_UP)).requiring(flowerRamp).setDone(() -> true);
     }
     public Command rampDown() {
-        return Command.build().setStart(() -> flowerRamp.setPosition(RAMP_DOWN));
+        return Command.build().setStart(() -> flowerRamp.setPosition(RAMP_DOWN)).requiring(flowerRamp).setDone(() -> true);
     }
     public Command shootBalls(int numBalls) {
         Command openGate = Command.build()
@@ -197,27 +198,27 @@ public class CompetitionAuto extends BaseOpMode{
     public Command autoRoutineGarden() {
         return sequential(
                 waitMs(waitTimeMs),
-                shootBalls(4).raceWith(hold(follower)),
+                //shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[0])),
-                rampDown(),
+                //rampDown(),
                 follow(follower, Paths.line(poses1[1], poses1[2]).constant(poses1[1])),
-                intakeBallForMillis(5000).raceWith(hold(follower)),
+                //intakeBallForMillis(5000).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[2], poses1[3]).constant(poses1[2])),
-                rampUp(),
+                //rampUp(),
                 follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[3])),
                 follow(follower, Paths.line(poses1[4], poses1[5]).constant(poses1[4])),
 
                 follow(follower, Paths.line(poses1[5], poses1[6]).constant(poses1[5])),
-                shootBalls(4).raceWith(hold(follower)),
+                //shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses1[6], poses1[7]).constant(poses1[6])),
                 follow(follower, Paths.line(poses1[7], poses1[8]).constant(poses1[7]))
         );
     }
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) {
         gardenPoses[0] = poseFactory.of(84.1293, 132.8942, 90);
-        gardenPoses[1] = poseFactory.of(119.598, 92.8211, 90);
-        gardenPoses[2] = poseFactory.of(130.6251, 93.4615, 0);
-        gardenPoses[3] = poseFactory.of(119.9248, 91.6962, 0);
+        gardenPoses[1] = poseFactory.of(119.598, 92.8211, 180); //this one
+        gardenPoses[2] = poseFactory.of(126, 93.4615, 180); // this one
+        gardenPoses[3] = poseFactory.of(119.9248, 91.6962, 180);
         gardenPoses[4] = poseFactory.of(105.4226, 30.1768, -90);
         gardenPoses[5] = poseFactory.of(83.4427, 26.1793, -90);
         gardenPoses[6] = poseFactory.of(83.7372, 8.6485, -90);
@@ -237,14 +238,14 @@ public class CompetitionAuto extends BaseOpMode{
         return sequential(
                 waitMs(waitTimeMs),
                 follow(follower,Paths.line(poses2[0], poses2[1]).constant(poses2[1])),
-                rampDown(),
-                shootBalls(4).raceWith(hold(follower)),
+                //rampDown(),
+                //shootBalls(4).raceWith(hold(follower)),
                 follow(follower,Paths.line(poses2[1], poses2[2]).constant(poses2[2])),
                 follow(follower, Paths.line(poses2[2], poses2[3]).constant(poses2[3])),
                 intakeBallForMillis(5000).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses2[3], poses2[4]).constant(poses2[4])),
-                follow(follower, Paths.line(poses2[4], poses2[5]).constant(poses2[5])).with(rampUp()),
-                shootBalls(4).raceWith(hold(follower)),
+                follow(follower, Paths.line(poses2[4], poses2[5]).constant(poses2[5])),//.with(rampUp()),
+                //shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(poses2[5], poses2[6]).constant(poses2[6]))
         );
     }
