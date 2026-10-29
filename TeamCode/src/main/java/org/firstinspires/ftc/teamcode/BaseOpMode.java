@@ -1,14 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
+
 @Config
 abstract public class BaseOpMode extends LinearOpMode { //67
     public enum Alliance {
@@ -37,10 +36,11 @@ abstract public class BaseOpMode extends LinearOpMode { //67
 
     //autoaim TODO: tune these values
 
-    public static double AIM_KP = 3;
-    public static double AIM_KI = 0;
-    public static double AIM_KD = 5.0;
-    public static double AIM_KF = 14.5;
+    public static double KP = 15;
+    public static double KI = 0;
+    public static double KD = 0;
+    public static double KF = 16.3;
+
 
 
     public void initializeHardware() {
@@ -61,7 +61,8 @@ abstract public class BaseOpMode extends LinearOpMode { //67
         intakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launchMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        launchMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(AIM_KP, AIM_KI, AIM_KD, AIM_KF));
+        launchMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
+                new PIDFCoefficients(KP, KI, KD, KF));
 
         //what happens when stopping
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
