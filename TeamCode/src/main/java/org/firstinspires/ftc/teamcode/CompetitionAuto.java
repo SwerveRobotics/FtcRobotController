@@ -214,7 +214,7 @@ public class CompetitionAuto extends BaseOpMode{
                 follow(follower, Paths.line(poses1[7], poses1[8]).constant(poses1[7]))
         );
     }
-    public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) {
+    public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) { //hey
         gardenPoses[0] = poseFactory.of(84.1293, 132.8942, 90);
         gardenPoses[1] = poseFactory.of(119.598, 92.8211, 180); //this one
         gardenPoses[2] = poseFactory.of(126, 93.4615, 180); // this one
