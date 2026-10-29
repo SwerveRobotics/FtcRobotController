@@ -166,30 +166,14 @@ public class CompetitionAuto extends BaseOpMode{
         return instant(() -> flowerRamp.setPosition(RAMP_DOWN));
     }
     public Command shootBalls(int numBalls) {
-        Command openGate = instant(() -> gate.setPosition(GATE_OPEN));
-        Command revUp = Command.build()
-                .setStart(() -> launchMotor.setVelocity(LAUNCHER_SPEED))
-                .setDone(() -> launchMotor.getVelocity()  > LAUNCHER_SPEED * 0.95)//let it rev up to nearly the full launch speed
-                .requiring(launchMotor);
-        Command actuallyShoot = Command.build()
-                .setStart(() -> { timer.reset();
-                })
-                .setExecute(()-> {
-                    intakeMotor.setVelocity(INTAKE_SPEED);
-                    telemetry.addData("Launching with speed ", launchMotor.getVelocity());
-                })
-                .setDone(() -> launchMotor.getVelocity() < LAUNCHER_SPEED * 0.95 || timer.milliseconds() > LAUNCH_TIME)
-                .setEnd(endCondition -> {
-                    telemetry.addData("Launched with speed ", launchMotor.getVelocity());
-                    intakeMotor.setVelocity(0);
-                })
-                        .requiring(launchMotor, intakeMotor);
-
-        Command end = instant(() -> {
-                    launchMotor.setVelocity(0);
-                    gate.setPosition(GATE_CLOSE);
-                });
-        return sequential(openGate, repeat(sequential(revUp, actuallyShoot), numBalls), end);
+        return sequential(instant(() -> gate.setPosition(GATE_OPEN)),
+                instant(() -> launchMotor.setVelocity(LAUNCHER_SPEED)),
+                waitMs(500),
+                instant(()->intakeMotor.setVelocity(-INTAKE_SPEED)),
+                waitMs(numBalls*LAUNCH_TIME),
+                instant(() -> launchMotor.setVelocity(0)),
+                instant(() -> gate.setPosition(GATE_CLOSE))
+        );
     }
     public Command autoRoutineGarden() {
         return sequential(
