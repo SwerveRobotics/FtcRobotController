@@ -160,10 +160,10 @@ public class CompetitionAuto extends BaseOpMode{
                 .requiring(intakeMotor);
     }
     public Command rampUp() {
-        return Command.build().setStart(() -> flowerRamp.setPosition(RAMP_UP)).requiring(flowerRamp).setDone(() -> true);
+        return instant(() -> flowerRamp.setPosition(RAMP_UP));
     }
     public Command rampDown() {
-        return Command.build().setStart(() -> flowerRamp.setPosition(RAMP_DOWN)).requiring(flowerRamp).setDone(() -> true);
+        return instant(() -> flowerRamp.setPosition(RAMP_DOWN));
     }
     public Command shootBalls(int numBalls) {
         Command openGate = Command.build()
