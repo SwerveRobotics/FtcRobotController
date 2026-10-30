@@ -17,6 +17,11 @@ public class CompetitionTeleOp extends BaseOpMode {
     double targetX;
     double targetY;
     Pose targetPose;
+    boolean fieldCentric = false;
+    double forward;
+    double lateral;
+    double turn;
+    double fieldCentricCorrectionFactor = 0;
     double amountToTurn = 0;
     private boolean turning = false;
     private double targetHeading = 0;
@@ -43,11 +48,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         targetPose = Pose.zero();
 
         while (opModeIsActive()) {
-            //read controller inputs
-            double forward = -gamepad1.left_stick_y * doSLOWMODE();
-            double lateral = -gamepad1.left_stick_x * doSLOWMODE();
-            double turn = -gamepad1.right_stick_x * doSLOWMODE();
-            //drive the robot
+            //LAUNCH AND INTAKE CONTROLS
 
             //when left stick is pushed up set velocity
             if (gamepad2.left_stick_y > 0.05) {
@@ -97,6 +98,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             if (gamepad1.left_bumper) {
                 follower.setPose(new Pose(0, 0, 0));
             }
+            //PSEUDO AUTO AIM USING ODOMETRY
 
             if (gamepad1.x) {
                 if (chosenAlliance.equals(Alliance.BLUE)) {
@@ -151,8 +153,30 @@ im != null) {
                     //turn = Math.max(-0.5, Math.min(0.5, -headingError * 1.5));
                 }
             }
+            //MOVE ROBOT!!!!!!!!!!!!!
+            //read controller inputs
+            forward = -gamepad1.left_stick_y * doSLOWMODE();
+            lateral = -gamepad1.left_stick_x * doSLOWMODE();
+            turn = -gamepad1.right_stick_x * doSLOWMODE();
+            if(gamepad1.yWasPressed()) {
+                fieldCentric = !fieldCentric;
+            }
+            if (!fieldCentric) {
+                follower.manual(forward, lateral, turn);
+            } else { //do math to make robot drive correctly
+                double t = follower.pose().heading() + fieldCentricCorrectionFactor;
+                follower.manual(forward * Math.cos(t) - lateral * Math.sin(t),
+                        forward * Math.sin(t) + lateral* Math.cos(t),
+                        turn);
+            }
+            if(gamepad1.dpad_left) { //rotate the robot's perceived angle
+                fieldCentricCorrectionFactor += 90;
+            }
+            if(gamepad1.dpad_right) {
+                fieldCentricCorrectionFactor -= 90;
+            }
 
-            follower.manual(forward, lateral, turn);
+
             follower.update();
             //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX
             telemetry.addData("X", follower.pose().x());
