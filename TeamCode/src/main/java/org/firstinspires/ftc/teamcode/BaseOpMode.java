@@ -36,10 +36,10 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     //autoaim TODO: tune these values
 
-    public static double KP = 15;
-    public static double KI = 0;
-    public static double KD = 0;
-    public static double KF = 16.3;
+    public static double KP = 15;    //15
+    public static double KI = 0;     //0
+    public static double KD = 0;     //0
+    public static double KF = 16;  //16.3
 
 
 

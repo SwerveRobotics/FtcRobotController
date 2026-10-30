@@ -181,11 +181,11 @@ public class CompetitionAuto extends BaseOpMode{
                 waitMs(waitTimeMs),
                 shootBalls(4),
                 follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[0])),
-                rampDown(),
+                //rampDown(),
                 follow(follower, Paths.line(poses1[1], poses1[2]).constant(poses1[1])),
                 intakeBallForMillis(5000),
                 follow(follower, Paths.line(poses1[2], poses1[3]).constant(poses1[2])),
-                rampUp(),
+                //rampUp(),
                 follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[3])),
                 follow(follower, Paths.line(poses1[4], poses1[5]).constant(poses1[4])),
 
