@@ -38,6 +38,7 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose[] poses1 = new Pose[9]; //this holds the poses for the garden path
     private Pose[] poses2 = new Pose[7]; //this holds the poses for the flower path
     private Pose autoParkingStartPose;
+    Alliance chosenAlliance;
 
 
     private final ElapsedTime timer = new ElapsedTime();
@@ -85,7 +86,7 @@ public class CompetitionAuto extends BaseOpMode{
 
 
         // get data from menu
-        Alliance chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
+        chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
         PoseStorage.chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
         AutoPath chosenPath = menu.getResult(AutoPath.class, "pathPicker");
         waitTimeMs = menu.getResult(Double.class, "waitSlider") * 1000.0;
@@ -194,11 +195,17 @@ public class CompetitionAuto extends BaseOpMode{
                 follow(follower, Paths.line(poses1[7], poses1[8]).constant(poses1[7]))
         );
     }
-    public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) { //hey
+    public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) { //BRUTE FORCE MIRROR
         gardenPoses[0] = poseFactory.of(84.1293, 132.8942, 90);
-        gardenPoses[1] = poseFactory.of(119.598, 92.8211, 180); //this one
-        gardenPoses[2] = poseFactory.of(126, 93.4615, 180); // this one
-        gardenPoses[3] = poseFactory.of(119.9248, 91.6962, 180);
+        if (chosenAlliance.equals(Alliance.RED)) {
+            gardenPoses[1] = poseFactory.of(119.598, 92.8211, 180); //this one
+            gardenPoses[2] = poseFactory.of(126, 93.4615, 180); // this one
+            gardenPoses[3] = poseFactory.of(119.9248, 91.6962, 180);
+        } else {
+            gardenPoses[1] = poseFactory.of(119.598, 92.8211, 0); //this one
+            gardenPoses[2] = poseFactory.of(126, 93.4615, 0); // this one
+            gardenPoses[3] = poseFactory.of(119.9248, 91.6962, 0);
+        }
         gardenPoses[4] = poseFactory.of(105.4226, 30.1768, -90);
         gardenPoses[5] = poseFactory.of(83.4427, 26.1793, -90);
         gardenPoses[6] = poseFactory.of(83.7372, 8.6485, -90);
