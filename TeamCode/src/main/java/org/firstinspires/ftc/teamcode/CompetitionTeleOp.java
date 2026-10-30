@@ -183,7 +183,7 @@ im != null) {
             if (!fieldCentric) {
                 follower.manual(forward, lateral, turn);
             } else { //do math to make robot drive correctly
-                double t = follower.pose().heading() + fieldCentricCorrectionFactor;
+                double t = Math.toRadians(follower.pose().heading() + fieldCentricCorrectionFactor);
                 follower.manual(forward * Math.cos(t) - lateral * Math.sin(t),
                         forward * Math.sin(t) + lateral* Math.cos(t),
                         turn);
@@ -204,7 +204,8 @@ im != null) {
             telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
             telemetry.addData("Gate Position", gate.getPosition());
             telemetry.addData("Intake speed", INTAKE_SPEED);
-            telemetry.addData("Launcher Speed1", launchMotor.getVelocity());
+            telemetry.addData("Launcher Speed", launchMotor.getVelocity());
+            telemetry.addData("Field-centric drive: ", fieldCentric);
 
             telemetry.update();
 
