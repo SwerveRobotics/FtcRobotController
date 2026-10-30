@@ -48,8 +48,27 @@ public class CompetitionTeleOp extends BaseOpMode {
         targetPose = Pose.zero();
 
         while (opModeIsActive()) {
-            //LAUNCH AND INTAKE CONTROLS
+            /*LAUNCH AND INTAKE CONTROLS:
+            gamepad1:
+                left joystick: x and y movement
+                right joystick: rotation
+                left bumper: reset perceived position to 0, 0, 0
+                right trigger: slow mode
+                y: toggle field-centric drive
+                dpad left: rotate field-centric drive perspective by 90 degrees counterclockwise
+                dpad right: rotate field-centric drive perspective by 90 degrees clockwise
+                x: rotate robot in direction of nearest hive
+            gamepad2:
+                left joystick: up for outtake, down for intake
+                y: open launch gate and intake
+                right bumper: turn on flywheel
+                left bumper: turn off flywheel
+                dpad up: flower ramp up
+                dpad down: flower ramp down
 
+
+
+             */
             //when left stick is pushed up set velocity
             if (gamepad2.left_stick_y > 0.05) {
                 intakeMotor.setPower(INTAKE_SPEED);
