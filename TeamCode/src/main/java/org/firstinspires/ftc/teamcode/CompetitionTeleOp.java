@@ -5,6 +5,8 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import java.lang.Math;
+import com.pedropathing.drivetrain.DrivePowers;
+import com.pedropathing.follower.ManualDrive;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
@@ -25,6 +27,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     double amountToTurn = 0;
     private boolean turning = false;
     private double targetHeading = 0;
+    private DrivePowers fcPowers;
 
     private Follower follower;
     //private Limelight3A limelight;
@@ -183,10 +186,12 @@ im != null) {
             if (!fieldCentric) {
                 follower.manual(forward, lateral, turn);
             } else { //do math to make robot drive correctly
-                double t = Math.toRadians(follower.pose().heading() + fieldCentricCorrectionFactor);
-                follower.manual(forward * Math.cos(t) - lateral * Math.sin(t),
-                        forward * Math.sin(t) + lateral* Math.cos(t),
-                        turn);
+//                double t = Math.toRadians(follower.pose().heading() + fieldCentricCorrectionFactor);
+//                follower.manual(forward * Math.cos(t) - lateral * Math.sin(t),
+//                        forward * Math.sin(t) + lateral* Math.cos(t),
+//                        turn);
+                fcPowers = ManualDrive.fieldCentric(forward, lateral, turn, follower.pose().heading(), fieldCentricCorrectionFactor);
+                follower.manual(fcPowers);
             }
             if(gamepad1.dpad_left) { //rotate the robot's perceived angle
                 fieldCentricCorrectionFactor += 90;
@@ -206,6 +211,7 @@ im != null) {
             telemetry.addData("Intake speed", INTAKE_SPEED);
             telemetry.addData("Launcher Speed", launchMotor.getVelocity());
             telemetry.addData("Field-centric drive: ", fieldCentric);
+            telemetry.addData("FC correction angle: ", fieldCentricCorrectionFactor);
 
             telemetry.update();
 
