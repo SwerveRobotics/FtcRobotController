@@ -8,12 +8,17 @@ import java.lang.Math;
 
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.util.ElapsedTime;
+
 
 @Config
 @TeleOp(name="417 Teleop")
 public class CompetitionTeleOp extends BaseOpMode {
     //variables
     Alliance chosenAlliance;
+    ElapsedTime timer = new ElapsedTime();
+    boolean rampMoving = false;
+    boolean lastDpadUp = false;
     double targetX;
     double targetY;
     Pose targetPose;
@@ -48,27 +53,8 @@ public class CompetitionTeleOp extends BaseOpMode {
         targetPose = Pose.zero();
 
         while (opModeIsActive()) {
-            /*LAUNCH AND INTAKE CONTROLS:
-            gamepad1:
-                left joystick: x and y movement
-                right joystick: rotation
-                left bumper: reset perceived position to 0, 0, 0
-                right trigger: slow mode
-                y: toggle field-centric drive
-                dpad left: rotate field-centric drive perspective by 90 degrees counterclockwise
-                dpad right: rotate field-centric drive perspective by 90 degrees clockwise
-                x: rotate robot in direction of nearest hive
-            gamepad2:
-                left joystick: up for outtake, down for intake
-                y: open launch gate and intake
-                right bumper: turn on flywheel
-                left bumper: turn off flywheel
-                dpad up: flower ramp up
-                dpad down: flower ramp down
+            //LAUNCH AND INTAKE CONTROLS
 
-
-
-             */
             //when left stick is pushed up set velocity
             if (gamepad2.left_stick_y > 0.05) {
                 intakeMotor.setPower(INTAKE_SPEED);
@@ -104,16 +90,27 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             }
             //flower intake up and down controls
-            if (gamepad2.dpad_down) {
-                //flowerRamp.getController().pwmEnable();
+            // Flower intake up and down controls
 
+            if (gamepad2.dpad_down) {
+                flowerRamp.getController().pwmEnable();
                 flowerRamp.setPosition(RAMP_DOWN);
+                rampMoving = false;
             }
-            if (gamepad2.dpad_up) {
+
+            if (gamepad2.dpad_up && !lastDpadUp) {
+                flowerRamp.getController().pwmEnable();
                 flowerRamp.setPosition(RAMP_UP);
-                //flowerRamp.getController().pwmDisable();
-                //flowerRamp.setPosition(RAMP_UP);
+                timer.reset();
+                rampMoving = true;
             }
+            if (rampMoving && timer.milliseconds() >= 700) {
+                flowerRamp.getController().pwmDisable();
+                telemetry.addLine("DISABLEDDDD");
+                rampMoving = false;
+            }
+
+            lastDpadUp = gamepad2.dpad_up;
             if (gamepad1.left_bumper) {
                 follower.setPose(new Pose(0, 0, 0));
             }
@@ -206,7 +203,6 @@ im != null) {
             telemetry.addData("Intake speed", INTAKE_SPEED);
             telemetry.addData("Launcher Speed", launchMotor.getVelocity());
             telemetry.addData("Field-centric drive: ", fieldCentric);
-
             telemetry.update();
 
         }
