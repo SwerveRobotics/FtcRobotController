@@ -17,7 +17,6 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double LAUNCHER_BACKSPIN = 150;
     public static double LAUNCHER_TOPSPIN = 150;
     public static double WHEEL_STOP_SPEED = 0;
-    public static double TRANSFER_WHEEL_START_SPEED = 312;
     public static double INTAKE_SPEED_MULTIPLIER = 2000;
     public static double TRANSFER_SPEED = 1200;
     public static double BALLS_TO_LAUNCH_TIME = 10;
@@ -85,10 +84,10 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         leftIntakeServo.setDirection(CRServo.Direction.REVERSE);
 
-        FRMotor.setDirection(DcMotor.Direction.REVERSE);
-        BRMotor.setDirection(DcMotor.Direction.REVERSE);
-        BLMotor.setDirection(DcMotor.Direction.REVERSE);
-        FLMotor.setDirection(DcMotor.Direction.REVERSE);
+//        FRMotor.setDirection(DcMotor.Direction.FORWARD);
+//        BRMotor.setDirection(DcMotor.Direction.REVERSE);
+//        BLMotor.setDirection(DcMotor.Direction.REVERSE);
+//        FLMotor.setDirection(DcMotor.Direction.FORWARD);
 
 
     }

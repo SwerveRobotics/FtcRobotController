@@ -39,15 +39,15 @@ public class CompetitionTeleOp extends BaseOpMode{
 
             }
             if (gamepad2.yWasPressed()) {
-                transferWheelMot.setVelocity(TRANSFER_SPEED);
+//                transferWheelMot.setVelocity(TRANSFER_SPEED);
                 lowerFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_TOPSPIN);
                 upperFlywheelMot.setVelocity(LAUNCHER_SPEED);
 
             }
             if(gamepad2.bWasPressed()) {
-                transferWheelMot.setVelocity(0.0);
-                lowerFlywheelMot.setVelocity(0.0);
-                upperFlywheelMot.setVelocity(0.0);
+                transferWheelMot.setVelocity(WHEEL_STOP_SPEED);
+                lowerFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
+                upperFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
             }
             if(gamepad2.leftBumperWasPressed()){
                 Pose dynamicControl1;
