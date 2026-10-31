@@ -60,6 +60,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 intakeMotor.setPower(INTAKE_SPEED);
             } else if (gamepad2.left_stick_y < -0.05 ) {
                 intakeMotor.setPower(-INTAKE_SPEED);
+
             }else if (gamepad2.y){
                 //launchMotor.setVelocity(LAUNCHER_SPEED);
 
@@ -202,6 +203,8 @@ im != null) {
             telemetry.addData("Gate Position", gate.getPosition());
             telemetry.addData("Intake speed", INTAKE_SPEED);
             telemetry.addData("Launcher Speed", launchMotor.getVelocity());
+            telemetry.addData("KF: ", KF);
+
             telemetry.addData("Field-centric drive: ", fieldCentric);
             telemetry.update();
 
