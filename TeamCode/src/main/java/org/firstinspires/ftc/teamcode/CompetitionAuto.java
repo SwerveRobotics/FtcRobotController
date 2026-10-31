@@ -28,7 +28,7 @@ import org.firstinspires.ftc.teamcode.menu.MenuInput;
 import org.firstinspires.ftc.teamcode.menu.MenuSlider;
 import org.firstinspires.ftc.teamcode.menu.TextMenu;
 
-
+import static com.pedropathing.ivy.groups.Groups.parallel;
 @Autonomous(name = "417 Auto")
 public class CompetitionAuto extends BaseOpMode{
     //when you select the class
@@ -168,24 +168,66 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command shootBalls(int numBalls) {
         return sequential(instant(() -> gate.setPosition(GATE_OPEN)),
-                instant(() -> launchMotor.setVelocity(LAUNCHER_SPEED)),
-                waitMs(500),
                 instant(()->intakeMotor.setVelocity(-INTAKE_SPEED)),
+                instant(() -> launchMotor.setVelocity(LAUNCHER_SPEED)),
+                //instant(()->intakeMotor.setVelocity(-INTAKE_SPEED)),
                 waitMs(numBalls*LAUNCH_TIME),
                 instant(() -> launchMotor.setVelocity(0)),
                 instant(() -> gate.setPosition(GATE_CLOSE))
         );
     }
+    public Command intake(long millis) {
+        return Command.build()
+                .setStart(() -> {
+                    timer.reset();
+                    intakeMotor.setVelocity(-INTAKE_SPEED);
+                })
+                .setDone(() -> timer.milliseconds() >= millis)
+                .setEnd(endCondition -> {
+                    intakeMotor.setVelocity(0);
+                })
+                .requiring(intakeMotor);
+    }
     public Command autoRoutineGarden() {
         return sequential(
                 waitMs(waitTimeMs),
                 shootBalls(4),
-                follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[0])),
-                //rampDown(),
+                parallel(follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[0])),
+                        rampDown()),
+
+                parallel(
+                        follow(follower, Paths.line(poses1[1], poses1[2]).constant(poses1[1])),
+                        intake(5000)),
+
+                follow(follower, Paths.line(poses1[2], poses1[3]).constant(poses1[2])),
+                rampUp(),
+
+                follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[3])),
+                follow(follower, Paths.line(poses1[4], poses1[5]).constant(poses1[4])),
+                follow(follower, Paths.line(poses1[5], poses1[6]).constant(poses1[5])),
+
+                shootBalls(4).raceWith(hold(follower)),
+                follow(follower, Paths.line(poses1[6], poses1[7]).constant(poses1[6])),
+                follow(follower, Paths.line(poses1[7], poses1[8]).constant(poses1[7]))
+        );
+    }
+/*
+    public Command autoRoutineGarden() {
+        return sequential(
+                waitMs(waitTimeMs),
+
+                shootBalls(4),
+                parallel(
+                        follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[0])),
+                        rampDown()
+                ),
+                intake(5000);
                 follow(follower, Paths.line(poses1[1], poses1[2]).constant(poses1[1])),
                 intakeBallForMillis(5000),
                 follow(follower, Paths.line(poses1[2], poses1[3]).constant(poses1[2])),
-                //rampUp(),
+                        intake(5000),
+
+        rampUp(),
                 follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[3])),
                 follow(follower, Paths.line(poses1[4], poses1[5]).constant(poses1[4])),
 
@@ -195,6 +237,8 @@ public class CompetitionAuto extends BaseOpMode{
                 follow(follower, Paths.line(poses1[7], poses1[8]).constant(poses1[7]))
         );
     }
+
+ */
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) { //BRUTE FORCE MIRROR
         gardenPoses[0] = poseFactory.of(84.1293, 132.8942, 90);
         if (chosenAlliance.equals(Alliance.RED)) {
