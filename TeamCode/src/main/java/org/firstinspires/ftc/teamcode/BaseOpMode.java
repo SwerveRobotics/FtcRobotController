@@ -27,16 +27,16 @@ abstract public class BaseOpMode extends LinearOpMode {
     //constants
     public static double LAUNCH_TIME = 500.0;
     //TODO: uh
-    public static double LAUNCHER_SPEED = 1400;//1250
+    public static double LAUNCHER_SPEED = 1360;//1250
     public static double INTAKE_SPEED = 1.0;
     public static double GATE_OPEN = .8;
     public static double GATE_CLOSE = 0.52;
-    public static double RAMP_UP = 0.14;//.14
+    public static double RAMP_UP = 0.3;//.14
     public static double RAMP_DOWN = 0.86;
 
     //autoaim TODO: tune these values
 
-    public static double KP = 130;
+    public static double KP = 150;
     public static double KI = 0;
     public static double KD = 5;
     public static double KF = 15;
