@@ -29,7 +29,8 @@ public class CompetitionTeleOp extends BaseOpMode {
     double lateral;
     double turn;
     double fieldCentricCorrectionFactor = 0;
-    double amountToTurn = 0;
+    double amountToTurn =
+            0;
     private boolean turning = false;
     private double targetHeading = 0;
     private DrivePowers fcPowers;
