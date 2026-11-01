@@ -22,6 +22,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.menu.MenuFinishedButton;
 import org.firstinspires.ftc.teamcode.menu.MenuHeader;
 import org.firstinspires.ftc.teamcode.menu.MenuInput;
@@ -38,6 +39,7 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose[] poses1 = new Pose[9]; //this holds the poses for the garden path
     private Pose[] poses2 = new Pose[7]; //this holds the poses for the flower path
     private Pose autoParkingStartPose;
+    private Pose shootPose; //small move forward before the first garden shot
     Alliance chosenAlliance;
 
 
@@ -72,16 +74,20 @@ public class CompetitionAuto extends BaseOpMode{
                 .add("waitSlider", new MenuSlider(0.0, 30.0))
                 .add()
                 .add("finishButton", new MenuFinishedButton());
-        while (!menu.isCompleted()) {
+        while (!menu.isCompleted() && !isStopRequested()) {
             // get x, y (stick) and select (A) input from controller
             // this is x, y (wasd) and select (enter) on the keyboard
             menuInput.update(gamepad1.left_stick_x, -gamepad1.left_stick_y, gamepad1.a);
             menu.updateWithInput(menuInput);
+
             // display the updated menu
             for (String line : menu.toListOfStrings()) {
                 telemetry.addLine(line); // but with appropriate printing method
             }
             telemetry.update();
+        }
+        if (isStopRequested()) {
+            return;
         }
 
 
@@ -99,7 +105,7 @@ public class CompetitionAuto extends BaseOpMode{
 
         Scheduler.reset();
         follower = Constants.create(hardwareMap);
-         //this changes based on path
+        //this changes based on path
 
         switch(chosenPath) {
             case GARDEN_PATH:
@@ -119,8 +125,8 @@ public class CompetitionAuto extends BaseOpMode{
                 break;
 
             default:
-                schedule(autoRoutineGarden());
-                telemetry.addData("How did you do this? You have to choose a path!", 67);
+                schedule(autoParkingPath());
+                telemetry.addLine("How did you do this? You have to choose a path!");
         }
         follower.update();
         waitForStart();
@@ -150,12 +156,12 @@ public class CompetitionAuto extends BaseOpMode{
                 .setStart(() -> {
                     //something goes here
                     timer.reset();
-                    intakeMotor.setVelocity(-INTAKE_SPEED);
+                    intakeMotor.setPower(-INTAKE_SPEED);
                 })
                 .setDone(() ->
                         timer.milliseconds() > millis)
                 .setEnd(endCondition -> {
-                    intakeMotor.setVelocity(0.0);
+                    intakeMotor.setPower(0.0);
                     // executed on end
                 })
                 .requiring(intakeMotor);
@@ -166,13 +172,28 @@ public class CompetitionAuto extends BaseOpMode{
     public Command rampDown() {
         return instant(() -> flowerRamp.setPosition(RAMP_DOWN));
     }
+    /*    public Command shootBalls(int numBalls) {
+            return sequential(
+                    instant(() -> gate.setPosition(GATE_OPEN)),
+                    instant(()->intakeMotor.setVelocity(-INTAKE_SPEED)),
+                    instant(() -> launchMotor.setVelocity(LAUNCHER_SPEED)),
+                    //instant(()->intakeMotor.setVelocity(-INTAKE_SPEED)),
+                    waitMs(numBalls*LAUNCH_TIME),
+                    instant(()->intakeMotor.setVelocity(0)),
+                    instant(() -> launchMotor.setVelocity(0)),
+                    instant(() -> gate.setPosition(GATE_CLOSE))
+            );
+        }*/
     public Command shootBalls(int numBalls) {
-        return sequential(instant(() -> gate.setPosition(GATE_OPEN)),
-                instant(()->intakeMotor.setVelocity(-INTAKE_SPEED)),
+        return sequential(
                 instant(() -> launchMotor.setVelocity(LAUNCHER_SPEED)),
-                //instant(()->intakeMotor.setVelocity(-INTAKE_SPEED)),
-                waitMs(numBalls*LAUNCH_TIME),
-                instant(() -> launchMotor.setVelocity(0)),
+                waitMs(8000), // tune this
+                instant(() -> gate.setPosition(GATE_OPEN)),
+                instant(() -> intakeMotor.setPower(0.5*INTAKE_SPEED)),
+                waitMs(numBalls * LAUNCH_TIME),
+                instant(() -> intakeMotor.setPower(0)),
+                instant(() -> launchMotor.setVelocity(0)),//longer wait time for launch
+                ///
                 instant(() -> gate.setPosition(GATE_CLOSE))
         );
     }
@@ -180,81 +201,110 @@ public class CompetitionAuto extends BaseOpMode{
         return Command.build()
                 .setStart(() -> {
                     timer.reset();
-                    intakeMotor.setVelocity(-INTAKE_SPEED);
+                    intakeMotor.setPower(-INTAKE_SPEED);
                 })
                 .setDone(() -> timer.milliseconds() >= millis)
                 .setEnd(endCondition -> {
-                    intakeMotor.setVelocity(0);
+                    intakeMotor.setPower(0);
                 })
                 .requiring(intakeMotor);
     }
+
+
+
+    public Command intakeOn() {
+        telemetry.addLine("INTAKE SHUD BE ON");
+        telemetry.update();
+        return instant(() -> intakeMotor.setPower(INTAKE_SPEED));
+    }
+
+    public Command intakeOff() {
+        return instant(() -> intakeMotor.setPower(0));
+    }
     public Command autoRoutineGarden() {
         return sequential(
                 waitMs(waitTimeMs),
+                follow(follower, Paths.line(poses1[0], shootPose).constant(shootPose)),
+
                 shootBalls(4),
-                parallel(follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[0])),
+
+                parallel(follow(follower, Paths.line(shootPose, poses1[1]).constant(poses1[1])),
                         rampDown()),
 
-                parallel(
-                        follow(follower, Paths.line(poses1[1], poses1[2]).constant(poses1[1])),
-                        intake(5000)),
+                // drive into the balls with intake running
+                intakeOn(),
+                follow(follower, Paths.line(poses1[1], poses1[2]).constant(poses1[2])),
+                waitMs(700), // time to pick up balls, tune this
+                follow(follower, Paths.line(poses1[2], poses1[1]).constant(poses1[2])),
 
-                follow(follower, Paths.line(poses1[2], poses1[3]).constant(poses1[2])),
+                follow(follower, Paths.line(poses1[1], poses1[2]).constant(poses1[2])),
+                waitMs(700),
+                intakeOff(),
+
+                follow(follower, Paths.line(poses1[2], poses1[3]).constant(poses1[3])),
                 rampUp(),
 
-                follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[3])),
-                follow(follower, Paths.line(poses1[4], poses1[5]).constant(poses1[4])),
-                follow(follower, Paths.line(poses1[5], poses1[6]).constant(poses1[5])),
+                follow(follower, Paths.line(poses1[3], poses1[8]).constant(poses1[3]))
+                /*
+                follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[4])),
+                follow(follower, Paths.line(poses1[4], poses1[5]).constant(poses1[5])),
+                follow(follower, Paths.line(poses1[5], poses1[6]).constant(poses1[6])),
 
-                shootBalls(4).raceWith(hold(follower)),
-                follow(follower, Paths.line(poses1[6], poses1[7]).constant(poses1[6])),
-                follow(follower, Paths.line(poses1[7], poses1[8]).constant(poses1[7]))
+                //shootBalls(4),
+
+                follow(follower, Paths.line(poses1[6], poses1[7]).constant(poses1[7])),
+                follow(follower, Paths.line(poses1[7], poses1[8]).constant(poses1[8]))
+
+                 */
         );
     }
-/*
-    public Command autoRoutineGarden() {
-        return sequential(
-                waitMs(waitTimeMs),
+    /*
+        public Command autoRoutineGarden() {
+            return sequential(
+                    waitMs(waitTimeMs),
 
-                shootBalls(4),
-                parallel(
-                        follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[0])),
-                        rampDown()
-                ),
-                intake(5000);
-                follow(follower, Paths.line(poses1[1], poses1[2]).constant(poses1[1])),
-                intakeBallForMillis(5000),
-                follow(follower, Paths.line(poses1[2], poses1[3]).constant(poses1[2])),
-                        intake(5000),
+                    shootBalls(4),
+                    parallel(
+                            follow(follower, Paths.line(poses1[0], poses1[1]).constant(poses1[0])),
+                            rampDown()
+                    ),
+                    intake(5000);
+                    follow(follower, Paths.line(poses1[1], poses1[2]).constant(poses1[1])),
+                    intakeBallForMillis(5000),
+                    follow(follower, Paths.line(poses1[2], poses1[3]).constant(poses1[2])),
+                            intake(5000),
 
-        rampUp(),
-                follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[3])),
-                follow(follower, Paths.line(poses1[4], poses1[5]).constant(poses1[4])),
+            rampUp(),
+                    follow(follower, Paths.line(poses1[3], poses1[4]).constant(poses1[3])),
+                    follow(follower, Paths.line(poses1[4], poses1[5]).constant(poses1[4])),
 
-                follow(follower, Paths.line(poses1[5], poses1[6]).constant(poses1[5])),
-                shootBalls(4).raceWith(hold(follower)),
-                follow(follower, Paths.line(poses1[6], poses1[7]).constant(poses1[6])),
-                follow(follower, Paths.line(poses1[7], poses1[8]).constant(poses1[7]))
-        );
-    }
+                    follow(follower, Paths.line(poses1[5], poses1[6]).constant(poses1[5])),
+                    shootBalls(4).raceWith(hold(follower)),
+                    follow(follower, Paths.line(poses1[6], poses1[7]).constant(poses1[6])),
+                    follow(follower, Paths.line(poses1[7], poses1[8]).constant(poses1[7]))
+            );
+        }
 
- */
+     */
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) { //BRUTE FORCE MIRROR
         gardenPoses[0] = poseFactory.of(84.1293, 132.8942, 90);
         if (chosenAlliance.equals(Alliance.RED)) {
             gardenPoses[1] = poseFactory.of(119.598, 92.8211, 180); //this one
-            gardenPoses[2] = poseFactory.of(126, 93.4615, 180); // this one
+            gardenPoses[2] = poseFactory.of(128, 93.4615, 180); // this one
             gardenPoses[3] = poseFactory.of(119.9248, 91.6962, 180);
         } else {
             gardenPoses[1] = poseFactory.of(119.598, 92.8211, 0); //this one
-            gardenPoses[2] = poseFactory.of(126, 93.4615, 0); // this one
+            gardenPoses[2] = poseFactory.of(128, 93.4615, 0); // this one
             gardenPoses[3] = poseFactory.of(119.9248, 91.6962, 0);
         }
         gardenPoses[4] = poseFactory.of(105.4226, 30.1768, -90);
-        gardenPoses[5] = poseFactory.of(83.4427, 26.1793, -90);
+        gardenPoses[5] = poseFactory.of(76.4427, 26.1793, -90);
         gardenPoses[6] = poseFactory.of(83.7372, 8.6485, -90);
         gardenPoses[7] = poseFactory.of(83.3717, 29.9152, -90);
         gardenPoses[8] = poseFactory.of(129.5481, 46.3087, -90);
+
+        // slightly forward from the start pose, flip the sign on y if it moves the wrong way
+        shootPose = poseFactory.of(84.1293, 130.8942, 90);
     }
     public Command autoParkingPath() {
         Pose end = poseFactory.of(126.76431357656855, 24.369302898095505, 90);
