@@ -156,7 +156,7 @@ public class CompetitionAuto extends BaseOpMode{
                 .setStart(() -> {
                     //something goes here
                     timer.reset();
-                    intakeMotor.setPower(-INTAKE_SPEED);
+                    intakeMotor.setPower(INTAKE_SPEED);
                 })
                 .setDone(() ->
                         timer.milliseconds() > millis)
