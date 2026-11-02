@@ -188,9 +188,18 @@ public class CompetitionAuto extends BaseOpMode{
                 instant(() -> launchMotor.setVelocity(LAUNCHER_SPEED)),
                 waitUntil( () -> intakeMotor.getVelocity() > 0.95 * LAUNCHER_SPEED).raceWith(waitMs(5000)), // tune this
                 instant(() -> gate.setPosition(GATE_OPEN)),
-                instant(() -> intakeMotor.setPower(0.5*INTAKE_SPEED)),
-                waitMs(numBalls * LAUNCH_TIME),
-                instant(() -> intakeMotor.setPower(0)),
+                repeat(sequential(
+                        instant(() -> intakeMotor.setPower(0.5 * INTAKE_SPEED)),
+                        waitMs(LAUNCH_TIME),
+                        instant(() -> intakeMotor.setPower(0)),
+                        waitMs(LAUNCH_TIME)
+                ), 2),
+                repeat(sequential(
+                        instant(() -> intakeMotor.setPower(INTAKE_SPEED)),
+                        waitMs(LAUNCH_TIME),
+                        instant(() -> intakeMotor.setPower(0)),
+                        waitMs(LAUNCH_TIME)
+                ), numBalls-1),
                 instant(() -> launchMotor.setVelocity(0)),//longer wait time for launch
                 instant(() -> gate.setPosition(GATE_CLOSE))
         );
@@ -211,13 +220,14 @@ public class CompetitionAuto extends BaseOpMode{
 
 
     public Command intakeOn() {
-        telemetry.addLine("INTAKE SHUD BE ON");
-        telemetry.update();
-        return instant(() -> intakeMotor.setPower(INTAKE_SPEED));
+        return instant(() -> intakeMotor.setPower(INTAKE_SPEED)).requiring(intakeMotor);
     }
 
     public Command intakeOff() {
-        return instant(() -> intakeMotor.setPower(0));
+        return instant(() -> intakeMotor.setPower(0)).requiring(intakeMotor);
+    }
+    public Command moveForward(double millis) {
+        return infinite(() -> follower.manual(0.3,0,0)).raceWith(waitMs(millis)).requiring(follower);
     }
     public Command autoRoutineGarden() {
         return sequential(
@@ -232,14 +242,19 @@ public class CompetitionAuto extends BaseOpMode{
                 // drive into the balls with intake running
                 intakeOn(),
                 follow(follower, Paths.line(points[1], points[2]).constant(points[2])),
+                //moveForward(700),
+                intakeOn(),
                 waitMs(700), // time to pick up balls, tune this
                 follow(follower, Paths.line(points[2], points[1]).constant(points[2])),
 
                 follow(follower, Paths.line(points[1], points[2]).constant(points[2])),
+                //moveForward(700),
+                intakeOn(),
                 waitMs(700),
-                intakeOff(),
+
 
                 follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
+                intakeOff(),
                 rampUp(),
 
                 follow(follower, Paths.line(points[3], points[8]).constant(points[3]))
@@ -288,11 +303,11 @@ public class CompetitionAuto extends BaseOpMode{
         gardenPoses[0] = poseFactory.of(84.1293, 132.8942, 90);
         if (chosenAlliance.equals(Alliance.RED)) {
             gardenPoses[1] = poseFactory.of(119.598, 92.8211, 180); //this one
-            gardenPoses[2] = poseFactory.of(128, 93.4615, 180); // this one
+            gardenPoses[2] = poseFactory.of(127, 93.4615, 180); // this one
             gardenPoses[3] = poseFactory.of(119.9248, 91.6962, 180);
         } else {
             gardenPoses[1] = poseFactory.of(119.598, 92.8211, 0); //this one
-            gardenPoses[2] = poseFactory.of(128, 93.4615, 0); // this one
+            gardenPoses[2] = poseFactory.of(127, 93.4615, 0); // this one
             gardenPoses[3] = poseFactory.of(119.9248, 91.6962, 0);
         }
         gardenPoses[4] = poseFactory.of(105.4226, 30.1768, -90);
@@ -302,7 +317,7 @@ public class CompetitionAuto extends BaseOpMode{
         gardenPoses[8] = poseFactory.of(129.5481, 46.3087, -90);
 
         // slightly forward from the start pose, flip the sign on y if it moves the wrong way
-        shootPose = poseFactory.of(84.1293, 130.8942, 90);
+        shootPose = poseFactory.of(84.1293, 131.8942, 90);
     }
     public Command autoParkingPath() {
         Pose end = poseFactory.of(126.76431357656855, 24.369302898095505, 90);
@@ -316,13 +331,17 @@ public class CompetitionAuto extends BaseOpMode{
     public Command autoRoutineFlower() {
         return sequential(
                 waitMs(waitTimeMs),
-                follow(follower,Paths.line(points[0], points[1]).constant(points[1])),
+                follow(follower,Paths.line(points[0], shootPose).constant(points[1])),
+                shootBalls(4),
+                follow(follower,Paths.line(shootPose, points[1]).constant(points[1])),
                 rampDown(),
-                shootBalls(4).raceWith(hold(follower)),
+
                 follow(follower,Paths.line(points[1], points[2]).constant(points[2])),
+                intakeOn(),
                 follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
-                intakeBallForMillis(5000).raceWith(hold(follower)),
+                intakeOn(),
                 follow(follower, Paths.line(points[3], points[4]).constant(points[4])),
+                intakeOff(),
                 follow(follower, Paths.line(points[4], points[5]).constant(points[5])).with(rampUp()),
                 shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(points[5], points[6]).constant(points[6]))
@@ -335,6 +354,7 @@ public class CompetitionAuto extends BaseOpMode{
         flowerPoses[3] = poseFactory.of(94.0503, 9.5, -90);
         flowerPoses[4] = poseFactory.of(94.4916, 17.3314, -90);
         flowerPoses[5] = poseFactory.of(84.7, 23.3459, -90);
-        flowerPoses[6] = poseFactory.of(129.3126, 24.6121, -90); //always face the back
+        flowerPoses[6] = poseFactory.of(129.3126, 24.6121, -90);
+        shootPose = poseFactory.of(79.1085, 9, -90);//always face the back
     }
 }

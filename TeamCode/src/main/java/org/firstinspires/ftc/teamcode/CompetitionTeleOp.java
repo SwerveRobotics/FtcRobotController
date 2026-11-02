@@ -86,7 +86,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             }
 
             // Hold Y to launch
-            if (gamepad2.y) {
+            if (gamepad2.y && launchMotor.getVelocity() > 0.95*LAUNCHER_SPEED) {
                 gate.setPosition(GATE_OPEN);
 
             } else {
