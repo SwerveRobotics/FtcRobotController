@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -20,6 +21,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected DcMotorEx intakeMotor;
     protected Servo gate;
     protected Servo flowerRamp;
+    protected GoBildaPinpointDriver pinpoint;
     //protected Limelight3A limelight3A;
 
 
@@ -49,6 +51,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         launchMotor = hardwareMap.get(DcMotorEx.class, "motLaunch");
         gate = hardwareMap.get(Servo.class, "alliGATEr");
         flowerRamp = hardwareMap.get(Servo.class, "flowerRamp");
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
         //limelight camera
         //limelight3A = hardwareMap.get(Limelight3A.class, "limelight");

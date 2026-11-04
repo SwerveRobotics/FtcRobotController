@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
 import static com.pedropathing.api.Paths.*;
@@ -133,6 +134,10 @@ public class CompetitionAuto extends BaseOpMode{
 
         while (opModeIsActive()) {
             follower.update();
+            if (pinpoint.getDeviceStatus() != GoBildaPinpointDriver.DeviceStatus.READY) {
+                telemetry.addLine("Pinpoint is crazy");
+                follower.stop();
+            }
             Scheduler.execute();
             //telling the values of the robot on the driver hub
             telemetry.addData("x", follower.pose().x());
