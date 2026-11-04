@@ -97,8 +97,8 @@ public class CompetitionAuto extends BaseOpMode{
         waitTimeMs = menu.getResult(Double.class, "waitSlider") * 1000.0;
         // set up the poseFactory and poses
         if (chosenAlliance.equals(Alliance.RED)) {
-            poseFactory = poseFactory.mirrorY(70.75);
-            poseFactory = poseFactory.mirrorX(70.75);
+            poseFactory = poseFactory.mirrorY(72);
+            poseFactory = poseFactory.mirrorX(72);
         }
         autoParkingStartPose = poseFactory.of(126.2764, 9.6619, 90);
 
@@ -186,7 +186,7 @@ public class CompetitionAuto extends BaseOpMode{
     public Command shootBalls(int numBalls) {
         return sequential(
                 instant(() -> launchMotor.setVelocity(LAUNCHER_SPEED)),
-                waitUntil( () -> intakeMotor.getVelocity() > 0.95 * LAUNCHER_SPEED).raceWith(waitMs(5000)), // tune this
+                waitUntil( () -> intakeMotor.getVelocity() > 0.95 * LAUNCHER_SPEED).raceWith(waitMs(AUTO_LUANCHER_TIME)), // tune this
                 instant(() -> gate.setPosition(GATE_OPEN)),
                 repeat(sequential(
                         instant(() -> intakeMotor.setPower(0.5 * INTAKE_SPEED)),
@@ -304,11 +304,11 @@ public class CompetitionAuto extends BaseOpMode{
         if (chosenAlliance.equals(Alliance.RED)) {
             gardenPoses[1] = poseFactory.of(119.598, 92.8211, 180); //this one
             gardenPoses[2] = poseFactory.of(127, 93.4615, 180); // this one
-            gardenPoses[3] = poseFactory.of(119.9248, 91.6962, 180);
+            gardenPoses[3] = poseFactory.of(119.9248, 81, 180);//y was 91.83
         } else {
             gardenPoses[1] = poseFactory.of(119.598, 92.8211, 0); //this one
             gardenPoses[2] = poseFactory.of(127, 93.4615, 0); // this one
-            gardenPoses[3] = poseFactory.of(119.9248, 91.6962, 0);
+            gardenPoses[3] = poseFactory.of(119.9248, 81, 0);
         }
         gardenPoses[4] = poseFactory.of(105.4226, 30.1768, -90);
         gardenPoses[5] = poseFactory.of(76.4427, 26.1793, -90);
@@ -349,11 +349,11 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public void initializeFlowerPath(Pose[] flowerPoses, PoseFactory poseFactory) {
         flowerPoses[0] = poseFactory.of(79.1085, 8.6331, -90);
-        flowerPoses[1] = poseFactory.of(84.7, 23.3459, -90);
+        flowerPoses[1] = poseFactory.of(80, 23.3459, -90);
         flowerPoses[2] = poseFactory.of(94.4916, 17.3314, -90);
         flowerPoses[3] = poseFactory.of(94.0503, 9.5, -90);
         flowerPoses[4] = poseFactory.of(94.4916, 17.3314, -90);
-        flowerPoses[5] = poseFactory.of(84.7, 23.3459, -90);
+        flowerPoses[5] = poseFactory.of(80, 23.3459, -90);
         flowerPoses[6] = poseFactory.of(129.3126, 24.6121, -90);
         shootPose = poseFactory.of(79.1085, 9, -90);//always face the back
     }

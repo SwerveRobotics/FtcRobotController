@@ -68,7 +68,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             }else if (gamepad2.y){
                 //launchMotor.setVelocity(LAUNCHER_SPEED);
 
-                intakeMotor.setPower(INTAKE_SPEED*.5);
+                intakeMotor.setPower(INTAKE_SPEED);//was sloer by .5 before
             } else {
                 intakeMotor.setPower(0);
             }
