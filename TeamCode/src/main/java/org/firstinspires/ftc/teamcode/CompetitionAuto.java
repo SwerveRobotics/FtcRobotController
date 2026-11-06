@@ -51,6 +51,7 @@ public class CompetitionAuto extends BaseOpMode{
         FLOWER_PATH,
         PARKING_PATH
     }
+    private double parkingBias = 0;
     public double waitTimeMs; //how long we wait at the start
     //what happens when you press the start button on the driver hub
 
@@ -73,6 +74,8 @@ public class CompetitionAuto extends BaseOpMode{
                 .add()
                 .add("Wait time:")
                 .add("waitSlider", new MenuSlider(0.0, 30.0))
+                .add()
+                .add("parkingBias", new MenuSlider(-15, 15))
                 .add()
                 .add("finishButton", new MenuFinishedButton());
         while (!menu.isCompleted() && !isStopRequested()) {
@@ -97,6 +100,7 @@ public class CompetitionAuto extends BaseOpMode{
         PoseStorage.chosenAlliance = menu.getResult(Alliance.class, "alliancePicker");
         AutoPath chosenPath = menu.getResult(AutoPath.class, "pathPicker");
         waitTimeMs = menu.getResult(Double.class, "waitSlider") * 1000.0;
+        parkingBias = menu.getResult(Double.class, "parkingBias");
         // set up the poseFactory and poses
         if (chosenAlliance.equals(Alliance.RED)) {
             poseFactory = poseFactory.mirrorY(70.75);
@@ -303,13 +307,13 @@ public class CompetitionAuto extends BaseOpMode{
         gardenPoses[5] = poseFactory.of(76.4427, 26.1793, -90);
         gardenPoses[6] = poseFactory.of(83.7372, 8.6485, -90);
         gardenPoses[7] = poseFactory.of(83.3717, 29.9152, -90);
-        gardenPoses[8] = poseFactory.of(129.5481, 46.3087, -90);
+        gardenPoses[8] = poseFactory.of(129.5481, 36 + parkingBias, -90);
 
         // slightly forward from the start pose, flip the sign on y if it moves the wrong way
         shootPose = poseFactory.of(84.1293, 131.8942, 90);
     }
     public Command autoParkingPath() {
-        Pose end = poseFactory.of(126.76431357656855, 24.369302898095505, 90);
+        Pose end = poseFactory.of(126.76431357656855, 36 + parkingBias, 90);
         return sequential(
                 waitMs(waitTimeMs),
                 follow(follower,
@@ -343,7 +347,7 @@ public class CompetitionAuto extends BaseOpMode{
         flowerPoses[3] = poseFactory.of(94.0503, 9.5, -90);
         flowerPoses[4] = poseFactory.of(94.4916, 17.3314, -90);
         flowerPoses[5] = poseFactory.of(84.7, 23.3459, -90);
-        flowerPoses[6] = poseFactory.of(129.3126, 24.6121, -90);
+        flowerPoses[6] = poseFactory.of(129.3126, 36 + parkingBias, -90);
         shootPose = poseFactory.of(79.1085, 9, -90);//always face the back
     }
 }
