@@ -41,6 +41,7 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose autoParkingStartPose;
     private Pose shootPose; //small move forward before the first garden shot
     Alliance chosenAlliance;
+    private boolean hiveTipped;
 
 
     private final ElapsedTime timer = new ElapsedTime();
@@ -112,7 +113,7 @@ public class CompetitionAuto extends BaseOpMode{
                 initializeGardenPath(points, poseFactory);
                 follower.setPose(points[0]);
                 //follower.setPose(autoRoutineGarden());
-                schedule(autoRoutineGarden());
+                schedule(autoRoutineGardenPartOne());
                 break;
             case FLOWER_PATH:
                 initializeFlowerPath(points, poseFactory);
@@ -152,6 +153,13 @@ public class CompetitionAuto extends BaseOpMode{
             }
 
             telemetry.update();
+            if (chosenPath.equals(AutoPath.GARDEN_PATH)) {
+                if (!Scheduler.isScheduled(autoRoutineGardenPartOne())) {
+                    schedule(autoRoutineGardenPartTwo(hiveTipped));
+                }
+
+            }
+
         }
         PoseStorage.endPose = follower.pose();
     }
@@ -234,7 +242,7 @@ public class CompetitionAuto extends BaseOpMode{
     public Command moveForward(double millis) {
         return infinite(() -> follower.manual(0.3,0,0)).raceWith(waitMs(millis)).requiring(follower);
     }
-    public Command autoRoutineGarden() {
+    public Command autoRoutineGardenPartOne() {
         return sequential(
                 waitMs(waitTimeMs),
                 follow(follower, Paths.line(points[0], shootPose).constant(shootPose)),
@@ -256,54 +264,28 @@ public class CompetitionAuto extends BaseOpMode{
                 //moveForward(700),
                 intakeOn(),
                 waitMs(700),
-
-
-                follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
-                intakeOff(),
-                rampUp(),
-
-                follow(follower, Paths.line(points[3], points[8]).constant(points[3]))
-                /*
+                follow(follower, Paths.line(points[2], points[3]).constant(points[3]))
+        );
+    }
+    public Command autoRoutineGardenPartTwo(boolean hiveTipped) {
+        if (hiveTipped) {
+            return sequential(
                 follow(follower, Paths.line(points[3], points[4]).constant(points[4])),
                 follow(follower, Paths.line(points[4], points[5]).constant(points[5])),
                 follow(follower, Paths.line(points[5], points[6]).constant(points[6])),
-
-                //shootBalls(4),
-
+                shootBalls(4),
                 follow(follower, Paths.line(points[6], points[7]).constant(points[7])),
                 follow(follower, Paths.line(points[7], points[8]).constant(points[8]))
-
-                 */
-        );
-    }
-    /*
-        public Command autoRoutineGarden() {
+            );
+        } else {
             return sequential(
-                    waitMs(waitTimeMs),
-
-                    shootBalls(4),
-                    parallel(
-                            follow(follower, Paths.line(points[0], points[1]).constant(points[0])),
-                            rampDown()
-                    ),
-                    intake(5000);
-                    follow(follower, Paths.line(points[1], points[2]).constant(points[1])),
-                    intakeBallForMillis(5000),
-                    follow(follower, Paths.line(points[2], points[3]).constant(points[2])),
-                            intake(5000),
-
-            rampUp(),
-                    follow(follower, Paths.line(points[3], points[4]).constant(points[3])),
-                    follow(follower, Paths.line(points[4], points[5]).constant(points[4])),
-
-                    follow(follower, Paths.line(points[5], points[6]).constant(points[5])),
-                    shootBalls(4).raceWith(hold(follower)),
-                    follow(follower, Paths.line(points[6], points[7]).constant(points[6])),
-                    follow(follower, Paths.line(points[7], points[8]).constant(points[7]))
+                follow(follower, Paths.line(points[3], shootPose).constant(shootPose),
+                shootBalls(4),
+                follow(follower, Paths.line(shootPose, points[3]).constant(points[3]),
+                follow(follower, Paths.line(points[3], points[8]).constant(points[8])
             );
         }
-
-     */
+    }
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) { //BRUTE FORCE MIRROR
         gardenPoses[0] = poseFactory.of(84.1293, 132.8942, 90);
         if (chosenAlliance.equals(Alliance.RED)) {
