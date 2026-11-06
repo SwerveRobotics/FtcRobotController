@@ -37,6 +37,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected DcMotorEx BRMotor;
 
     protected IMU imu;
+    //TODO make sure its working
 
     public void initializeHardware() {
         // Hardware map initialization
@@ -93,7 +94,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         // Set directions of motors
         upperFlywheelMot.setDirection(DcMotor.Direction.REVERSE);
         lowerFlywheelMot.setDirection(DcMotor.Direction.FORWARD);
-        transferWheelMot.setDirection(DcMotor.Direction.REVERSE);
+        transferWheelMot.setDirection(DcMotor.Direction.FORWARD);
         intakeMot.setDirection(DcMotor.Direction.FORWARD);
 
         leftIntakeServo.setDirection(CRServo.Direction.REVERSE);
@@ -101,7 +102,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 //        FRMotor.setDirection(DcMotor.Direction.FORWARD);
 //        BRMotor.setDirection(DcMotor.Direction.REVERSE);
 //        BLMotor.setDirection(DcMotor.Direction.REVERSE);
-//        FLMotor.setDirection(DcMotor.Direction.FORWARD);
+//        FLMotor.setDirection(D+cMotor.Direction.FORWARD);
 
 
     }

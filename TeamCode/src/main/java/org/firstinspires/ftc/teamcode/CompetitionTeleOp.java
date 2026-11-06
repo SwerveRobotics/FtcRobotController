@@ -14,6 +14,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 public class CompetitionTeleOp extends BaseOpMode{
     private Follower follower;
     private PoseFactory poseFactory = PoseFactory.degrees();
+    private Pose blue_basket_r = poseFactory.of(84,84,0);
     private Pose resetPoint = poseFactory.of(80, 8, 90);
     private Pose autoDriveControl1 = poseFactory.of(0,90,90);
     private Pose autoDriveControl2 = poseFactory.of(20,30,90);
@@ -33,6 +34,9 @@ public class CompetitionTeleOp extends BaseOpMode{
         double kp = 0.03; //TODO tune for pid
 
         while (opModeIsActive()) {
+            telemetry.addData("x", follower.pose().x());
+            telemetry.addData("y", follower.pose().y());
+            telemetry.addData("heading", follower.pose().heading());
             Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
             DashboardDraw.drawRobot(currPose);
             intakeMot.setVelocity(gamepad2.left_stick_y * INTAKE_SPEED_MULTIPLIER);
@@ -107,7 +111,7 @@ public class CompetitionTeleOp extends BaseOpMode{
 
 
             follower.update();
-
+            telemetry.update();
 
         }
     }
