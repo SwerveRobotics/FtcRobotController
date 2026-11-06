@@ -27,6 +27,11 @@ public class CompetitionTeleOp extends BaseOpMode{
         follower = Constants.create(hardwareMap);
         waitForStart();
 
+        // for imu heading correction on strafing
+        double targetHeading = 0;
+        boolean wasTurning = false;
+        double kp = 0.03; //TODO tune for pid
+
         while (opModeIsActive()) {
             Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
             DashboardDraw.drawRobot(currPose);
@@ -67,10 +72,36 @@ public class CompetitionTeleOp extends BaseOpMode{
 
             if(!follower.isBusy()) {
                 double slowModeMultiplier = doSLOWMODE();
+
+                double drive = -gamepad1.left_stick_y * slowModeMultiplier;
+                double strafe = -gamepad1.left_stick_x * slowModeMultiplier;
+                double turn = -gamepad1.right_stick_x * slowModeMultiplier;
+                double currentHeading = imu.getRobotYawPitchRollAngles().getYaw(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES);
+
+                // hold the heading of the robot at the turn heading driver has set it to
+                // automatic steering correction for driving forward/backward and strafing
+                if (Math.abs(gamepad1.right_stick_x) > 0.05) {
+                    targetHeading = currentHeading;
+                    wasTurning = true;
+                } else {
+                    // set new target heading as soon as driver stops actively turning
+                    if (wasTurning) {
+                        targetHeading = currentHeading;
+                        wasTurning = false;
+                    }
+                }
+
+                double angleError = targetHeading - currentHeading;
+                // set angle error to be in range 0 to 360 because imu reads from -180 to 180
+                while (angleError > 180)  angleError -= 360;
+                while (angleError < -180) angleError += 360;
+
+                turn = angleError * kp;
+
                 follower.manual(
-                        -gamepad1.left_stick_y * slowModeMultiplier,
-                        -gamepad1.left_stick_x * slowModeMultiplier,
-                        -gamepad1.right_stick_x * slowModeMultiplier
+                        drive,
+                        strafe,
+                        turn
                 );
             }
 

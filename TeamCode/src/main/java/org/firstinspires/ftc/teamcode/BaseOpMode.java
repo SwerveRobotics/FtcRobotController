@@ -1,11 +1,13 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 
 abstract public class BaseOpMode extends LinearOpMode {
@@ -13,7 +15,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double MOTOR_D_VALUE = 1;
 
     //Motors/Servos
-    public static double LAUNCHER_SPEED = 500;
+    public static double LAUNCHER_SPEED = 1000;
     public static double LAUNCHER_BACKSPIN = 150;
     public static double LAUNCHER_TOPSPIN = 150;
     public static double WHEEL_STOP_SPEED = 0;
@@ -34,6 +36,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected DcMotorEx BLMotor;
     protected DcMotorEx BRMotor;
 
+    protected IMU imu;
+
     public void initializeHardware() {
         // Hardware map initialization
         upperFlywheelMot = hardwareMap.get(DcMotorEx.class, "motULauncher");
@@ -48,6 +52,16 @@ abstract public class BaseOpMode extends LinearOpMode {
         FRMotor = hardwareMap.get(DcMotorEx.class, "FrontRight");
         BLMotor = hardwareMap.get(DcMotorEx.class, "BackLeft");
         BRMotor = hardwareMap.get(DcMotorEx.class, "BackRight");
+
+        imu = hardwareMap.get(IMU.class, "imu");
+
+        // Set physical orientation of IMU -- TODO set these
+        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.UP,
+                RevHubOrientationOnRobot.UsbFacingDirection.FORWARD
+        ));
+
+        imu.initialize(parameters);
 
 
         // Initializing motor behaviors
@@ -78,7 +92,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         // Set directions of motors
         upperFlywheelMot.setDirection(DcMotor.Direction.REVERSE);
-        lowerFlywheelMot.setDirection(DcMotor.Direction.REVERSE);
+        lowerFlywheelMot.setDirection(DcMotor.Direction.FORWARD);
         transferWheelMot.setDirection(DcMotor.Direction.REVERSE);
         intakeMot.setDirection(DcMotor.Direction.FORWARD);
 
