@@ -264,7 +264,9 @@ public class CompetitionAuto extends BaseOpMode{
                 //moveForward(700),
                 intakeOn(),
                 waitMs(700),
-                follow(follower, Paths.line(points[2], points[3]).constant(points[3]))
+                follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
+                intakeOff(),
+                rampUp()
         );
     }
     public Command autoRoutineGardenPartTwo(boolean hiveTipped) {
@@ -279,11 +281,11 @@ public class CompetitionAuto extends BaseOpMode{
             );
         } else {
             return sequential(
-                follow(follower, Paths.line(points[3], shootPose).constant(shootPose),
+                follow(follower, Paths.line(points[3], shootPose).constant(shootPose)),
                 shootBalls(4),
-                follow(follower, Paths.line(shootPose, points[3]).constant(points[3]),
-                follow(follower, Paths.line(points[3], points[8]).constant(points[8])
-            );
+                follow(follower, Paths.line(shootPose, points[3]).constant(points[3])),
+                follow(follower, Paths.line(points[3], points[8]).constant(points[8]))
+                );
         }
     }
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) { //BRUTE FORCE MIRROR
