@@ -68,7 +68,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             }else if (gamepad2.y){
                 //launchMotor.setVelocity(LAUNCHER_SPEED);
 
-                intakeMotor.setPower(INTAKE_SPEED*.5);
+                intakeMotor.setPower(INTAKE_SPEED);//was sloer by .5 before
             } else {
                 intakeMotor.setPower(0);
             }
@@ -117,7 +117,10 @@ public class CompetitionTeleOp extends BaseOpMode {
 
             lastDpadUp = gamepad2.dpad_up;
             if (gamepad1.left_bumper) {
-                follower.setPose(new Pose(0, 0, 0));
+                fieldCentricCorrectionFactor = -follower.pose().heading();
+            }
+            if (gamepad1.right_bumper) {
+                follower.setPose(new Pose(8.5,8.5, follower.pose().heading()));
             }
             //PSEUDO AUTO AIM USING ODOMETRY
 
@@ -178,7 +181,10 @@ im != null) {
             //read controller inputs
             forward = -gamepad1.left_stick_y * doSLOWMODE();
             lateral = -gamepad1.left_stick_x * doSLOWMODE();
-            turn = -gamepad1.right_stick_x * doSLOWMODE();
+            if (!turning) {
+                turn = -gamepad1.right_stick_x * doSLOWMODE();
+            }
+
             if(gamepad1.yWasPressed()) {
                 fieldCentric = !fieldCentric;
             }
@@ -191,12 +197,6 @@ im != null) {
 //                        turn);
                 fcPowers = ManualDrive.fieldCentric(forward, lateral, turn, follower.pose().heading(), fieldCentricCorrectionFactor);
                 follower.manual(fcPowers);
-            }
-            if(gamepad1.dpad_left) { //rotate the robot's perceived angle
-                fieldCentricCorrectionFactor += 90;
-            }
-            if(gamepad1.dpad_right) {
-                fieldCentricCorrectionFactor -= 90;
             }
 
 
