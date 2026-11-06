@@ -8,6 +8,11 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import java.util.List;
+
 
 @Config
 abstract public class BaseOpMode extends LinearOpMode {
@@ -22,7 +27,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected Servo gate;
     protected Servo flowerRamp;
     protected GoBildaPinpointDriver pinpoint;
-    //protected Limelight3A limelight3A;
+    protected Limelight3A limelight;
 
 
 
@@ -42,7 +47,32 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double KI = 0;
     public static double KD = 5;
     public static double KF = 15;
+    // For seeing if hive is down or not
+    public boolean HIVE_DOWN = true;
 
+
+    protected boolean IS_HIVE_SCORABLE () {
+        LLResult result = limelight.getLatestResult();
+            if (result != null && result.isValid()) {
+                boolean foundScorableTarget = false;
+                double targetErrorX = 0;
+                for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
+                    int id = tag.getFiducialId();
+                    foundScorableTarget = true;
+                    targetErrorX = tag.getTargetXDegrees();
+                    telemetry.addData("Horizontal Error (tx)", targetErrorX);
+
+                }
+                if (!foundScorableTarget ) {
+                    telemetry.addData("status","Target Not Found");
+                }
+                return foundScorableTarget;
+            }
+            else {
+                telemetry.addData("status", "No Valid Targets Visible");
+            }
+            return false;
+    }
 
 
     public void initializeHardware() {
@@ -53,8 +83,10 @@ abstract public class BaseOpMode extends LinearOpMode {
         flowerRamp = hardwareMap.get(Servo.class, "flowerRamp");
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
+
         //limelight camera
-        //limelight3A = hardwareMap.get(Limelight3A.class, "limelight");
+
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
         //set motors to be energized
         intakeMotor.setMotorEnable();
