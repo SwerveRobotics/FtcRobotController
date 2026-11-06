@@ -263,49 +263,11 @@ public class CompetitionAuto extends BaseOpMode{
                 rampUp(),
 
                 follow(follower, Paths.line(points[3], points[8]).constant(points[3]))
-                /*
-                follow(follower, Paths.line(points[3], points[4]).constant(points[4])),
-                follow(follower, Paths.line(points[4], points[5]).constant(points[5])),
-                follow(follower, Paths.line(points[5], points[6]).constant(points[6])),
 
-                //shootBalls(4),
-
-                follow(follower, Paths.line(points[6], points[7]).constant(points[7])),
-                follow(follower, Paths.line(points[7], points[8]).constant(points[8]))
-
-                 */
         );
     }
-    /*
-        public Command autoRoutineGarden() {
-            return sequential(
-                    waitMs(waitTimeMs),
-
-                    shootBalls(4),
-                    parallel(
-                            follow(follower, Paths.line(points[0], points[1]).constant(points[0])),
-                            rampDown()
-                    ),
-                    intake(5000);
-                    follow(follower, Paths.line(points[1], points[2]).constant(points[1])),
-                    intakeBallForMillis(5000),
-                    follow(follower, Paths.line(points[2], points[3]).constant(points[2])),
-                            intake(5000),
-
-            rampUp(),
-                    follow(follower, Paths.line(points[3], points[4]).constant(points[3])),
-                    follow(follower, Paths.line(points[4], points[5]).constant(points[4])),
-
-                    follow(follower, Paths.line(points[5], points[6]).constant(points[5])),
-                    shootBalls(4).raceWith(hold(follower)),
-                    follow(follower, Paths.line(points[6], points[7]).constant(points[6])),
-                    follow(follower, Paths.line(points[7], points[8]).constant(points[7]))
-            );
-        }
-
-     */
     public void initializeGardenPath(Pose[] gardenPoses, PoseFactory poseFactory) { //BRUTE FORCE MIRROR
-        gardenPoses[0] = poseFactory.of(84.1293, 132.8942, 90);
+        gardenPoses[0] = poseFactory.of(84.1293, 135, 90);
         if (chosenAlliance.equals(Alliance.RED)) {
             gardenPoses[1] = poseFactory.of(119.598, 92.8211, 180); //this one
             gardenPoses[2] = poseFactory.of(127, 93.4615, 180); // this one
@@ -336,30 +298,57 @@ public class CompetitionAuto extends BaseOpMode{
     public Command autoRoutineFlower() {
         return sequential(
                 waitMs(waitTimeMs),
+                /*
                 follow(follower,Paths.line(points[0], shootPose).constant(points[1])),
                 shootBalls(4),
+
                 follow(follower,Paths.line(shootPose, points[1]).constant(points[1])),
                 rampDown(),
-
+                waitMs(500),
                 follow(follower,Paths.line(points[1], points[2]).constant(points[2])),
                 intakeOn(),
+                waitMs(1000),
                 follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
-                intakeOn(),
-                follow(follower, Paths.line(points[3], points[4]).constant(points[4])),
+                rampUp(),
                 intakeOff(),
-                follow(follower, Paths.line(points[4], points[5]).constant(points[5])).with(rampUp()),
-                shootBalls(4).raceWith(hold(follower)),
-                follow(follower, Paths.line(points[5], points[6]).constant(points[6]))
+                follow(follower, Paths.line(points[3], points[4]).constant(points[4]))
+                //intakeOff(),
+                //follow(follower, Paths.line(points[4], points[5]).constant(points[5])).with(rampUp())
+
+                //shootBalls(4).raceWith(hold(follower))
+                //follow(follower, Paths.line(points[5], points[6]).constant(points[6]))
+*/
+                follow(follower, Paths.line(points[0], shootPose).constant(points[1])),
+                shootBalls(4),
+
+                // drop the ramp while driving over so it's down on arrival
+                parallel(
+                        follow(follower, Paths.line(shootPose, points[1]).constant(points[1])),
+                        rampDown()
+                ),
+                waitMs(500), // servo travel time, raise if the ramp still isn't down
+
+                // intake runs while driving into the flowers, then sits and picks up
+                intakeOn(),
+                follow(follower, Paths.line(points[1], points[2]).constant(points[2])),
+                waitMs(1000), // tune this
+
+                follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
+                rampUp(),
+                intakeOff(),
+                follow(follower, Paths.line(points[3], points[4]).constant(points[4]))
         );
     }
     public void initializeFlowerPath(Pose[] flowerPoses, PoseFactory poseFactory) {
         flowerPoses[0] = poseFactory.of(79.1085, 8.6331, -90);
-        flowerPoses[1] = poseFactory.of(80, 23.3459, -90);
+        flowerPoses[1] = poseFactory.of(95.0853, 26.4156, -90);
         flowerPoses[2] = poseFactory.of(94.4916, 17.3314, -90);
-        flowerPoses[3] = poseFactory.of(94.0503, 9.5, -90);
-        flowerPoses[4] = poseFactory.of(94.4916, 17.3314, -90);
-        flowerPoses[5] = poseFactory.of(80, 23.3459, -90);
-        flowerPoses[6] = poseFactory.of(129.3126, 24.6121, -90);
+        flowerPoses[3] = poseFactory.of(95.09, 26.42, -90.9547);
+        flowerPoses[4] = poseFactory.of(129.3, 24.6, 0);
+
+
+        //flowerPoses[5] = poseFactory.of(80, 23.3459, -90);
+        //flowerPoses[6] = poseFactory.of(129.3126, 24.6121, -90);
         shootPose = poseFactory.of(79.1085, 9, -90);//always face the back
     }
 }
