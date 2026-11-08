@@ -15,7 +15,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double MOTOR_D_VALUE = 1;
 
     //Motors/Servos
-    public static double LAUNCHER_SPEED = 1000;
+    public static double LAUNCHER_SPEED = 3000;
     public static double LAUNCHER_BACKSPIN = 150;
     public static double LAUNCHER_TOPSPIN = 150;
     public static double WHEEL_STOP_SPEED = 0;
@@ -88,8 +88,8 @@ abstract public class BaseOpMode extends LinearOpMode {
 
 
         // Set PID coefficients for flywheel
-        upperFlywheelMot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, MOTOR_D_VALUE, 10));
-        lowerFlywheelMot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, MOTOR_D_VALUE, 10));
+        //upperFlywheelMot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, MOTOR_D_VALUE, 10));
+        //lowerFlywheelMot.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, new PIDFCoefficients(300, 0, MOTOR_D_VALUE, 10));
 
         // Set directions of motors
         upperFlywheelMot.setDirection(DcMotor.Direction.REVERSE);

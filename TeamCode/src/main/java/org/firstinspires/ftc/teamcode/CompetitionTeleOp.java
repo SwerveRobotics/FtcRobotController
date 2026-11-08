@@ -36,6 +36,8 @@ public class CompetitionTeleOp extends BaseOpMode{
         while (opModeIsActive()) {
             telemetry.addData("x", follower.pose().x());
             telemetry.addData("y", follower.pose().y());
+            telemetry.addData("upper_flywheel: ", upperFlywheelMot.getVelocity());
+            telemetry.addData("lower_flywheel: ", lowerFlywheelMot.getVelocity());
             telemetry.addData("heading", follower.pose().heading());
             Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
             DashboardDraw.drawRobot(currPose);
@@ -51,7 +53,6 @@ public class CompetitionTeleOp extends BaseOpMode{
 //                transferWheelMot.setVelocity(TRANSFER_SPEED);
                 lowerFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_TOPSPIN);
                 upperFlywheelMot.setVelocity(LAUNCHER_SPEED);
-
             }
             if(gamepad2.bWasPressed()) {
                 transferWheelMot.setVelocity(WHEEL_STOP_SPEED);
