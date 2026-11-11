@@ -71,9 +71,11 @@ abstract public class BaseOpMode extends LinearOpMode {
                 for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
                     int id = tag.getFiducialId();
                     double distMM = distanceToTag(tag);
-                    if (distMM > 850) { //dist of 800 or less is down, dist of 900 or more is up
+                    if (distMM > 0.85) { //dist of 800 or less is down, dist of 900 or more is up
                         if (tagBelongs(chosenAlliance, id)) {
                             foundScorableTarget = true;
+                        } else {
+                            telemetry.addLine("wrong team detected");
                         }
                     }
                     targetErrorX = tag.getTargetXDegrees();
