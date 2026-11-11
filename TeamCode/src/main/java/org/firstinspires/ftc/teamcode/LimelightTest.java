@@ -7,6 +7,11 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 @TeleOp(name="Test Limelight")
 public class LimelightTest extends BaseOpMode {
     @Override
+    public void initializeHardware() {
+        super.initializeHardware();
+    }
+
+    @Override
     public void runOpMode() throws InterruptedException {
         initializeLimelight();
         waitForStart();
