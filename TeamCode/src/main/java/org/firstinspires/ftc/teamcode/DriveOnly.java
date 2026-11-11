@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
+import static org.firstinspires.ftc.teamcode.TuneLauncherPIDF.LAUNCHERspeed;
+
 import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.ManualDrive;
@@ -17,7 +19,7 @@ import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
  * Left bumper = reset pose to (0, 0, 0)
  */
 @TeleOp(name = "417 Drive Only")
-public class DriveOnly extends LinearOpMode {
+public class DriveOnly extends TuneLauncherPIDF {
     private Follower follower;
     private boolean fieldCentric = false;
     private double fieldCentricCorrection = 0; // radians
@@ -65,7 +67,20 @@ public class DriveOnly extends LinearOpMode {
                         follower.pose().heading(), fieldCentricCorrection);
                 follower.manual(powers);
             }
+            if (gamepad2.left_stick_y > 0.05) {
+                intakeMoto.setPower(INTAKEspeed);
+            } else if (gamepad2.left_stick_y < -0.05 ) {
+                intakeMoto.setPower(-INTAKEspeed);
 
+
+
+                if (gamepad2.right_bumper) {
+                launchMoto.setVelocity(LAUNCHERspeed);
+                telemetry.addLine("Launcher is being intiated!");
+            }else if (gamepad2.left_bumper) {
+                launchMoto.setVelocity(0);
+            }
+            }
             follower.update();
 
             telemetry.addData("X", follower.pose().x());
