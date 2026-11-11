@@ -35,6 +35,7 @@ public class CompetitionTeleOp extends BaseOpMode {
     private DrivePowers fcPowers;
 
     private Follower follower;
+    private double turretRelative;
     //private Limelight3A limelight;
     //private AutoAim autoAim;
     @Override
@@ -67,7 +68,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             }else if (gamepad2.y){
                 //launchMotor.setVelocity(LAUNCHER_SPEED);
 
-                intakeMotor.setPower(INTAKE_SPEED);//was sloer by .5 before
+                intakeMotor.setPower(INTAKE_SPEED);//was slower by .5 before
             } else {
                 intakeMotor.setPower(0);
             }
@@ -166,8 +167,8 @@ im != null) {
             double headingError = targetHeading - follower.pose().heading();
 
             if (turning) {
-                // Stop the  turn when the robot is around 2 degrees of the target(hich is 30 degrees)
-                if (Math.abs(headingError) < Math.toRadians(2)) {
+                // Stop the  turn when the robot is around 2 degrees of the target(which is 30 degrees)
+                if (Math.abs(headingError) < 2) {
                     turning = false;
                     turn = 0;
                 } else {
@@ -175,6 +176,17 @@ im != null) {
                     turn = Math.max(-0.5, Math.min(0.5, headingError * 1.5));
                     //turn = Math.max(-0.5, Math.min(0.5, -headingError * 1.5));
                 }
+            }
+            //TURRET HEADING
+            if(gamepad2.right_stick_x != 0) {
+                turretRelative += gamepad2.right_stick_x;
+                if (turretRelative < 0) {
+                    turretRelative += 360;
+                }
+                if (turretRelative > 360) {
+                    turretRelative -= 360;
+                }
+                turnTurretRelative(turretRelative);
             }
             //MOVE ROBOT!!!!!!!!!!!!!
             //read controller inputs

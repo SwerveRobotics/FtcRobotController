@@ -59,7 +59,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double KD = 5;
     public static double KF = 15;
     // For seeing if hive is down or not
-    public boolean HIVE_DOWN = true;
+    public boolean hiveDown = true;
+
 
 
     protected boolean isHiveScorable () {
@@ -160,7 +161,11 @@ abstract public class BaseOpMode extends LinearOpMode {
         if (turretRelative < 0) {
             turretRelative += 360;
         }
-        turretServo.setPosition(turretRelative/360);
+        turnTurretRelative(turretRelative);
+    }
+    public void turnTurretRelative(double targetHeading) {
+        turretServo.setPosition(targetHeading/360);
+        telemetry.addData("Target Relative Turret Position", targetHeading);
     }
 
 }
