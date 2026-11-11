@@ -11,6 +11,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+
 import java.util.List;
 
 
@@ -68,6 +72,7 @@ abstract public class BaseOpMode extends LinearOpMode {
                     targetErrorX = tag.getTargetXDegrees();
                     telemetry.addData("April Tag ID", id);
                     telemetry.addData("Horizontal Error (tx)", targetErrorX);
+                    telemetry.addData("Distance to camera", distanceToTag(tag));
 
                 }
                 if (!foundScorableTarget ) {
@@ -79,6 +84,16 @@ abstract public class BaseOpMode extends LinearOpMode {
                 telemetry.addData("status", "No Valid Targets Visible");
             }
             return false;
+    }
+    protected double distanceToTag(LLResultTypes.FiducialResult tag) {
+        Position x = tag.getTargetPoseCameraSpace().getPosition();
+        return distanceToOrigin(x);
+    }
+    protected double distanceToPosition(Position x, Position y) {
+        return Math.sqrt((x.x-y.x)*(x.x-y.x)+(x.y-y.y)*(x.y-y.y)+(x.z-y.z)*(x.z-y.z));
+    }
+    protected double distanceToOrigin(Position x) {
+        return Math.sqrt(x.x*x.x + x.y*x.y + x.z*x.z);
     }
 
     public void initializeLimelight() {
