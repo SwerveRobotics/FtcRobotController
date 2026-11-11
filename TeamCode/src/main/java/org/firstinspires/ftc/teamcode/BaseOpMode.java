@@ -52,7 +52,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public boolean HIVE_DOWN = true;
 
 
-    protected boolean IS_HIVE_SCORABLE () {
+    protected boolean isHiveScorable () {
         LLResult result = limelight.getLatestResult();
             if (result != null && result.isValid()) {
                 boolean foundScorableTarget = false;
@@ -61,6 +61,7 @@ abstract public class BaseOpMode extends LinearOpMode {
                     int id = tag.getFiducialId();
                     foundScorableTarget = true;
                     targetErrorX = tag.getTargetXDegrees();
+                    telemetry.addData("April Tag ID", id);
                     telemetry.addData("Horizontal Error (tx)", targetErrorX);
 
                 }
@@ -75,8 +76,17 @@ abstract public class BaseOpMode extends LinearOpMode {
             return false;
     }
 
+    public void initializeLimelight() {
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        telemetry.setMsTransmissionInterval(11);
+        limelight.pipelineSwitch(0);
+        limelight.start();
+    }
+
 
     public void initializeHardware() {
+        initializeLimelight();
+
         //initialize motors
         intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
         launchMotor = hardwareMap.get(DcMotorEx.class, "motLaunch");
@@ -87,7 +97,6 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         //limelight camera
 
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
         //set motors to be energized
         intakeMotor.setMotorEnable();
