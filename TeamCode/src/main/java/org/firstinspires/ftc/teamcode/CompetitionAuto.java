@@ -149,7 +149,7 @@ public class CompetitionAuto extends BaseOpMode{
             telemetry.addData("heading", follower.pose().heading());
             telemetry.addData("Launcher Speed: ", launchMotor.getVelocity());
             telemetry.addData("Ramp Position",flowerRamp.getPosition() == RAMP_UP ? "Up":"Down");
-            telemetry.addData("Is Hive Scorable",isHiveScorable());
+            //telemetry.addData("Is Hive Scorable", isHiveScorable());
 
             if (follower.currentPath() != null) {
                 telemetry.addData("Current path distance remaining", follower.distanceToEndpoint());
