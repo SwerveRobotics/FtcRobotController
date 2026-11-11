@@ -17,7 +17,6 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp(name="417 Teleop")
 public class CompetitionTeleOp extends BaseOpMode {
     //variables
-    Alliance chosenAlliance;
     ElapsedTime timer = new ElapsedTime();
     boolean rampMoving = false;
     boolean lastDpadUp = false;

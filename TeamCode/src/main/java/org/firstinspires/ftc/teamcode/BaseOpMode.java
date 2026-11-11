@@ -34,6 +34,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected Servo flowerRamp;
     protected GoBildaPinpointDriver pinpoint;
     protected Limelight3A limelight;
+    protected Alliance chosenAlliance;
 
 
 
@@ -68,7 +69,12 @@ abstract public class BaseOpMode extends LinearOpMode {
                 double targetErrorX = 0;
                 for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
                     int id = tag.getFiducialId();
-                    foundScorableTarget = true;
+                    double distMM = distanceToTag(tag);
+                    if (distMM > 850) { //dist of 800 or less is down, dist of 900 or more is up
+                        if (tagBelongs(chosenAlliance, id)) {
+                            foundScorableTarget = true;
+                        }
+                    }
                     targetErrorX = tag.getTargetXDegrees();
                     telemetry.addData("April Tag ID", id);
                     telemetry.addData("Horizontal Error (tx)", targetErrorX);
@@ -94,6 +100,11 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
     protected double distanceToOrigin(Position x) {
         return Math.sqrt(x.x*x.x + x.y*x.y + x.z*x.z);
+    }
+    protected boolean tagBelongs(Alliance team, int id) {
+        boolean tagBlue = id > 37;
+        boolean teamBlue = team.equals(Alliance.BLUE);
+        return tagBlue == teamBlue;
     }
 
     public void initializeLimelight() {
