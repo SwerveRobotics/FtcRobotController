@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
+import com.qualcomm.robotcore.hardware.Servo;
 
 abstract public class BaseOpMode extends LinearOpMode {
     // Constants
@@ -30,6 +31,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected DcMotorEx intakeMot;
     protected CRServo leftIntakeServo;
     protected CRServo rightIntakeServo;
+    protected Servo gateServo;
 
     protected DcMotorEx FLMotor;
     protected DcMotorEx FRMotor;
@@ -48,6 +50,8 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         rightIntakeServo = hardwareMap.get(CRServo.class, "rightservo");
         leftIntakeServo = hardwareMap.get(CRServo.class, "leftservo");
+        gateServo = hardwareMap.get(Servo.class, "gateServo");
+
 
         FLMotor = hardwareMap.get(DcMotorEx.class, "FrontLeft");
         FRMotor = hardwareMap.get(DcMotorEx.class, "FrontRight");
@@ -98,6 +102,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         intakeMot.setDirection(DcMotor.Direction.FORWARD);
 
         leftIntakeServo.setDirection(CRServo.Direction.REVERSE);
+        gateServo.setDirection(Servo.Direction.FORWARD);
 
 //        FRMotor.setDirection(DcMotor.Direction.FORWARD);
 //        BRMotor.setDirection(DcMotor.Direction.REVERSE);

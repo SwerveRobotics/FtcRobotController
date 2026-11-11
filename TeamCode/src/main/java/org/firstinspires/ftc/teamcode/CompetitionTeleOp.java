@@ -32,6 +32,8 @@ public class CompetitionTeleOp extends BaseOpMode{
         double targetHeading = 0;
         boolean wasTurning = false;
         double kp = 0.03; //TODO tune for pid
+        int button_count = 0;
+        double servo_pos = 0.0;
 
         while (opModeIsActive()) {
             telemetry.addData("x", follower.pose().x());
@@ -47,6 +49,14 @@ public class CompetitionTeleOp extends BaseOpMode{
 
             if (gamepad2.aWasPressed()) {
                 transferWheelMot.setVelocity(TRANSFER_SPEED);
+
+            }
+            if (gamepad2.xWasPressed()) {
+                servo_pos += 0.25;
+                if(servo_pos > 1.0) {
+                    servo_pos = 0.0;
+                }
+                gateServo.setPosition(servo_pos);
 
             }
             if (gamepad2.yWasPressed()) {
