@@ -40,7 +40,6 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose[] points = new Pose[32]; //this holds the poses for any path
     private Pose autoParkingStartPose;
     private Pose shootPose; //small move forward before the first garden shot
-    Alliance chosenAlliance;
     private boolean hiveTipped;
 
 

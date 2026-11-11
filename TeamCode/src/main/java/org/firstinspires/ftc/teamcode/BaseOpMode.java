@@ -34,6 +34,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected Servo flowerRamp;
     protected GoBildaPinpointDriver pinpoint;
     protected Limelight3A limelight;
+    protected Alliance chosenAlliance;
 
 
 
@@ -58,7 +59,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double KD = 5;
     public static double KF = 15;
     // For seeing if hive is down or not
-    public boolean HIVE_DOWN = true;
+    public boolean hiveDown = true;
+
 
 
     protected boolean IS_HIVE_SCORABLE () {
@@ -68,7 +70,12 @@ abstract public class BaseOpMode extends LinearOpMode {
                 double targetErrorX = 0;
                 for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
                     int id = tag.getFiducialId();
-                    foundScorableTarget = true;
+                    double distMM = distanceToTag(tag);
+                    if (distMM > 850) { //dist of 800 or less is down, dist of 900 or more is up
+                        if (tagBelongs(chosenAlliance, id)) {
+                            foundScorableTarget = true;
+                        }
+                    }
                     targetErrorX = tag.getTargetXDegrees();
                     telemetry.addData("Horizontal Error (tx)", targetErrorX);
                     telemetry.addData("Distance to camera", distanceToTag(tag));
@@ -93,6 +100,11 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
     protected double distanceToOrigin(Position x) {
         return Math.sqrt(x.x*x.x + x.y*x.y + x.z*x.z);
+    }
+    protected boolean tagBelongs(Alliance team, int id) {
+        boolean tagBlue = id > 37;
+        boolean teamBlue = team.equals(Alliance.BLUE);
+        return tagBlue == teamBlue;
     }
 
 
@@ -140,7 +152,11 @@ abstract public class BaseOpMode extends LinearOpMode {
         if (turretRelative < 0) {
             turretRelative += 360;
         }
-        turretServo.setPosition(turretRelative/360);
+        turnTurretRelative(turretRelative);
+    }
+    public void turnTurretRelative(double targetHeading) {
+        turretServo.setPosition(targetHeading/360);
+        telemetry.addData("Target Relative Turret Position", targetHeading);
     }
 
 }
