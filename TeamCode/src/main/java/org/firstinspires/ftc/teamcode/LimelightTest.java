@@ -13,10 +13,11 @@ public class LimelightTest extends BaseOpMode {
 
     @Override
     public void runOpMode() throws InterruptedException {
-        initializeLimelight();
+        //initializeLimelight();
         waitForStart();
+        chosenAlliance = Alliance.BLUE;
         while (opModeIsActive()) {
-            telemetry.addData("Is Hive Scorable",isHiveScorable());
+            //telemetry.addData("Is Hive Scorable",isHiveScorable());
             telemetry.update();
         }
     }

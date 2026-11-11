@@ -25,6 +25,7 @@ public class Constants {
         c.frontLeftDirection.set(DcMotorSimple.Direction.REVERSE);
         c.frontRightDirection.set(DcMotorSimple.Direction.FORWARD);
         c.backLeftDirection.set(DcMotorSimple.Direction.REVERSE);
+
         c.backRightDirection.set(DcMotorSimple.Direction.FORWARD);
         c.manualBrakeMode.set(true);
     });

@@ -11,6 +11,10 @@ import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
+
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Position;
+
 import java.util.List;
 
 
@@ -30,6 +34,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected Servo flowerRamp;
     protected GoBildaPinpointDriver pinpoint;
     protected Limelight3A limelight;
+    protected Alliance chosenAlliance;
 
 
 
@@ -54,20 +59,28 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double KD = 5;
     public static double KF = 15;
     // For seeing if hive is down or not
-    public boolean HIVE_DOWN = true;
+    public boolean hiveDown = true;
 
 
-    protected boolean isHiveScorable () {
+
+    protected boolean IS_HIVE_SCORABLE () {
         LLResult result = limelight.getLatestResult();
             if (result != null && result.isValid()) {
                 boolean foundScorableTarget = false;
                 double targetErrorX = 0;
                 for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
                     int id = tag.getFiducialId();
-                    foundScorableTarget = true;
+                    double distMM = distanceToTag(tag);
+                    if (distMM > 0.85) { //dist of 800 or less is down, dist of 900 or more is up
+                        if (tagBelongs(chosenAlliance, id)) {
+                            foundScorableTarget = true;
+                        } else {
+                            telemetry.addLine("wrong team detected");
+                        }
+                    }
                     targetErrorX = tag.getTargetXDegrees();
-                    telemetry.addData("April Tag ID", id);
                     telemetry.addData("Horizontal Error (tx)", targetErrorX);
+                    telemetry.addData("Distance to camera", distanceToTag(tag));
 
                 }
                 if (!foundScorableTarget ) {
@@ -79,6 +92,21 @@ abstract public class BaseOpMode extends LinearOpMode {
                 telemetry.addData("status", "No Valid Targets Visible");
             }
             return false;
+    }
+    protected double distanceToTag(LLResultTypes.FiducialResult tag) {
+        Position x = tag.getTargetPoseCameraSpace().getPosition();
+        return distanceToOrigin(x);
+    }
+    protected double distanceToPosition(Position x, Position y) {
+        return Math.sqrt((x.x-y.x)*(x.x-y.x)+(x.y-y.y)*(x.y-y.y)+(x.z-y.z)*(x.z-y.z));
+    }
+    protected double distanceToOrigin(Position x) {
+        return Math.sqrt(x.x*x.x + x.y*x.y + x.z*x.z);
+    }
+    protected boolean tagBelongs(Alliance team, int id) {
+        boolean tagBlue = id > 37;
+        boolean teamBlue = team.equals(Alliance.BLUE);
+        return tagBlue == teamBlue;
     }
 
     public void initializeLimelight() {
@@ -104,6 +132,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         //limelight camera
 
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
         //set motors to be energized
         intakeMotor.setMotorEnable();
@@ -134,7 +163,11 @@ abstract public class BaseOpMode extends LinearOpMode {
         if (turretRelative < 0) {
             turretRelative += 360;
         }
-        turretServo.setPosition(turretRelative/360);
+        turnTurretRelative(turretRelative);
+    }
+    public void turnTurretRelative(double targetHeading) {
+        turretServo.setPosition(targetHeading/360);
+        telemetry.addData("Target Relative Turret Position", targetHeading);
     }
 
 }
