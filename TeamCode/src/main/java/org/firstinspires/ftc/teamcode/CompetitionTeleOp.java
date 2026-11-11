@@ -35,6 +35,8 @@ public class CompetitionTeleOp extends BaseOpMode{
         int button_count = 0;
         double servo_pos = 0.0;
 
+        gateServo.setPosition(servo_pos);
+
         while (opModeIsActive()) {
             telemetry.addData("x", follower.pose().x());
             telemetry.addData("y", follower.pose().y());
@@ -49,21 +51,22 @@ public class CompetitionTeleOp extends BaseOpMode{
 
             if (gamepad2.aWasPressed()) {
                 transferWheelMot.setVelocity(TRANSFER_SPEED);
-
             }
+
             if (gamepad2.xWasPressed()) {
                 servo_pos += 0.25;
                 if(servo_pos > 1.0) {
                     servo_pos = 0.0;
                 }
                 gateServo.setPosition(servo_pos);
-
             }
+
             if (gamepad2.yWasPressed()) {
-//                transferWheelMot.setVelocity(TRANSFER_SPEED);
                 lowerFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_TOPSPIN);
                 upperFlywheelMot.setVelocity(LAUNCHER_SPEED);
             }
+
+
             if(gamepad2.bWasPressed()) {
                 transferWheelMot.setVelocity(WHEEL_STOP_SPEED);
                 lowerFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
@@ -88,30 +91,43 @@ public class CompetitionTeleOp extends BaseOpMode{
             if(!follower.isBusy()) {
                 double slowModeMultiplier = doSLOWMODE();
 
-                double drive = -gamepad1.left_stick_y * slowModeMultiplier;
-                double strafe = -gamepad1.left_stick_x * slowModeMultiplier;
-                double turn = -gamepad1.right_stick_x * slowModeMultiplier;
-                double currentHeading = imu.getRobotYawPitchRollAngles().getYaw(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES);
+                double drive = 0;
+                double strafe = 0;
+                double turn = 0;
+
+                // added a 0.05 deadzone in both directions for driver controls - TODO TEST!!
+                if (Math.abs(gamepad1.left_stick_y) > DRIVING_CONTROL_DEADZONE || Math.abs(gamepad1.left_stick_x) > DRIVING_CONTROL_DEADZONE || Math.abs(gamepad1.right_stick_x) > DRIVING_CONTROL_DEADZONE) {
+                    drive = -gamepad1.left_stick_y * slowModeMultiplier;
+                    strafe = -gamepad1.left_stick_x * slowModeMultiplier;
+                    turn = -gamepad1.right_stick_x * slowModeMultiplier;
+                }
+
+                // TODO TEST and use telemetry to make sure it's actual doing something
+//                double currentHeading = imu.getRobotYawPitchRollAngles().getYaw(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES);
+
+                telemetry.addData("turn: ", turn );
+                telemetry.addData("lower flywheel motor: ", lowerFlywheelMot.getVelocity());
+                telemetry.addData("upper flywheel motor: ", upperFlywheelMot.getVelocity());
 
                 // hold the heading of the robot at the turn heading driver has set it to
                 // automatic steering correction for driving forward/backward and strafing
-                if (Math.abs(gamepad1.right_stick_x) > 0.05) {
-                    targetHeading = currentHeading;
-                    wasTurning = true;
-                } else {
-                    // set new target heading as soon as driver stops actively turning
-                    if (wasTurning) {
-                        targetHeading = currentHeading;
-                        wasTurning = false;
-                    }
-                }
+//                if (Math.abs(gamepad1.right_stick_x) > 0.05) {
+//                    targetHeading = currentHeading;
+//                    wasTurning = true;
+//                } else {
+//                    // set new target heading as soon as driver stops actively turning
+//                    if (wasTurning) {
+//                        targetHeading = currentHeading;
+//                        wasTurning = false;
+//                    }
+//                }
 
-                double angleError = targetHeading - currentHeading;
-                // set angle error to be in range 0 to 360 because imu reads from -180 to 180
-                while (angleError > 180)  angleError -= 360;
-                while (angleError < -180) angleError += 360;
+//                double angleError = targetHeading - currentHeading;
+//                // set angle error to be in range 0 to 360 because imu reads from -180 to 180
+//                while (angleError > 180)  angleError -= 360;
+//                while (angleError < -180) angleError += 360;
 
-                turn = angleError * kp;
+//                turn = angleError * kp;
 
                 follower.manual(
                         drive,

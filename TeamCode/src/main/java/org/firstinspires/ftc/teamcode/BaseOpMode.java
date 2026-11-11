@@ -16,7 +16,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double MOTOR_D_VALUE = 1;
 
     //Motors/Servos
-    public static double LAUNCHER_SPEED = 3000;
+    public static double LAUNCHER_SPEED = 3500;
     public static double LAUNCHER_BACKSPIN = 150;
     public static double LAUNCHER_TOPSPIN = 150;
     public static double WHEEL_STOP_SPEED = 0;
@@ -25,6 +25,9 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double BALLS_TO_LAUNCH_TIME = 10;
     public static double FOUR_BALLS_TIME = 10;
     public static double PARTNER_LAUNCH_TIME= 10;
+
+    public static double DRIVING_CONTROL_DEADZONE = 0.05;
+
     protected DcMotorEx transferWheelMot;
     protected DcMotorEx lowerFlywheelMot;
     protected DcMotorEx upperFlywheelMot;
