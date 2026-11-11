@@ -1,25 +1,42 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.pedropathing.drivetrain.DrivePowers;
+import com.pedropathing.follower.Follower;
 import com.pedropathing.follower.ManualDrive;
 import com.pedropathing.math.Pose;
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
-
+/**
+ * Drive-only teleop, all in one file. Only touches the drivetrain and pinpoint
+ * (through Pedro's Constants), so it works with a bare robot.
+ *
+ * Left stick = drive, right stick x = turn, right trigger = slow mode
+ * Y = toggle robot-centric / field-centric
+ * Dpad left / right = rotate the field-centric zero by 90 degrees
+ * Left bumper = reset pose to (0, 0, 0)
+ */
 @TeleOp(name = "417 Drive Only")
-public class DriveOnly extends TuneLauncherPIDF {
+public class DriveOnly extends LinearOpMode {
+    private Follower follower;
     private boolean fieldCentric = false;
     private double fieldCentricCorrection = 0; // radians
 
     @Override
     public void runOpMode() throws InterruptedException {
-        initializeDrive();
+        follower = Constants.create(hardwareMap);
         follower.setPose(new Pose(0, 0, 0));
 
         waitForStart();
 
         while (opModeIsActive()) {
-            double scale = slowModeScale();
+            // hold right trigger to slow down (1 normally, 0.5 at full trigger)
+            double scale = 1;
+            if (gamepad1.right_trigger != 0) {
+                scale = ((-gamepad1.right_trigger + 1) / 2) + 0.5;
+            }
+
+            // stick up is NEGATIVE in the FTC SDK, so these all need the minus sign
             double forward = -gamepad1.left_stick_y * scale;
             double lateral = -gamepad1.left_stick_x * scale;
             double turn = -gamepad1.right_stick_x * scale;
@@ -29,7 +46,6 @@ public class DriveOnly extends TuneLauncherPIDF {
             }
 
             // one 90 degree step per press (not per loop)
-            // if one press turns it by the wrong amount, check the units ManualDrive expects
             if (gamepad1.dpadLeftWasPressed()) {
                 fieldCentricCorrection += Math.toRadians(90);
             }
