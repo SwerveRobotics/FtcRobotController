@@ -109,8 +109,17 @@ abstract public class BaseOpMode extends LinearOpMode {
         return tagBlue == teamBlue;
     }
 
+    public void initializeLimelight() {
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        telemetry.setMsTransmissionInterval(11);
+        limelight.pipelineSwitch(0);
+        limelight.start();
+    }
+
 
     public void initializeHardware() {
+        initializeLimelight();
+
         //initialize motors
         intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
         transferMotor = hardwareMap.get(DcMotorEx.class, "transfer");
