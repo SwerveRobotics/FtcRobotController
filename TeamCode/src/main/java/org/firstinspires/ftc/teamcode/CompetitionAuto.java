@@ -170,14 +170,14 @@ public class CompetitionAuto extends BaseOpMode{
 //        } else {
 //            poseFactory = PoseFactory.degrees();
 //        }
-        follower.setPose(leaveAndParkStart_2);
+        follower.setPose(launchAndParkStart_2);
         Scheduler.reset();
 
 
 
 
         waitForStart();
-        schedule(leaveFromWall());
+        schedule(aRlaunchAndPark());
 
         while (opModeIsActive()) {
             follower.update();
