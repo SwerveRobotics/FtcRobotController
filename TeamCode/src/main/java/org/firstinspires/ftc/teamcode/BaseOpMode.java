@@ -140,18 +140,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
 
     //FUNCTION ASSUMES THAT THE SERVO'S LIMITS ARE FROM ZERO TO 360(we checked with hardware and they said it's right)
-    public void turnTurretAbsolute(double robotHeading, double targetHeading) { //takes [0,360], [0,360]
-        double turretRelative = targetHeading - robotHeading;
-        if (turretRelative < 0) {
-            turretRelative += 360;
-        }
-        turnTurretRelative(turretRelative);
-    }
-    public void turnTurretRelative(double targetHeading) {
-        turretServo.setPosition(targetHeading/360);
-        telemetry.addData("Target Relative Turret Position", targetHeading);
 
-    }
+
     //step 2: pick the goal point based on which cell is up
     private double[] getGoalPoint() {
         if (chosenAlliance == null || upCell == UpCell.UNKNOWN) return null; //dont know yettt
@@ -186,9 +176,8 @@ abstract public class BaseOpMode extends LinearOpMode {
         //limits, a little inside the real stops
         double minDeg = Math.min(TURRET_LEFT_END, TURRET_RIGHT_END) + TURRET_LIMIT_MARGIN_DEG;
         double maxDeg = Math.max(TURRET_LEFT_END, TURRET_RIGHT_END) - TURRET_LIMIT_MARGIN_DEG;
-    }
 
-        //same angle can show up as desired, desired + 360, desired - 360
+    //same angle can show up as desired, desired + 360, desired - 360
         //pick the one that fits and is closest to where the turret is
         turretAtLimit = false;
         double best = Double.NaN;
@@ -288,9 +277,8 @@ abstract public class BaseOpMode extends LinearOpMode {
         turnTurretRelative(turretRelative);
     }
     public void turnTurretRelative(double targetHeading) {
-        turretServo.setPosition(targetHeading/360);
+        turretServo.setPosition(targetHeading / 360);
         telemetry.addData("Target Relative Turret Position", targetHeading);
-
 
 
         //starts the turret and center degree
