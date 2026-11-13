@@ -86,20 +86,22 @@ abstract public class BaseOpMode extends LinearOpMode {
 //---------------------------------------------------------------
     protected boolean IS_HIVE_SCORABLE () {
         LLResult result = limelight.getLatestResult();
-        if (result != null && result.isValid()) {
-            boolean foundScorableTarget = false;
-            double targetErrorX = 0;
-            for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
-                int id = tag.getFiducialId();
-                double distMM = distanceToTag(tag);
-                if (distMM > 850) { //dist of 800 or less is down, dist of 900 or more is up
-                    if (tagBelongs(chosenAlliance, id)) {
-                        foundScorableTarget = true;
+            if (result != null && result.isValid()) {
+                boolean foundScorableTarget = false;
+                double targetErrorX = 0;
+                for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
+                    int id = tag.getFiducialId();
+                    double distMM = distanceToTag(tag);
+                    if (distMM > 0.85) { //dist of 800 or less is down, dist of 900 or more is up
+                        if (tagBelongs(chosenAlliance, id)) {
+                            foundScorableTarget = true;
+                        } else {
+                            telemetry.addLine("wrong team detected");
+                        }
                     }
-                }
-                targetErrorX = tag.getTargetXDegrees();
-                telemetry.addData("Horizontal Error (tx)", targetErrorX);
-                telemetry.addData("Distance to camera", distanceToTag(tag));
+                    targetErrorX = tag.getTargetXDegrees();
+                    telemetry.addData("Horizontal Error (tx)", targetErrorX);
+                    telemetry.addData("Distance to camera", distanceToTag(tag));
 
             }
             if (!foundScorableTarget ) {
@@ -126,6 +128,13 @@ abstract public class BaseOpMode extends LinearOpMode {
         boolean tagBlue = id > 37;
         boolean teamBlue = team.equals(Alliance.BLUE);
         return tagBlue == teamBlue;
+    }
+
+    public void initializeLimelight() {
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        telemetry.setMsTransmissionInterval(11);
+        limelight.pipelineSwitch(0);
+        limelight.start();
     }
 
     //FUNCTION ASSUMES THAT THE SERVO'S LIMITS ARE FROM ZERO TO 360(we checked with hardware and they said it's right)
@@ -221,6 +230,8 @@ abstract public class BaseOpMode extends LinearOpMode {
         turretServo.setPosition(Math.max(0, Math.min(1, turretCommandedDeg / 360.0)));
     }
     public void initializeHardware() {
+        initializeLimelight();
+
         //initialize motors
         intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
         transferMotor = hardwareMap.get(DcMotorEx.class, "transfer");
