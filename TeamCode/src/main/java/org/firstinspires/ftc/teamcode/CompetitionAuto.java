@@ -3,13 +3,11 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
-import static com.pedropathing.api.Paths.*;
 import com.pedropathing.api.Paths;
 
 import com.pedropathing.api.PoseFactory;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
-import com.pedropathing.paths.Path;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.Scheduler;
 import static com.pedropathing.ivy.Scheduler.schedule;
@@ -19,11 +17,8 @@ import static com.pedropathing.ivy.groups.Groups.sequential;
 import static com.pedropathing.ivy.pedro.PedroCommands.follow;
 import static com.pedropathing.ivy.pedro.PedroCommands.hold;
 
-import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.teamcode.menu.MenuFinishedButton;
 import org.firstinspires.ftc.teamcode.menu.MenuHeader;
 import org.firstinspires.ftc.teamcode.menu.MenuInput;
@@ -34,7 +29,6 @@ import static com.pedropathing.ivy.groups.Groups.parallel;
 @Autonomous(name = "417 Auto")
 public class CompetitionAuto extends BaseOpMode{
     //when you select the class
-    private Follower follower;
     //the values of the paths
     private PoseFactory poseFactory = PoseFactory.degrees();
     private Pose[] points = new Pose[32]; //this holds the poses for any path
@@ -143,12 +137,7 @@ public class CompetitionAuto extends BaseOpMode{
             }
             Scheduler.execute();
             //telling the values of the robot on the driver hub
-            telemetry.addData("x", follower.pose().x());
-            telemetry.addData("y", follower.pose().y());
-            telemetry.addData("heading", follower.pose().heading());
-            telemetry.addData("Launcher Speed: ", launchMotor.getVelocity());
-            telemetry.addData("Ramp Position",flowerRamp.getPosition() == RAMP_UP ? "Up":"Down");
-            //telemetry.addData("Is Hive Scorable", isHiveScorable());
+            printTelemetry();
 
             if (follower.currentPath() != null) {
                 telemetry.addData("Current path distance remaining", follower.distanceToEndpoint());
@@ -186,44 +175,31 @@ public class CompetitionAuto extends BaseOpMode{
     public Command rampDown() {
         return instant(() -> flowerRamp.setPosition(RAMP_DOWN));
     }
-    /*    public Command shootBalls(int numBalls) {
-            return sequential(
-                    instant(() -> gate.setPosition(GATE_OPEN)),
-                    instant(()->intakeMotor.setVelocity(-INTAKE_SPEED)),
-                    instant(() -> launchMotor.setVelocity(LAUNCHER_SPEED)),
-                    //instant(()->intakeMotor.setVelocity(-INTAKE_SPEED)),
-                    waitMs(numBalls*LAUNCH_TIME),
-                    instant(()->intakeMotor.setVelocity(0)),
-                    instant(() -> launchMotor.setVelocity(0)),
-                    instant(() -> gate.setPosition(GATE_CLOSE))
-            );
-        }*/
     public Command shootBalls(int numBalls) {
         return sequential(
-                instant(() -> launchMotor.setVelocity(LAUNCHER_SPEED)),
-                waitUntil( () -> intakeMotor.getVelocity() > 0.95 * LAUNCHER_SPEED).raceWith(waitMs(5000)), // tune this
-                instant(() -> gate.setPosition(GATE_OPEN)),
+                instant(() -> setTurretVelocity(LAUNCHER_SPEED)),
+                waitMs(5000), // tune this
+                instant(() -> intakeAndTransfer(true)),
                 repeat(sequential(
-                        instant(() -> intakeMotor.setPower(0.5 * INTAKE_SPEED)),
+                        instant(() -> intakeAndTransfer(true)),
                         waitMs(LAUNCH_TIME),
-                        instant(() -> intakeMotor.setPower(0)),
+                        instant(() -> intakeAndTransfer(false)),
                         waitMs(LAUNCH_TIME)
                 ), 2),
                 repeat(sequential(
-                        instant(() -> intakeMotor.setPower(INTAKE_SPEED)),
+                        instant(() -> intakeAndTransfer(true)),
                         waitMs(LAUNCH_TIME),
-                        instant(() -> intakeMotor.setPower(0)),
+                        instant(() -> intakeAndTransfer(false)),
                         waitMs(LAUNCH_TIME)
                 ), numBalls-1),
-                instant(() -> launchMotor.setVelocity(0)),//longer wait time for launch
-                instant(() -> gate.setPosition(GATE_CLOSE))
+                instant(() -> intakeAndTransfer(false))//longer wait time for launch
         );
     }
     public Command intake(long millis) {
         return Command.build()
                 .setStart(() -> {
                     timer.reset();
-                    intakeMotor.setPower(-INTAKE_SPEED);
+                    intakeMotor.setPower(INTAKE_SPEED);
                 })
                 .setDone(() -> timer.milliseconds() >= millis)
                 .setEnd(endCondition -> {
