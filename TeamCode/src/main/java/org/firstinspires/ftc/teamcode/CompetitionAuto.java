@@ -10,6 +10,8 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.Scheduler;
+
+import static com.pedropathing.ivy.Scheduler.isScheduled;
 import static com.pedropathing.ivy.Scheduler.schedule;
 import static com.pedropathing.ivy.commands.Commands.*;
 import static com.pedropathing.ivy.groups.Groups.repeat;
@@ -35,8 +37,8 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose autoParkingStartPose;
     private Pose shootPose; //small move forward before the first garden shot
     private boolean hiveTipped;
-
-
+    private Command gardenPartOne;
+    private boolean gardenPartTwoStarted = false;
 
     private final ElapsedTime timer = new ElapsedTime();
 
@@ -109,7 +111,8 @@ public class CompetitionAuto extends BaseOpMode{
             case GARDEN_PATH:
                 initializeGardenPath(points, poseFactory);
                 follower.setPose(points[0]);
-                schedule(autoRoutineGardenPartOne());
+                gardenPartOne = autoRoutineGardenPartOne();
+                schedule(gardenPartOne);
                 break;
             case FLOWER_PATH:
                 initializeFlowerPath(points, poseFactory);
@@ -145,11 +148,9 @@ public class CompetitionAuto extends BaseOpMode{
             }
 
             telemetry.update();
-            if (chosenPath.equals(AutoPath.GARDEN_PATH)) {
-                if (!Scheduler.isScheduled(autoRoutineGardenPartOne())) {
-                    schedule(autoRoutineGardenPartTwo(hiveTipped));
-                }
-
+            if (chosenPath == AutoPath.GARDEN_PATH && !gardenPartTwoStarted && !Scheduler.isScheduled(gardenPartOne)){
+                schedule(autoRoutineGardenPartTwo(hiveTipped));
+                gardenPartTwoStarted = true;
             }
         }
         PoseStorage.endPose = follower.pose();
