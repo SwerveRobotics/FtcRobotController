@@ -88,8 +88,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static boolean AUDIENCE_CELL_IS_HIGH_Y = true; //TODO which y is which cell
 
 
-    private final List<Integer> RED_LIST = List.of(30, 31, 32, 33, 34, 35, 36, 37);
-    private final List<Integer> BLUE_LIST =List.of(38, 39, 40, 41, 42, 43, 44, 45);
+    public final List<Integer> RED_LIST = List.of(30, 31, 32, 33, 34, 35, 36, 37);
+    public final List<Integer> BLUE_LIST =List.of(38, 39, 40, 41, 42, 43, 44, 45);
     /**
      * Given an alliance, returns the list of April tags for that alliance
      *
