@@ -12,6 +12,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 
 import java.util.List;
@@ -83,22 +84,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double GOAL_Y_LOW = 54.5;
     public static boolean AUDIENCE_CELL_IS_HIGH_Y = true; //TODO which y is which cell
 //---------------------------------------------------------------
-
-    private final List<Integer> RED_LIST = List.of(30, 31, 32, 33, 34, 35, 36, 37);
-    private final List<Integer> BLUE_LIST =List.of(38, 39, 40, 41, 42, 43, 44, 45);
-    /**
-     * Given an alliance, returns the list of April tags for that alliance
-     *
-     * @return List of tags fot the alliance
-     */
-    protected List<Integer> getAprilTagsForAlliance(Alliance alliance) {
-        if (alliance.equals(Alliance.RED)) {
-            return RED_LIST;
-        } else {
-            return BLUE_LIST;
-        }
-    }
-    protected boolean isHiveScorable () {
+    protected boolean IS_HIVE_SCORABLE () {
         LLResult result = limelight.getLatestResult();
             if (result != null && result.isValid()) {
                 boolean foundScorableTarget = false;

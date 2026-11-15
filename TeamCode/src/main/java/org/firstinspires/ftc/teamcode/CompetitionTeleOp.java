@@ -33,8 +33,6 @@ public class CompetitionTeleOp extends BaseOpMode {
     private boolean turning = false;
     private double targetHeading = 0;
     private DrivePowers fcPowers;
-
-    private Follower follower;
     private double turretRelative;
     //private Limelight3A limelight;
     //private AutoAim autoAim;
@@ -66,31 +64,23 @@ public class CompetitionTeleOp extends BaseOpMode {
                 intakeMotor.setPower(-INTAKE_SPEED);
 
             }else if (gamepad2.y){
-                //launchMotor.setVelocity(LAUNCHER_SPEED);
-
                 intakeMotor.setPower(INTAKE_SPEED);//was slower by .5 before
+                transferMotor.setVelocity(TRANSFER_SPEED);
             } else {
                 intakeMotor.setPower(0);
             }
             //launching controls
-            launchMotor.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
-                    new PIDFCoefficients(KP, KI, KD, KF));
-
-
-
             if (gamepad2.right_bumper) {
-                launchMotor.setVelocity(LAUNCHER_SPEED);
-                telemetry.addLine("Launcher is being intiated!");
+                setTurretVelocity(LAUNCHER_SPEED);
             }else if (gamepad2.left_bumper) {
-                launchMotor.setVelocity(0);
+                setTurretVelocity(0);
             }
 
             // Hold Y to launch
-            if (gamepad2.y && launchMotor.getVelocity() > 0.95*LAUNCHER_SPEED) {
-                gate.setPosition(GATE_OPEN);
-
+            if (gamepad2.y && turretIsFast()) {
+                transferMotor.setVelocity(TRANSFER_SPEED);
             } else {
-                gate.setPosition(GATE_CLOSE);
+                transferMotor.setVelocity(0);
                 //intakeMotor.setPower(0);
 
             }
@@ -135,7 +125,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 }   else {
                     targetY = 54.5;
                 }
-                targetHeading = Math.atan2(targetY-follower.pose().y(),targetX - follower.pose().x()); //get angle based on target
+                targetHeading = Math.toDegrees(Math.atan2(targetY-follower.pose().y(),targetX - follower.pose().x())); //get angle based on target
                 turning = true;
             }
             /*
@@ -212,16 +202,9 @@ im != null) {
 
 
             follower.update();
+            printTelemetry();
             //add telemetry on driver station X, Y, Heading follower.pose.getheading .getY  .getX
-            telemetry.addData("X", follower.pose().x());
-            telemetry.addData("Y", follower.pose().y());
-            //telemetry.addData("Left stick Y:", gamepad2.left_stick_y);
-            telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
-            telemetry.addData("Gate Position", gate.getPosition());
-            telemetry.addData("Intake speed", INTAKE_SPEED);
-            telemetry.addData("Launcher Speed", launchMotor.getVelocity());
             telemetry.addData("KF: ", KF);
-
             telemetry.addData("Field-centric drive: ", fieldCentric);
             telemetry.addData("FC correction angle: ", fieldCentricCorrectionFactor);
 
