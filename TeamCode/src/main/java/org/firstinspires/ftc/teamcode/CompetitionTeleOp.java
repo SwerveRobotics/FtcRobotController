@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import java.lang.Math;
 import com.pedropathing.drivetrain.DrivePowers;
@@ -55,6 +57,33 @@ public class CompetitionTeleOp extends BaseOpMode {
         targetPose = Pose.zero();
 
         while (opModeIsActive()) {
+            /**
+             *
+             */
+            LLResult result = limelight.getLatestResult();
+            if (result != null && result.isValid()) {
+                double tx = result.getTx();
+                double currentHeadingInDegrees = Math.toDegrees(follower.pose().heading());
+                turnTurretAbsolute(follower.pose().heading(), currentHeadingInDegrees - tx);
+                telemetry.addData("Tag TX", tx);
+
+            } else {
+                // midpoint = (70.75, 70.75)
+                follower.pose().x();
+                follower.pose().y();
+                double xToOrigin = follower.pose().x() - 70.75;
+                double yToOrigin = follower.pose().y() -70.75;
+                double angleInRadian = Math.atan2(yToOrigin, xToOrigin);
+                double convertRadiansIntoDegrees = Math.toDegrees(angleInRadian);
+                turnTurretAbsolute(follower.pose().heading(), convertRadiansIntoDegrees + 180);
+                telemetry.addData("Robot x pose", follower.pose().x());
+                telemetry.addData("Robot y pose", follower.pose().y());
+                telemetry.addData("Robot current heading: ", Math.toDegrees(follower.pose().heading()));
+                telemetry.addData("Robot target heading", convertRadiansIntoDegrees + 180);
+            }
+
+
+
             //LAUNCH AND INTAKE CONTROLS
 
             //when left stick is pushed up set velocity
