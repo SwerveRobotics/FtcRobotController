@@ -13,7 +13,6 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 
@@ -86,7 +85,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double GOAL_Y_LOW = 54.5;
     public static boolean AUDIENCE_CELL_IS_HIGH_Y = true; //TODO which y is which cell
     //---------------------------------------------------------------
-    protected boolean IS_HIVE_SCORABLE () {
+    protected boolean isHiveScorable() {
         LLResult result = limelight.getLatestResult();
         if (result != null && result.isValid()) {
             boolean foundScorableTarget = false;
@@ -314,6 +313,6 @@ abstract public class BaseOpMode extends LinearOpMode {
         telemetry.addData("Average Turret Speed", avgTurretSpeed() );
         telemetry.addData("Turret position:", turretServo.getPosition());
         telemetry.addData("Ramp Position",flowerRamp.getPosition() == RAMP_UP ? "Up":"Down");
-        telemetry.addData("Is Hive Scorable", IS_HIVE_SCORABLE());
+        telemetry.addData("Is Hive Scorable", isHiveScorable());
     }
 }
