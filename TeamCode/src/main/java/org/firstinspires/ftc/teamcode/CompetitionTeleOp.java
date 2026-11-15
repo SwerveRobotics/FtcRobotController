@@ -13,6 +13,11 @@ import com.pedropathing.follower.ManualDrive;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes.FiducialResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import java.util.List;
+import java.util.Set;
 
 
 @Config
@@ -55,6 +60,13 @@ public class CompetitionTeleOp extends BaseOpMode {
         chosenAlliance = PoseStorage.chosenAlliance;
         flowerRamp.setPosition(RAMP_UP);
         targetPose = Pose.zero();
+        Set<List> ignoredTags = Set.of(RED_LIST);
+        if (chosenAlliance == Alliance.BLUE) {
+           ignoredTags = Set.of(RED_LIST);
+        }
+        else if (chosenAlliance == Alliance.RED) {
+            ignoredTags = Set.of(BLUE_LIST);
+        }
 
         while (opModeIsActive()) {
             /**
@@ -62,6 +74,19 @@ public class CompetitionTeleOp extends BaseOpMode {
              */
             LLResult result = limelight.getLatestResult();
             if (result != null && result.isValid()) {
+                List<FiducialResult> fiducials = result.getFiducialResults();
+                for (FiducialResult tag : fiducials) {
+                    int id = tag.getFiducialId();
+
+                    // Skip any tag on your exclusion list
+                    if (ignoredTags.contains(id)) {
+                        continue;
+                    }
+                    double tx = tag.getTargetXDegrees();
+                    double ty = tag.getTargetYDegrees();
+                    telemetry.addData("Valid Tag " + id, "tx: %.2f, ty: %.2f", tx, ty);
+                }
+
                 double tx = result.getTx();
                 double currentHeadingInDegrees = Math.toDegrees(follower.pose().heading());
                 turnTurretAbsolute(follower.pose().heading(), currentHeadingInDegrees - tx);
