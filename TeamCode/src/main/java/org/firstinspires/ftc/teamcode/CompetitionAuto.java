@@ -149,6 +149,7 @@ public class CompetitionAuto extends BaseOpMode{
 
             telemetry.update();
             if (chosenPath == AutoPath.GARDEN_PATH && !gardenPartTwoStarted && !Scheduler.isScheduled(gardenPartOne)){
+                hiveTipped = !IS_HIVE_SCORABLE();
                 schedule(autoRoutineGardenPartTwo(hiveTipped));
                 gardenPartTwoStarted = true;
             }
