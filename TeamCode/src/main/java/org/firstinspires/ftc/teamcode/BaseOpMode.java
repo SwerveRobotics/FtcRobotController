@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -16,7 +17,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double MOTOR_D_VALUE = 1;
 
     //Motors/Servos
-    public static double LAUNCHER_SPEED = 2300;
+    public static double LAUNCHER_SPEED = 2700;
     public static double LAUNCHER_BACKSPIN = 150;
     public static double LAUNCHER_TOPSPIN = 150;
     public static double WHEEL_STOP_SPEED = 0;
@@ -34,7 +35,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected DcMotorEx intakeMot;
     protected CRServo leftIntakeServo;
     protected CRServo rightIntakeServo;
-    protected Servo gateServo;
+    protected CRServo gateServo;
+    protected AnalogInput gateServoFeedback;
 
     protected DcMotorEx FLMotor;
     protected DcMotorEx FRMotor;
@@ -42,7 +44,6 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected DcMotorEx BRMotor;
 
     protected IMU imu;
-    //TODO make sure its working
 
     public void initializeHardware() {
         // Hardware map initialization
@@ -53,7 +54,9 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         rightIntakeServo = hardwareMap.get(CRServo.class, "rightservo");
         leftIntakeServo = hardwareMap.get(CRServo.class, "leftservo");
-        gateServo = hardwareMap.get(Servo.class, "gateServo");
+        gateServo = hardwareMap.get(CRServo.class, "gateServo");
+        gateServoFeedback = hardwareMap.get(AnalogInput.class, "gateServoFeedback");
+
 
 
         FLMotor = hardwareMap.get(DcMotorEx.class, "FrontLeft");
@@ -105,7 +108,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         intakeMot.setDirection(DcMotor.Direction.FORWARD);
 
         leftIntakeServo.setDirection(CRServo.Direction.REVERSE);
-        gateServo.setDirection(Servo.Direction.FORWARD);
+        gateServo.setDirection(CRServo.Direction.FORWARD);
 
 //        FRMotor.setDirection(DcMotor.Direction.FORWARD);
 //        BRMotor.setDirection(DcMotor.Direction.REVERSE);
