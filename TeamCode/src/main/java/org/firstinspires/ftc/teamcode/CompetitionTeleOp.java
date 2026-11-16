@@ -35,7 +35,7 @@ public class CompetitionTeleOp extends BaseOpMode{
         int button_count = 0;
         double servo_pos = 0.0;
 
-        gateServo.setPosition(servo_pos);
+//        gateServo.setPosition(servo_pos);
 
         while (opModeIsActive()) {
             telemetry.addData("x", follower.pose().x());
@@ -58,7 +58,8 @@ public class CompetitionTeleOp extends BaseOpMode{
                 if(servo_pos > 1.0) {
                     servo_pos = 0.0;
                 }
-                gateServo.setPosition(servo_pos);
+//                gateServo.setPosition(servo_pos);
+                gateServo.setPower(1.0);
             }
 
             if (gamepad2.yWasPressed()) {
@@ -95,19 +96,17 @@ public class CompetitionTeleOp extends BaseOpMode{
                 double strafe = 0;
                 double turn = 0;
 
-                // added a 0.05 deadzone in both directions for driver controls - TODO TEST!!
+                // added a 0.05 deadzone in both directions for driver controls
                 if (Math.abs(gamepad1.left_stick_y) > DRIVING_CONTROL_DEADZONE || Math.abs(gamepad1.left_stick_x) > DRIVING_CONTROL_DEADZONE || Math.abs(gamepad1.right_stick_x) > DRIVING_CONTROL_DEADZONE) {
                     drive = -gamepad1.left_stick_y * slowModeMultiplier;
                     strafe = -gamepad1.left_stick_x * slowModeMultiplier;
                     turn = -gamepad1.right_stick_x * slowModeMultiplier;
                 }
 
-                // TODO TEST and use telemetry to make sure it's actual doing something
-//                double currentHeading = imu.getRobotYawPitchRollAngles().getYaw(org.firstinspires.ftc.robotcore.external.navigation.AngleUnit.DEGREES);
-
                 telemetry.addData("turn: ", turn );
                 telemetry.addData("lower flywheel motor: ", lowerFlywheelMot.getVelocity());
                 telemetry.addData("upper flywheel motor: ", upperFlywheelMot.getVelocity());
+                telemetry.addData("gate servo fb: ", gateServoFeedback.getVoltage());
 
                 // hold the heading of the robot at the turn heading driver has set it to
                 // automatic steering correction for driving forward/backward and strafing
