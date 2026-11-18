@@ -61,14 +61,14 @@ public class CompetitionTeleOp extends BaseOpMode {
         //TODO: commented out RED_LIST
         follower.setPose(PoseStorage.endPose);
         chosenAlliance = PoseStorage.chosenAlliance;
-        //flowerRamp.setPosition(RAMP_UP);
+        flowerRamp.setPosition(RAMP_UP);
         targetPose = Pose.zero();
         //Set<List> ignoredTags = Set.of(RED_LIST);
+        Set<List<Integer>> ignoredTags;
         if (chosenAlliance == Alliance.BLUE) {
-           //ignoredTags = Set.of(RED_LIST);
-        }
-        else if (chosenAlliance == Alliance.RED) {
-            //ignoredTags = Set.of(BLUE_LIST);
+            ignoredTags = Set.of(RED_LIST);
+        } else if (chosenAlliance == Alliance.RED) {
+            ignoredTags = Set.of(BLUE_LIST);
         }
 
         while (opModeIsActive()) {
@@ -102,7 +102,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 follower.pose().x();
                 follower.pose().y();
                 double xToOrigin = follower.pose().x() - 70.75;
-                double yToOrigin = follower.pose().y() -70.75;
+                double yToOrigin = follower.pose().y() - 70.75;
                 double angleInRadian = Math.atan2(yToOrigin, xToOrigin);
                 double convertRadiansIntoDegrees = Math.toDegrees(angleInRadian);
                 turnTurretAbsolute(follower.pose().heading(), convertRadiansIntoDegrees + 180);
@@ -113,7 +113,6 @@ public class CompetitionTeleOp extends BaseOpMode {
             }
 
 
-
             //LAUNCH AND INTAKE CONTROLS
 
             //when left stick is pushed up set velocity
@@ -121,19 +120,19 @@ public class CompetitionTeleOp extends BaseOpMode {
                 intakeMotor.setPower(INTAKE_SPEED);
                 transferMotor.setPower(TRANSFER_SPEED);
 
-            } else if (gamepad2.left_stick_y < -0.05 ) {
+            } else if (gamepad2.left_stick_y < -0.05) {
                 intakeMotor.setPower(-INTAKE_SPEED);
 
                 transferMotor.setPower(TRANSFER_SPEED);
 
-            if(gamepad2.a){
-                transferMotor.setPower(TRANSFER_SPEED);
-            }else {
-                transferMotor.setPower(0);
-            }
+                if (gamepad2.a) {
+                    transferMotor.setPower(TRANSFER_SPEED);
+                } else {
+                    transferMotor.setPower(0);
+                }
 
 
-            }else if (gamepad2.y){
+            } else if (gamepad2.y) {
                 intakeMotor.setPower(INTAKE_SPEED);//was slower by .5 before
                 transferMotor.setPower(TRANSFER_SPEED);
                 gate.setPosition(GATE_OPEN);
@@ -146,7 +145,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 setTurretVelocity(velocity1, velocity2);
 
 
-            }else if (gamepad2.left_bumper) {
+            } else if (gamepad2.left_bumper) {
                 setTurretVelocity(0, 0);
             }
 
@@ -184,7 +183,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 fieldCentricCorrectionFactor = -follower.pose().heading();
             }
             if (gamepad1.right_bumper) {
-                follower.setPose(new Pose(8.5,8.5, follower.pose().heading()));
+                follower.setPose(new Pose(8.5, 8.5, follower.pose().heading()));
             }
             //PSEUDO AUTO AIM USING ODOMETRY
 
@@ -196,10 +195,10 @@ public class CompetitionTeleOp extends BaseOpMode {
                 }
                 if (follower.pose().y() > 70) {
                     targetY = 86.5;
-                }   else {
+                } else {
                     targetY = 54.5;
                 }
-                targetHeading = Math.toDegrees(Math.atan2(targetY-follower.pose().y(),targetX - follower.pose().x())); //get angle based on target
+                targetHeading = Math.toDegrees(Math.atan2(targetY - follower.pose().y(), targetX - follower.pose().x())); //get angle based on target
                 turning = true;
             }
             /*
@@ -227,7 +226,6 @@ im != null) {
  */
 
 
-
             double headingError = targetHeading - follower.pose().heading();
 
             if (turning) {
@@ -242,7 +240,7 @@ im != null) {
                 }
             }
             //TURRET HEADING
-            if(gamepad2.right_stick_x != 0) {
+            if (gamepad2.right_stick_x != 0) {
                 turretRelative += gamepad2.right_stick_x;
                 if (turretRelative < 0) {
                     turretRelative += 360;
@@ -260,7 +258,7 @@ im != null) {
                 turn = -gamepad1.right_stick_x * doSLOWMODE();
             }
 
-            if(gamepad1.yWasPressed()) {
+            if (gamepad1.yWasPressed()) {
                 fieldCentric = !fieldCentric;
             }
             if (!fieldCentric) {

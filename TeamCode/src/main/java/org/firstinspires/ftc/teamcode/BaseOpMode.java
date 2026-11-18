@@ -18,13 +18,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 
 import java.util.List;
+import java.util.Set;
 
 
 @Config
 abstract public class BaseOpMode extends LinearOpMode {
     public enum Alliance {
         RED,
-        BLUE,
+        BLUE
     }
     public enum UpCell {
         AUDIENCE,
@@ -175,6 +176,12 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     //steps 3 and 4: where the turret should point (servo degrees), NaN if we cant aim yet
     private double getRoughAim(double poseX, double poseY, double headingRad) {
+        Set<List<Integer>> ignoredTags;
+        if (chosenAlliance == Alliance.BLUE) {
+            ignoredTags = Set.of(RED_LIST);
+        } else if (chosenAlliance == Alliance.RED) {
+            ignoredTags = Set.of(BLUE_LIST);
+        }
         //limits not set yet, dont move
         if (Math.abs(TURRET_RIGHT_END - TURRET_LEFT_END) < 20) return Double.NaN;
 
