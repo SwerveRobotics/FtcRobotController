@@ -149,7 +149,8 @@ public class CompetitionAuto extends BaseOpMode{
 
             telemetry.update();
             if (chosenPath == AutoPath.GARDEN_PATH && !gardenPartTwoStarted && !Scheduler.isScheduled(gardenPartOne)){
-                hiveTipped = !IS_HIVE_SCORABLE();
+                //TODO
+                //hiveTipped = !IS_HIVE_SCORABLE();
                 schedule(autoRoutineGardenPartTwo(hiveTipped));
                 gardenPartTwoStarted = true;
             }
@@ -179,7 +180,8 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command shootBalls(int numBalls) {
         return sequential(
-                instant(() -> setTurretVelocity(LAUNCHER_SPEED)),
+                //TODO
+                instant(() -> setTurretVelocity(velocity1, velocity2)),
                 waitMs(5000), // tune this
                 instant(() -> intakeAndTransfer(true)),
                 repeat(sequential(
