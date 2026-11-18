@@ -25,8 +25,15 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double TRANSFER_SPEED = 1200;
     public static double BALLS_TO_LAUNCH_TIME = 10;
     public static double FOUR_BALLS_TIME = 10;
-    public static double PARTNER_LAUNCH_TIME= 10;
+    public double [] GATE_VOLTS = {2.61,1.69,0.87,0.15};
+    public double GATE_KP = 0.3;
+    public double gateError;
+    public static int gateIndex = 0;
+    double GATE_VOLT_TOLERANCE = 0.05;
 
+
+
+    public static double PARTNER_LAUNCH_TIME= 10;
     public static double DRIVING_CONTROL_DEADZONE = 0.05;
 
     protected DcMotorEx transferWheelMot;
