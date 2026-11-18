@@ -3,6 +3,8 @@ package org.firstinspires.ftc.teamcode;
 import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import java.lang.Math;
 import com.pedropathing.drivetrain.DrivePowers;
@@ -11,6 +13,11 @@ import com.pedropathing.follower.ManualDrive;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes.FiducialResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
+import java.util.List;
+import java.util.Set;
 
 
 @Config
@@ -53,8 +60,55 @@ public class CompetitionTeleOp extends BaseOpMode {
         chosenAlliance = PoseStorage.chosenAlliance;
         //flowerRamp.setPosition(RAMP_UP);
         targetPose = Pose.zero();
+        Set<List> ignoredTags = Set.of(RED_LIST);
+        if (chosenAlliance == Alliance.BLUE) {
+           ignoredTags = Set.of(RED_LIST);
+        }
+        else if (chosenAlliance == Alliance.RED) {
+            ignoredTags = Set.of(BLUE_LIST);
+        }
 
         while (opModeIsActive()) {
+            /**
+             *
+             */
+            LLResult result = limelight.getLatestResult();
+            if (result != null && result.isValid()) {
+                List<FiducialResult> fiducials = result.getFiducialResults();
+                for (FiducialResult tag : fiducials) {
+                    int id = tag.getFiducialId();
+
+                    // Skip any tag on your exclusion list
+                    if (ignoredTags.contains(id)) {
+                        continue;
+                    }
+                    double tx = tag.getTargetXDegrees();
+                    double ty = tag.getTargetYDegrees();
+                    telemetry.addData("Valid Tag " + id, "tx: %.2f, ty: %.2f", tx, ty);
+                }
+
+                double tx = result.getTx();
+                double currentHeadingInDegrees = Math.toDegrees(follower.pose().heading());
+                turnTurretAbsolute(follower.pose().heading(), currentHeadingInDegrees - tx);
+                telemetry.addData("Tag TX", tx);
+
+            } else {
+                // midpoint = (70.75, 70.75)
+                follower.pose().x();
+                follower.pose().y();
+                double xToOrigin = follower.pose().x() - 70.75;
+                double yToOrigin = follower.pose().y() -70.75;
+                double angleInRadian = Math.atan2(yToOrigin, xToOrigin);
+                double convertRadiansIntoDegrees = Math.toDegrees(angleInRadian);
+                turnTurretAbsolute(follower.pose().heading(), convertRadiansIntoDegrees + 180);
+                telemetry.addData("Robot x pose", follower.pose().x());
+                telemetry.addData("Robot y pose", follower.pose().y());
+                telemetry.addData("Robot current heading: ", Math.toDegrees(follower.pose().heading()));
+                telemetry.addData("Robot target heading", convertRadiansIntoDegrees + 180);
+            }
+
+
+
             //LAUNCH AND INTAKE CONTROLS
 
             //when left stick is pushed up set velocity

@@ -35,6 +35,7 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose autoParkingStartPose;
     private Pose shootPose; //small move forward before the first garden shot
     private boolean hiveTipped;
+    private int autoStage;
 
 
 
@@ -127,6 +128,7 @@ public class CompetitionAuto extends BaseOpMode{
         }
         follower.update();
         waitForStart();
+        autoStage = 1;
 
 
         while (opModeIsActive()) {
@@ -143,11 +145,13 @@ public class CompetitionAuto extends BaseOpMode{
                 telemetry.addData("Current path distance remaining", follower.distanceToEndpoint());
                 telemetry.addData("Path number", follower.pathIndex());
             }
+            telemetry.addData("Auto Stage", autoStage);
 
             telemetry.update();
             if (chosenPath.equals(AutoPath.GARDEN_PATH)) {
-                if (!Scheduler.isScheduled(autoRoutineGardenPartOne())) {
+                if (!Scheduler.isScheduled(autoRoutineGardenPartOne()) && autoStage == 1) {
                     schedule(autoRoutineGardenPartTwo(hiveTipped));
+                    autoStage = 2;
                 }
 
             }

@@ -54,15 +54,11 @@ abstract public class BaseOpMode extends LinearOpMode {
     //constants
     public static double LAUNCH_TIME = 350.0;
     //TODO: uh
-    public static double velocity2 = 1360;//1250
-
-    public static double velocity1 = 1360;//1250
+    public static double LAUNCHER_SPEED = 1360;//1250
     public static double AUTO_LAUNCHER_TIME = 3000;
     public static double INTAKE_SPEED = 1.0;
-    public static double GATE_OPEN = 0;
-    public static double GATE_CLOSED = 0.07;
-
-    public static double TRANSFER_SPEED = 1;
+    public static double GATE_OPEN = .8;
+    public static double TRANSFER_SPEED = 1500;
 
 
     public static double RAMP_UP = 0.3;//.14
@@ -78,9 +74,9 @@ abstract public class BaseOpMode extends LinearOpMode {
     public boolean hiveDown = true;
 //-------------------turret constants-----------------------------------------------
     //turret stuff, all in servo degrees (servo 0 to 1 = 0 to 360)
-    public static double TURRET_LEFT_END = 45;
-    public static double TURRET_RIGHT_END = 315;
-    public static double TURRET_CENTER_DEG = 0; //servo angle when the turret is straight
+    public static double TURRET_LEFT_END;
+    public static double TURRET_RIGHT_END;
+    public static double TURRET_CENTER_DEG = 180; //servo angle when the turret is straight
     public static double TURRET_STRAIGHT_OFFSET_DEG = 180; //where the turret shoots at center, from robot front, ccw is positive. 180 = out the back
     public static double TURRET_DIR = 1; //flip to -1 if it turns the wrong way
     public static double TURRET_LIMIT_MARGIN_DEG = 5; //stay this far inside the real stops
@@ -184,7 +180,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         double minDeg = Math.min(TURRET_LEFT_END, TURRET_RIGHT_END) + TURRET_LIMIT_MARGIN_DEG;
         double maxDeg = Math.max(TURRET_LEFT_END, TURRET_RIGHT_END) - TURRET_LIMIT_MARGIN_DEG;
 
-    //same angle can show up as desired, desired + 360, desired - 360
+        //same angle can show up as desired, desired + 360, desired - 360
         //pick the one that fits and is closest to where the turret is
         turretAtLimit = false;
         double best = Double.NaN;
@@ -247,7 +243,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         //limelight camera
 
-        //limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
         //set motors to be energized
         intakeMotor.setMotorEnable();
@@ -257,10 +253,10 @@ abstract public class BaseOpMode extends LinearOpMode {
         transferMotor.setMotorEnable();
 
         //Run using encoder
-        //intakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        intakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launchMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launchMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        //transferMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        transferMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         launchMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
                 new PIDFCoefficients(KP, KI, KD, KF));
@@ -271,10 +267,10 @@ abstract public class BaseOpMode extends LinearOpMode {
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         launchMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         launchMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        transferMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+        transferMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         //set direction
-        intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         transferMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         launchMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
         launchMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -297,12 +293,12 @@ abstract public class BaseOpMode extends LinearOpMode {
         turretServo.setPosition(TURRET_CENTER_DEG / 360.0);
         turretTimer.reset(); //for time
     }
-    public void setTurretVelocity(double velocity1, double velocity2) {
-        launchMotor1.setVelocity(velocity1);
-        launchMotor2.setVelocity(velocity2);
+    public void setTurretVelocity(double velocity) {
+        launchMotor1.setVelocity(velocity);
+        launchMotor2.setVelocity(velocity);
     }
     public boolean turretIsFast() {
-        return launchMotor1.getVelocity() > 0.95 * velocity1 && launchMotor2.getVelocity() > 0.95*velocity2;
+        return launchMotor1.getVelocity() > 0.95 * LAUNCHER_SPEED && launchMotor2.getVelocity() > 0.95*LAUNCHER_SPEED;
     }
     public double avgTurretSpeed() {
         return (launchMotor2.getVelocity() + launchMotor1.getVelocity())/2.0;
