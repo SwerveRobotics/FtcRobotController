@@ -180,6 +180,7 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command shootBalls(int numBalls) {
         return sequential(
+                instant(()->turnTurretRelative(0)),
                 //TODO
                 instant(() -> setTurretVelocity(velocity1, velocity2)),
                 waitMs(5000), // tune this
@@ -224,6 +225,9 @@ public class CompetitionAuto extends BaseOpMode{
     public Command moveForward(double millis) {
         return infinite(() -> follower.manual(0.3,0,0)).raceWith(waitMs(millis)).requiring(follower);
     }
+//    public Command determineTip(double) {
+//        return conditional(decider -> (hiveIsScorable))
+//    }
     public Command autoRoutineGardenPartOne() {
         return sequential(
                 waitMs(waitTimeMs),
@@ -249,6 +253,7 @@ public class CompetitionAuto extends BaseOpMode{
                 follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
                 intakeOff(),
                 rampUp()
+                //follow(follower, Paths.line(points[3], shootPose).constant(shootPose)),
         );
     }
     public Command autoRoutineGardenPartTwo(boolean hiveTipped) {

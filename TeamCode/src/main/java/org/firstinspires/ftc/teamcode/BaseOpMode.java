@@ -228,7 +228,15 @@ abstract public class BaseOpMode extends LinearOpMode {
             turretCommandedDeg += Math.signum(diff) * maxStep;
         }
 
-        turretServo.setPosition(Math.max(0, Math.min(1, turretCommandedDeg / 360.0)));
+        turretServo.setPosition(Math.max(0, Math.min(1, angleToServoPos(turretCommandedDeg))));
+        turretServo2.setPosition(Math.max(0, Math.min(1, angleToServoPos(turretCommandedDeg))));
+    }
+    public double angleToServoPos(double angle) {
+        if (angle > 270) {
+            angle -= 360;
+        }
+        double progress = (angle + 90)/(270);
+        return Math.max(Math.min(1,progress), 0);
     }
 
     public void initializeHardware() {
@@ -290,16 +298,12 @@ abstract public class BaseOpMode extends LinearOpMode {
         turnTurretRelative(turretRelative);
     }
     public void turnTurretRelative(double targetHeading) {
-        turretServo.setPosition(targetHeading / 360);
-        telemetry.addData("Target Relative Turret Position", targetHeading);
-
-
         //starts the turret and center degree
         turretCommandedDeg = TURRET_CENTER_DEG;
-        turretServo.setPosition(TURRET_CENTER_DEG / 360.0);
+        turretTargetDeg = targetHeading;
         turretTimer.reset(); //for time
     }
-    public void setTurretVelocity(double velocity1, double veloity2) {
+    public void setTurretVelocity(double velocity1, double velocity2) {
         launchMotor1.setVelocity(velocity1);
         launchMotor2.setVelocity(velocity2);
     }

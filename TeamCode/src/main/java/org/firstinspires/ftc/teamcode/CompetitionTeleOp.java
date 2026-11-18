@@ -243,7 +243,7 @@ im != null) {
             }
             //TURRET HEADING
             if(gamepad2.right_stick_x != 0) {
-                turretRelative += gamepad2.right_stick_x;
+                turretRelative += gamepad2.right_stick_x*0.100;
                 if (turretRelative < 0) {
                     turretRelative += 360;
                 }
