@@ -57,7 +57,13 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double LAUNCHER_SPEED = 1360;//1250
     public static double AUTO_LAUNCHER_TIME = 3000;
     public static double INTAKE_SPEED = 1.0;
-    public static double GATE_OPEN = .8;
+
+    public static double velocity1 = 1350;
+    public static double velocity2 = 1350;
+
+    public static double GATE_OPEN = 0;
+    public static double GATE_CLOSED = 0.07;
+
     public static double TRANSFER_SPEED = 1500;
 
 
@@ -293,9 +299,9 @@ abstract public class BaseOpMode extends LinearOpMode {
         turretServo.setPosition(TURRET_CENTER_DEG / 360.0);
         turretTimer.reset(); //for time
     }
-    public void setTurretVelocity(double velocity) {
-        launchMotor1.setVelocity(velocity);
-        launchMotor2.setVelocity(velocity);
+    public void setTurretVelocity(double velocity1, double veloity2) {
+        launchMotor1.setVelocity(velocity1);
+        launchMotor2.setVelocity(velocity2);
     }
     public boolean turretIsFast() {
         return launchMotor1.getVelocity() > 0.95 * LAUNCHER_SPEED && launchMotor2.getVelocity() > 0.95*LAUNCHER_SPEED;

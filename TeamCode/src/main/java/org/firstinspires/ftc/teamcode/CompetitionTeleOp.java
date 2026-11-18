@@ -56,32 +56,37 @@ public class CompetitionTeleOp extends BaseOpMode {
         //autoAim = new AutoAim();
         //driver press st art on DS
         waitForStart();
+
+
+        //TODO: commented out RED_LIST
         follower.setPose(PoseStorage.endPose);
         chosenAlliance = PoseStorage.chosenAlliance;
         //flowerRamp.setPosition(RAMP_UP);
         targetPose = Pose.zero();
-        Set<List> ignoredTags = Set.of(RED_LIST);
+        //Set<List> ignoredTags = Set.of(RED_LIST);
         if (chosenAlliance == Alliance.BLUE) {
-           ignoredTags = Set.of(RED_LIST);
+           //ignoredTags = Set.of(RED_LIST);
         }
         else if (chosenAlliance == Alliance.RED) {
-            ignoredTags = Set.of(BLUE_LIST);
+            //ignoredTags = Set.of(BLUE_LIST);
         }
 
         while (opModeIsActive()) {
             /**
              *
              */
-            LLResult result = limelight.getLatestResult();
+            //LLResult result = limelight.getLatestResult();
+            LLResult result = null;
+
             if (result != null && result.isValid()) {
                 List<FiducialResult> fiducials = result.getFiducialResults();
                 for (FiducialResult tag : fiducials) {
                     int id = tag.getFiducialId();
 
-                    // Skip any tag on your exclusion list
-                    if (ignoredTags.contains(id)) {
-                        continue;
-                    }
+                    // Skip any tag on your exclusion list TODO: commented out below
+//                    if (ignoredTags.contains(id)) {
+//                        continue;
+//                    }
                     double tx = tag.getTargetXDegrees();
                     double ty = tag.getTargetYDegrees();
                     telemetry.addData("Valid Tag " + id, "tx: %.2f, ty: %.2f", tx, ty);
