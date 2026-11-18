@@ -4,6 +4,7 @@ import com.pedropathing.follower.Follower;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 
 abstract public class TuneLauncherPIDF extends LinearOpMode {
     protected Follower follower;
@@ -11,16 +12,22 @@ abstract public class TuneLauncherPIDF extends LinearOpMode {
     protected DcMotorEx launchMoto;
     public static double LAUNCHERspeed = 1360;//1250
     public static double INTAKEspeed = 1.0;
+    protected Servo turretServo;
+
+    protected Servo turretServo2 ;
+
 
     protected void initializeDrive() {
         follower = Constants.create(hardwareMap);
 
         launchMoto = hardwareMap.get(DcMotorEx.class, "motLaunch");
-
         launchMoto.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         intakeMoto = hardwareMap.get(DcMotorEx.class, "intake");
         intakeMoto.setMotorEnable();
         launchMoto.setMotorEnable();
+
+        turretServo = hardwareMap.get(Servo.class, "turretServo");
+        turretServo2 = hardwareMap.get(Servo.class, "turretServo2");
 
     }
 

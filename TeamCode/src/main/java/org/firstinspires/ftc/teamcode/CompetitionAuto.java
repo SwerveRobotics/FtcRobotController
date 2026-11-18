@@ -177,7 +177,7 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command shootBalls(int numBalls) {
         return sequential(
-                instant(() -> setTurretVelocity(LAUNCHER_SPEED)),
+                instant(() -> setTurretVelocity(velocity1, velocity2)),
                 waitMs(5000), // tune this
                 instant(() -> intakeAndTransfer(true)),
                 repeat(sequential(

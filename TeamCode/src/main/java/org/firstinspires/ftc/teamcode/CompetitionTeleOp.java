@@ -51,7 +51,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         waitForStart();
         follower.setPose(PoseStorage.endPose);
         chosenAlliance = PoseStorage.chosenAlliance;
-        flowerRamp.setPosition(RAMP_UP);
+        //flowerRamp.setPosition(RAMP_UP);
         targetPose = Pose.zero();
 
         while (opModeIsActive()) {
@@ -60,20 +60,35 @@ public class CompetitionTeleOp extends BaseOpMode {
             //when left stick is pushed up set velocity
             if (gamepad2.left_stick_y > 0.05) {
                 intakeMotor.setPower(INTAKE_SPEED);
+                transferMotor.setPower(TRANSFER_SPEED);
+
             } else if (gamepad2.left_stick_y < -0.05 ) {
                 intakeMotor.setPower(-INTAKE_SPEED);
 
+                transferMotor.setPower(TRANSFER_SPEED);
+
+            if(gamepad2.a){
+                transferMotor.setPower(TRANSFER_SPEED);
+            }else {
+                transferMotor.setPower(0);
+            }
+
+
             }else if (gamepad2.y){
                 intakeMotor.setPower(INTAKE_SPEED);//was slower by .5 before
-                transferMotor.setVelocity(TRANSFER_SPEED);
+                transferMotor.setPower(TRANSFER_SPEED);
+                gate.setPosition(GATE_OPEN);
             } else {
                 intakeMotor.setPower(0);
+                gate.setPosition(GATE_CLOSED);
             }
             //launching controls
             if (gamepad2.right_bumper) {
-                setTurretVelocity(LAUNCHER_SPEED);
+                setTurretVelocity(velocity1, velocity2);
+
+
             }else if (gamepad2.left_bumper) {
-                setTurretVelocity(0);
+                setTurretVelocity(0, 0);
             }
 
             // Hold Y to launch
@@ -87,23 +102,23 @@ public class CompetitionTeleOp extends BaseOpMode {
             //flower intake up and down controls
             // Flower intake up and down controls
 
-            if (gamepad2.dpad_down) {
-                flowerRamp.getController().pwmEnable();
-                flowerRamp.setPosition(RAMP_DOWN);
-                rampMoving = false;
-            }
-
-            if (gamepad2.dpad_up && !lastDpadUp) {
-                flowerRamp.getController().pwmEnable();
-                flowerRamp.setPosition(RAMP_UP);
-                timer.reset();
-                rampMoving = true;
-            }
-            if (rampMoving && timer.milliseconds() >= 700) {
-                flowerRamp.getController().pwmDisable();
-                telemetry.addLine("DISABLEDDDD");
-                rampMoving = false;
-            }
+//            if (gamepad2.dpad_down) {
+//                flowerRamp.getController().pwmEnable();
+//                flowerRamp.setPosition(RAMP_DOWN);
+//                rampMoving = false;
+//            }
+//
+//            if (gamepad2.dpad_up && !lastDpadUp) {
+//                flowerRamp.getController().pwmEnable();
+//                flowerRamp.setPosition(RAMP_UP);
+//                timer.reset();
+//                rampMoving = true;
+//            }
+//            if (rampMoving && timer.milliseconds() >= 700) {
+//                flowerRamp.getController().pwmDisable();
+//                telemetry.addLine("DISABLEDDDD");
+//                rampMoving = false;
+//            }
 
             lastDpadUp = gamepad2.dpad_up;
             if (gamepad1.left_bumper) {

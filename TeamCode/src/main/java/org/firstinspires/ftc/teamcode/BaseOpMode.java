@@ -34,10 +34,13 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected DcMotorEx intakeMotor;
     protected DcMotorEx transferMotor;
     protected Servo turretServo;
+
+    protected Servo turretServo2 ;
+
     protected Servo gate;
     protected Servo flowerRamp;
     protected GoBildaPinpointDriver pinpoint;
-    protected Limelight3A limelight;
+    //protected Limelight3A limelight;
     protected Alliance chosenAlliance;
     protected Follower follower;
 
@@ -51,11 +54,15 @@ abstract public class BaseOpMode extends LinearOpMode {
     //constants
     public static double LAUNCH_TIME = 350.0;
     //TODO: uh
-    public static double LAUNCHER_SPEED = 1360;//1250
+    public static double velocity2 = 1360;//1250
+
+    public static double velocity1 = 1360;//1250
     public static double AUTO_LAUNCHER_TIME = 3000;
     public static double INTAKE_SPEED = 1.0;
-    public static double GATE_OPEN = .8;
-    public static double TRANSFER_SPEED = 1500;
+    public static double GATE_OPEN = 0;
+    public static double GATE_CLOSED = 0.07;
+
+    public static double TRANSFER_SPEED = 1;
 
 
     public static double RAMP_UP = 0.3;//.14
@@ -71,9 +78,9 @@ abstract public class BaseOpMode extends LinearOpMode {
     public boolean hiveDown = true;
 //-------------------turret constants-----------------------------------------------
     //turret stuff, all in servo degrees (servo 0 to 1 = 0 to 360)
-    public static double TURRET_LEFT_END;
-    public static double TURRET_RIGHT_END;
-    public static double TURRET_CENTER_DEG = 180; //servo angle when the turret is straight
+    public static double TURRET_LEFT_END = 45;
+    public static double TURRET_RIGHT_END = 315;
+    public static double TURRET_CENTER_DEG = 0; //servo angle when the turret is straight
     public static double TURRET_STRAIGHT_OFFSET_DEG = 180; //where the turret shoots at center, from robot front, ccw is positive. 180 = out the back
     public static double TURRET_DIR = 1; //flip to -1 if it turns the wrong way
     public static double TURRET_LIMIT_MARGIN_DEG = 5; //stay this far inside the real stops
@@ -86,36 +93,36 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double GOAL_Y_LOW = 54.5;
     public static boolean AUDIENCE_CELL_IS_HIGH_Y = true; //TODO which y is which cell
 //---------------------------------------------------------------
-    protected boolean IS_HIVE_SCORABLE () {
-        LLResult result = limelight.getLatestResult();
-            if (result != null && result.isValid()) {
-                boolean foundScorableTarget = false;
-                double targetErrorX = 0;
-                for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
-                    int id = tag.getFiducialId();
-                    double distMM = distanceToTag(tag);
-                    if (distMM > 0.85) { //dist of 800 or less is down, dist of 900 or more is up
-                        if (tagBelongs(chosenAlliance, id)) {
-                            foundScorableTarget = true;
-                        } else {
-                            telemetry.addLine("wrong team detected");
-                        }
-                    }
-                    targetErrorX = tag.getTargetXDegrees();
-                    telemetry.addData("Horizontal Error (tx)", targetErrorX);
-                    telemetry.addData("Distance to camera", distanceToTag(tag));
-
-            }
-            if (!foundScorableTarget ) {
-                telemetry.addData("status","Target Not Found");
-            }
-            return foundScorableTarget;
-        }
-        else {
-            telemetry.addData("status", "No Valid Targets Visible");
-        }
-        return false;
-    }
+//    //protected boolean IS_HIVE_SCORABLE () {
+//        LLResult result = limelight.getLatestResult();
+//            if (result != null && result.isValid()) {
+//                boolean foundScorableTarget = false;
+//                double targetErrorX = 0;
+//                for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
+//                    int id = tag.getFiducialId();
+//                    double distMM = distanceToTag(tag);
+//                    if (distMM > 0.85) { //dist of 800 or less is down, dist of 900 or more is up
+//                        if (tagBelongs(chosenAlliance, id)) {
+//                            foundScorableTarget = true;
+//                        } else {
+//                            telemetry.addLine("wrong team detected");
+//                        }
+//                    }
+//                    targetErrorX = tag.getTargetXDegrees();
+//                    telemetry.addData("Horizontal Error (tx)", targetErrorX);
+//                    telemetry.addData("Distance to camera", distanceToTag(tag));
+//
+//            }
+//            if (!foundScorableTarget ) {
+//                telemetry.addData("status","Target Not Found");
+//            }
+//            return foundScorableTarget;
+//        }
+//        else {
+//            telemetry.addData("status", "No Valid Targets Visible");
+//        }
+//        return false;
+//    }
     protected double distanceToTag(LLResultTypes.FiducialResult tag) {
         Position x = tag.getTargetPoseCameraSpace().getPosition();
         return distanceToOrigin(x);
@@ -132,12 +139,12 @@ abstract public class BaseOpMode extends LinearOpMode {
         return tagBlue == teamBlue;
     }
 
-    public void initializeLimelight() {
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        telemetry.setMsTransmissionInterval(11);
-        limelight.pipelineSwitch(0);
-        limelight.start();
-    }
+//    public void initializeLimelight() {
+//        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+//        telemetry.setMsTransmissionInterval(11);
+//        limelight.pipelineSwitch(0);
+//        limelight.start();
+//    }
 
     //FUNCTION ASSUMES THAT THE SERVO'S LIMITS ARE FROM ZERO TO 360(we checked with hardware and they said it's right)
 
@@ -221,22 +228,26 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         turretServo.setPosition(Math.max(0, Math.min(1, turretCommandedDeg / 360.0)));
     }
+
     public void initializeHardware() {
-        initializeLimelight();
+        //initializeLimelight();
 
         //initialize motors
         intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
         transferMotor = hardwareMap.get(DcMotorEx.class, "transfer");
+
         launchMotor1 = hardwareMap.get(DcMotorEx.class, "launch1");
         launchMotor2 = hardwareMap.get(DcMotorEx.class, "launch2");
         turretServo = hardwareMap.get(Servo.class, "turretServo");
-        flowerRamp = hardwareMap.get(Servo.class, "flowerRamp");
+        turretServo2 = hardwareMap.get(Servo.class, "turretServo2");
+        gate = hardwareMap.get(Servo.class, "gate");
+        //flowerRamp = hardwareMap.get(Servo.class, "flowerRamp");
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
 
         //limelight camera
 
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        //limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
         //set motors to be energized
         intakeMotor.setMotorEnable();
@@ -246,10 +257,10 @@ abstract public class BaseOpMode extends LinearOpMode {
         transferMotor.setMotorEnable();
 
         //Run using encoder
-        intakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //intakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launchMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launchMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        transferMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //transferMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         launchMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
                 new PIDFCoefficients(KP, KI, KD, KF));
@@ -260,10 +271,10 @@ abstract public class BaseOpMode extends LinearOpMode {
         intakeMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         launchMotor1.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         launchMotor2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        transferMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        transferMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
         //set direction
-        intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         transferMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         launchMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
         launchMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -286,12 +297,12 @@ abstract public class BaseOpMode extends LinearOpMode {
         turretServo.setPosition(TURRET_CENTER_DEG / 360.0);
         turretTimer.reset(); //for time
     }
-    public void setTurretVelocity(double velocity) {
-        launchMotor1.setVelocity(velocity);
-        launchMotor2.setVelocity(velocity);
+    public void setTurretVelocity(double velocity1, double velocity2) {
+        launchMotor1.setVelocity(velocity1);
+        launchMotor2.setVelocity(velocity2);
     }
     public boolean turretIsFast() {
-        return launchMotor1.getVelocity() > 0.95 * LAUNCHER_SPEED && launchMotor2.getVelocity() > 0.95*LAUNCHER_SPEED;
+        return launchMotor1.getVelocity() > 0.95 * velocity1 && launchMotor2.getVelocity() > 0.95*velocity2;
     }
     public double avgTurretSpeed() {
         return (launchMotor2.getVelocity() + launchMotor1.getVelocity())/2.0;
@@ -313,7 +324,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         telemetry.addData("Transfer speed", transferMotor.getVelocity());
         telemetry.addData("Average Turret Speed", avgTurretSpeed() );
         telemetry.addData("Turret position:", turretServo.getPosition());
-        telemetry.addData("Ramp Position",flowerRamp.getPosition() == RAMP_UP ? "Up":"Down");
-        telemetry.addData("Is Hive Scorable", IS_HIVE_SCORABLE());
+        //telemetry.addData("Ramp Position",flowerRamp.getPosition() == RAMP_UP ? "Up":"Down");
+        //telemetry.addData("Is Hive Scorable", IS_HIVE_SCORABLE());
     }
 }
