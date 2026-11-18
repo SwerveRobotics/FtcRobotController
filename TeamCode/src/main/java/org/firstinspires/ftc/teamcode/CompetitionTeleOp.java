@@ -113,6 +113,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             }
 
 
+
             //LAUNCH AND INTAKE CONTROLS
 
             //when left stick is pushed up set velocity
@@ -183,7 +184,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 fieldCentricCorrectionFactor = -follower.pose().heading();
             }
             if (gamepad1.right_bumper) {
-                follower.setPose(new Pose(8.5,8.5, follower.pose().heading()));
+                follower.setPose(new Pose(8.5, 8.5, follower.pose().heading()));
             }
             //PSEUDO AUTO AIM USING ODOMETRY
 
