@@ -10,6 +10,8 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.Scheduler;
+
+import static com.pedropathing.ivy.Scheduler.isScheduled;
 import static com.pedropathing.ivy.Scheduler.schedule;
 import static com.pedropathing.ivy.commands.Commands.*;
 import static com.pedropathing.ivy.groups.Groups.repeat;
@@ -35,9 +37,8 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose autoParkingStartPose;
     private Pose shootPose; //small move forward before the first garden shot
     private boolean hiveTipped;
-    private int autoStage;
-
-
+    private Command gardenPartOne;
+    private boolean gardenPartTwoStarted = false;
 
     private final ElapsedTime timer = new ElapsedTime();
 
@@ -110,7 +111,8 @@ public class CompetitionAuto extends BaseOpMode{
             case GARDEN_PATH:
                 initializeGardenPath(points, poseFactory);
                 follower.setPose(points[0]);
-                schedule(autoRoutineGardenPartOne());
+                gardenPartOne = autoRoutineGardenPartOne();
+                schedule(gardenPartOne);
                 break;
             case FLOWER_PATH:
                 initializeFlowerPath(points, poseFactory);
@@ -128,7 +130,6 @@ public class CompetitionAuto extends BaseOpMode{
         }
         follower.update();
         waitForStart();
-        autoStage = 1;
 
 
         while (opModeIsActive()) {
@@ -145,15 +146,12 @@ public class CompetitionAuto extends BaseOpMode{
                 telemetry.addData("Current path distance remaining", follower.distanceToEndpoint());
                 telemetry.addData("Path number", follower.pathIndex());
             }
-            telemetry.addData("Auto Stage", autoStage);
 
             telemetry.update();
-            if (chosenPath.equals(AutoPath.GARDEN_PATH)) {
-                if (!Scheduler.isScheduled(autoRoutineGardenPartOne()) && autoStage == 1) {
-                    schedule(autoRoutineGardenPartTwo(hiveTipped));
-                    autoStage = 2;
-                }
-
+            if (chosenPath == AutoPath.GARDEN_PATH && !gardenPartTwoStarted && !Scheduler.isScheduled(gardenPartOne)){
+                hiveTipped = !IS_HIVE_SCORABLE();
+                schedule(autoRoutineGardenPartTwo(hiveTipped));
+                gardenPartTwoStarted = true;
             }
         }
         PoseStorage.endPose = follower.pose();
@@ -181,7 +179,7 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command shootBalls(int numBalls) {
         return sequential(
-                instant(() -> setTurretVelocity(velocity1, velocity2)),
+                instant(() -> setTurretVelocity(LAUNCHER_SPEED)),
                 waitMs(5000), // tune this
                 instant(() -> intakeAndTransfer(true)),
                 repeat(sequential(

@@ -69,17 +69,16 @@ public class DriveOnly extends TuneLauncherPIDF {
             }
             if (gamepad2.left_stick_y > 0.05) {
                 intakeMoto.setPower(INTAKEspeed);
-            } else if (gamepad2.left_stick_y < -0.05 ) {
+            } else if (gamepad2.left_stick_y < -0.05) {
                 intakeMoto.setPower(-INTAKEspeed);
 
 
-
                 if (gamepad2.right_bumper) {
-                launchMoto.setVelocity(LAUNCHERspeed);
-                telemetry.addLine("Launcher is being intiated!");
-            }else if (gamepad2.left_bumper) {
-                launchMoto.setVelocity(0);
-            }
+                    launchMoto.setVelocity(LAUNCHERspeed);
+                    telemetry.addLine("Launcher is being intiated!");
+                } else if (gamepad2.left_bumper) {
+                    launchMoto.setVelocity(0);
+                }
             }
             follower.update();
 
@@ -89,7 +88,9 @@ public class DriveOnly extends TuneLauncherPIDF {
             telemetry.addData("Field-centric", fieldCentric);
             telemetry.addData("FC correction (deg)", Math.toDegrees(fieldCentricCorrection));
             telemetry.addData("Slow mode scale", scale);
+
             telemetry.update();
+
         }
     }
 }

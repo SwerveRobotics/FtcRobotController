@@ -15,16 +15,7 @@ public class Servo_testing extends BaseOpMode {
         while (opModeIsActive()) {
 
             double joystick = -gamepad1.right_stick_y;
-//            if(gamepad1.a){
-//                turretServo.setPosition(1.0);
-//                turretServo2.setPosition(1.0);
-//
-//            }
-//            else if(gamepad1.b){
-//                turretServo.setPosition(0);
-//                turretServo2.setPosition(0);
-//
-//            }
+
             if (Math.abs(joystick) > 0.05) {
                 position += joystick * 0.05/100;
             }
