@@ -62,14 +62,14 @@ public class CompetitionAuto extends BaseOpMode{
 //    public Command stopIntake = instant(() -> intakeMot.setPower(0.0) );
     public Command aRleaveAndPark() {
         return sequential(
-            follow(follower, leaveAndPark())
+            follow(follower, launchAndPark())
 
         );
     }
     public Command aRlaunchAndPark() {
         return sequential(
-                launchFourBalls(),
-                follow(follower, launchAndPark())
+                launchFourBalls()
+                //follow(follower, launchAndPark())
 
         );
     }
@@ -170,7 +170,7 @@ public class CompetitionAuto extends BaseOpMode{
         } else {
             poseFactory = PoseFactory.degrees();
         }
-        follower.setPose(launchAndParkStart_2);
+        follower.setPose(startPos);
         Scheduler.reset();
 
 
@@ -262,9 +262,14 @@ public class CompetitionAuto extends BaseOpMode{
                 // Turn on launcher flywheels
                 instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
                 instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
+                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[0])*GATE_KP)),
 
                 // Wait for four balls to launch7
-                waitMs(FOUR_BALLS_TIME), //TODO: need a constant for this too to tune later
+                waitMs(2000),
+                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[1])*GATE_KP)),
+
+                // Wait for four balls to launch7
+                waitMs(2000), //TODO: need a constant for this too to tune later
 
                 // Turn launcher off
                 instant(() -> transferWheelMot.setPower(0.0)),

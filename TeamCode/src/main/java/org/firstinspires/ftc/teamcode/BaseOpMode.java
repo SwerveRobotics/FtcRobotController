@@ -23,8 +23,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double WHEEL_STOP_SPEED = 0;
     public static double INTAKE_SPEED_MULTIPLIER = 2000;
     public static double TRANSFER_SPEED = 1200;
-    public static double BALLS_TO_LAUNCH_TIME = 10;
-    public static double FOUR_BALLS_TIME = 10;
+    public static double BALLS_TO_LAUNCH_TIME = 10000;
+    public static double FOUR_BALLS_TIME = 10000;
     public double [] GATE_VOLTS = {2.61,1.69,0.87,0.15};
     public double GATE_KP = 0.3;
     public double gateError;
