@@ -243,7 +243,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         //limelight camera
 
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        //limelight = hardwareMap.get(Limelight3A.class, "limelight");
 
         //set motors to be energized
         intakeMotor.setMotorEnable();
