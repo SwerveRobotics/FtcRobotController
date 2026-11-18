@@ -248,7 +248,7 @@ abstract public class BaseOpMode extends LinearOpMode {
             angle -= 360;
         }
         double progress = (angle + 90)/(270);
-        return Math.max(Math.min(1,progress), 0);
+        return Math.max(Math.min(0.9379,progress*0.9379), 0);
     }
 
     public void initializeHardware() {
