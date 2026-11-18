@@ -63,6 +63,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double AUTO_LAUNCHER_TIME = 3000;
     public static double INTAKE_SPEED = 1.0;
 
+
     public static double velocity1 = 850;
     public static double velocity2 = 800;
 

@@ -121,6 +121,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 transferMotor.setPower(TRANSFER_SPEED);
 
             } else if (gamepad2.left_stick_y < -0.05) {
+
                 intakeMotor.setPower(-INTAKE_SPEED);
 
                 transferMotor.setPower(-TRANSFER_SPEED);

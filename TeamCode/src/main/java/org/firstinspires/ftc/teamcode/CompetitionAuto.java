@@ -206,7 +206,8 @@ public class CompetitionAuto extends BaseOpMode{
                     intakeMotor.setPower(INTAKE_SPEED);
                 })
                 .setDone(() -> timer.milliseconds() >= millis)
-                .setEnd(endCondition -> {
+                .setEnd(endCondition ->
+                {
                     intakeMotor.setPower(0);
                 })
                 .requiring(intakeMotor);
