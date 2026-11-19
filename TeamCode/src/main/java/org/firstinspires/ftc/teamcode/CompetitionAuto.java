@@ -30,17 +30,17 @@ public class CompetitionAuto extends BaseOpMode{
     private PoseFactory poseFactory = PoseFactory.degrees();
     private Pose leaveAndParkStart = poseFactory.of(132.832, 59.8271, 90);
     private Pose leaveAndParkStart_2 = poseFactory.of(132.832, 59.8271, 180);
-    private Pose leaveAndPark = poseFactory.of(127, 32, 180);
+    private Pose leaveAndPark = poseFactory.of(127, 35, 180);
     private Pose leaveAndParkControl1 = poseFactory.of(96, 50, 180);
 
     //For launch and park path
     //private final Pose start = poseFactory.of(84, 134, 90);
     private Pose launchAndParkStart_2 = poseFactory.of(84, 134, 270);
-    private Pose launchAndPark = poseFactory.of(127, 32, 180);
+    private Pose launchAndPark = poseFactory.of(129, 45, 180);
     private Pose launchAndParkControl1 = poseFactory.of(125, 132, 0);
 
     private Pose hDLaunchandParkStart = poseFactory.of(80, 9, 90);
-    private Pose hDLaunchandPark = poseFactory.of(127, 32, 180);
+    private Pose hDLaunchandPark = poseFactory.of(127, 29, 180);
     private Pose hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
     boolean redAlliance;
     private Command decide;
@@ -68,15 +68,15 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command aRlaunchAndPark() {
         return sequential(
-                launchFourBalls()
-                //follow(follower, launchAndPark())
+                launchFourBalls(),
+                follow(follower, launchAndPark())
 
         );
     }
     public Command aRHDlaunchAndPark() {
         return sequential(
-                waitMs(PARTNER_LAUNCH_TIME),
-                launchFourBalls(),
+                //waitMs(PARTNER_LAUNCH_TIME),
+                //launchFourBalls(),
                 follow(follower, hDLaunchandPark())
 
         );
@@ -254,27 +254,40 @@ public class CompetitionAuto extends BaseOpMode{
     public Command launchFourBalls() {
         return sequential(
                 // Turn on transfer wheel
+                instant(() -> lowerFlywheelMot.setVelocity(LOWER_LAUNCHER_SPEED)),
+                instant(() -> upperFlywheelMot.setVelocity(UPPER_LAUNCHER_SPEED)),
+                waitMs(BALLS_TO_LAUNCH_TIME),
                 instant(() -> transferWheelMot.setVelocity(TRANSFER_SPEED)),
 
                 // Wait for balls to get to launcher
-                waitMs(BALLS_TO_LAUNCH_TIME), //TODO: need to decide a constant value
+                waitMs(1500), //TODO: need to decide a constant value
 
                 // Turn on launcher flywheels
-                instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
-                instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
-                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[0])*GATE_KP)),
+//                instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
+//                instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
+                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[0])*0.1)),
 
                 // Wait for four balls to launch7
                 waitMs(2000),
-                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[1])*GATE_KP)),
+                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[1])*0.1)),
 
                 // Wait for four balls to launch7
-                waitMs(2000), //TODO: need a constant for this too to tune later
+                waitMs(2000),
+                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[2])*0.1)),
+
+                // Wait for four balls to launch7
+                waitMs(2000),
+                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[3])*0.1)),
+
+                // Wait for four balls to launch7
+                waitMs(2000),
+                //TODO: need a constant for this too to tune later
 
                 // Turn launcher off
                 instant(() -> transferWheelMot.setPower(0.0)),
                 instant(() -> lowerFlywheelMot.setPower(0.0)),
-                instant(() -> upperFlywheelMot.setPower(0.0))
+                instant(() -> upperFlywheelMot.setPower(0.0)),
+                instant(() -> gateServo.setPower(0.0))
         );
       }
 

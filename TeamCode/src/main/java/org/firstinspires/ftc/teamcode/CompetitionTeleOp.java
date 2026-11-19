@@ -67,6 +67,13 @@ public class CompetitionTeleOp extends BaseOpMode{
             gateError = currentVoltage - targetVoltage;
 
             gateServo.setPower(GATE_KP * gateError);
+//            if(gateIndex != 0) {
+//                gateServo.setPower(GATE_KP * gateError);
+//            } else { gateServo.setPower(MATH.abs(GATE_KP * gateError));}
+
+
+///
+//
 
             telemetry.addData("Gate Target", targetVoltage);
             telemetry.addData("Gate Current", currentVoltage);
@@ -74,8 +81,8 @@ public class CompetitionTeleOp extends BaseOpMode{
 
 
             if (gamepad2.yWasPressed()) {
-                lowerFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_TOPSPIN);
-                upperFlywheelMot.setVelocity(LAUNCHER_SPEED);
+                lowerFlywheelMot.setVelocity(LOWER_LAUNCHER_SPEED);
+                upperFlywheelMot.setVelocity(UPPER_LAUNCHER_SPEED);
             }
 
 
