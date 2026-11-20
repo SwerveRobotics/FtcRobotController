@@ -49,6 +49,8 @@ abstract public class BaseOpMode extends LinearOpMode {
 
 
     protected UpCell upCell = UpCell.UNKNOWN; //which cell is up, step 1 sets this
+    //to TEST turret servo in teleop
+    public double position = 0.3163;
     protected boolean turretAutoAim = true;
     private double turretCommandedDeg = 180;
     private double turretTargetDeg = 180;
@@ -61,13 +63,14 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double AUTO_LAUNCHER_TIME = 3000;
     public static double INTAKE_SPEED = 1.0;
 
-    public static double velocity1 = 1350;
-    public static double velocity2 = 1350;
+
+    public static double velocity1 = 850;
+    public static double velocity2 = 800;
 
     public static double GATE_OPEN = 0;
-    public static double GATE_CLOSED = 0.07;
+    public static double GATE_CLOSED = 0.13;
 
-    public static double TRANSFER_SPEED = 1500;
+    public static double TRANSFER_SPEED = 1.0;//1
 
 
     public static double RAMP_UP = 0.3;//.14
@@ -81,7 +84,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double KF = 15;
     // For seeing if hive is down or not
     public boolean hiveDown = true;
-//-------------------turret constants-----------------------------------------------
+    //-------------------turret constants-----------------------------------------------
     //turret stuff, all in servo degrees (servo 0 to 1 = 0 to 360)
     public static double TURRET_LEFT_END;
     public static double TURRET_RIGHT_END;
@@ -282,7 +285,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         intakeMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launchMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         launchMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        transferMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        //transferMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
         launchMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER,
                 new PIDFCoefficients(KP, KI, KD, KF));
@@ -296,7 +299,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         transferMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         //set direction
-        intakeMotor.setDirection(DcMotorSimple.Direction.FORWARD);
+        intakeMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         transferMotor.setDirection(DcMotorSimple.Direction.FORWARD);
         launchMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
         launchMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
@@ -319,6 +322,11 @@ abstract public class BaseOpMode extends LinearOpMode {
         launchMotor1.setVelocity(velocity1);
         launchMotor2.setVelocity(velocity2);
     }
+    public void servoPosition(double position) {
+        turretServo.setPosition(position);
+        turretServo2.setPosition(position);
+    }
+
     public boolean turretIsFast() {
         return launchMotor1.getVelocity() > 0.95 * LAUNCHER_SPEED && launchMotor2.getVelocity() > 0.95*LAUNCHER_SPEED;
     }
@@ -339,7 +347,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         telemetry.addData("Y", follower.pose().y());
         telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
         telemetry.addData("Intake speed", intakeMotor.getVelocity());
-        telemetry.addData("Transfer speed", transferMotor.getVelocity());
+        telemetry.addData("Transfer speed", transferMotor.getPower());
         telemetry.addData("Average Turret Speed", avgTurretSpeed() );
         telemetry.addData("Turret position:", turretServo.getPosition());
         //telemetry.addData("Ramp Position",flowerRamp.getPosition() == RAMP_UP ? "Up":"Down");

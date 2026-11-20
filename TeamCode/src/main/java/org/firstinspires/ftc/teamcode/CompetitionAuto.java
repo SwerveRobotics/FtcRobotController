@@ -173,10 +173,10 @@ public class CompetitionAuto extends BaseOpMode{
                 .requiring(intakeMotor);
     }
     public Command rampUp() {
-        return instant(() -> flowerRamp.setPosition(RAMP_UP));
+        return instant(() -> { if (flowerRamp != null) flowerRamp.setPosition(RAMP_UP); });
     }
     public Command rampDown() {
-        return instant(() -> flowerRamp.setPosition(RAMP_DOWN));
+        return instant(() -> { if (flowerRamp != null) flowerRamp.setPosition(RAMP_DOWN); });
     }
     public Command shootBalls(int numBalls) {
         return sequential(
@@ -207,7 +207,8 @@ public class CompetitionAuto extends BaseOpMode{
                     intakeMotor.setPower(INTAKE_SPEED);
                 })
                 .setDone(() -> timer.milliseconds() >= millis)
-                .setEnd(endCondition -> {
+                .setEnd(endCondition ->
+                {
                     intakeMotor.setPower(0);
                 })
                 .requiring(intakeMotor);

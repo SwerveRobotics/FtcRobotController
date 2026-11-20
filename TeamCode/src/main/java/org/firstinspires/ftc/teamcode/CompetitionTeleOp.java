@@ -61,7 +61,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         //TODO: commented out RED_LIST
         follower.setPose(PoseStorage.endPose);
         chosenAlliance = PoseStorage.chosenAlliance;
-        flowerRamp.setPosition(RAMP_UP);
+        //flowerRamp.setPosition(RAMP_UP);
         targetPose = Pose.zero();
         //Set<List> ignoredTags = Set.of(RED_LIST);
         Set<List<Integer>> ignoredTags;
@@ -94,7 +94,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 
                 double tx = result.getTx();
                 double currentHeadingInDegrees = Math.toDegrees(follower.pose().heading());
-                turnTurretAbsolute(follower.pose().heading(), currentHeadingInDegrees - tx);
+                //turnTurretAbsolute(follower.pose().heading(), currentHeadingInDegrees - tx);
                 telemetry.addData("Tag TX", tx);
 
             } else {
@@ -105,7 +105,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 double yToOrigin = follower.pose().y() - 70.75;
                 double angleInRadian = Math.atan2(yToOrigin, xToOrigin);
                 double convertRadiansIntoDegrees = Math.toDegrees(angleInRadian);
-                turnTurretAbsolute(follower.pose().heading(), convertRadiansIntoDegrees + 180);
+                //turnTurretAbsolute(follower.pose().heading(), convertRadiansIntoDegrees + 180);
                 telemetry.addData("Robot x pose", follower.pose().x());
                 telemetry.addData("Robot y pose", follower.pose().y());
                 telemetry.addData("Robot current heading: ", Math.toDegrees(follower.pose().heading()));
@@ -122,42 +122,42 @@ public class CompetitionTeleOp extends BaseOpMode {
                 transferMotor.setPower(TRANSFER_SPEED);
 
             } else if (gamepad2.left_stick_y < -0.05) {
+
                 intakeMotor.setPower(-INTAKE_SPEED);
 
-                transferMotor.setPower(TRANSFER_SPEED);
-
-                if (gamepad2.a) {
-                    transferMotor.setPower(TRANSFER_SPEED);
-                } else {
-                    transferMotor.setPower(0);
-                }
+                transferMotor.setPower(-TRANSFER_SPEED);
 
 
-            } else if (gamepad2.y) {
+                double joystick = -gamepad1.right_stick_y;
+
+//                if (Math.abs(joystick) > 0.05) {
+//                    position += joystick * 0.05/100;
+//                }
+//
+//                position = Math.max(0.0, Math.min(1.0, position));
+
+                turretServo.setPosition(position);
+                turretServo2.setPosition(position);
+//launching!
+            }else if (gamepad2.y){
                 intakeMotor.setPower(INTAKE_SPEED);//was slower by .5 before
-                transferMotor.setPower(TRANSFER_SPEED);
+                transferMotor.setPower(0.5);
                 gate.setPosition(GATE_OPEN);
+
             } else {
                 intakeMotor.setPower(0);
+                transferMotor.setPower((0));
                 gate.setPosition(GATE_CLOSED);
             }
             //launching controls
             if (gamepad2.right_bumper) {
                 setTurretVelocity(velocity1, velocity2);
-
-
-            } else if (gamepad2.left_bumper) {
+            }else if (gamepad2.left_bumper) {
                 setTurretVelocity(0, 0);
             }
-
+            //turretIsFast();
             // Hold Y to launch
-            if (gamepad2.y && turretIsFast()) {
-                transferMotor.setVelocity(TRANSFER_SPEED);
-            } else {
-                transferMotor.setVelocity(0);
-                //intakeMotor.setPower(0);
 
-            }
             //flower intake up and down controls
             // Flower intake up and down controls
 
@@ -169,8 +169,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 //
 //            if (gamepad2.dpad_up && !lastDpadUp) {
 //                flowerRamp.getController().pwmEnable();
-//                flowerRamp.setPosition(RAMP_UP);
-//                timer.reset();
+//                timer.reset();//                flowerRamp.setPosition(RAMP_UP);
 //                rampMoving = true;
 //            }
 //            if (rampMoving && timer.milliseconds() >= 700) {
@@ -196,10 +195,10 @@ public class CompetitionTeleOp extends BaseOpMode {
                 }
                 if (follower.pose().y() > 70) {
                     targetY = 86.5;
-                } else {
+                }   else {
                     targetY = 54.5;
                 }
-                targetHeading = Math.toDegrees(Math.atan2(targetY - follower.pose().y(), targetX - follower.pose().x())); //get angle based on target
+                targetHeading = Math.toDegrees(Math.atan2(targetY-follower.pose().y(),targetX - follower.pose().x())); //get angle based on target
                 turning = true;
             }
             /*
@@ -227,6 +226,7 @@ im != null) {
  */
 
 
+
             double headingError = targetHeading - follower.pose().heading();
 
             if (turning) {
@@ -249,7 +249,7 @@ im != null) {
                 if (turretRelative > 360) {
                     turretRelative -= 360;
                 }
-                turnTurretRelative(turretRelative);
+                //turnTurretRelative (turretRelative);
             }
             //MOVE ROBOT!!!!!!!!!!!!!
             //read controller inputs
