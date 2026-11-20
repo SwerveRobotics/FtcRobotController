@@ -179,22 +179,25 @@ public class CompetitionAuto extends BaseOpMode{
                 })
                 .requiring(intakeMotor);
     }
-    public Command rampUp() {
-        return instant(() -> { if (flowerRamp != null) flowerRamp.setPosition(RAMP_UP); });
-    }
-    public Command rampDown() {
-        return instant(() -> { if (flowerRamp != null) flowerRamp.setPosition(RAMP_DOWN); });
-    }
-    public Command shootBalls(int numBalls) {
+//    public Command rampUp() {
+//        return instant(() -> { if (flowerRamp != null) flowerRamp.setPosition(RAMP_UP); });
+//    }
+//    public Command rampDown() {
+//        return instant(() -> { if (flowerRamp != null) flowerRamp.setPosition(RAMP_DOWN); });
+//    }
+    public Command shootBalls(int numBalls, double angle) {
         return sequential(
-                instant(()-> servoPosition(angleToServoPos(0))),
-                instant(() -> setTurretVelocity(velocity1, velocity2)),
+                instant(()-> servoPosition(angleToServoPos(angle))),
+                instant(() -> setTurretVelocity(VELOCITY_1, VELOCITY_2)),
                 waitMs(2000), // tune this
                 instant(() -> intakeAndTransfer(true)),
                 waitMs(numBalls*LAUNCH_TIME),
                 instant(() -> intakeAndTransfer(false)),//longer wait time for launch
                 instant(() -> setTurretVelocity(0,0))
         );
+    }
+    public Command shootBalls(int numBalls) {
+        return shootBalls(numBalls, 0);
     }
     public Command intake(long millis) {
         return Command.build()
@@ -232,8 +235,8 @@ public class CompetitionAuto extends BaseOpMode{
 
                 shootBalls(4),
 
-                parallel(follow(follower, Paths.line(shootPose, points[1]).constant(points[1])),
-                        rampDown()),
+                parallel(follow(follower, Paths.line(shootPose, points[1]).constant(points[1]))
+                        ),
 
                 // drive into the balls with intake running
                 intakeOn(),
@@ -248,8 +251,8 @@ public class CompetitionAuto extends BaseOpMode{
                 intakeOn(),
                 waitMs(700),
                 follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
-                intakeOff(),
-                rampUp()
+                intakeOff()
+
                 //follow(follower, Paths.line(points[3], shootPose).constant(shootPose)),
         );
     }
@@ -290,7 +293,7 @@ public class CompetitionAuto extends BaseOpMode{
         gardenPoses[8]   = poseFactory.of(129.5481, 36 + parkingBias, -90);
 
         // slightly forward from the start pose, flip the sign on y if it moves the wrong way
-        shootPose = poseFactory.of(84.1293, 131.8942, 90);
+        shootPose = poseFactory.of(84.1293, 120, 90);
     }
     public Command autoParkingPath() {
         Pose end = poseFactory.of(126.76431357656855, 36 + parkingBias, 90);
@@ -307,7 +310,7 @@ public class CompetitionAuto extends BaseOpMode{
                 follow(follower,Paths.line(points[0], shootPose).constant(points[1])),
                 shootBalls(4),
                 follow(follower,Paths.line(shootPose, points[1]).constant(points[1])),
-                rampDown(),
+
 
                 follow(follower,Paths.line(points[1], points[2]).constant(points[2])),
                 intakeOn(),
@@ -315,7 +318,7 @@ public class CompetitionAuto extends BaseOpMode{
                 intakeOn(),
                 follow(follower, Paths.line(points[3], points[4]).constant(points[4])),
                 intakeOff(),
-                follow(follower, Paths.line(points[4], points[5]).constant(points[5])).with(rampUp()),
+                follow(follower, Paths.line(points[4], points[5]).constant(points[5])),
                 shootBalls(4).raceWith(hold(follower)),
                 follow(follower, Paths.line(points[5], points[6]).constant(points[6]))
         );
@@ -328,7 +331,7 @@ public class CompetitionAuto extends BaseOpMode{
         flowerPoses[4] = poseFactory.of(94.4916, 17.3314, -90);
         flowerPoses[5] = poseFactory.of(84.7, 23.3459, -90);
         flowerPoses[6] = poseFactory.of(129.3126, 36 + parkingBias, -90);
-        shootPose = poseFactory.of(79.1085, 9, -90);//always face the back
+        shootPose = poseFactory.of(79.1085, 24, -90);//always face the back
     }
     public void initializeShootPath(Pose[] shootPoses, PoseFactory poseFactory) {
         poseFactory.mirrorX(70.75);
