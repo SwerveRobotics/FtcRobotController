@@ -115,6 +115,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             }
 
 
+
             //LAUNCH AND INTAKE CONTROLS
 
             //when left stick is pushed up set velocity
@@ -252,7 +253,7 @@ im != null) {
                 }
             }
             //TURRET HEADING
-            if (gamepad2.right_stick_x != 0) {
+            if(gamepad2.right_stick_x != 0) {
                 turretRelative += gamepad2.right_stick_x;
                 if (turretRelative < 0) {
                     turretRelative += 360;
@@ -260,8 +261,9 @@ im != null) {
                 if (turretRelative > 360) {
                     turretRelative -= 360;
                 }
-                //turnTurretRelative (turretRelative);
+                turnTurretRelative (turretRelative);
             }
+            updateTurret(follower.pose().x(), follower.pose().y(), Math.toRadians(follower.pose().heading()));
             //MOVE ROBOT!!!!!!!!!!!!!
             //read controller inputs
             forward = -gamepad1.left_stick_y * doSLOWMODE();
