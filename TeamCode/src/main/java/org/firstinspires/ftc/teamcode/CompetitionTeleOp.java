@@ -263,7 +263,7 @@ im != null) {
                 if (turretRelative > 360) {
                     turretRelative -= 360;
                 }
-                turnTurretRelative (turretRelative);
+                servoPosition(angleToServoPos(turretRelative));
             }
             updateTurret(follower.pose().x(), follower.pose().y(), Math.toRadians(follower.pose().heading()));
             //MOVE ROBOT!!!!!!!!!!!!!
