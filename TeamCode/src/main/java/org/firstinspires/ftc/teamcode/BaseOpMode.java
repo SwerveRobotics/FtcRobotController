@@ -246,10 +246,10 @@ abstract public class BaseOpMode extends LinearOpMode {
             angle -= 360;
         }
         double progress = (angle + 90)/(270);
-        return Math.max(Math.min(0.98,progress + 0.4), 0);
+        return Math.max(Math.min(SERVO_POSITION_BACKWARD,progress*(SERVO_POSITION_BACKWARD-SERVO_POSITION_FORWARD) + SERVO_POSITION_FORWARD), SERVO_POSITION_FORWARD);
     }
     public double servoPosToAngle(double servoPos){
-        double rawAngle = -90 + 360 * (servoPos -0.4)/0.58;
+        double rawAngle = -90 + 270 * (servoPos -SERVO_POSITION_FORWARD)/(SERVO_POSITION_BACKWARD-SERVO_POSITION_FORWARD);
         if (rawAngle < 0 ) {
             rawAngle += 360;
         }
