@@ -157,8 +157,6 @@ abstract public class BaseOpMode extends LinearOpMode {
 //        limelight.start();
 //    }
 
-    //FUNCTION ASSUMES THAT THE SERVO'S LIMITS ARE FROM ZERO TO 360(we checked with hardware and they said it's right)
-
 
     //step 2: pick the goal point based on which cell is up
     private double[] getGoalPoint() {
@@ -179,12 +177,12 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     //steps 3 and 4: where the turret should point (servo degrees), NaN if we cant aim yet
     private double getRoughAim(double poseX, double poseY, double headingRad) {
-        Set<List<Integer>> ignoredTags;
-        if (chosenAlliance == Alliance.BLUE) {
-            ignoredTags = Set.of(RED_LIST);
-        } else if (chosenAlliance == Alliance.RED) {
-            ignoredTags = Set.of(BLUE_LIST);
-        }
+//        Set<List<Integer>> ignoredTags;
+//        if (chosenAlliance == Alliance.BLUE) {
+//            ignoredTags = Set.of(RED_LIST);
+//        } else if (chosenAlliance == Alliance.RED) {
+//            ignoredTags = Set.of(BLUE_LIST);
+//        }
         //limits not set yet, dont move
         if (Math.abs(TURRET_RIGHT_END - TURRET_LEFT_END) < 20) return Double.NaN;
 
@@ -218,7 +216,8 @@ abstract public class BaseOpMode extends LinearOpMode {
             best = (Math.abs(wrap180(desired - minDeg)) <= Math.abs(wrap180(desired - maxDeg))) ? minDeg : maxDeg;
             turretAtLimit = true;
         }
-        return best;
+        //return best;
+        return goalAngle;
     }
 
     //step 6: call this every loop
@@ -228,11 +227,11 @@ abstract public class BaseOpMode extends LinearOpMode {
         if (dt <= 0 || dt > 0.25) dt = 0.02; //first loop or a lag spike
 
         //if auto aim is off or we cant aim, just hold where we are
-        turretTargetDeg = turretCommandedDeg;
-        if (turretAutoAim) {
-            double rough = getRoughAim(poseX, poseY, headingRad);
-            if (!Double.isNaN(rough)) turretTargetDeg = rough;
-        }
+//        turretTargetDeg = turretCommandedDeg;
+//        if (turretAutoAim) {
+//            double rough = getRoughAim(poseX, poseY, headingRad);
+//            if (!Double.isNaN(rough)) turretTargetDeg = rough;
+//        }
 
         //move toward the target but not faster than the max speed
         double maxStep = TURRET_MAX_SPEED_DEG_PER_SEC * dt;
@@ -242,9 +241,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         } else {
             turretCommandedDeg += Math.signum(diff) * maxStep;
         }
-
-        turretServo.setPosition(Math.max(0, Math.min(1, angleToServoPos(turretCommandedDeg))));
-        turretServo2.setPosition(Math.max(0, Math.min(1, angleToServoPos(turretCommandedDeg))));
+        servoPosition(Math.max(0, Math.min(1, angleToServoPos(turretCommandedDeg))));
     }
     public double angleToServoPos(double angle) {
         if (angle > 270) {
@@ -252,6 +249,13 @@ abstract public class BaseOpMode extends LinearOpMode {
         }
         double progress = (angle + 90)/(270);
         return Math.max(Math.min(0.9379,progress*0.9379), 0);
+    }
+    public double servoPosToAngle(double servoPos){
+        double rawAngle = -90 + 360 * servoPos/0.9379;
+        if (rawAngle < 0 ) {
+            rawAngle += 360;
+        }
+        return rawAngle;
     }
 
     public void initializeHardware() {
@@ -314,7 +318,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
     public void turnTurretRelative(double targetHeading) {
         //starts the turret and center degree
-        turretCommandedDeg = TURRET_CENTER_DEG;
+        turretCommandedDeg = servoPosToAngle(turretServo.getPosition());
         turretTargetDeg = targetHeading;
         turretTimer.reset(); //for time
     }
