@@ -6,12 +6,10 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.pedropathing.api.Paths;
 
 import com.pedropathing.api.PoseFactory;
-import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.Scheduler;
 
-import static com.pedropathing.ivy.Scheduler.isScheduled;
 import static com.pedropathing.ivy.Scheduler.schedule;
 import static com.pedropathing.ivy.commands.Commands.*;
 import static com.pedropathing.ivy.groups.Groups.repeat;
@@ -181,7 +179,7 @@ public class CompetitionAuto extends BaseOpMode{
     public Command shootBalls(int numBalls) {
         return sequential(
                 //TODO
-                instant(() -> setTurretVelocity(velocity1, velocity2)),
+                instant(() -> setTurretVelocity(VELOCITY_1, VELOCITY_2)),
                 waitMs(5000), // tune this
                 instant(() -> intakeAndTransfer(true)),
                 repeat(sequential(
