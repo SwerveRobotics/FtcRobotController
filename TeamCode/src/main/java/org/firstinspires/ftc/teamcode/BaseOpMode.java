@@ -248,10 +248,10 @@ abstract public class BaseOpMode extends LinearOpMode {
             angle -= 360;
         }
         double progress = (angle + 90)/(270);
-        return Math.max(Math.min(0.9379,progress*0.9379), 0);
+        return Math.max(Math.min(0.98,progress + 0.4), 0);
     }
     public double servoPosToAngle(double servoPos){
-        double rawAngle = -90 + 360 * servoPos/0.9379;
+        double rawAngle = -90 + 360 * (servoPos -0.4)/0.58;
         if (rawAngle < 0 ) {
             rawAngle += 360;
         }

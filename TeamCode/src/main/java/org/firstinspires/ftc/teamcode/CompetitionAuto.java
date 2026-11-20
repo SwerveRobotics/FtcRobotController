@@ -331,14 +331,17 @@ public class CompetitionAuto extends BaseOpMode{
         shootPose = poseFactory.of(79.1085, 9, -90);//always face the back
     }
     public void initializeShootPath(Pose[] shootPoses, PoseFactory poseFactory) {
+        poseFactory.mirrorX(70.75);
+        poseFactory.mirrorY(70.75);
         shootPoses[0] = poseFactory.of(52.431, 7.2652, 90);
         shootPoses[1] = poseFactory.of(52.312, 18.0501, -90);
-        shootPoses[2] = poseFactory.of(10.1821, 92.6888, 119.4426);
+        shootPoses[2] = poseFactory.of(10.1821, 105-parkingBias, 119.4426); //141 - 36 = 105
     }
 
     public Command autoRoutineShoot() {
         return sequential(
                 waitMs(waitTimeMs),
+                shootBalls(4),
                 follow(follower, Paths.line(points[0], points[1]).constant(points[1])),
                 follow(follower, Paths.line(points[1], points[2]).tangent())
         );
