@@ -57,7 +57,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     private boolean turretAtLimit = false;
     private final ElapsedTime turretTimer = new ElapsedTime();
     //constants
-    public static double LAUNCH_TIME = 350.0;
+    public static double LAUNCH_TIME = 800.0;
     //TODO: uh
     public static double LAUNCHER_SPEED = 1360;//1250
     public static double AUTO_LAUNCHER_TIME = 3000;

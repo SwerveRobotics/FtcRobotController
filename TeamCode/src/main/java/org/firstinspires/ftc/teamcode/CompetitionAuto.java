@@ -140,6 +140,7 @@ public class CompetitionAuto extends BaseOpMode{
 
         while (opModeIsActive()) {
             follower.update();
+            servoPosition(angleToServoPos(0));
             if (pinpoint.getDeviceStatus() != GoBildaPinpointDriver.DeviceStatus.READY) {
                 telemetry.addLine("Pinpoint is crazy");
                 follower.stop();
@@ -186,24 +187,13 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command shootBalls(int numBalls) {
         return sequential(
-                instant(()->turnTurretRelative(0)),
-                //TODO
+                instant(()-> servoPosition(angleToServoPos(0))),
                 instant(() -> setTurretVelocity(velocity1, velocity2)),
-                waitMs(5000), // tune this
+                waitMs(2000), // tune this
                 instant(() -> intakeAndTransfer(true)),
-                repeat(sequential(
-                        instant(() -> intakeAndTransfer(true)),
-                        waitMs(LAUNCH_TIME),
-                        instant(() -> intakeAndTransfer(false)),
-                        waitMs(LAUNCH_TIME)
-                ), 2),
-                repeat(sequential(
-                        instant(() -> intakeAndTransfer(true)),
-                        waitMs(LAUNCH_TIME),
-                        instant(() -> intakeAndTransfer(false)),
-                        waitMs(LAUNCH_TIME)
-                ), numBalls-1),
-                instant(() -> intakeAndTransfer(false))//longer wait time for launch
+                waitMs(numBalls*LAUNCH_TIME),
+                instant(() -> intakeAndTransfer(false)),//longer wait time for launch
+                instant(() -> setTurretVelocity(0,0))
         );
     }
     public Command intake(long millis) {
