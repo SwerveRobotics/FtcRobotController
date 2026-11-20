@@ -156,6 +156,9 @@ public class CompetitionTeleOp extends BaseOpMode {
                 setTurretVelocity(0, 0);
             }
 
+
+
+
             if(gamepad2.right_bumper){
                 servoPosition(SERVO_POSITION_FORWARD);
             } else if (gamepad2.left_bumper) {

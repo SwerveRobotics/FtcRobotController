@@ -47,6 +47,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     protected UpCell upCell = UpCell.UNKNOWN; //which cell is up, step 1 sets this
     //to TEST turret servo in teleop
+
     public double SERVO_POSITION_FORWARD = 0.4;
     public double SERVO_POSITION_BACKWARD = 0.98;
 
