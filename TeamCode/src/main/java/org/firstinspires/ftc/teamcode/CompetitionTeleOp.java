@@ -122,12 +122,14 @@ public class CompetitionTeleOp extends BaseOpMode {
             if (gamepad2.left_stick_y > 0.05) {
                 intakeMotor.setPower(INTAKE_SPEED);
                 transferMotor.setPower(TRANSFER_INTAKE_SPEED);
+                gate.setPosition(GATE_CLOSED);
 
             } else if (gamepad2.left_stick_y < -0.05) {
 
                 intakeMotor.setPower(-INTAKE_SPEED);
 
                 transferMotor.setPower(-TRANSFER_SPEED);
+                gate.setPosition(GATE_CLOSED);
 
 
                 double joystick = -gamepad1.right_stick_y;
