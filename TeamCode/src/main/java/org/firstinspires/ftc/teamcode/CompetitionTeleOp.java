@@ -1,21 +1,16 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.pedropathing.follower.Follower;
 import com.pedropathing.math.Pose;
 import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import java.lang.Math;
 import com.pedropathing.drivetrain.DrivePowers;
 import com.pedropathing.follower.ManualDrive;
 
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes.FiducialResult;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
+
 import java.util.List;
 import java.util.Set;
 
@@ -57,6 +52,9 @@ public class CompetitionTeleOp extends BaseOpMode {
         //driver press st art on DS
         waitForStart();
 
+        turretServo.setPosition(SERVO_POSITION_FORWARD);
+        turretServo2.setPosition(SERVO_POSITION_FORWARD);
+
 
         //TODO: commented out RED_LIST
         follower.setPose(PoseStorage.endPose);
@@ -72,6 +70,8 @@ public class CompetitionTeleOp extends BaseOpMode {
         }
 
         while (opModeIsActive()) {
+            updateLauncherPidf();
+
             /**
              *
              */
@@ -110,6 +110,8 @@ public class CompetitionTeleOp extends BaseOpMode {
                 telemetry.addData("Robot y pose", follower.pose().y());
                 telemetry.addData("Robot current heading: ", Math.toDegrees(follower.pose().heading()));
                 telemetry.addData("Robot target heading", convertRadiansIntoDegrees + 180);
+
+                telemetry.addData("Transfer speed: ", transferMotor.getPower());
             }
 
 
@@ -118,7 +120,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             //when left stick is pushed up set velocity
             if (gamepad2.left_stick_y > 0.05) {
                 intakeMotor.setPower(INTAKE_SPEED);
-                transferMotor.setPower(TRANSFER_SPEED);
+                transferMotor.setPower(TRANSFER_INTAKE_SPEED);
 
             } else if (gamepad2.left_stick_y < -0.05) {
 
@@ -135,8 +137,6 @@ public class CompetitionTeleOp extends BaseOpMode {
 //
 //                position = Math.max(0.0, Math.min(1.0, position));
 
-                turretServo.setPosition(position);
-                turretServo2.setPosition(position);
 //launching!
             }else if (gamepad2.y){
                 intakeMotor.setPower(INTAKE_SPEED);//was slower by .5 before
@@ -149,11 +149,20 @@ public class CompetitionTeleOp extends BaseOpMode {
                 gate.setPosition(GATE_CLOSED);
             }
             //launching controls
-            if (gamepad2.right_bumper) {
-                setTurretVelocity(velocity1, velocity2);
-            }else if (gamepad2.left_bumper) {
+
+            if(gamepad2.rightTriggerWasPressed()){
+                setTurretVelocity(VELOCITY_1, VELOCITY_2);
+            }else if (gamepad2.left_trigger_pressed){
                 setTurretVelocity(0, 0);
             }
+
+            if(gamepad2.right_bumper){
+                servoPosition(SERVO_POSITION_FORWARD);
+            } else if (gamepad2.left_bumper) {
+                servoPosition(SERVO_POSITION_BACKWARD);
+
+            }
+
             //turretIsFast();
             // Hold Y to launch
 
@@ -291,91 +300,4 @@ im != null) {
             return 1;
         }
     }
-    /*
-    @Config
-     class AutoAim {
-        private final PIDControllerNEW pid = new PIDControllerNEW();
-        public double getOffset() {
-            LLResult result = limelight.getLatestResult();
-
-            if (result == null || !result.isValid()) {
-                telemetry.addData("AutoAim: ", "No Limelight result");
-                pid.reset();
-                return 0;
-            }
-
-            List<LLResultTypes.FiducialResult> detections = result.getFiducialResults();
-
-            LLResultTypes.FiducialResult target = null;
-
-            // Only target AprilTags 39 and 40
-            for (LLResultTypes.FiducialResult detection : detections) {
-                int id = detection.getFiducialId();
-
-                if (id == 39 || id == 40) {
-                    target = detection;
-                    break;
-                }
-            }
-
-            if (target == null) {
-                telemetry.addData("AutoAim", "Tags 39 OR 40 not detected");
-                pid.reset();
-                return 0;
-            }
-
-            // Horizontal angle from the Limelight to the target
-            double tx = target.getTargetXDegrees();
-
-            // Center the tag: desired horizontal angle is 0 degrees
-            double turnPower = pid.calculate(tx, 0);
-
-            // Limit turn power
-            turnPower = Math.max(-AIM_MAX_TURN, Math.min(AIM_MAX_TURN, turnPower)
-            );
-
-            telemetry.addData("AutoAim Target ID", target.getFiducialId());
-            telemetry.addData("Horizontal Error (degrees)", tx);
-            telemetry.addData("AutoAim Turn Power", turnPower);
-
-            return turnPower;
-        }
-    }
-    class PIDControllerNEW {
-        private double previousError = 0;
-        private double integral = 0;
-        private long lastTimestamp = System.nanoTime();
-
-        public double calculate(double currentValue) {
-            return calculate(currentValue, 0);
-        }
-
-        public double calculate(double currentValue, double setpoint) {
-            long now = System.nanoTime();
-            double dt = (now - lastTimestamp) / 1e9;
-            lastTimestamp = now;
-
-            // Avoid division by zero
-            if (dt <= 0) {
-                dt = 0.001;
-            }
-
-            double error = setpoint - currentValue;
-
-            integral += error * dt;
-            double derivative = (error - previousError) / dt;
-
-            double output = (AIM_KP * error) + (AIM_KI * integral) + (AIM_KD * derivative);
-            previousError = error;
-            return output;
-        }
-
-        public void reset() {
-            previousError = 0;
-            integral = 0;
-            lastTimestamp = System.nanoTime();
-        }
-    }
-
-*/
 }
