@@ -233,7 +233,7 @@ public class CompetitionAuto extends BaseOpMode{
                 waitMs(waitTimeMs),
                 follow(follower, Paths.line(points[0], shootPose).constant(shootPose)),
 
-                shootBalls(4),
+                shootBalls(4,180),
 
                 parallel(follow(follower, Paths.line(shootPose, points[1]).constant(points[1]))
                         ),
@@ -338,7 +338,8 @@ public class CompetitionAuto extends BaseOpMode{
         poseFactory.mirrorY(70.75);
         shootPoses[0] = poseFactory.of(52.431, 7.2652, 90);
         shootPoses[1] = poseFactory.of(52.312, 18.0501, -90);
-        shootPoses[2] = poseFactory.of(10.1821, 105-parkingBias, 119.4426); //141 - 36 = 105
+        shootPoses[2] = poseFactory.of(20, 18.0501, -90);
+        shootPoses[3] = poseFactory.of(10.1821, 105-parkingBias, 119.4426); //141 - 36 = 105
     }
 
     public Command autoRoutineShoot() {
@@ -346,7 +347,8 @@ public class CompetitionAuto extends BaseOpMode{
                 waitMs(waitTimeMs),
                 shootBalls(4),
                 follow(follower, Paths.line(points[0], points[1]).constant(points[1])),
-                follow(follower, Paths.line(points[1], points[2]).tangent())
+                follow(follower, Paths.line(points[1], points[2]).constant(points[1])),
+                follow(follower, Paths.line(points[2], points[3]).constant(points[2]))
         );
     }
 }

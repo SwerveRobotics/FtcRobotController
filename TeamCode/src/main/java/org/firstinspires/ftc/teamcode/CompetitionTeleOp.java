@@ -132,14 +132,6 @@ public class CompetitionTeleOp extends BaseOpMode {
                 gate.setPosition(GATE_CLOSED);
 
 
-                double joystick = -gamepad1.right_stick_y;
-
-//                if (Math.abs(joystick) > 0.05) {
-//                    position += joystick * 0.05/100;
-//                }
-//
-//                position = Math.max(0.0, Math.min(1.0, position));
-
 //launching!
             }else if (gamepad2.y){
                 intakeMotor.setPower(INTAKE_SPEED);//was slower by .5 before
