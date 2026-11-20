@@ -9,11 +9,8 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.PIDFCoefficients;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.util.ElapsedTime;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
 
@@ -41,7 +38,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected Servo turretServo2 ;
 
     protected Servo gate;
-    protected Servo flowerRamp;
+    //protected Servo flowerRamp;
     protected GoBildaPinpointDriver pinpoint;
     //protected Limelight3A limelight;
     protected Alliance chosenAlliance;
@@ -50,7 +47,10 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     protected UpCell upCell = UpCell.UNKNOWN; //which cell is up, step 1 sets this
     //to TEST turret servo in teleop
-    public double position = 0.3163;
+
+    public double SERVO_POSITION_FORWARD = 0.4;
+    public double SERVO_POSITION_BACKWARD = 0.98;
+
     protected boolean turretAutoAim = true;
     private double turretCommandedDeg = 180;
     private double turretTargetDeg = 180;
@@ -58,14 +58,12 @@ abstract public class BaseOpMode extends LinearOpMode {
     private final ElapsedTime turretTimer = new ElapsedTime();
     //constants
     public static double LAUNCH_TIME = 800.0;
-    //TODO: uh
-    public static double LAUNCHER_SPEED = 1360;//1250
-    public static double AUTO_LAUNCHER_TIME = 3000;
     public static double INTAKE_SPEED = 1.0;
 
 
-    public static double velocity1 = 850;
-    public static double velocity2 = 800;
+    public static double VELOCITY_1 = 950;
+    public static double VELOCITY_2 = 600;
+    public static double TRANSFER_INTAKE_SPEED = 0.6;
 
     public static double GATE_OPEN = 0;
     public static double GATE_CLOSED = 0.13;
@@ -73,12 +71,12 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double TRANSFER_SPEED = 1.0;//1
 
 
-    public static double RAMP_UP = 0.3;//.14
-    public static double RAMP_DOWN = 0.88;
+    public static double RAMP_UP = .7;//.14
+    public static double RAMP_DOWN = .23;
 
     //autoaim TODO: tune these values
 
-    public static double KP = 150;
+    public static double KP = 200;
     public static double KI = 0;
     public static double KD = 5;
     public static double KF = 15;
@@ -308,8 +306,16 @@ abstract public class BaseOpMode extends LinearOpMode {
         launchMotor1.setDirection(DcMotorSimple.Direction.REVERSE);
         launchMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
     }
-    //FUNCTION ASSUMES THAT THE SERVO'S LIMITS ARE FROM ZERO TO 360(we checked with hardware and they said it's right)
-    public void turnTurretAbsolute(double robotHeading, double targetHeading) { //takes [0,360], [0,360]
+    //remembers what we last sent to the hub so we only resend when a value changes
+    private double lastKP = Double.NaN, lastKI = Double.NaN, lastKD = Double.NaN, lastKF = Double.NaN;
+    public void updateLauncherPidf() {
+        if (KP != lastKP || KI != lastKI || KD != lastKD || KF != lastKF) {
+            PIDFCoefficients pidf = new PIDFCoefficients(KP, KI, KD, KF);
+            launchMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
+            launchMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
+            lastKP = KP; lastKI = KI; lastKD = KD; lastKF = KF;
+        }
+    }    public void turnTurretAbsolute(double robotHeading, double targetHeading) { //takes [0,360], [0,360]
         double turretRelative = targetHeading - robotHeading;
         if (turretRelative < 0) {
             turretRelative += 360;
@@ -332,7 +338,9 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
 
     public boolean turretIsFast() {
-        return launchMotor1.getVelocity() > 0.95 * LAUNCHER_SPEED && launchMotor2.getVelocity() > 0.95*LAUNCHER_SPEED;
+        if (VELOCITY_1 <= 0 || VELOCITY_2 <= 0) return false;
+        return launchMotor1.getVelocity() > 0.95 * VELOCITY_1
+                && launchMotor2.getVelocity() > 0.95 * VELOCITY_2;
     }
     public double avgTurretSpeed() {
         return (launchMotor2.getVelocity() + launchMotor1.getVelocity())/2.0;
