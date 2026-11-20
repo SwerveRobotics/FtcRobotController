@@ -11,6 +11,7 @@ import com.pedropathing.math.Pose;
 import com.pedropathing.ivy.Command;
 import com.pedropathing.ivy.Scheduler;
 
+
 import static com.pedropathing.ivy.Scheduler.isScheduled;
 import static com.pedropathing.ivy.Scheduler.schedule;
 import static com.pedropathing.ivy.commands.Commands.*;
@@ -45,7 +46,8 @@ public class CompetitionAuto extends BaseOpMode{
     public enum AutoPath { //different options for auto routine
         GARDEN_PATH,
         FLOWER_PATH,
-        PARKING_PATH
+        PARKING_PATH,
+        SHOOT_PATH
     }
     private double parkingBias = 0;
     public double waitTimeMs; //how long we wait at the start
@@ -123,7 +125,11 @@ public class CompetitionAuto extends BaseOpMode{
                 follower.setPose(autoParkingStartPose);
                 schedule(autoParkingPath());
                 break;
-
+            case SHOOT_PATH:
+                initializeShootPath(points, poseFactory);
+                follower.setPose(points[0]);
+                schedule(autoRoutineShoot());
+                break;
             default:
                 schedule(autoParkingPath());
                 telemetry.addLine("How did you do this? You have to choose a path!");
@@ -291,7 +297,7 @@ public class CompetitionAuto extends BaseOpMode{
         gardenPoses[5] = poseFactory.of(76.4427, 26.1793, -90);
         gardenPoses[6] = poseFactory.of(83.7372, 8.6485, -90);
         gardenPoses[7] = poseFactory.of(83.3717, 29.9152, -90);
-        gardenPoses[8] = poseFactory.of(129.5481, 36 + parkingBias, -90);
+        gardenPoses[8]   = poseFactory.of(129.5481, 36 + parkingBias, -90);
 
         // slightly forward from the start pose, flip the sign on y if it moves the wrong way
         shootPose = poseFactory.of(84.1293, 131.8942, 90);
@@ -333,5 +339,18 @@ public class CompetitionAuto extends BaseOpMode{
         flowerPoses[5] = poseFactory.of(84.7, 23.3459, -90);
         flowerPoses[6] = poseFactory.of(129.3126, 36 + parkingBias, -90);
         shootPose = poseFactory.of(79.1085, 9, -90);//always face the back
+    }
+    public void initializeShootPath(Pose[] shootPoses, PoseFactory poseFactory) {
+        shootPoses[0] = poseFactory.of(52.431, 7.2652, 90);
+        shootPoses[1] = poseFactory.of(52.312, 18.0501, -90);
+        shootPoses[2] = poseFactory.of(10.1821, 92.6888, 119.4426);
+    }
+
+    public Command autoRoutineShoot() {
+        return sequential(
+                waitMs(waitTimeMs),
+                follow(follower, Paths.line(points[0], points[1]).constant(points[1])),
+                follow(follower, Paths.line(points[1], points[2]).tangent())
+        );
     }
 }
