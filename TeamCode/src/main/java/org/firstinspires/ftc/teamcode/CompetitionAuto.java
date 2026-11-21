@@ -187,7 +187,7 @@ public class CompetitionAuto extends BaseOpMode{
 //    }
     public Command shootBalls(int numBalls, double angle) {
         return sequential(
-                instant(()-> turnTurretRelative(angle)),
+                instant(()-> servoPosition(SERVO_POSITION_FORWARD)),
                 instant(() -> setTurretVelocity(VELOCITY_1, VELOCITY_2)),
                 waitMs(700), // tune this
                 instant(() -> intakeAndTransfer(true)),
@@ -347,8 +347,8 @@ public class CompetitionAuto extends BaseOpMode{
     public Command autoRoutineShoot() {
         return sequential(
                 waitMs(waitTimeMs),
-                shootBalls(4),
                 follow(follower, Paths.line(points[0], points[1]).constant(points[1])),
+                shootBalls(4),
                 follow(follower, Paths.line(points[1], points[2]).constant(points[2])),
                 follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
                 follow(follower, Paths.curve(points[3], points[5], points[4]).constant(points[4])),
