@@ -17,8 +17,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double MOTOR_D_VALUE = 1;
 
     //Motors/Servos
-    public static double UPPER_LAUNCHER_SPEED = 2700;
-    public static double LOWER_LAUNCHER_SPEED = 2300;
+    public static double UPPER_LAUNCHER_SPEED = 2400;
+    public static double LOWER_LAUNCHER_SPEED = 2000;
 //    public static double LAUNCHER_TOPSPIN = 50;
     public static double WHEEL_STOP_SPEED = 0;
     public static double INTAKE_SPEED_MULTIPLIER = 2000;
@@ -26,7 +26,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double BALLS_TO_LAUNCH_TIME = 3500;
     public static double FOUR_BALLS_TIME = 10000;
     public double [] GATE_VOLTS = {2.61,1.69,0.87,0.15};
-    public double GATE_KP = 0.3;
+    public double GATE_KP = 0.4;
     public double gateError;
     public static int gateIndex = 0;
     double GATE_VOLT_TOLERANCE = 0.05;

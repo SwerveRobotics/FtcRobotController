@@ -35,7 +35,9 @@ public class CompetitionTeleOp extends BaseOpMode{
         int button_count = 0;
         double servo_pos = 0.0;
 
-//        gateServo.setPosition(servo_pos);
+        // set position to 0 in init
+        gateServo.setPower(GATE_KP * (gateServoFeedback.getVoltage()-GATE_VOLTS[0]));
+
 
         while (opModeIsActive()) {
             telemetry.addData("x", follower.pose().x());
@@ -52,6 +54,9 @@ public class CompetitionTeleOp extends BaseOpMode{
             if (gamepad2.aWasPressed()) {
                 transferWheelMot.setVelocity(TRANSFER_SPEED);
             }
+            if (gamepad2.rightBumperWasPressed()) {
+                transferWheelMot.setVelocity(-TRANSFER_SPEED);
+            }
 
 
             // NEW GATE CODE!!!
@@ -67,7 +72,16 @@ public class CompetitionTeleOp extends BaseOpMode{
             gateError = currentVoltage - targetVoltage;
 
             gateServo.setPower(GATE_KP * gateError);
-//            if(gateIndex != 0) {
+            // current check
+//            if(currentVoltage >= 3.25 || currentVoltage <= 0.04) {
+//                gateServo.setPower(0.0);
+//            }
+
+            // prevents gate from being pushed too far and doing a full revolution to get back
+            if(Math.abs(gateError) < GATE_VOLT_TOLERANCE) {
+                gateServo.setPower(0.0);
+            }
+
 //                gateServo.setPower(GATE_KP * gateError);
 //            } else { gateServo.setPower(MATH.abs(GATE_KP * gateError));}
 
