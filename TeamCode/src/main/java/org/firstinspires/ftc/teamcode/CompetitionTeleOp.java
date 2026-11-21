@@ -205,7 +205,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                     targetY = 54.5;
                 }
                 targetHeading = Math.toDegrees(Math.atan2(targetY-follower.pose().y(),targetX - follower.pose().x())); //get angle based on target
-                turning = true;
+                turnTurretAbsolute(follower.pose().heading(), targetHeading);
             }
             /*
             // Press A to turn 30 degrees
@@ -247,15 +247,12 @@ im != null) {
                 }
             }
             //TURRET HEADING
-            if(gamepad2.right_stick_x != 0) {
-                turretRelative += gamepad2.right_stick_x;
-                if (turretRelative < 0) {
-                    turretRelative += 360;
-                }
-                if (turretRelative > 360) {
-                    turretRelative -= 360;
-                }
-                servoPosition(angleToServoPos(turretRelative));
+            if(gamepad2.right_stick_y < -0.05) {
+                turretRelative = 0;
+                turnTurretRelative(turretRelative);
+            } else if (gamepad2.right_stick_y > 0.05) {
+                turretRelative = 180;
+                turnTurretRelative(turretRelative);
             }
             updateTurret(follower.pose().x(), follower.pose().y(), Math.toRadians(follower.pose().heading()));
             //MOVE ROBOT!!!!!!!!!!!!!

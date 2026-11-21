@@ -187,7 +187,7 @@ public class CompetitionAuto extends BaseOpMode{
 //    }
     public Command shootBalls(int numBalls, double angle) {
         return sequential(
-                instant(()-> servoPosition(angleToServoPos(angle))),
+                instant(()-> turnTurretRelative(angle)),
                 instant(() -> setTurretVelocity(VELOCITY_1, VELOCITY_2)),
                 waitMs(2000), // tune this
                 instant(() -> intakeAndTransfer(true)),
@@ -337,8 +337,8 @@ public class CompetitionAuto extends BaseOpMode{
         poseFactory.mirrorX(70.75);
         poseFactory.mirrorY(70.75);
         shootPoses[0] = poseFactory.of(52.431, 7.2652, 90);
-        shootPoses[1] = poseFactory.of(52.312, 18.0501, -90);
-        shootPoses[2] = poseFactory.of(20, 18.0501, -90);
+        shootPoses[1] = poseFactory.of(52.312, 24, -90);
+        shootPoses[2] = poseFactory.of(20, 24, -90);
         shootPoses[3] = poseFactory.of(10.1821, 105-parkingBias, 119.4426); //141 - 36 = 105
     }
 

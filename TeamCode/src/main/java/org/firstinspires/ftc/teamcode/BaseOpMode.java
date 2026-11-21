@@ -57,7 +57,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     private boolean turretAtLimit = false;
     private final ElapsedTime turretTimer = new ElapsedTime();
     //constants
-    public static double LAUNCH_TIME = 800.0;
+    public static double LAUNCH_TIME = 1000.0;
     public static double INTAKE_SPEED = 1.0;
 
 
@@ -324,9 +324,10 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
     public void turnTurretRelative(double targetHeading) {
         //starts the turret and center degree
-        turretCommandedDeg = servoPosToAngle(turretServo.getPosition());
-        turretTargetDeg = targetHeading;
-        turretTimer.reset(); //for time
+        //turretCommandedDeg = servoPosToAngle(turretServo.getPosition());
+        servoPosition(angleToServoPos(angleToServoPos(targetHeading)));
+//        turretTargetDeg = targetHeading;
+//        turretTimer.reset(); //for time
     }
     public void setTurretVelocity(double velocity1, double velocity2) {
         launchMotor1.setVelocity(velocity1);
@@ -361,7 +362,8 @@ abstract public class BaseOpMode extends LinearOpMode {
         telemetry.addData("Intake speed", intakeMotor.getVelocity());
         telemetry.addData("Transfer speed", transferMotor.getPower());
         telemetry.addData("Average Turret Speed", avgTurretSpeed() );
-        telemetry.addData("Turret position:", turretServo.getPosition());
+        telemetry.addData("Turret position", turretServo.getPosition());
+        telemetry.addData("Gate Position", (gate.getPosition() == GATE_OPEN)?"Open":"Closed");
         //telemetry.addData("Ramp Position",flowerRamp.getPosition() == RAMP_UP ? "Up":"Down");
         //telemetry.addData("Is Hive Scorable", IS_HIVE_SCORABLE());
     }
