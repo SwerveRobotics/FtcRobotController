@@ -52,7 +52,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public double SERVO_POSITION_BACKWARD = 1;
 
     public static double TURRET_LEFT_END = 0.0;
-    public static double TURRET_RIGHT_END = 0.98;
+    public static double TURRET_RIGHT_END = 1.0;
 
     protected boolean turretAutoAim = true;
     private double turretCommandedDeg = 180;
@@ -243,14 +243,14 @@ abstract public class BaseOpMode extends LinearOpMode {
         servoPosition(Math.max(0, Math.min(1, angleToServoPos(turretCommandedDeg))));
     }
     public double angleToServoPos(double angle) {
-        if (angle > 270) {
+        if (angle > 225) {
             angle -= 360;
         }
-        double progress = (angle + 90)/(270);
+        double progress = (angle + 135)/(315);
         return Math.max(Math.min(TURRET_RIGHT_END,progress*(TURRET_RIGHT_END-TURRET_LEFT_END) + TURRET_LEFT_END), TURRET_LEFT_END);
     }
     public double servoPosToAngle(double servoPos){
-        double rawAngle = -90 + 270 * (servoPos -TURRET_LEFT_END)/(TURRET_RIGHT_END-TURRET_LEFT_END);
+        double rawAngle = -135 + 315 * (servoPos -TURRET_LEFT_END)/(TURRET_RIGHT_END-TURRET_LEFT_END);
         if (rawAngle < 0 ) {
             rawAngle += 360;
         }

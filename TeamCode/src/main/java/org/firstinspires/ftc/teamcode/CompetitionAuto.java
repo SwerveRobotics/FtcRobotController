@@ -334,12 +334,14 @@ public class CompetitionAuto extends BaseOpMode{
         shootPose = poseFactory.of(79.1085, 24, -90);//always face the back
     }
     public void initializeShootPath(Pose[] shootPoses, PoseFactory poseFactory) {
-        poseFactory.mirrorX(70.75);
-        poseFactory.mirrorY(70.75);
-        shootPoses[0] = poseFactory.of(52.431, 7.2652, 90);
-        shootPoses[1] = poseFactory.of(52.312, 24, -90);
-        shootPoses[2] = poseFactory.of(20, 24, -90);
-        shootPoses[3] = poseFactory.of(10.1821, 105-parkingBias, 119.4426); //141 - 36 = 105
+        shootPoses[0] = poseFactory.of(52.431, 7.2652, 90);           // start
+        shootPoses[1] = poseFactory.of(52.31, 24, 90);               // path1
+        shootPoses[2] = poseFactory.of(9.3424, 14.276, -167.2482);    // point2
+        shootPoses[3] = poseFactory.of(8.4078, 8.0435, -90);         // point3
+        shootPoses[4] = poseFactory.of(56.0542, 128.0638, 50.0106);   // point4
+        shootPoses[5] = poseFactory.of(18.3698, 83.1365, 0);         // point4Control1
+        shootPoses[6] = poseFactory.of(55.8442, 117, -91.0871);      // point5
+        shootPoses[7] = poseFactory.of(15.1157, 95.9429, -152.6605); // point6
     }
 
     public Command autoRoutineShoot() {
@@ -347,8 +349,11 @@ public class CompetitionAuto extends BaseOpMode{
                 waitMs(waitTimeMs),
                 shootBalls(4),
                 follow(follower, Paths.line(points[0], points[1]).constant(points[1])),
-                follow(follower, Paths.line(points[1], points[2]).constant(points[1])),
-                follow(follower, Paths.line(points[2], points[3]).constant(points[2]))
+                follow(follower, Paths.line(points[1], points[2]).constant(points[2])),
+                follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
+                follow(follower, Paths.curve(points[3], points[5], points[4]).constant(points[4])),
+                follow(follower, Paths.line(points[4], points[6]).constant(points[6])),
+                follow(follower, Paths.line(points[6], points[7]).constant(points[7]))
         );
     }
 }
