@@ -189,7 +189,7 @@ public class CompetitionAuto extends BaseOpMode{
         return sequential(
                 instant(()-> turnTurretRelative(angle)),
                 instant(() -> setTurretVelocity(VELOCITY_1, VELOCITY_2)),
-                waitMs(2000), // tune this
+                waitMs(700), // tune this
                 instant(() -> intakeAndTransfer(true)),
                 waitMs(numBalls*LAUNCH_TIME),
                 instant(() -> intakeAndTransfer(false)),//longer wait time for launch

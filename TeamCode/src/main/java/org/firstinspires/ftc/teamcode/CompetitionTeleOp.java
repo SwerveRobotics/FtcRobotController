@@ -130,7 +130,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 //launching!
             }else if (gamepad2.y){
                 intakeMotor.setPower(INTAKE_SPEED);//was slower by .5 before
-                transferMotor.setPower(0.5);
+                transferMotor.setPower(0.5* TRANSFER_SPEED);
                 gate.setPosition(GATE_OPEN);
 
             } else {

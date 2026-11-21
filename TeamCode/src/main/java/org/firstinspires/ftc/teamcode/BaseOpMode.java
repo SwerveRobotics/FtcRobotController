@@ -349,8 +349,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     }
     public void intakeAndTransfer(boolean on) {
         if (on) {
-            intakeMotor.setVelocity(INTAKE_SPEED);
-            transferMotor.setVelocity(TRANSFER_SPEED);
+            intakeMotor.setPower(INTAKE_SPEED);
+            transferMotor.setPower(0.5 * TRANSFER_SPEED);
         } else {
             intakeMotor.setVelocity(0);
             transferMotor.setVelocity(0);
