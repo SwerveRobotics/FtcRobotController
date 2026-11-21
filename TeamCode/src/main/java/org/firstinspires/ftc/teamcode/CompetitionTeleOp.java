@@ -130,7 +130,7 @@ public class CompetitionTeleOp extends BaseOpMode {
 //launching!
             }else if (gamepad2.y){
                 intakeMotor.setPower(INTAKE_SPEED);//was slower by .5 before
-                transferMotor.setPower(0.5* TRANSFER_SPEED);
+                transferMotor.setPower(TRANSFER_SPEED);
                 gate.setPosition(GATE_OPEN);
 
             } else {
@@ -200,7 +200,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                     targetY = 54.5;
                 }
                 targetHeading = Math.toDegrees(Math.atan2(targetY-follower.pose().y(),targetX - follower.pose().x())); //get angle based on target
-                turnTurretAbsolute(follower.pose().heading(), targetHeading);
+                //turnTurretAbsolute(follower.pose().heading(), targetHeading);
             }
             /*
             // Press A to turn 30 degrees
@@ -244,12 +244,12 @@ im != null) {
             //TURRET HEADING
             if(gamepad2.right_stick_y < -0.05) {
                 turretRelative = 0;
-                turnTurretRelative(turretRelative);
+                //turnTurretRelative(turretRelative);
             } else if (gamepad2.right_stick_y > 0.05) {
                 turretRelative = 180;
-                turnTurretRelative(turretRelative);
+                //turnTurretRelative(turretRelative);
             }
-            updateTurret(follower.pose().x(), follower.pose().y(), Math.toRadians(follower.pose().heading()));
+            //updateTurret(follower.pose().x(), follower.pose().y(), Math.toRadians(follower.pose().heading()));
             //MOVE ROBOT!!!!!!!!!!!!!
             //read controller inputs
             forward = -gamepad1.left_stick_y * doSLOWMODE();

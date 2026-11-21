@@ -48,8 +48,8 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected UpCell upCell = UpCell.UNKNOWN; //which cell is up, step 1 sets this
     //to TEST turret servo in teleop
 
-    public double SERVO_POSITION_FORWARD = 0.4;
-    public double SERVO_POSITION_BACKWARD = 0.98;
+    public double SERVO_POSITION_FORWARD = 0.417;
+    public double SERVO_POSITION_BACKWARD = 1;
 
     public static double TURRET_LEFT_END = 0.0;
     public static double TURRET_RIGHT_END = 0.98;
@@ -66,7 +66,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     public static double VELOCITY_1 = 950;
     public static double VELOCITY_2 = 600;
-    public static double TRANSFER_INTAKE_SPEED = 0.6;
+    public static double TRANSFER_INTAKE_SPEED = 0.7;
 
     public static double GATE_OPEN = 0;
     public static double GATE_CLOSED = 0.13;
@@ -79,7 +79,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     //autoaim TODO: tune these values
 
-    public static double KP = 200;
+    public static double KP = 150;
     public static double KI = 0;
     public static double KD = 5;
     public static double KF = 15;
@@ -352,8 +352,8 @@ abstract public class BaseOpMode extends LinearOpMode {
             intakeMotor.setPower(INTAKE_SPEED);
             transferMotor.setPower(0.5 * TRANSFER_SPEED);
         } else {
-            intakeMotor.setVelocity(0);
-            transferMotor.setVelocity(0);
+            intakeMotor.setPower(0);
+            transferMotor.setPower(0);
         }
     }
     public void printTelemetry() {
@@ -363,6 +363,9 @@ abstract public class BaseOpMode extends LinearOpMode {
         telemetry.addData("Intake speed", intakeMotor.getVelocity());
         telemetry.addData("Transfer speed", transferMotor.getPower());
         telemetry.addData("Average Turret Speed", avgTurretSpeed() );
+        telemetry.addData("launch Motor 1: ", launchMotor1.getVelocity());
+
+        telemetry.addData("launch Motor 2: ", launchMotor2.getVelocity());
         telemetry.addData("Turret position", turretServo.getPosition());
         telemetry.addData("Gate Position", (gate.getPosition() == GATE_OPEN)?"Open":"Closed");
         //telemetry.addData("Ramp Position",flowerRamp.getPosition() == RAMP_UP ? "Up":"Down");
