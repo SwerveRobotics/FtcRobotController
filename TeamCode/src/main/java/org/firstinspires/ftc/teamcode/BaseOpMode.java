@@ -51,6 +51,9 @@ abstract public class BaseOpMode extends LinearOpMode {
     public double SERVO_POSITION_FORWARD = 0.4;
     public double SERVO_POSITION_BACKWARD = 0.98;
 
+    public static double TURRET_LEFT_END = 0.0;
+    public static double TURRET_RIGHT_END = 0.98;
+
     protected boolean turretAutoAim = true;
     private double turretCommandedDeg = 180;
     private double turretTargetDeg = 180;
@@ -84,8 +87,6 @@ abstract public class BaseOpMode extends LinearOpMode {
     public boolean hiveDown = true;
     //-------------------turret constants-----------------------------------------------
     //turret stuff, all in servo degrees (servo 0 to 1 = 0 to 360)
-    public static double TURRET_LEFT_END;
-    public static double TURRET_RIGHT_END;
     public static double TURRET_CENTER_DEG = 180; //servo angle when the turret is straight
     public static double TURRET_STRAIGHT_OFFSET_DEG = 180; //where the turret shoots at center, from robot front, ccw is positive. 180 = out the back
     public static double TURRET_DIR = 1; //flip to -1 if it turns the wrong way
@@ -246,10 +247,10 @@ abstract public class BaseOpMode extends LinearOpMode {
             angle -= 360;
         }
         double progress = (angle + 90)/(270);
-        return Math.max(Math.min(SERVO_POSITION_BACKWARD,progress*(SERVO_POSITION_BACKWARD-SERVO_POSITION_FORWARD) + SERVO_POSITION_FORWARD), SERVO_POSITION_FORWARD);
+        return Math.max(Math.min(TURRET_RIGHT_END,progress*(TURRET_RIGHT_END-TURRET_LEFT_END) + TURRET_LEFT_END), TURRET_LEFT_END);
     }
     public double servoPosToAngle(double servoPos){
-        double rawAngle = -90 + 270 * (servoPos -SERVO_POSITION_FORWARD)/(SERVO_POSITION_BACKWARD-SERVO_POSITION_FORWARD);
+        double rawAngle = -90 + 270 * (servoPos -TURRET_LEFT_END)/(TURRET_RIGHT_END-TURRET_LEFT_END);
         if (rawAngle < 0 ) {
             rawAngle += 360;
         }

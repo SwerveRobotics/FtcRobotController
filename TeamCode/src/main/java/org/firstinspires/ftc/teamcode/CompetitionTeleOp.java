@@ -106,12 +106,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 double angleInRadian = Math.atan2(yToOrigin, xToOrigin);
                 double convertRadiansIntoDegrees = Math.toDegrees(angleInRadian);
                 //turnTurretAbsolute(follower.pose().heading(), convertRadiansIntoDegrees + 180);
-                telemetry.addData("Robot x pose", follower.pose().x());
-                telemetry.addData("Robot y pose", follower.pose().y());
-                telemetry.addData("Robot current heading: ", Math.toDegrees(follower.pose().heading()));
                 telemetry.addData("Robot target heading", convertRadiansIntoDegrees + 180);
-
-                telemetry.addData("Transfer speed: ", transferMotor.getPower());
             }
 
 
