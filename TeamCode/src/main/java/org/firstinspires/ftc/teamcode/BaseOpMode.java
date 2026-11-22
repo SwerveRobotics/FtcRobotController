@@ -66,7 +66,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     public static double VELOCITY_1 = 950;
     public static double VELOCITY_2 = 600;
-    public static double TRANSFER_INTAKE_SPEED = 0.7;
+    public static double TRANSFER_INTAKE_SPEED = 0.5;
 
     public static double GATE_OPEN = 0;
     public static double GATE_CLOSED = 0.13;
