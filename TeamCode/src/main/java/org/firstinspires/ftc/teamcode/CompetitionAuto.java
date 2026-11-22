@@ -27,7 +27,7 @@ import org.firstinspires.ftc.teamcode.menu.MenuHeader;
 import org.firstinspires.ftc.teamcode.menu.MenuInput;
 import org.firstinspires.ftc.teamcode.menu.MenuSlider;
 import org.firstinspires.ftc.teamcode.menu.TextMenu;
-
+//67
 import static com.pedropathing.ivy.groups.Groups.parallel;
 @Autonomous(name = "417 Auto")
 public class CompetitionAuto extends BaseOpMode{
@@ -140,7 +140,6 @@ public class CompetitionAuto extends BaseOpMode{
 
         while (opModeIsActive()) {
             follower.update();
-            servoPosition(angleToServoPos(0));
             if (pinpoint.getDeviceStatus() != GoBildaPinpointDriver.DeviceStatus.READY) {
                 telemetry.addLine("Pinpoint is crazy");
                 follower.stop();
@@ -187,13 +186,13 @@ public class CompetitionAuto extends BaseOpMode{
 //    }
     public Command shootBalls(int numBalls, double angle) {
         return sequential(
-                instant(()-> servoPosition(SERVO_POSITION_FORWARD)),
-                instant(() -> setTurretVelocity(VELOCITY_1, VELOCITY_2)),
+                instant(()-> turret.turnRelative(angle)),
+                instant(() -> turret.setVelocity(VELOCITY_1, VELOCITY_2)),
                 waitMs(700), // tune this
                 instant(() -> intakeAndTransfer(true)),
                 waitMs(numBalls*LAUNCH_TIME),
                 instant(() -> intakeAndTransfer(false)),//longer wait time for launch
-                instant(() -> setTurretVelocity(0,0))
+                instant(() -> turret.setVelocity(0,0))
         );
     }
     public Command shootBalls(int numBalls) {

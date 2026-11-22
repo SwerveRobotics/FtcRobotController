@@ -35,11 +35,14 @@ abstract public class BaseOpMode extends LinearOpMode {
     //motors;
     protected DcMotorEx launchMotor1;
     protected DcMotorEx launchMotor2;
+    protected Servo turretServo;
+    protected Servo turretServo2 ;
     protected DcMotorEx intakeMotor;
     protected DcMotorEx transferMotor;
-    protected Servo turretServo;
-
-    protected Servo turretServo2 ;
+    public double BLUE_GOAL_X = 84;
+    public double RED_GOAL_X = 58;
+    public double GOAL_Y_HIGH = 86.5;
+    public double GOAL_Y_LOW = 54.5;
 
     protected Servo gate;
     //protected Servo flowerRamp;
@@ -47,22 +50,11 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected Limelight3A limelight;
     protected Alliance chosenAlliance;
     protected Follower follower;
-
+//67
 
     protected UpCell upCell = UpCell.UNKNOWN; //which cell is up, step 1 sets this
     //to TEST turret servo in teleop
-
-    public double SERVO_POSITION_FORWARD = 0.417;
-    public double SERVO_POSITION_BACKWARD = 1;
-
-    public static double TURRET_LEFT_END = 0.0;
-    public static double TURRET_RIGHT_END = 1.0;
-
-    protected boolean turretAutoAim = true;
-    private double turretCommandedDeg = 180;
-    private double turretTargetDeg = 180;
-    private boolean turretAtLimit = false;
-    private final ElapsedTime turretTimer = new ElapsedTime();
+    public Turret turret;
     //constants
     public static double LAUNCH_TIME = 1000.0;
     public static double INTAKE_SPEED = 1.0;
@@ -89,19 +81,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double KF = 15;
     // For seeing if hive is down or not
     public boolean hiveDown = true;
-    //-------------------turret constants-----------------------------------------------
-    //turret stuff, all in servo degrees (servo 0 to 1 = 0 to 360)
-    public static double TURRET_CENTER_DEG = 180; //servo angle when the turret is straight
-    public static double TURRET_STRAIGHT_OFFSET_DEG = 180; //where the turret shoots at center, from robot front, ccw is positive. 180 = out the back
-    public static double TURRET_DIR = 1; //flip to -1 if it turns the wrong way
-    public static double TURRET_LIMIT_MARGIN_DEG = 5; //stay this far inside the real stops
-    public static double TURRET_MAX_SPEED_DEG_PER_SEC = 300;
 
-    //goal points in field inches, TODO check these
-    public static double BLUE_GOAL_X = 84;
-    public static double RED_GOAL_X = 58;
-    public static double GOAL_Y_HIGH = 86.5;
-    public static double GOAL_Y_LOW = 54.5;
     public static boolean AUDIENCE_CELL_IS_HIGH_Y = true; //TODO which y is which cell
 
     public final List<Integer> RED_LIST = List.of(30, 31, 32, 33, 34, 35, 36, 37);
@@ -331,7 +311,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public void turnTurretRelative(double targetHeading) {
         //starts the turret and center degree
         //turretCommandedDeg = servoPosToAngle(turretServo.getPosition());
-        servoPosition(angleToServoPos((targetHeading)));
+        servoPosition(angleToServoPos(angleToServoPos(targetHeading)));
 //        turretTargetDeg = targetHeading;
 //        turretTimer.reset(); //for time
     }

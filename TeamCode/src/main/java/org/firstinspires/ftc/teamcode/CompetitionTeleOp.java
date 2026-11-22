@@ -31,13 +31,11 @@ public class CompetitionTeleOp extends BaseOpMode {
     double lateral;
     double turn;
     double fieldCentricCorrectionFactor = 0;
-    double amountToTurn =
-            0;
     private boolean turning = false;
     private double targetHeading = 0;
     private DrivePowers fcPowers;
     private double turretRelative;
-    //private Limelight3A limelight;
+
     //private AutoAim autoAim;
     @Override
     public void runOpMode() throws InterruptedException {
@@ -53,8 +51,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         //driver press st art on DS
         waitForStart();
 
-        turretServo.setPosition(SERVO_POSITION_FORWARD);
-        turretServo2.setPosition(SERVO_POSITION_FORWARD);
+        turret.faceForward();
 
 
         //TODO: commented out RED_LIST
@@ -71,7 +68,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         }
 
         while (opModeIsActive()) {
-            updateLauncherPidf();
+            turret.updateLauncherPidf();
 
             /**
              *
@@ -107,7 +104,6 @@ public class CompetitionTeleOp extends BaseOpMode {
                 double angleInRadian = Math.atan2(yToOrigin, xToOrigin);
                 double convertRadiansIntoDegrees = Math.toDegrees(angleInRadian);
                 //turnTurretAbsolute(follower.pose().heading(), convertRadiansIntoDegrees + 180);
-                telemetry.addData("Robot target heading", convertRadiansIntoDegrees + 180);
             }
 
 
@@ -142,19 +138,18 @@ public class CompetitionTeleOp extends BaseOpMode {
             //launching controls
 
             if(gamepad2.rightTriggerWasPressed()){
-                setTurretVelocity(VELOCITY_1, VELOCITY_2);
+               turret.setVelocity(VELOCITY_1, VELOCITY_2);
             }else if (gamepad2.left_trigger_pressed){
-                setTurretVelocity(0, 0);
+               turret.setVelocity(0, 0);
             }
 
 
 
 
             if(gamepad2.right_bumper){
-                servoPosition(SERVO_POSITION_FORWARD);
+                turret.faceForward();
             } else if (gamepad2.left_bumper) {
-                servoPosition(SERVO_POSITION_BACKWARD);
-
+                turret.faceBackward();
             }
 
             //turretIsFast();
@@ -201,7 +196,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                     targetY = 54.5;
                 }
                 targetHeading = Math.toDegrees(Math.atan2(targetY-follower.pose().y(),targetX - follower.pose().x())); //get angle based on target
-                //turnTurretAbsolute(follower.pose().heading(), targetHeading);
+                turret.turnAbsolute(follower.pose().heading(), targetHeading);
             }
             /*
             // Press A to turn 30 degrees
@@ -211,7 +206,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                 targetHeading = follower.pose().heading() + Math.toRadians(30);
                 turning = true;
             }
-
+67
 */
 
 /*
