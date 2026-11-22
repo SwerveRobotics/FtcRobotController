@@ -331,7 +331,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public void turnTurretRelative(double targetHeading) {
         //starts the turret and center degree
         //turretCommandedDeg = servoPosToAngle(turretServo.getPosition());
-        servoPosition(angleToServoPos(angleToServoPos(targetHeading)));
+        servoPosition(angleToServoPos((targetHeading)));
 //        turretTargetDeg = targetHeading;
 //        turretTimer.reset(); //for time
     }

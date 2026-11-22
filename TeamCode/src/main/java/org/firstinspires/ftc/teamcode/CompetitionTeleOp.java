@@ -11,6 +11,7 @@ import com.pedropathing.follower.ManualDrive;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.hardware.limelightvision.LLResultTypes.FiducialResult;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -62,7 +63,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         //flowerRamp.setPosition(RAMP_UP);
         targetPose = Pose.zero();
         //Set<List> ignoredTags = Set.of(RED_LIST);
-        Set<List<Integer>> ignoredTags;
+        Set<List<Integer>> ignoredTags = Collections.emptySet();
         if (chosenAlliance == Alliance.BLUE) {
             ignoredTags = Set.of(RED_LIST);
         } else if (chosenAlliance == Alliance.RED) {
@@ -84,9 +85,9 @@ public class CompetitionTeleOp extends BaseOpMode {
                     int id = tag.getFiducialId();
 
                     // Skip any tag on your exclusion list TODO: commented out below
-//                    if (ignoredTags.contains(id)) {
-//                        continue;
-//                    }
+                    if (ignoredTags.contains(id)) {
+                        continue;
+                    }
                     double tx = tag.getTargetXDegrees();
                     double ty = tag.getTargetYDegrees();
                     telemetry.addData("Valid Tag " + id, "tx: %.2f, ty: %.2f", tx, ty);
