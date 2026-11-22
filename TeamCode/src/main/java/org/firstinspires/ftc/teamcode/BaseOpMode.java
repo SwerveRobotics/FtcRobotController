@@ -13,6 +13,7 @@ import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.Position;
+import org.firstinspires.ftc.teamcode.procedures.Turret;
 
 import java.util.List;
 import java.util.Set;
@@ -31,11 +32,14 @@ abstract public class BaseOpMode extends LinearOpMode {
     //motors;
     protected DcMotorEx launchMotor1;
     protected DcMotorEx launchMotor2;
+    protected Servo turretServo;
+    protected Servo turretServo2 ;
     protected DcMotorEx intakeMotor;
     protected DcMotorEx transferMotor;
-    protected Servo turretServo;
-
-    protected Servo turretServo2 ;
+    public double BLUE_GOAL_X = 84;
+    public double RED_GOAL_X = 58;
+    public double GOAL_Y_HIGH = 86.5;
+    public double GOAL_Y_LOW = 54.5;
 
     protected Servo gate;
     //protected Servo flowerRamp;
@@ -47,18 +51,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     protected UpCell upCell = UpCell.UNKNOWN; //which cell is up, step 1 sets this
     //to TEST turret servo in teleop
-
-    public double SERVO_POSITION_FORWARD = 0.417;
-    public double SERVO_POSITION_BACKWARD = 1;
-
-    public static double TURRET_LEFT_END = 0.0;
-    public static double TURRET_RIGHT_END = 1.0;
-
-    protected boolean turretAutoAim = true;
-    private double turretCommandedDeg = 180;
-    private double turretTargetDeg = 180;
-    private boolean turretAtLimit = false;
-    private final ElapsedTime turretTimer = new ElapsedTime();
+    public Turret turret;
     //constants
     public static double LAUNCH_TIME = 1000.0;
     public static double INTAKE_SPEED = 1.0;
@@ -85,19 +78,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double KF = 15;
     // For seeing if hive is down or not
     public boolean hiveDown = true;
-    //-------------------turret constants-----------------------------------------------
-    //turret stuff, all in servo degrees (servo 0 to 1 = 0 to 360)
-    public static double TURRET_CENTER_DEG = 180; //servo angle when the turret is straight
-    public static double TURRET_STRAIGHT_OFFSET_DEG = 180; //where the turret shoots at center, from robot front, ccw is positive. 180 = out the back
-    public static double TURRET_DIR = 1; //flip to -1 if it turns the wrong way
-    public static double TURRET_LIMIT_MARGIN_DEG = 5; //stay this far inside the real stops
-    public static double TURRET_MAX_SPEED_DEG_PER_SEC = 300;
 
-    //goal points in field inches, TODO check these
-    public static double BLUE_GOAL_X = 84;
-    public static double RED_GOAL_X = 58;
-    public static double GOAL_Y_HIGH = 86.5;
-    public static double GOAL_Y_LOW = 54.5;
     public static boolean AUDIENCE_CELL_IS_HIGH_Y = true; //TODO which y is which cell
 
     public final List<Integer> RED_LIST = List.of(30, 31, 32, 33, 34, 35, 36, 37);
@@ -158,13 +139,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
 
     //step 2: pick the goal point based on which cell is up
-    private double[] getGoalPoint() {
-        if (chosenAlliance == null || upCell == UpCell.UNKNOWN) return null; //dont know yettt
-        double x = (chosenAlliance == Alliance.BLUE) ? BLUE_GOAL_X : RED_GOAL_X;
-        boolean high = (upCell == UpCell.AUDIENCE) == AUDIENCE_CELL_IS_HIGH_Y;
-        return new double[]{x,
-                high ? GOAL_Y_HIGH : GOAL_Y_LOW};
-    }
+
 
     //keeps an angle between -180 and 180
     private static double wrap180(double deg) {
@@ -172,6 +147,13 @@ abstract public class BaseOpMode extends LinearOpMode {
         if (d > 180) d -= 360;
         if (d <= -180) d += 360;
         return d;
+    }
+    private double[] getGoalPoint() {
+        if (chosenAlliance == null || upCell == UpCell.UNKNOWN) return null; //dont know yettt
+        double x = (chosenAlliance == Alliance.BLUE) ? BLUE_GOAL_X : RED_GOAL_X;
+        boolean high = (upCell == UpCell.AUDIENCE) == AUDIENCE_CELL_IS_HIGH_Y;
+        return new double[]{x,
+                high ? GOAL_Y_HIGH : GOAL_Y_LOW};
     }
 
     //steps 3 and 4: where the turret should point (servo degrees), NaN if we cant aim yet
@@ -183,91 +165,52 @@ abstract public class BaseOpMode extends LinearOpMode {
 //            ignoredTags = Set.of(BLUE_LIST);
 //        }
         //limits not set yet, dont move
-        if (Math.abs(TURRET_RIGHT_END - TURRET_LEFT_END) < 20) return Double.NaN;
 
         double[] goal = getGoalPoint();
         if (goal == null) return Double.NaN;
 
         //angle from the robot to the goal on the field
         double goalAngle = Math.toDegrees(Math.atan2(goal[1] - poseY, goal[0] - poseX));
-        //make it relative to the robot, then to where the turret shoots at center
-        double relative = wrap180(goalAngle - Math.toDegrees(headingRad) - TURRET_STRAIGHT_OFFSET_DEG);
-        double desired = TURRET_CENTER_DEG + TURRET_DIR * relative;
-
-        //limits, a little inside the real stops
-        double minDeg = Math.min(TURRET_LEFT_END, TURRET_RIGHT_END) + TURRET_LIMIT_MARGIN_DEG;
-        double maxDeg = Math.max(TURRET_LEFT_END, TURRET_RIGHT_END) - TURRET_LIMIT_MARGIN_DEG;
-
-        //same angle can show up as desired, desired + 360, desired - 360
-        //pick the one that fits and is closest to where the turret is
-        turretAtLimit = false;
-        double best = Double.NaN;
-        for (int k = -1; k <= 1; k++) {
-            double cand = desired + 360 * k;
-            if (cand >= minDeg && cand <= maxDeg) {
-                if (Double.isNaN(best) || Math.abs(cand - turretCommandedDeg) < Math.abs(best - turretCommandedDeg)) {
-                    best = cand;
-                }
-            }
-        }
-        //nothing fits = goal is in the dead zone, so go to the closest limit
-        if (Double.isNaN(best)) {
-            best = (Math.abs(wrap180(desired - minDeg)) <= Math.abs(wrap180(desired - maxDeg))) ? minDeg : maxDeg;
-            turretAtLimit = true;
-        }
+//        //make it relative to the robot, then to where the turret shoots at center
+//        double relative = wrap180(goalAngle - Math.toDegrees(headingRad) - TURRET_STRAIGHT_OFFSET_DEG);
+//        double desired = TURRET_CENTER_DEG + TURRET_DIR * relative;
+//
+//        //limits, a little inside the real stops
+//        double minDeg = Math.min(TURRET_LEFT_END, TURRET_RIGHT_END) + TURRET_LIMIT_MARGIN_DEG;
+//        double maxDeg = Math.max(TURRET_LEFT_END, TURRET_RIGHT_END) - TURRET_LIMIT_MARGIN_DEG;
+//
+//        //same angle can show up as desired, desired + 360, desired - 360
+//        //pick the one that fits and is closest to where the turret is
+//        turretAtLimit = false;
+//        double best = Double.NaN;
+//        for (int k = -1; k <= 1; k++) {
+//            double cand = desired + 360 * k;
+//            if (cand >= minDeg && cand <= maxDeg) {
+//                if (Double.isNaN(best) || Math.abs(cand - turretCommandedDeg) < Math.abs(best - turretCommandedDeg)) {
+//                    best = cand;
+//                }
+//            }
+//        }
+//        //nothing fits = goal is in the dead zone, so go to the closest limit
+//        if (Double.isNaN(best)) {
+//            best = (Math.abs(wrap180(desired - minDeg)) <= Math.abs(wrap180(desired - maxDeg))) ? minDeg : maxDeg;
+//            turretAtLimit = true;
+//        }
         //return best;
         return goalAngle;
     }
 
-    //step 6: call this every loop
-    protected void updateTurret(double poseX, double poseY, double headingRad) {
-        double dt = turretTimer.seconds();
-        turretTimer.reset();
-        if (dt <= 0 || dt > 0.25) dt = 0.02; //first loop or a lag spike
-
-        //if auto aim is off or we cant aim, just hold where we are
-//        turretTargetDeg = turretCommandedDeg;
-//        if (turretAutoAim) {
-//            double rough = getRoughAim(poseX, poseY, headingRad);
-//            if (!Double.isNaN(rough)) turretTargetDeg = rough;
-//        }
-
-        //move toward the target but not faster than the max speed
-        double maxStep = TURRET_MAX_SPEED_DEG_PER_SEC * dt;
-        double diff = turretTargetDeg - turretCommandedDeg;
-        if (Math.abs(diff) <= maxStep) {
-            turretCommandedDeg = turretTargetDeg;
-        } else {
-            turretCommandedDeg += Math.signum(diff) * maxStep;
-        }
-        servoPosition(Math.max(0, Math.min(1, angleToServoPos(turretCommandedDeg))));
-    }
-    public double angleToServoPos(double angle) {
-        if (angle > 225) {
-            angle -= 360;
-        }
-        double progress = (angle + 135)/(315);
-        return Math.max(Math.min(TURRET_RIGHT_END,progress*(TURRET_RIGHT_END-TURRET_LEFT_END) + TURRET_LEFT_END), TURRET_LEFT_END);
-    }
-    public double servoPosToAngle(double servoPos){
-        double rawAngle = -135 + 315 * (servoPos -TURRET_LEFT_END)/(TURRET_RIGHT_END-TURRET_LEFT_END);
-        if (rawAngle < 0 ) {
-            rawAngle += 360;
-        }
-        return rawAngle;
-    }
-
     public void initializeHardware() {
         //initializeLimelight();
-
-        //initialize motors
-        intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
-        transferMotor = hardwareMap.get(DcMotorEx.class, "transfer");
-
         launchMotor1 = hardwareMap.get(DcMotorEx.class, "launch1");
         launchMotor2 = hardwareMap.get(DcMotorEx.class, "launch2");
         turretServo = hardwareMap.get(Servo.class, "turretServo");
         turretServo2 = hardwareMap.get(Servo.class, "turretServo2");
+        turret = new Turret(launchMotor1, launchMotor2, turretServo, turretServo2);
+        //initialize motors
+        intakeMotor = hardwareMap.get(DcMotorEx.class, "intake");
+        transferMotor = hardwareMap.get(DcMotorEx.class, "transfer");
+
         gate = hardwareMap.get(Servo.class, "gate");
         //flowerRamp = hardwareMap.get(Servo.class, "flowerRamp");
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
@@ -308,45 +251,6 @@ abstract public class BaseOpMode extends LinearOpMode {
         launchMotor2.setDirection(DcMotorSimple.Direction.FORWARD);
     }
     //remembers what we last sent to the hub so we only resend when a value changes
-    private double lastKP = Double.NaN, lastKI = Double.NaN, lastKD = Double.NaN, lastKF = Double.NaN;
-    public void updateLauncherPidf() {
-        if (KP != lastKP || KI != lastKI || KD != lastKD || KF != lastKF) {
-            PIDFCoefficients pidf = new PIDFCoefficients(KP, KI, KD, KF);
-            launchMotor1.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
-            launchMotor2.setPIDFCoefficients(DcMotor.RunMode.RUN_USING_ENCODER, pidf);
-            lastKP = KP; lastKI = KI; lastKD = KD; lastKF = KF;
-        }
-    }    public void turnTurretAbsolute(double robotHeading, double targetHeading) { //takes [0,360], [0,360]
-        double turretRelative = targetHeading - robotHeading;
-        if (turretRelative < 0) {
-            turretRelative += 360;
-        }
-        turnTurretRelative(turretRelative);
-    }
-    public void turnTurretRelative(double targetHeading) {
-        //starts the turret and center degree
-        //turretCommandedDeg = servoPosToAngle(turretServo.getPosition());
-        servoPosition(angleToServoPos(angleToServoPos(targetHeading)));
-//        turretTargetDeg = targetHeading;
-//        turretTimer.reset(); //for time
-    }
-    public void setTurretVelocity(double velocity1, double velocity2) {
-        launchMotor1.setVelocity(velocity1);
-        launchMotor2.setVelocity(velocity2);
-    }
-    public void servoPosition(double position) {
-        turretServo.setPosition(position);
-        turretServo2.setPosition(position);
-    }
-
-    public boolean turretIsFast() {
-        if (VELOCITY_1 <= 0 || VELOCITY_2 <= 0) return false;
-        return launchMotor1.getVelocity() > 0.95 * VELOCITY_1
-                && launchMotor2.getVelocity() > 0.95 * VELOCITY_2;
-    }
-    public double avgTurretSpeed() {
-        return (launchMotor2.getVelocity() + launchMotor1.getVelocity())/2.0;
-    }
     public void intakeAndTransfer(boolean on) {
         if (on) {
             intakeMotor.setPower(INTAKE_SPEED);
@@ -362,7 +266,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
         telemetry.addData("Intake speed", intakeMotor.getVelocity());
         telemetry.addData("Transfer speed", transferMotor.getPower());
-        telemetry.addData("Average Turret Speed", avgTurretSpeed() );
+        telemetry.addData("Average Turret Speed", turret.avgSpeed() );
         telemetry.addData("launch Motor 1: ", launchMotor1.getVelocity());
 
         telemetry.addData("launch Motor 2: ", launchMotor2.getVelocity());
