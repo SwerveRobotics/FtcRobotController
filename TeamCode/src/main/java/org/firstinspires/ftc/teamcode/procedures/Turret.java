@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.teamcode.BaseOpMode;
 @Config
-public class Turret {
+public class Turret { //67
     protected DcMotorEx launchMotor1;
     protected DcMotorEx launchMotor2;
     protected Servo turretServo;
