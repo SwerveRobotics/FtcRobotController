@@ -1,8 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
 import com.acmerobotics.dashboard.config.Config;
+//import com.google.blocks.ftcrobotcontroller.runtime.HardwareAccess;
+//import com.google.blocks.ftcrobotcontroller.runtime.Limelight3AAccess;
 import com.pedropathing.follower.Follower;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -40,7 +44,7 @@ abstract public class BaseOpMode extends LinearOpMode {
     protected Servo gate;
     //protected Servo flowerRamp;
     protected GoBildaPinpointDriver pinpoint;
-    //protected Limelight3A limelight;
+    protected Limelight3A limelight;
     protected Alliance chosenAlliance;
     protected Follower follower;
 
@@ -103,36 +107,37 @@ abstract public class BaseOpMode extends LinearOpMode {
     public final List<Integer> RED_LIST = List.of(30, 31, 32, 33, 34, 35, 36, 37);
     public final List<Integer> BLUE_LIST =List.of(38, 39, 40, 41, 42, 43, 44, 45);
 //---------------------------------------------------------------
-//    //protected boolean IS_HIVE_SCORABLE () {
-//        LLResult result = limelight.getLatestResult();
-//            if (result != null && result.isValid()) {
-//                boolean foundScorableTarget = false;
-//                double targetErrorX = 0;
-//                for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
-//                    int id = tag.getFiducialId();
-//                    double distMM = distanceToTag(tag);
-//                    if (distMM > 0.85) { //dist of 800 or less is down, dist of 900 or more is up
-//                        if (tagBelongs(chosenAlliance, id)) {
-//                            foundScorableTarget = true;
-//                        } else {
-//                            telemetry.addLine("wrong team detected");
-//                        }
-//                    }
-//                    targetErrorX = tag.getTargetXDegrees();
-//                    telemetry.addData("Horizontal Error (tx)", targetErrorX);
-//                    telemetry.addData("Distance to camera", distanceToTag(tag));
-//
-//            }
-//            if (!foundScorableTarget ) {
-//                telemetry.addData("status","Target Not Found");
-//            }
-//            return foundScorableTarget;
-//        }
-//        else {
-//            telemetry.addData("status", "No Valid Targets Visible");
-//        }
-//        return false;
-//    }
+    //public Limelight3AAccess extends limelight;
+    protected boolean IS_HIVE_SCORABLE () {
+        LLResult result = limelight.getLatestResult();
+            if (result != null && result.isValid()) {
+                boolean foundScorableTarget = false;
+                double targetErrorX = 0;
+                for (LLResultTypes.FiducialResult tag : result.getFiducialResults()) {
+                    int id = tag.getFiducialId();
+                    double distMM = distanceToTag(tag);
+                    if (distMM > 0.85) { //dist of 800 or less is down, dist of 900 or more is up
+                        if (tagBelongs(chosenAlliance, id)) {
+                            foundScorableTarget = true;
+                        } else {
+                            telemetry.addLine("wrong team detected");
+                        }
+                    }
+                    targetErrorX = tag.getTargetXDegrees();
+                    telemetry.addData("Horizontal Error (tx)", targetErrorX);
+                    telemetry.addData("Distance to camera", distanceToTag(tag));
+
+            }
+            if (!foundScorableTarget ) {
+                telemetry.addData("status","Target Not Found");
+            }
+            return foundScorableTarget;
+        }
+        else {
+            telemetry.addData("status", "No Valid Targets Visible");
+        }
+        return false;
+    }
     protected double distanceToTag(LLResultTypes.FiducialResult tag) {
         Position x = tag.getTargetPoseCameraSpace().getPosition();
         return distanceToOrigin(x);
@@ -176,12 +181,12 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     //steps 3 and 4: where the turret should point (servo degrees), NaN if we cant aim yet
     private double getRoughAim(double poseX, double poseY, double headingRad) {
-//        Set<List<Integer>> ignoredTags;
-//        if (chosenAlliance == Alliance.BLUE) {
-//            ignoredTags = Set.of(RED_LIST);
-//        } else if (chosenAlliance == Alliance.RED) {
-//            ignoredTags = Set.of(BLUE_LIST);
-//        }
+        Set<List<Integer>> ignoredTags;
+        if (chosenAlliance == Alliance.BLUE) {
+            ignoredTags = Set.of(RED_LIST);
+        } else if (chosenAlliance == Alliance.RED) {
+            ignoredTags = Set.of(BLUE_LIST);
+        }
         //limits not set yet, dont move
         if (Math.abs(TURRET_RIGHT_END - TURRET_LEFT_END) < 20) return Double.NaN;
 
