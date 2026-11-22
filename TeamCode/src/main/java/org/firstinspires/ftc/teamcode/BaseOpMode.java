@@ -17,8 +17,9 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double MOTOR_D_VALUE = 1;
 
     //Motors/Servos
-    public static double UPPER_LAUNCHER_SPEED = 2400;
-    public static double LOWER_LAUNCHER_SPEED = 2000;
+    public static double UPPER_LAUNCHER_SPEED = 2300;
+    public static double LOWER_LAUNCHER_SPEED = 1900;
+
 //    public static double LAUNCHER_TOPSPIN = 50;
     public static double WHEEL_STOP_SPEED = 0;
     public static double INTAKE_SPEED_MULTIPLIER = 2000;
