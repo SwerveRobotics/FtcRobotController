@@ -40,28 +40,27 @@ public class CompetitionTeleOp extends BaseOpMode{
 
 
         while (opModeIsActive()) {
-            telemetry.addData("x", follower.pose().x());
-            telemetry.addData("y", follower.pose().y());
-            telemetry.addData("upper_flywheel: ", upperFlywheelMot.getVelocity());
-            telemetry.addData("lower_flywheel: ", lowerFlywheelMot.getVelocity());
-            telemetry.addData("heading", follower.pose().heading());
-            Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
-            DashboardDraw.drawRobot(currPose);
+//            telemetry.addData("x", follower.pose().x());
+//            telemetry.addData("y", follower.pose().y());
+//            telemetry.addData("upper_flywheel: ", upperFlywheelMot.getVelocity());
+//            telemetry.addData("lower_flywheel: ", lowerFlywheelMot.getVelocity());
+//            telemetry.addData("heading", follower.pose().heading());
+//            Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
+//            DashboardDraw.drawRobot(currPose);
             intakeMot.setVelocity(gamepad2.left_stick_y * INTAKE_SPEED_MULTIPLIER);
-            leftIntakeServo.setPower(gamepad2.left_stick_y);
-            rightIntakeServo.setPower(gamepad2.left_stick_y);
 
-            if (gamepad2.aWasPressed()) {
-                transferWheelMot.setVelocity(TRANSFER_SPEED);
-            }
             if (gamepad2.rightBumperWasPressed()) {
                 transferWheelMot.setVelocity(-TRANSFER_SPEED);
             }
 
+            if (gamepad2.a) {
+                transferWheelMot.setVelocity(TRANSFER_SPEED);
+            } else {
+                transferWheelMot.setVelocity(WHEEL_STOP_SPEED);
+            }
 
-            // NEW GATE CODE!!!
+
             if (gamepad2.xWasPressed()) {
-
                 gateIndex++;
                 if (gateIndex >= GATE_VOLTS.length) {
                     gateIndex = 0;
@@ -82,16 +81,14 @@ public class CompetitionTeleOp extends BaseOpMode{
                 gateServo.setPower(0.0);
             }
 
-//                gateServo.setPower(GATE_KP * gateError);
-//            } else { gateServo.setPower(MATH.abs(GATE_KP * gateError));}
 
 
 ///
 //
 
-            telemetry.addData("Gate Target", targetVoltage);
-            telemetry.addData("Gate Current", currentVoltage);
-            telemetry.addData("Gate Index", gateIndex);
+//            telemetry.addData("Gate Target", targetVoltage);
+//            telemetry.addData("Gate Current", currentVoltage);
+//            telemetry.addData("Gate Index", gateIndex);
 
 
             if (gamepad2.yWasPressed()) {
@@ -105,20 +102,20 @@ public class CompetitionTeleOp extends BaseOpMode{
                 lowerFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
                 upperFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
             }
-            if(gamepad2.leftBumperWasPressed()){
-                Pose dynamicControl1;
-                Pose dynamicControl2;
-                if(currPose.x() > 72){
-                    dynamicControl1 = poseFactory.of(130,90,90);
-                    dynamicControl2 = poseFactory.of(130,30,90);
-                } else {
-                   dynamicControl1 = autoDriveControl1;
-                    dynamicControl2 = autoDriveControl2;
-
-                }
-                Path autoDriveTo  = curve(currPose, dynamicControl1,dynamicControl2, resetPoint).linear(currPose, resetPoint);
-                follower.follow(autoDriveTo);
-            }
+//            if(gamepad2.leftBumperWasPressed()){
+//                Pose dynamicControl1;
+//                Pose dynamicControl2;
+//                if(currPose.x() > 72){
+//                    dynamicControl1 = poseFactory.of(130,90,90);
+//                    dynamicControl2 = poseFactory.of(130,30,90);
+//                } else {
+//                   dynamicControl1 = autoDriveControl1;
+//                    dynamicControl2 = autoDriveControl2;
+//
+//                }
+//                Path autoDriveTo  = curve(currPose, dynamicControl1,dynamicControl2, resetPoint).linear(currPose, resetPoint);
+//                follower.follow(autoDriveTo);
+//            }
 
 
             if(!follower.isBusy()) {
@@ -135,10 +132,10 @@ public class CompetitionTeleOp extends BaseOpMode{
                     turn = -gamepad1.right_stick_x * slowModeMultiplier;
                 }
 
-                telemetry.addData("turn: ", turn );
-                telemetry.addData("lower flywheel motor: ", lowerFlywheelMot.getVelocity());
-                telemetry.addData("upper flywheel motor: ", upperFlywheelMot.getVelocity());
-                telemetry.addData("gate servo fb: ", gateServoFeedback.getVoltage());
+//                telemetry.addData("turn: ", turn );
+//                telemetry.addData("lower flywheel motor: ", lowerFlywheelMot.getVelocity());
+//                telemetry.addData("upper flywheel motor: ", upperFlywheelMot.getVelocity());
+//                telemetry.addData("gate servo fb: ", gateServoFeedback.getVoltage());
 
                 // hold the heading of the robot at the turn heading driver has set it to
                 // automatic steering correction for driving forward/backward and strafing
