@@ -176,7 +176,7 @@ abstract public class BaseOpMode extends LinearOpMode {
 
         //angle from the robot to the goal on the field
         double goalAngle = Math.toDegrees(Math.atan2(goal[1] - poseY, goal[0] - poseX));
-//        //make it relative to the robot, then to where the turret shoots at center
+//        //make it relative to the robot, then to where the turret shoots at center67
 //        double relative = wrap180(goalAngle - Math.toDegrees(headingRad) - TURRET_STRAIGHT_OFFSET_DEG);
 //        double desired = TURRET_CENTER_DEG + TURRET_DIR * relative;
 //
