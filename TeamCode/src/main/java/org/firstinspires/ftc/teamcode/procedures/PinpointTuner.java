@@ -1,5 +1,7 @@
 package org.firstinspires.ftc.teamcode.procedures;
 
+import com.pedropathing.drivetrain.DrivePowers;
+import com.pedropathing.drivetrain.Drivetrain;
 import com.pedropathing.math.Pose;
 import com.pedropathing.revhub.localizers.PinpointConfig;
 import com.pedropathing.revhub.localizers.PinpointLocalizer;
@@ -7,9 +9,12 @@ import com.pedropathing.tuning.autotune.Inputs;
 import com.pedropathing.tuning.autotune.Procedure;
 import com.pedropathing.tuning.autotune.TuningOpMode;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.robotcore.hardware.HardwareMap;
+
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 import java.util.*;
+import java.util.function.Function;
 
 public class PinpointTuner extends Procedure {
     enum PodType {
@@ -201,6 +206,7 @@ class PinpointOffsets extends TuningOpMode<List<Double>> {
     OptionalDouble customPodScalar =  OptionalDouble.empty();
     boolean forwardPodReversed, strafePodReversed;
     private Pose previous = Pose.zero();
+    Function<HardwareMap, Drivetrain> drivetrainFunction;
 
     public PinpointOffsets(String name, PinpointTuner.PodType podType, OptionalDouble customPodScalar, Boolean forwardPodReversed, Boolean strafePodReversed) {
         super("Offsets Identification",
@@ -238,6 +244,7 @@ class PinpointOffsets extends TuningOpMode<List<Double>> {
         if (customPodScalar.isPresent()) {
             localizer.reset();
         }
+        Drivetrain drivetrain = drivetrainFunction.apply(hardwareMap);
         localizer.setPose(Pose.zero());
         localizer.update();
 
@@ -248,16 +255,17 @@ class PinpointOffsets extends TuningOpMode<List<Double>> {
         localizer.update();
 
         localizer.setPose(Pose.zero());
-
-        while (!isStopRequested()) {
+        DrivePowers power = new DrivePowers(0,0,0.2);
+        while (!isStopRequested() || localizer.pose().heading() >= 180) {
             previous = localizer.pose();
+            drivetrain.drive(power, true);
             localizer.update();
-
             telemetry.addData("heading", localizer.pose().heading());
             telemetry.addData("pose", localizer.pose());
             telemetry.addData("previous", previous);
             telemetry.update();
         }
+        drivetrain.stop();
 
         if (localizer.pose().x() != Pose.zero().x() || localizer.pose().y() != Pose.zero().y()) {
             previous =  localizer.pose();
