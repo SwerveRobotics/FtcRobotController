@@ -190,7 +190,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                     targetX = 58;
                 }
                 if (follower.pose().y() > 70) {
-                    targetY = 86.5;
+                    targetY = 86.5; //not 67
                 }   else {
                     targetY = 54.5;
                 }
