@@ -40,11 +40,14 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose launchAndParkControl1 = poseFactory.of(125, 132, 0);
 
     private Pose hDLaunchandParkStart = poseFactory.of(80, 9, 90);
-    private Pose hDLaunchandPark = poseFactory.of(127, 29, 180);
-    private Pose hDLaunchandParkControl1 = poseFactory.of(75, 20, 0);
+    private Pose hDLaunchandPark = poseFactory.of(127, 19, 180);
+    private Pose hDLaunchandParkControl1 = poseFactory.of(75, 10, 0);
     boolean redAlliance;
     private Command decide;
     private Pose startPos;
+
+    private double gateVoltage;
+    private int gateTarget = -1;
 
     public enum Alliance {
         RED,
@@ -183,13 +186,28 @@ public class CompetitionAuto extends BaseOpMode{
             follower.update();
             Scheduler.execute();
 
-            telemetry.addData("x", follower.pose().x());
-            telemetry.addData("y", follower.pose().y());
-            telemetry.addData("heading", follower.pose().heading());
+            gateVoltage = gateServoFeedback.getVoltage();
+
+            if (gateTarget != -1) {
+                double error = GATE_VOLTS[gateTarget] - gateServoFeedback.getVoltage();
+                double power = error * GATE_KP;
+
+                if (Math.abs(error) < GATE_VOLT_TOLERANCE) {
+                    gateTarget = -1; // Resets target when gate reaches position
+                    gateServo.setPower(0);
+                } else {
+                    gateServo.setPower(power);
+                }
+            }
+
+//            telemetry.addData("x", follower.pose().x());
+//            telemetry.addData("y", follower.pose().y());
+//            telemetry.addData("heading", follower.pose().heading());
+//            telemetry.addData("gate servo voltage", gateServoFeedback.getVoltage());
 
             if (follower.currentPath() != null) {
-                telemetry.addData("Current path distance remaining", follower.distanceToEndpoint());
-                telemetry.addData("Path number", follower.pathIndex());
+//                telemetry.addData("Current path distance remaining", follower.distanceToEndpoint());
+//                telemetry.addData("Path number", follower.pathIndex());
             }
 
             telemetry.update();
@@ -262,32 +280,39 @@ public class CompetitionAuto extends BaseOpMode{
                 // Wait for balls to get to launcher
                 waitMs(1500), //TODO: need to decide a constant value
 
+                instant(() -> gateServo.setPower(0.3)),
+                waitMs(6000),
+                instant(() -> gateServo.setPower(0)),
+
                 // Turn on launcher flywheels
-//                instant(() -> lowerFlywheelMot.setVelocity(LAUNCHER_SPEED)),
-//                instant(() -> upperFlywheelMot.setVelocity(LAUNCHER_SPEED - LAUNCHER_BACKSPIN)),
-                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[0])*0.1)),
+//                instant(() -> gateTarget = 0),
+//
+//                // Wait for four balls to launch7
+//                waitMs(2000),
+//                instant(() -> gateTarget = 1),
+//
+//                // Wait for four balls to launch7
+//                waitMs(2000),
+//                instant(() -> gateTarget = 2),
+//
+//                // Wait for four balls to launch7
+//                waitMs(2000),
+//                instant(() -> gateTarget = 3),
+//
+//                waitMs(2000),
+//                instant(() -> gateTarget = 0),
+
 
                 // Wait for four balls to launch7
-                waitMs(2000),
-                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[1])*0.1)),
-
-                // Wait for four balls to launch7
-                waitMs(2000),
-                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[2])*0.1)),
-
-                // Wait for four balls to launch7
-                waitMs(2000),
-                instant(() -> gateServo.setPower((gateServoFeedback.getVoltage() - GATE_VOLTS[3])*0.1)),
-
-                // Wait for four balls to launch7
-                waitMs(2000),
+                waitMs(4000),
                 //TODO: need a constant for this too to tune later
 
                 // Turn launcher off
                 instant(() -> transferWheelMot.setPower(0.0)),
                 instant(() -> lowerFlywheelMot.setPower(0.0)),
                 instant(() -> upperFlywheelMot.setPower(0.0)),
-                instant(() -> gateServo.setPower(0.0))
+                instant(() -> gateServo.setPower(0.0)),
+                instant(() -> gateTarget = -1)
         );
       }
 
