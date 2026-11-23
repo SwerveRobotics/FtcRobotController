@@ -47,7 +47,11 @@ public class CompetitionTeleOp extends BaseOpMode{
 //            telemetry.addData("heading", follower.pose().heading());
 //            Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
 //            DashboardDraw.drawRobot(currPose);
-            intakeMot.setVelocity(gamepad2.left_stick_y * INTAKE_SPEED_MULTIPLIER);
+            intakeMot.setPower(gamepad2.left_stick_y);
+            // if intake runs, put gate back in its blocking position
+            if (Math.abs(gamepad2.left_stick_y) >= 0.05) {
+                gateIndex = 0;
+            }
 
             if (gamepad2.rightBumperWasPressed()) {
                 transferWheelMot.setVelocity(-TRANSFER_SPEED);
