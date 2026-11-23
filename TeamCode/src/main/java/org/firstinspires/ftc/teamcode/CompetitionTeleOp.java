@@ -191,7 +191,7 @@ public class CompetitionTeleOp extends BaseOpMode {
                     targetX = 58;
                 }
                 if (follower.pose().y() > 70) {
-                    targetY = 86.5;
+                    targetY = 86.5; //not 67
                 }   else {
                     targetY = 54.5;
                 }
@@ -238,12 +238,16 @@ im != null) {
                 }
             }
             //TURRET HEADING
-            if(gamepad2.right_stick_y < -0.05) {
-                turretRelative = 0;
-                //turnTurretRelative(turretRelative);
-            } else if (gamepad2.right_stick_y > 0.05) {
-                turretRelative = 180;
-                //turnTurretRelative(turretRelative);
+            if (Math.abs(gamepad2.right_stick_x) > 0.05) {
+                if(turretRelative < 0) {
+                    turretRelative += 360;
+                }
+                if (turretRelative > 360) {
+                    turretRelative -= 360;
+                }
+                turretRelative += -7*gamepad2.right_stick_x;
+                turret.turnRelative(turretRelative);
+
             }
             //updateTurret(follower.pose().x(), follower.pose().y(), Math.toRadians(follower.pose().heading()));
             //MOVE ROBOT!!!!!!!!!!!!!
@@ -275,6 +279,7 @@ im != null) {
             telemetry.addData("KF: ", KF);
             telemetry.addData("Field-centric drive: ", fieldCentric);
             telemetry.addData("FC correction angle: ", fieldCentricCorrectionFactor);
+            telemetry.addData("Turret Target heading", turretRelative);
 
             telemetry.update();
 
