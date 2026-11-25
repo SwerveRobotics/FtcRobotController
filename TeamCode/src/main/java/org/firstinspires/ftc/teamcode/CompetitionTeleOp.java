@@ -70,9 +70,6 @@ public class CompetitionTeleOp extends BaseOpMode {
         while (opModeIsActive()) {
             turret.updateLauncherPidf();
 
-            /**
-             *
-             */
             //LLResult result = limelight.getLatestResult();
             LLResult result = null;
 

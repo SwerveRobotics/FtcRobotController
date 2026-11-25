@@ -59,8 +59,6 @@ abstract public class BaseOpMode extends LinearOpMode {
     //constants
     public static double LAUNCH_TIME = 1000.0;
     public static double INTAKE_SPEED = 1.0;
-
-
     public static double VELOCITY_1 = 950*1.4;
     public static double VELOCITY_2 = 600*1.4;
     public static double TRANSFER_INTAKE_SPEED = 0.5;
