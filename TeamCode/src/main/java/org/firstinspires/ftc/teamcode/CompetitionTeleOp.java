@@ -31,6 +31,13 @@ public class CompetitionTeleOp extends BaseOpMode{
     public void runOpMode() throws InterruptedException {
         initializeHardware();
         follower = Constants.create(hardwareMap);
+
+        follower.setPose(new Pose(
+                autoEndX,
+                autoEndY,
+                autoEndHeading
+        ));
+
         waitForStart();
 
         // for imu heading correction on strafing
@@ -50,7 +57,7 @@ public class CompetitionTeleOp extends BaseOpMode{
 //            telemetry.addData("upper_flywheel: ", upperFlywheelMot.getVelocity());
 //            telemetry.addData("lower_flywheel: ", lowerFlywheelMot.getVelocity());
 //            telemetry.addData("heading", follower.pose().heading());
-            Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
+            Pose currPose = follower.pose();
             DashboardDraw.drawRobot(currPose);
 
             intakeMot.setPower(gamepad2.left_stick_y);
@@ -71,6 +78,7 @@ public class CompetitionTeleOp extends BaseOpMode{
 
 
             if (gamepad2.xWasPressed()) {
+                transferWheelMot.setVelocity(TRANSFER_SPEED);
                 gateIndex++;
                 if (gateIndex >= GATE_VOLTS.length) {
                     gateIndex = 0;
@@ -90,16 +98,6 @@ public class CompetitionTeleOp extends BaseOpMode{
             if(Math.abs(gateError) < GATE_VOLT_TOLERANCE) {
                 gateServo.setPower(0.0);
             }
-
-
-
-///
-//
-
-//            telemetry.addData("Gate Target", targetVoltage);
-//            telemetry.addData("Gate Current", currentVoltage);
-//            telemetry.addData("Gate Index", gateIndex);
-
 
             if (gamepad2.yWasPressed()) {
                 lowerFlywheelMot.setVelocity(LOWER_LAUNCHER_SPEED);
@@ -128,6 +126,9 @@ public class CompetitionTeleOp extends BaseOpMode{
                 follower.follow(autoDriveTo);
             }
 
+            if (gamepad1.aWasPressed()) {
+                follower.setPose(new Pose(12, 12, 0));
+            }
 
             if(!follower.isBusy()) {
                 double slowModeMultiplier = doSLOWMODE();
@@ -158,6 +159,13 @@ public class CompetitionTeleOp extends BaseOpMode{
 //                telemetry.addData("lower flywheel motor: ", lowerFlywheelMot.getVelocity());
 //                telemetry.addData("upper flywheel motor: ", upperFlywheelMot.getVelocity());
 //                telemetry.addData("gate servo fb: ", gateServoFeedback.getVoltage());
+//                telemetry.addData("Gate Target", targetVoltage);
+//                telemetry.addData("Gate Current", currentVoltage);
+//                telemetry.addData("Gate Index", gateIndex);
+                telemetry.addData("drive:", drive);
+                telemetry.addData("strafe:", strafe);
+                telemetry.addData("turn:", turn);
+
 
                 // hold the heading of the robot at the turn heading driver has set it to
                 // automatic steering correction for driving forward/backward and strafing
@@ -197,19 +205,22 @@ public class CompetitionTeleOp extends BaseOpMode{
         double deltaX = aimTargetX - currPose.x();
         double deltaY = aimTargetY - currPose.y();
 
-        double targetHeading = Math.toDegrees(Math.atan2(deltaY, deltaX));
+        // both targetHeading and headingError are in RADIANS
+        double targetHeading = Math.atan2(deltaY, deltaX);
         double headingError = targetHeading - currPose.heading();
 
-        while (headingError > 180) headingError -= 360;
-        while (headingError < -180) headingError += 360;
-
+        // normalize to -pi to pi
+        headingError = Math.atan2(
+                Math.sin(headingError),
+                Math.cos(headingError)
+        );
         double turn = AUTO_AIM_KP * headingError;
         turn = Math.max(-1, Math.min(1, turn));
 
         telemetry.addData("Target Heading", targetHeading);
         telemetry.addData("Current Heading", currPose.heading());
-        telemetry.addData("Heading Error", headingError);
-        telemetry.addData("Aim Turn Power", turn);
+        telemetry.addData(" Turn Power", turn);
+
 
         return turn;
 

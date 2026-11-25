@@ -38,6 +38,9 @@ public class CompetitionAuto extends BaseOpMode{
     private Pose launchAndParkStart_2 = poseFactory.of(84, 134, 270);
     private Pose launchAndPark = poseFactory.of(129, 45, 180);
     private Pose launchAndParkControl1 = poseFactory.of(125, 132, 0);
+    private Pose gardenIntakeEnd = poseFactory.of(126, 133, 270);
+    private Pose gardenIntakeEnd2 = poseFactory.of(116, 133, 0);
+    private Pose gardenIntakeEnd3 = poseFactory.of(136, 133, 0);
 
     private Pose hDLaunchandParkStart = poseFactory.of(80, 9, 90);
     private Pose hDLaunchandPark = poseFactory.of(127, 19, 180);
@@ -72,10 +75,19 @@ public class CompetitionAuto extends BaseOpMode{
     public Command aRlaunchAndPark() {
         return sequential(
                 launchFourBalls(),
+                runIntakeAtPower(1.0),
+                runTransferAtPower(0.5),
+                follow(follower, line(launchAndPark, gardenIntakeEnd).constant(270).with(Constants.foresightConfig.maxPathSpeed.at(0.3))),
+                follow(follower, line(gardenIntakeEnd, gardenIntakeEnd2).constant(270)),
+                follow(follower, line(gardenIntakeEnd2, gardenIntakeEnd3).constant(0)),
+                runIntakeAtPower(0.0),
+                runTransferAtPower(0.0),
+                follow(follower, gardenToLaunch()),
+                launchFourBalls(),
                 follow(follower, launchAndPark())
-
         );
     }
+
     public Command aRHDlaunchAndPark() {
         return sequential(
                 //waitMs(PARTNER_LAUNCH_TIME),
@@ -90,7 +102,8 @@ public class CompetitionAuto extends BaseOpMode{
     public void runOpMode() throws InterruptedException {
         follower = Constants.create(hardwareMap);
         initializeHardware();
-//        follower.setPose(leaveAndParkStart_2);
+
+        //        follower.setPose(leaveAndParkStart_2);
 //        follower.update();
 
 //        Making follower to tell the robot
@@ -212,6 +225,12 @@ public class CompetitionAuto extends BaseOpMode{
 
             telemetry.update();
         }
+        Pose finalPose = follower.pose();
+
+        autoEndX = finalPose.x();
+        autoEndY = finalPose.y();
+        autoEndHeading = finalPose.heading();
+
 
     }
 
@@ -223,22 +242,38 @@ public class CompetitionAuto extends BaseOpMode{
     public Path launchAndPark() {
         return curve(launchAndParkStart_2, launchAndParkControl1, launchAndPark).linear(launchAndParkStart_2, launchAndPark);
     }
+
+    public Path gardenIntake() {
+        Path firstLine = line(launchAndPark, gardenIntakeEnd).constant(270);//with(Constants.foresightConfig.maxPathSpeed.at(0.3));
+        Path secondLine = line(gardenIntakeEnd, gardenIntakeEnd2).constant(270).with(Constants.foresightConfig.maxPathSpeed.at(0.3));
+        Path thirdLine = line(gardenIntakeEnd2, gardenIntakeEnd3).constant(270).with(Constants.foresightConfig.maxPathSpeed.at(0.3));
+        return path(firstLine, secondLine, thirdLine);
+
+//        return line(launchAndParkStart_2, gardenIntakeEnd).constant(gardenIntakeEnd).with(Constants.foresightConfig.maxPathSpeed.at(0.1));
+    }
+
+    public Path gardenToLaunch() {
+        return line(gardenIntakeEnd, launchAndParkStart_2).constant(270);
+    }
+
+
     public Path hDLaunchandPark() {
         return curve(hDLaunchandParkStart, hDLaunchandParkControl1, hDLaunchandPark).linear(hDLaunchandParkStart, hDLaunchandPark);
     }
 
     // Mechanism movement commands (intake and launching)
-    public Command runIntakeForMS(long milliseconds) {
+    public Command runIntakeAtPower(double intakePower) {
         return sequential(
-                // Turn on intake
-                instant(() -> intakeMot.setPower(1.0)),
+                // Set intake to power requested
+                instant(() -> intakeMot.setPower(intakePower))
+                );
+    }
 
-                // Run intake for the time in seconds
-                waitMs(milliseconds),
-
-                // Turn intake off
-                instant(() -> intakeMot.setPower(0.0))
-        );
+    public Command runTransferAtPower(double transferPower) {
+        return sequential(
+                // Set intake to power requested
+                instant(() -> transferWheelMot.setPower(transferPower))
+                );
     }
     public Command leaveFromWall() {
         return sequential(
@@ -281,26 +316,8 @@ public class CompetitionAuto extends BaseOpMode{
                 waitMs(1500), //TODO: need to decide a constant value
 
                 instant(() -> gateServo.setPower(0.3)),
-                waitMs(6000),
+                waitMs(1000),
                 instant(() -> gateServo.setPower(0)),
-
-                // Turn on launcher flywheels
-//                instant(() -> gateTarget = 0),
-//
-//                // Wait for four balls to launch7
-//                waitMs(2000),
-//                instant(() -> gateTarget = 1),
-//
-//                // Wait for four balls to launch7
-//                waitMs(2000),
-//                instant(() -> gateTarget = 2),
-//
-//                // Wait for four balls to launch7
-//                waitMs(2000),
-//                instant(() -> gateTarget = 3),
-//
-//                waitMs(2000),
-//                instant(() -> gateTarget = 0),
 
 
                 // Wait for four balls to launch7

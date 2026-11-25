@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode;
 
 
+import com.pedropathing.math.Pose;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
@@ -15,11 +16,8 @@ import com.qualcomm.robotcore.hardware.Servo;
 abstract public class BaseOpMode extends LinearOpMode {
     // Constants
     public static double MOTOR_D_VALUE = 1;
-
-    //Motors/Servos
     public static double UPPER_LAUNCHER_SPEED = 2400;
     public static double LOWER_LAUNCHER_SPEED = 2000;
-
     public static double WHEEL_STOP_SPEED = 0;
     public static double TRANSFER_SPEED = 1200;
     public static double BALLS_TO_LAUNCH_TIME = 3500;
@@ -30,6 +28,11 @@ abstract public class BaseOpMode extends LinearOpMode {
     public double gateError;
     public static int gateIndex = 0;
     double GATE_VOLT_TOLERANCE = 0.05;
+
+    // for auto aim (auto to teleop pose)
+    public static double autoEndX = 12;
+    public static double autoEndY = 12;
+    public static double autoEndHeading = 0;
 
 
 
