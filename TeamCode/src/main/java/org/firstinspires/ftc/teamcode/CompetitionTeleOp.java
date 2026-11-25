@@ -19,6 +19,11 @@ public class CompetitionTeleOp extends BaseOpMode{
     private Pose autoDriveControl1 = poseFactory.of(0,90,90);
     private Pose autoDriveControl2 = poseFactory.of(20,30,90);
 
+    // AUTOAIM
+    double aimTargetX = 72;
+    double aimTargetY = 72;
+
+
 
 
 
@@ -45,8 +50,9 @@ public class CompetitionTeleOp extends BaseOpMode{
 //            telemetry.addData("upper_flywheel: ", upperFlywheelMot.getVelocity());
 //            telemetry.addData("lower_flywheel: ", lowerFlywheelMot.getVelocity());
 //            telemetry.addData("heading", follower.pose().heading());
-//            Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
-//            DashboardDraw.drawRobot(currPose);
+            Pose currPose = poseFactory.of(follower.pose().x(), follower.pose().y(), follower.pose().heading());
+            DashboardDraw.drawRobot(currPose);
+
             intakeMot.setPower(gamepad2.left_stick_y);
             // if intake runs, put gate back in its blocking position
             if (Math.abs(gamepad2.left_stick_y) >= 0.05) {
@@ -106,20 +112,21 @@ public class CompetitionTeleOp extends BaseOpMode{
                 lowerFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
                 upperFlywheelMot.setVelocity(WHEEL_STOP_SPEED);
             }
-//            if(gamepad2.leftBumperWasPressed()){
-//                Pose dynamicControl1;
-//                Pose dynamicControl2;
-//                if(currPose.x() > 72){
-//                    dynamicControl1 = poseFactory.of(130,90,90);
-//                    dynamicControl2 = poseFactory.of(130,30,90);
-//                } else {
-//                   dynamicControl1 = autoDriveControl1;
-//                    dynamicControl2 = autoDriveControl2;
-//
-//                }
-//                Path autoDriveTo  = curve(currPose, dynamicControl1,dynamicControl2, resetPoint).linear(currPose, resetPoint);
-//                follower.follow(autoDriveTo);
-//            }
+
+            if(gamepad2.leftBumperWasPressed()){
+                Pose dynamicControl1;
+                Pose dynamicControl2;
+                if(currPose.x() > 72){
+                    dynamicControl1 = poseFactory.of(130,90,90);
+                    dynamicControl2 = poseFactory.of(130,30,90);
+                } else {
+                   dynamicControl1 = autoDriveControl1;
+                    dynamicControl2 = autoDriveControl2;
+
+                }
+                Path autoDriveTo  = curve(currPose, dynamicControl1,dynamicControl2, resetPoint).linear(currPose, resetPoint);
+                follower.follow(autoDriveTo);
+            }
 
 
             if(!follower.isBusy()) {
@@ -133,8 +140,19 @@ public class CompetitionTeleOp extends BaseOpMode{
                 if (Math.abs(gamepad1.left_stick_y) > DRIVING_CONTROL_DEADZONE || Math.abs(gamepad1.left_stick_x) > DRIVING_CONTROL_DEADZONE || Math.abs(gamepad1.right_stick_x) > DRIVING_CONTROL_DEADZONE) {
                     drive = -gamepad1.left_stick_y * slowModeMultiplier;
                     strafe = -gamepad1.left_stick_x * slowModeMultiplier;
+                }
+
+                if (gamepad1.right_bumper) {
+
+                    // Auto aim while button is held
+                    turn = autoAim(currPose);
+
+                } else {
+
+                    // Normal manual turning
                     turn = -gamepad1.right_stick_x * slowModeMultiplier;
                 }
+
 
 //                telemetry.addData("turn: ", turn );
 //                telemetry.addData("lower flywheel motor: ", lowerFlywheelMot.getVelocity());
@@ -174,6 +192,29 @@ public class CompetitionTeleOp extends BaseOpMode{
 
         }
     }
+
+    public double autoAim(Pose currPose) {
+        double deltaX = aimTargetX - currPose.x();
+        double deltaY = aimTargetY - currPose.y();
+
+        double targetHeading = Math.toDegrees(Math.atan2(deltaY, deltaX));
+        double headingError = targetHeading - currPose.heading();
+
+        while (headingError > 180) headingError -= 360;
+        while (headingError < -180) headingError += 360;
+
+        double turn = AUTO_AIM_KP * headingError;
+        turn = Math.max(-1, Math.min(1, turn));
+
+        telemetry.addData("Target Heading", targetHeading);
+        telemetry.addData("Current Heading", currPose.heading());
+        telemetry.addData("Heading Error", headingError);
+        telemetry.addData("Aim Turn Power", turn);
+
+        return turn;
+
+    }
+
     public double doSLOWMODE() {
         if (gamepad1.right_trigger != 0) {
             return ((-gamepad1.right_trigger + 1)/2) + 0.5;
