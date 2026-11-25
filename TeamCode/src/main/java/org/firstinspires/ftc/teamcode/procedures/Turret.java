@@ -40,27 +40,56 @@ public class Turret { //67
         turretServo = servo1;
         turretServo2 = servo2;
     }
-    public void updateTurret(double poseX, double poseY, double headingRad) {
+//    public void updateTurret(double poseX, double poseY, double headingRad) {
+//        double dt = turretTimer.seconds();
+//        turretTimer.reset();
+//        if (dt <= 0 || dt > 0.25) dt = 0.02; //first loop or a lag spike
+//
+//        //if auto aim is off or we cant aim, just hold where we are
+////        turretTargetDeg = turretCommandedDeg;
+////        if (turretAutoAim) {
+////            double rough = getRoughAim(poseX, poseY, headingRad);
+////            if (!Double.isNaN(rough)) turretTargetDeg = rough;
+////        }
+//
+//        //move toward the target but not faster than the max speed
+//        double maxStep = TURRET_MAX_SPEED_DEG_PER_SEC * dt;
+//        double diff = turretTargetDeg - turretCommandedDeg;
+//        if (Math.abs(diff) <= maxStep) {
+//            turretCommandedDeg = turretTargetDeg;
+//        } else {
+//            turretCommandedDeg += Math.signum(diff) * maxStep;
+//        }
+//        servoPosition(Math.max(0, Math.min(1, angleToServoPos(turretCommandedDeg))));
+//    }
+
+    public void updateTurret(double poseX, double poseY, double headingRad, Double limelightTx, double goalX, double goalY) {
         double dt = turretTimer.seconds();
         turretTimer.reset();
-        if (dt <= 0 || dt > 0.25) dt = 0.02; //first loop or a lag spike
+        if (dt <= 0 || dt > 0.25) dt = 0.02; // Guard against lag spikes
 
-        //if auto aim is off or we cant aim, just hold where we are
-//        turretTargetDeg = turretCommandedDeg;
-//        if (turretAutoAim) {
-//            double rough = getRoughAim(poseX, poseY, headingRad);
-//            if (!Double.isNaN(rough)) turretTargetDeg = rough;
-//        }
+        if (turretAutoAim) {
+            if (limelightTx != null) {
+                // Precision Vision Aiming: Use Limelight horizontal offset (tx)
+                double currentAngle = servoPosToAngle(turretCommandedDeg);
+                turretTargetDeg = currentAngle - limelightTx;
+            } else {
+                // Odometry Backup Aiming: Calculate field-relative angle to goal
+                double goalAngle = Math.toDegrees(Math.atan2(goalY - poseY, goalX - poseX));
+                double robotDeg = Math.toDegrees(headingRad);
+                double relative = goalAngle - robotDeg;
 
-        //move toward the target but not faster than the max speed
-        double maxStep = TURRET_MAX_SPEED_DEG_PER_SEC * dt;
-        double diff = turretTargetDeg - turretCommandedDeg;
-        if (Math.abs(diff) <= maxStep) {
-            turretCommandedDeg = turretTargetDeg;
-        } else {
-            turretCommandedDeg += Math.signum(diff) * maxStep;
+                // Normalize relative angle to [-180, 180]
+                while (relative > 180) relative -= 360;
+                while (relative <= -180) relative += 360;
+
+                turretTargetDeg = relative + 180; // Adjust depending on your turret's zero reference
+            }
         }
-        servoPosition(Math.max(0, Math.min(1, angleToServoPos(turretCommandedDeg))));
+
+        // Smooth movement toward target angle
+        double targetServoPos = angleToServoPos(turretTargetDeg);
+        servoPosition(Math.max(0.0, Math.min(1.0, targetServoPos)));
     }
     public double angleToServoPos(double angle) {
         if (angle > 225) {
