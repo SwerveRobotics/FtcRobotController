@@ -337,14 +337,17 @@ public class CompetitionAuto extends BaseOpMode{
     public void initializeShootPath(Pose[] shootPoses, PoseFactory poseFactory) {
         shootPoses[0] = poseFactory.of(52.431, 7.2652, 90);           // start
         shootPoses[1] = poseFactory.of(52.31, 24, 90);               // path1
-        shootPoses[2] = poseFactory.of(28.9718, 11.3368, -180);   // point2
-        shootPoses[3] = poseFactory.of(10.6144, 10.3417, -180);
-
-
+        shootPoses[2] = poseFactory.of(28.9718, 11.3368, 0);   // point2
+        shootPoses[3] = poseFactory.of(14.1328, 10.6519, 0);
         // point3
-        shootPoses[4] = poseFactory.of(56.0542, 128.0638, 50.0106);   // point4
-        shootPoses[5] = poseFactory.of(18.3698, 83.1365, 0);
+        shootPoses[4] = poseFactory.of(56.0542, 128.0638, 50.0106);
+        // point4
+        Pose point4Control1 = poseFactory.of(20.2091, 80.9294, 0);
+        Pose point4Control2 = poseFactory.of(22.1937, 110.1101, 0);
+        Pose point4Segment1Start = poseFactory.of(56.0542, 128.0638, 0);
+        Pose point4Segment1End = poseFactory.of(56.0542, 128.0638, 0);
 
+        shootPoses[5] = poseFactory.of(55.8442, 117, 0);
 
         // point4Control1
         shootPoses[6] = poseFactory.of(55.8442, 117, -91.0871);      // point5
@@ -356,16 +359,17 @@ public class CompetitionAuto extends BaseOpMode{
                 waitMs(waitTimeMs),
                 follow(follower, Paths.line(points[0], points[1]).constant(points[1])),
                 shootBalls(4),
-                follow(follower, Paths.line(points[1], points[2]).constant(points[2])),
+                follow(follower, Paths.line(points[1], points[2]).tangent()),
+
 
                 intakeOn(),
 
                 follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
-                follow(follower, Paths.curve(points[3], points[5], points[4]).constant(points[4])),
+                follow(follower, Paths.curve(points[3], points[6], points[7], points[4]).constant(points[4])),
 
                 intakeOff(),
                 shootBalls(4),
-                follow(follower, Paths.line(points[4], points[6]).constant(points[6])),
+                follow(follower, Paths.line(points[4], points[6]).tangent()),
                 follow(follower, Paths.line(points[6], points[7]).constant(points[7]))
         );
     }
