@@ -19,6 +19,7 @@ public class CompetitionTeleOp extends BaseOpMode{
     private Pose autoDriveControl1 = poseFactory.of(0,90,90);
     private Pose autoDriveControl2 = poseFactory.of(20,30,90);
 
+
     // AUTOAIM
     double aimTargetX = 72;
     double aimTargetY = 72;
@@ -72,9 +73,10 @@ public class CompetitionTeleOp extends BaseOpMode{
 
             if (gamepad2.a) {
                 transferWheelMot.setVelocity(TRANSFER_SPEED);
-            } else {
+            } else if (gamepad2.aWasReleased()) {
                 transferWheelMot.setVelocity(WHEEL_STOP_SPEED);
             }
+
 
 
             if (gamepad2.xWasPressed()) {
