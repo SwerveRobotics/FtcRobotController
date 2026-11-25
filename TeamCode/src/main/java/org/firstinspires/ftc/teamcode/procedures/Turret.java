@@ -19,8 +19,8 @@ public class Turret { //67
     public double SERVO_POSITION_BACKWARD = 1;
     public double LEFT_END_DEGREES = -135;
     public double RIGHT_END_DEGREES = 180;
-    public double VELOCITY_1 = 950;
-    public double VELOCITY_2 = 600;
+    public double VELOCITY_1 = 950*1.4;
+    public double VELOCITY_2 = 600*1.4;
     public double TURRET_LEFT_END = 0.0;
     public double TURRET_RIGHT_END = 1.0;
     protected boolean turretAutoAim = true;
