@@ -267,12 +267,18 @@ abstract public class BaseOpMode extends LinearOpMode {
         telemetry.addData("X", follower.pose().x());
         telemetry.addData("Y", follower.pose().y());
         telemetry.addData("Heading", Math.toDegrees(follower.pose().heading()));
-        telemetry.addData("Intake speed", intakeMotor.getVelocity());
-        telemetry.addData("Transfer speed", transferMotor.getPower());
-        telemetry.addData("Average Turret Speed", turret.avgSpeed() );
+//        telemetry.addData("Intake speed", intakeMotor.getVelocity());
+//        telemetry.addData("Transfer speed", transferMotor.getPower());
+//        telemetry.addData("Average Turret Speed", turret.avgSpeed() );
         telemetry.addData("launch Motor 1: ", launchMotor1.getVelocity());
 
         telemetry.addData("launch Motor 2: ", launchMotor2.getVelocity());
+
+        telemetry.addData("KP: ", KP);
+
+        telemetry.addData("KD: ", KD);
+
+        telemetry.addData("KI: ", KI);
         telemetry.addData("Turret position", turretServo.getPosition());
         telemetry.addData("Gate Position", (gate.getPosition() == GATE_OPEN)?"Open":"Closed");
         //telemetry.addData("Ramp Position",flowerRamp.getPosition() == RAMP_UP ? "Up":"Down");
