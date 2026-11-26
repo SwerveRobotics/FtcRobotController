@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.pedropathing.paths.interpolator.Interpolator;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 
@@ -191,7 +192,7 @@ public class CompetitionAuto extends BaseOpMode{
     public Command shootBalls(int numBalls, double angle) {
         return sequential(
                 instant(()-> turret.turnRelative(angle)),
-                instant(() -> turret.setVelocity(VELOCITY, VELOCITY)),
+                instant(() -> turret.setVelocity(VELOCITY_1, VELOCITY_2)),
                 waitMs(700), // tune this
                 instant(() -> gate.setPosition(GATE_OPEN)),
                 instant(() -> intakeAndTransfer(true)),
@@ -203,6 +204,11 @@ public class CompetitionAuto extends BaseOpMode{
     }
     public Command shootBalls(int numBalls) {
         return shootBalls(numBalls, 0);
+    }
+    public Command spinupLaunch() {
+        return sequential (
+            instant(()-> turret.turnRelative(turret.servoPosToAngle(.409))),
+            instant(() -> turret.setVelocity(VELOCITY, VELOCITY)));
     }
     public Command intake(long millis) {
         return Command.build()
@@ -220,11 +226,9 @@ public class CompetitionAuto extends BaseOpMode{
 
 
 
-
     public Command intakeOn() {
         return instant(() -> {intakeMotor.setPower(INTAKE_SPEED);
-            transferMotor.setPower(TRANSFER_INTAKE_SPEED);
-            gate.setPosition(GATE_CLOSED);}).requiring(intakeMotor);
+        transferMotor.setPower(TRANSFER_INTAKE_SPEED);}).requiring(intakeMotor);
     }
 
     public Command intakeOff() {
@@ -364,7 +368,7 @@ public class CompetitionAuto extends BaseOpMode{
 
     public Command autoRoutineShoot() {
         return sequential(
-                startUp(),
+                waitMs(waitTimeMs),
                 follow(follower, Paths.line(points[0], points[1]).constant(points[1])),
                 shootBalls(4),
                 follow(follower, Paths.line(points[1], points[2]).tangent()),
@@ -372,8 +376,14 @@ public class CompetitionAuto extends BaseOpMode{
 
                 intakeOn(),
 
-                follow(follower, Paths.line(points[2], points[3]).constant(points[3])),
-                follow(follower, Paths.curve(points[3], points[6], points[7], points[4]).constant(points[4])),
+                follow(follower, Paths.line(points[2], points[3])
+                        .constant(points[3])
+                        .with(Constants.foresightConfig.maxPathSpeed.at(0.5)) // 50% of max speed
+                ),
+                follow(follower, Paths.curve(points[3], points[8], points[9], points[4]).heading(Interpolator.piecewise().until(
+                        1,
+                        Interpolator.linear(points[10], points[11])
+                ))),
 
                 intakeOff(),
                 shootBalls(4),
