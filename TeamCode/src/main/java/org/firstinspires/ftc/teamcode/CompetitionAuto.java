@@ -189,9 +189,11 @@ public class CompetitionAuto extends BaseOpMode{
                 instant(()-> turret.turnRelative(angle)),
                 instant(() -> turret.setVelocity(VELOCITY_1, VELOCITY_2)),
                 waitMs(700), // tune this
+                instant(() -> gate.setPosition(GATE_OPEN)),
                 instant(() -> intakeAndTransfer(true)),
                 waitMs(numBalls*LAUNCH_TIME),
                 instant(() -> intakeAndTransfer(false)),//longer wait time for launch
+                instant(() -> gate.setPosition(GATE_CLOSED)),
                 instant(() -> turret.setVelocity(0,0))
         );
     }
@@ -214,9 +216,11 @@ public class CompetitionAuto extends BaseOpMode{
 
 
 
+
     public Command intakeOn() {
         return instant(() -> {intakeMotor.setPower(INTAKE_SPEED);
-        transferMotor.setPower(TRANSFER_INTAKE_SPEED);}).requiring(intakeMotor);
+            transferMotor.setPower(TRANSFER_INTAKE_SPEED);
+            gate.setPosition(GATE_CLOSED);}).requiring(intakeMotor);
     }
 
     public Command intakeOff() {
