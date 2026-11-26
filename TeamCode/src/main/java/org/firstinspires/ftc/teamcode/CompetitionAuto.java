@@ -192,7 +192,7 @@ public class CompetitionAuto extends BaseOpMode{
     public Command shootBalls(int numBalls, double angle) {
         return sequential(
                 instant(()-> turret.turnRelative(angle)),
-                instant(() -> turret.setVelocity(VELOCITY_1, VELOCITY_2)),
+                instant(() -> turret.setVelocity(VELOCITY, VELOCITY)),
                 waitMs(700), // tune this
                 instant(() -> gate.setPosition(GATE_OPEN)),
                 instant(() -> intakeAndTransfer(true)),
@@ -368,7 +368,7 @@ public class CompetitionAuto extends BaseOpMode{
 
     public Command autoRoutineShoot() {
         return sequential(
-                waitMs(waitTimeMs),
+                spinupLaunch(),
                 follow(follower, Paths.line(points[0], points[1]).constant(points[1])),
                 shootBalls(4),
                 follow(follower, Paths.line(points[1], points[2]).tangent()),
