@@ -110,7 +110,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             //when left stick is pushed up set velocity
             if (gamepad2.left_stick_y > 0.05) {
                 intakeMotor.setPower(INTAKE_SPEED);
-                transferMotor.setPower(TRANSFER_INTAKE_SPEED);
+                transferMotor.setPower(0);
                 gate.setPosition(GATE_CLOSED);
 
             } else if (gamepad2.left_stick_y < -0.05) {
@@ -135,7 +135,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             //launching controls
 
             if(gamepad2.rightTriggerWasPressed()){
-               turret.setVelocity(VELOCITY_1, VELOCITY_2);
+               turret.setVelocity(VELOCITY, VELOCITY);
             }else if (gamepad2.left_trigger_pressed){
                turret.setVelocity(0, 0);
             }
