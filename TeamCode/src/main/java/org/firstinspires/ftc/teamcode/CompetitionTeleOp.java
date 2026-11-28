@@ -10,6 +10,8 @@ import com.pedropathing.paths.Path;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 
+import org.firstinspires.ftc.robotcore.external.navigation.CurrentUnit;
+
 @TeleOp(name = "CompetitionTeleOp")
 public class CompetitionTeleOp extends BaseOpMode{
     private Follower follower;
@@ -58,10 +60,17 @@ public class CompetitionTeleOp extends BaseOpMode{
 //            telemetry.addData("upper_flywheel: ", upperFlywheelMot.getVelocity());
 //            telemetry.addData("lower_flywheel: ", lowerFlywheelMot.getVelocity());
 //            telemetry.addData("heading", follower.pose().heading());
+
+//            telemetry.addData("Transfer Motor Power", transferWheelMot.getPower());
+//            telemetry.addData("Transfer Current (A)", transferWheelMot.getCurrent(CurrentUnit.AMPS));
+//            telemetry.addData("Transfer Velocity (ticks/sec)", transferWheelMot.getVelocity());
+//            telemetry.addData("intake current ", intakeMot.getCurrent(CurrentUnit.AMPS));
+
             Pose currPose = follower.pose();
             DashboardDraw.drawRobot(currPose);
 
             intakeMot.setPower(gamepad2.left_stick_y);
+
             // if intake runs, put gate back in its blocking position
             if (Math.abs(gamepad2.left_stick_y) >= 0.05) {
                 gateIndex = 0;
@@ -121,7 +130,7 @@ public class CompetitionTeleOp extends BaseOpMode{
                     dynamicControl2 = poseFactory.of(130,30,90);
                 } else {
                    dynamicControl1 = autoDriveControl1;
-                    dynamicControl2 = autoDriveControl2;
+                   dynamicControl2 = autoDriveControl2;
 
                 }
                 Path autoDriveTo  = curve(currPose, dynamicControl1,dynamicControl2, resetPoint).linear(currPose, resetPoint);
