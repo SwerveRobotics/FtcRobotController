@@ -59,8 +59,10 @@ abstract public class BaseOpMode extends LinearOpMode {
     //constants
     public static double LAUNCH_TIME = 1000.0;
     public static double INTAKE_SPEED = 1.0;
-    public static double VELOCITY_1 = 950*1.4;
-    public static double VELOCITY_2 = 600*1.4;
+    public static double VELOCITY_1 = 900*1.4;
+    public static double VELOCITY_2 = 750*1.4;
+    public static double VELOCITY = 1050;
+
     public static double TRANSFER_INTAKE_SPEED = 0.5;
 
     public static double GATE_OPEN = 0;
@@ -74,8 +76,8 @@ abstract public class BaseOpMode extends LinearOpMode {
 
     //autoaim TODO: tune these values
 
-    public static double KP = 150;
-    public static double KI = 0;
+    public static double KP = 50;
+    public static double KI = 5;
     public static double KD = 5;
     public static double KF = 15;
     // For seeing if hive is down or not

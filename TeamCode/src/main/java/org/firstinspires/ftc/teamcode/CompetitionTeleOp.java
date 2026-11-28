@@ -136,7 +136,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             //launching controls
 
             if(gamepad2.rightTriggerWasPressed()){
-               turret.setVelocity(VELOCITY_1, VELOCITY_2);
+               turret.setVelocity(VELOCITY, VELOCITY);
             }else if (gamepad2.left_trigger_pressed){
                turret.setVelocity(0, 0);
             }
