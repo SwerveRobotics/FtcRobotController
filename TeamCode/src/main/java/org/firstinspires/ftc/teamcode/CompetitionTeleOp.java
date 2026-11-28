@@ -70,6 +70,7 @@ public class CompetitionTeleOp extends BaseOpMode {
         while (opModeIsActive()) {
             turret.updateLauncherPidf();
 
+
             //LLResult result = limelight.getLatestResult();
             LLResult result = null;
 
@@ -110,7 +111,7 @@ public class CompetitionTeleOp extends BaseOpMode {
             //when left stick is pushed up set velocity
             if (gamepad2.left_stick_y > 0.05) {
                 intakeMotor.setPower(INTAKE_SPEED);
-                transferMotor.setPower(TRANSFER_INTAKE_SPEED);
+                transferMotor.setPower(0);
                 gate.setPosition(GATE_CLOSED);
 
             } else if (gamepad2.left_stick_y < -0.05) {
