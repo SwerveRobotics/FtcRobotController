@@ -24,15 +24,15 @@ abstract public class BaseOpMode extends LinearOpMode {
     public static double FOUR_BALLS_TIME = 10000;
     public double [] GATE_VOLTS = {2.61,1.69}; //0.87,0.15
     public double GATE_KP = 0.4;
-    double AUTO_AIM_KP = 0.015;
+    double AUTO_AIM_KP = 0.4;
     public double gateError;
     public static int gateIndex = 0;
     double GATE_VOLT_TOLERANCE = 0.05;
 
     // for auto aim (auto to teleop pose)
-    public static double autoEndX = 12;
-    public static double autoEndY = 12;
-    public static double autoEndHeading = 0;
+    public static double autoEndX = 84;
+    public static double autoEndY = 134;
+    public static double autoEndHeading = 270;
 
 
 
@@ -62,8 +62,8 @@ abstract public class BaseOpMode extends LinearOpMode {
         transferWheelMot = hardwareMap.get(DcMotorEx.class, "feedLaunch");
         intakeMot = hardwareMap.get(DcMotorEx.class, "motIntake");
 
-        rightIntakeServo = hardwareMap.get(CRServo.class, "rightservo");
-        leftIntakeServo = hardwareMap.get(CRServo.class, "leftservo");
+//        rightIntakeServo = hardwareMap.get(CRServo.class, "rightservo");
+//        leftIntakeServo = hardwareMap.get(CRServo.class, "leftservo");
         gateServo = hardwareMap.get(CRServo.class, "gateServo");
         gateServoFeedback = hardwareMap.get(AnalogInput.class, "gateServoFeedback");
 
@@ -101,7 +101,7 @@ abstract public class BaseOpMode extends LinearOpMode {
         upperFlywheelMot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         lowerFlywheelMot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         transferWheelMot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
+        intakeMot.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
         FLMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         FRMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -119,13 +119,8 @@ abstract public class BaseOpMode extends LinearOpMode {
         transferWheelMot.setDirection(DcMotor.Direction.FORWARD);
         intakeMot.setDirection(DcMotor.Direction.FORWARD);
 
-        leftIntakeServo.setDirection(CRServo.Direction.REVERSE);
+//        leftIntakeServo.setDirection(CRServo.Direction.REVERSE);
         gateServo.setDirection(CRServo.Direction.FORWARD);
-
-//        FRMotor.setDirection(DcMotor.Direction.FORWARD);
-//        BRMotor.setDirection(DcMotor.Direction.REVERSE);
-//        BLMotor.setDirection(DcMotor.Direction.REVERSE);
-//        FLMotor.setDirection(D+cMotor.Direction.FORWARD);
 
 
     }
